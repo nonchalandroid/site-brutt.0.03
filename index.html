@@ -200,10 +200,10 @@ input.t,textarea.t{width:100%;padding:11px 12px;border-radius:10px;border:1px so
 .smoke{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 /* fundo brilhante: brilho dourado fixo que "respira" atrás do conteúdo */
 .smoke::before,.smoke::after{content:"";position:absolute;inset:-10%;pointer-events:none}
-.smoke::before{background:radial-gradient(900px 520px at 50% 0%,rgba(227,172,61,.30),rgba(227,172,61,.10) 45%,transparent 72%),radial-gradient(700px 520px at 8% 100%,rgba(242,107,29,.16),transparent 70%),radial-gradient(700px 520px at 95% 85%,rgba(227,172,61,.14),transparent 70%);animation:glow-breathe 9s ease-in-out infinite}
-.smoke::after{background:radial-gradient(600px 380px at 50% 8%,rgba(255,214,130,.16),transparent 70%);mix-blend-mode:screen;animation:glow-breathe 6s ease-in-out infinite reverse}
+.smoke::before{background:radial-gradient(900px 520px at 50% 0%,rgba(227,172,61,.20),rgba(227,172,61,.07) 45%,transparent 72%),radial-gradient(700px 520px at 8% 100%,rgba(242,107,29,.10),transparent 70%),radial-gradient(700px 520px at 95% 85%,rgba(227,172,61,.09),transparent 70%);animation:glow-breathe 9s ease-in-out infinite}
+.smoke::after{background:radial-gradient(600px 380px at 50% 8%,rgba(255,214,130,.10),transparent 70%);mix-blend-mode:screen;animation:glow-breathe 6s ease-in-out infinite reverse}
 @keyframes glow-breathe{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
-.smoke i{position:absolute;bottom:-30vh;width:60vmax;height:60vmax;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(236,212,166,.34),rgba(226,196,140,.14) 42%,transparent 70%);filter:blur(36px);opacity:0;animation:rise 30s linear infinite;will-change:transform,opacity}
+.smoke i{position:absolute;bottom:-30vh;width:60vmax;height:60vmax;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(236,212,166,.24),rgba(226,196,140,.09) 42%,transparent 70%);filter:blur(36px);opacity:0;animation:rise 30s linear infinite;will-change:transform,opacity}
 .smoke i:nth-child(1){left:-15vmax;animation-delay:0s}
 .smoke i:nth-child(2){left:20vw;width:48vmax;height:48vmax;animation-duration:36s;animation-delay:-14s}
 .smoke i:nth-child(3){right:-12vmax;animation-duration:33s;animation-delay:-22s}
@@ -298,7 +298,7 @@ nav ul{gap:0}
 input.t.bad{border-color:#d6392b;animation:shake .4s}
 @media (prefers-reduced-motion:reduce){.badge.bump,#cartBtn.shake,input.t.bad{animation:none}.minbar{transition:none}}
 
-body{font-synthesis:none;background:radial-gradient(1200px 600px at 50% -10%,#3a230f 0%,var(--bg) 65%)}
+body{font-synthesis:none;background:radial-gradient(1200px 600px at 50% -10%,#2a1a0d 0%,var(--bg) 62%)}
 h1,.sec-h h2,.cats-h h2,.grp,.dd-head b,.up-t b,.m-b h3,.age h2,.d-h h3,.perk b{text-transform:uppercase;letter-spacing:.025em}
 .hero h1{font-size:clamp(34px,6.4vw,64px);line-height:1.02;color:var(--ink)}
 .sec-h h2{font-size:clamp(24px,3.6vw,34px)}
