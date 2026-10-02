@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Brutt · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --bg:#120b07; --surface:#1c130c; --surface-2:#241a11; --line:#3a2a1a;
+  --gold:#d8a638; --gold-2:#f0cc74; --ink:#f3e4c8; --muted:#b8a184;
+  --red:#c0453a; --green:#3f7a4e;
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme: light){ :root{} }
+*{box-sizing:inherit}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Barlow',system-ui,sans-serif;min-height:100%;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);}
+h1,h2,h3{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.2px;margin:0}
+button,input,select,textarea{font-family:inherit;font-size:15px;color:var(--ink)}
+input,select,textarea{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
+button{cursor:pointer;border:0;border-radius:10px;padding:10px 16px;font-weight:600}
+.btn-gold{background:var(--gold);color:#241705}
+.btn-gold:hover{background:var(--gold-2)}
+.btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn-ghost:hover{border-color:var(--gold)}
+.btn-danger{background:transparent;color:var(--red);border:1px solid var(--red)}
+.btn-sm{padding:7px 12px;font-size:13px;border-radius:8px}
+a{color:var(--gold-2)}
+
+/* ---------- shell ---------- */
+#app{max-width:980px;margin:0 auto;padding:0 14px 60px}
+.topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 14px calc(14px + env(safe-area-inset-top,0px));background:var(--bg);border-bottom:1px solid var(--line)}
+.topbar .brand{display:flex;align-items:baseline;gap:8px}
+.topbar .brand b{font-family:'Barlow Condensed',sans-serif;font-size:22px;color:var(--gold-2);text-transform:uppercase}
+.topbar .brand span{font-size:12px;color:var(--muted)}
+.topbar .who{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+
+/* ---------- login ---------- */
+.center-screen{min-height:70vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px}
+.login-card{width:100%;max-width:360px}
+.login-card h1{font-size:30px;color:var(--gold-2);margin-bottom:4px}
+.login-card p.sub{color:var(--muted);font-size:14px;margin:0 0 20px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+.err{color:var(--red);font-size:13px;margin-top:10px}
+.full{width:100%}
+
+/* ---------- search ---------- */
+.scan-wrap{margin:16px 0 10px}
+.scan-wrap input{font-size:18px;padding:14px 16px}
+.scan-hint{font-size:12px;color:var(--muted);margin-top:6px}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+
+/* ---------- product list ---------- */
+.plist{display:flex;flex-direction:column;gap:8px}
+.prow{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;padding:10px 12px;cursor:pointer}
+.prow:hover{border-color:var(--gold)}
+.prow .thumb{width:46px;height:46px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;
+  justify-content:center;font-size:22px;overflow:hidden;flex:none}
+.prow .thumb img{width:100%;height:100%;object-fit:cover}
+.prow .info{flex:1;min-width:0}
+.prow .info .n{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .info .m{font-size:12px;color:var(--muted)}
+.prow .right{text-align:right;flex:none}
+.prow .right .price{font-weight:700;color:var(--gold-2)}
+.prow .right .stock{font-size:12px;color:var(--muted)}
+.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);margin-left:6px}
+.badge.off{color:var(--red);border-color:var(--red)}
+.empty{color:var(--muted);text-align:center;padding:40px 10px}
+
+/* ---------- modal/drawer ---------- */
+.veil{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:none}
+.veil.on{display:block}
+.drawer{position:fixed;right:0;top:0;bottom:0;width:min(480px,100%);background:var(--bg);border-left:1px solid var(--line);
+  z-index:21;transform:translateX(100%);transition:transform .25s ease;overflow-y:auto;
+  padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
+.drawer.on{transform:translateX(0)}
+.drawer-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.drawer-h h2{font-size:22px}
+.x{background:none;border:0;color:var(--muted);font-size:24px;line-height:1;padding:8px;min-width:40px;min-height:40px}
+.section{margin-bottom:22px}
+.section h3{font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px;font-weight:600;font-family:'Barlow',sans-serif}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photo-box{display:flex;align-items:center;gap:14px}
+.photo-box .ph{width:84px;height:84px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;
+  justify-content:center;font-size:36px;overflow:hidden;flex:none}
+.photo-box .ph img{width:100%;height:100%;object-fit:cover}
+.stock-now{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
+.stock-now .n{font-size:32px;font-weight:700;color:var(--gold-2);font-family:'Barlow Condensed',sans-serif}
+.mv-tabs{display:flex;gap:6px;margin-bottom:10px}
+.mv-tabs button{flex:1}
+.mv-tabs button.active{background:var(--gold);color:#241705}
+.mv-tabs button:not(.active){background:var(--surface-2);color:var(--muted)}
+.hist{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.hist-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+.hist-row .t{color:var(--muted)}
+.save-row{display:flex;gap:10px;margin-top:16px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--gold);color:#241705;
+  padding:10px 18px;border-radius:10px;font-weight:600;z-index:30;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:10px;padding:10px 12px}
+.switch{position:relative;width:42px;height:24px;flex:none}
+.switch input{opacity:0;width:100%;height:100%;position:absolute;margin:0;cursor:pointer}
+.switch .track{position:absolute;inset:0;background:var(--line);border-radius:999px;transition:.2s}
+.switch .track::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:var(--ink);top:3px;left:3px;transition:.2s}
+.switch input:checked + .track{background:var(--green)}
+.switch input:checked + .track::after{transform:translateX(18px)}
+.loading{text-align:center;color:var(--muted);padding:30px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="veil" id="veil"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPA_URL = "https://vedlxtljilsanykmddtj.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZGx4dGxqaWxzYW55a21kZHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NjYzNzUsImV4cCI6MjEwNjE0MjM3NX0.JlUPvGdomBHLlu5ei5dEb1qFR4FZ2nC45JTZUJ-IN6g";
+const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+const BUCKET = "product-images";
+
+const $ = (s, r=document) => r.querySelector(s);
+const app = $("#app");
+let state = { session:null, staff:null, categories:[], results:[], current:null, mvType:"entrada" };
+
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("on");
+  setTimeout(()=>t.classList.remove("on"), 2200);
+}
+function esc(s){ return (s??"").toString().replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function brl(v){ return (v==null) ? "—" : "R$ " + Number(v).toFixed(2).replace(".", ","); }
+
+/* ---------------- boot ---------------- */
+async function boot(){
+  const { data:{ session } } = await sb.auth.getSession();
+  state.session = session;
+  if(!session){ renderLogin(); return; }
+  await loadStaffAndContinue();
+}
+sb.auth.onAuthStateChange((_evt, session) => { state.session = session; });
+
+async function loadStaffAndContinue(){
+  app.innerHTML = `<div class="loading">Carregando…</div>`;
+  const { data: staffRows } = await sb.from("staff").select("*").eq("user_id", state.session.user.id);
+  state.staff = (staffRows && staffRows[0]) || null;
+  if(!state.staff){ renderAccessDenied(); return; }
+  const { data: cats } = await sb.from("categories").select("id,name,slug,parent_id").order("name");
+  state.categories = cats || [];
+  renderMain();
+}
+
+/* ---------------- login ---------------- */
+function renderLogin(){
+  app.innerHTML = `
+    <div class="center-screen">
+      <div class="card login-card">
+        <h1>Brutt</h1>
+        <p class="sub">Painel interno · entre com sua conta</p>
+        <div class="field"><label>E-mail</label><input type="email" id="loEmail" autocomplete="username"></div>
+        <div class="field"><label>Senha</label><input type="password" id="loPass" autocomplete="current-password"></div>
+        <button class="btn-gold full" id="loBtn">Entrar</button>
+        <div class="err" id="loErr" hidden></div>
+      </div>
+    </div>`;
+  $("#loBtn").onclick = async () => {
+    const email = $("#loEmail").value.trim(), password = $("#loPass").value;
+    $("#loErr").hidden = true;
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){ $("#loErr").textContent = "E-mail ou senha incorretos."; $("#loErr").hidden = false; return; }
+    state.session = data.session;
+    await loadStaffAndContinue();
+  };
+  $("#loPass").addEventListener("keydown", e => { if(e.key==="Enter") $("#loBtn").click(); });
+}
+
+function renderAccessDenied(){
+  app.innerHTML = `
+    <div class="center-screen">
+      <div class="card login-card">
+        <h1>Sem acesso</h1>
+        <p class="sub">Sua conta está autenticada, mas ainda não foi liberada para o painel. Peça para um administrador te adicionar na equipe.</p>
+        <button class="btn-ghost full" id="loOut">Sair</button>
+      </div>
+    </div>`;
+  $("#loOut").onclick = async () => { await sb.auth.signOut(); renderLogin(); };
+}
+
+/* ---------------- main shell ---------------- */
+function renderMain(){
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand"><b>Brutt</b><span>admin</span></div>
+      <div class="who">${esc(state.staff.name)} <button class="btn-ghost btn-sm" id="outBtn">Sair</button></div>
+    </div>
+    <div class="scan-wrap">
+      <input id="searchBox" placeholder="Bipar EAN, ou buscar por nome / SKU…" autofocus>
+      <div class="scan-hint">Um leitor de código de barras funciona direto aqui — ele "digita" o código e aperta Enter sozinho.</div>
+    </div>
+    <div class="toolbar">
+      <button class="btn-gold btn-sm" id="newBtn">+ Novo produto</button>
+    </div>
+    <div class="plist" id="plist"><div class="empty">Busque um produto por nome, SKU, ou bipe um EAN.</div></div>
+  `;
+  $("#outBtn").onclick = async () => { await sb.auth.signOut(); renderLogin(); };
+  $("#newBtn").onclick = () => openNewProduct();
+
+  const box = $("#searchBox");
+  let t;
+  box.addEventListener("input", () => { clearTimeout(t); t = setTimeout(()=>runSearch(box.value), 250); });
+  box.addEventListener("keydown", e => { if(e.key==="Enter"){ clearTimeout(t); runSearch(box.value, true); } });
+}
+
+async function runSearch(qRaw, fromScan){
+  const q = qRaw.trim();
+  const list = $("#plist");
+  if(!q){ list.innerHTML = `<div class="empty">Busque um produto por nome, SKU, ou bipe um EAN.</div>`; return; }
+  list.innerHTML = `<div class="loading">Buscando…</div>`;
+
+  // EAN bipado costuma ser só dígitos e vir seguido de Enter: tenta igualdade exata primeiro
+  let rows = [];
+  if(/^\d{6,}$/.test(q)){
+    const { data } = await sb.from("products").select("*").or(`ean.eq.${q},sku.eq.${q}`).limit(20);
+    rows = data || [];
+  }
+  if(rows.length === 0){
+    const { data } = await sb.from("products")
+      .select("*")
+      .or(`name.ilike.%${q}%,sku.ilike.%${q}%,ean.ilike.%${q}%`)
+      .order("name").limit(40);
+    rows = data || [];
+  }
+  state.results = rows;
+
+  if(rows.length === 0){ list.innerHTML = `<div class="empty">Nada encontrado para "${esc(q)}".</div>`; return; }
+  if(fromScan && rows.length === 1){ openProduct(rows[0].id); }
+
+  const ids = rows.map(r=>r.id);
+  const { data: imgs } = await sb.from("product_images").select("product_id,url").in("product_id", ids);
+  const imgByProduct = {}; (imgs||[]).forEach(i => imgByProduct[i.product_id] = i.url);
+
+  list.innerHTML = rows.map(p => `
+    <div class="prow" data-id="${p.id}">
+      <div class="thumb">${imgByProduct[p.id] ? `<img src="${imgByProduct[p.id]}" alt="">` : esc(p.icon||"📦")}</div>
+      <div class="info">
+        <div class="n">${esc(p.name)}${!p.is_active ? '<span class="badge off">inativo</span>' : ''}</div>
+        <div class="m">SKU ${esc(p.sku)}${p.ean ? " · EAN " + esc(p.ean) : ""}</div>
+      </div>
+      <div class="right">
+        <div class="price">${brl(p.promo_price || p.price)}</div>
+        <div class="stock">estoque: ${p.stock}</div>
+      </div>
+    </div>
+  `).join("");
+  list.querySelectorAll(".prow").forEach(el => el.onclick = () => openProduct(el.dataset.id));
+}
+
+/* ---------------- drawer helpers ---------------- */
+function openDrawer(html){
+  let d = $("#drawer");
+  if(!d){
+    d = document.createElement("div"); d.className = "drawer"; d.id = "drawer";
+    document.body.appendChild(d);
+    $("#veil").onclick = closeDrawer;
+  }
+  d.innerHTML = html;
+  requestAnimationFrame(()=>{ $("#veil").classList.add("on"); d.classList.add("on"); });
+  d.querySelectorAll("[data-close]").forEach(b => b.onclick = closeDrawer);
+}
+function closeDrawer(){
+  $("#veil").classList.remove("on");
+  const d = $("#drawer"); if(d) d.classList.remove("on");
+}
+
+/* ---------------- product detail / edit ---------------- */
+async function openProduct(id){
+  openDrawer(`<div class="loading">Carregando…</div>`);
+  const { data: p } = await sb.from("products").select("*").eq("id", id).single();
+  const { data: imgRows } = await sb.from("product_images").select("*").eq("product_id", id);
+  const { data: hist } = await sb.from("stock_movements").select("*").eq("product_id", id).order("created_at",{ascending:false}).limit(8);
+  state.current = p;
+  const img = (imgRows && imgRows[0]) || null;
+
+  const catOptions = renderCategoryOptions(p.category_id);
+
+  openDrawer(`
+    <div class="drawer-h"><h2>${esc(p.name)}</h2><button class="x" data-close>×</button></div>
+
+    <div class="section">
+      <h3>Foto</h3>
+      <div class="photo-box">
+        <div class="ph">${img ? `<img src="${img.url}" alt="">` : esc(p.icon||"📦")}</div>
+        <div>
+          <button class="btn-ghost btn-sm" id="photoBtn">Trocar foto</button>
+          <input type="file" id="photoFile" accept="image/*" hidden>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Estoque</h3>
+      <div class="stock-now"><span class="n">${p.stock}</span><span style="color:var(--muted)">unidades em estoque</span></div>
+      <div class="mv-tabs">
+        <button data-mv="entrada" class="active">Entrada</button>
+        <button data-mv="saida">Saída</button>
+        <button data-mv="ajuste">Ajuste</button>
+      </div>
+      <div class="grid2">
+        <input type="number" min="0" id="mvQty" placeholder="Quantidade">
+        <input type="text" id="mvNote" placeholder="Observação (opcional)">
+      </div>
+      <div class="save-row"><button class="btn-gold" id="mvBtn" style="width:100%">Registrar movimentação</button></div>
+      <div class="hist" id="histBox">
+        ${(hist && hist.length) ? hist.map(h => `
+          <div class="hist-row">
+            <span>${h.type} · ${h.quantity} <span class="t">(${h.stock_before}→${h.stock_after})</span></span>
+            <span class="t">${new Date(h.created_at).toLocaleDateString('pt-BR')}</span>
+          </div>`).join("") : '<div class="t" style="padding:8px 0">Sem movimentações registradas ainda.</div>'}
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Dados do produto</h3>
+      <div class="field"><label>Nome</label><input id="fName" value="${esc(p.name)}"></div>
+      <div class="grid2">
+        <div class="field"><label>Preço (R$)</label><input id="fPrice" type="number" step="0.01" value="${p.price}"></div>
+        <div class="field"><label>Preço promocional</label><input id="fPromo" type="number" step="0.01" value="${p.promo_price ?? ''}"></div>
+      </div>
+      <div class="field"><label>Categoria</label><select id="fCat">${catOptions}</select></div>
+      <div class="field"><label>Descrição</label><textarea id="fDesc" rows="3">${esc(p.description||"")}</textarea></div>
+      <div class="toggle-row">
+        <span>Produto ativo no site</span>
+        <label class="switch"><input type="checkbox" id="fActive" ${p.is_active?'checked':''}><span class="track"></span></label>
+      </div>
+      <div class="save-row"><button class="btn-gold" id="saveBtn" style="width:100%">Salvar alterações</button></div>
+    </div>
+  `);
+
+  $("#photoBtn").onclick = () => $("#photoFile").click();
+  $("#photoFile").onchange = (e) => uploadPhoto(p.id, e.target.files[0]);
+
+  {
+    const tabs = document.querySelectorAll("[data-mv]");
+    tabs.forEach(b => b.onclick = () => { tabs.forEach(x=>x.classList.remove("active")); b.classList.add("active"); state.mvType = b.dataset.mv; });
+  }
+  $("#mvBtn").onclick = () => registerMovement(p.id);
+
+  $("#saveBtn").onclick = () => saveProduct(p.id);
+}
+
+function renderCategoryOptions(selectedId){
+  const parents = state.categories.filter(c=>!c.parent_id);
+  let html = "";
+  parents.forEach(parent => {
+    const children = state.categories.filter(c=>c.parent_id===parent.id);
+    if(children.length===0){
+      html += `<option value="${parent.id}" ${parent.id===selectedId?'selected':''}>${esc(parent.name)}</option>`;
+    } else {
+      html += `<optgroup label="${esc(parent.name)}">`;
+      children.forEach(ch => html += `<option value="${ch.id}" ${ch.id===selectedId?'selected':''}>${esc(ch.name)}</option>`);
+      html += `</optgroup>`;
+    }
+  });
+  return html;
+}
+
+async function saveProduct(id){
+  const payload = {
+    name: $("#fName").value.trim(),
+    price: parseFloat($("#fPrice").value) || 0,
+    promo_price: $("#fPromo").value ? parseFloat($("#fPromo").value) : null,
+    category_id: $("#fCat").value,
+    description: $("#fDesc").value.trim() || null,
+    is_active: $("#fActive").checked,
+  };
+  const { error } = await sb.from("products").update(payload).eq("id", id);
+  if(error){ toast("Erro ao salvar: " + error.message); return; }
+  toast("Produto atualizado.");
+  closeDrawer();
+  runSearch($("#searchBox").value, false);
+}
+
+async function registerMovement(productId){
+  const qty = parseInt($("#mvQty").value, 10);
+  if(!qty && qty !== 0){ toast("Informe a quantidade."); return; }
+  const note = $("#mvNote").value.trim() || null;
+  const { error } = await sb.rpc("registrar_movimento_estoque", {
+    p_product_id: productId, p_type: state.mvType, p_quantity: qty, p_note: note
+  });
+  if(error){ toast("Erro: " + error.message); return; }
+  toast("Estoque atualizado.");
+  openProduct(productId);
+}
+
+async function uploadPhoto(productId, file){
+  if(!file) return;
+  toast("Enviando foto…");
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const path = `${productId}.${ext}`;
+  const { error: upErr } = await sb.storage.from(BUCKET).upload(path, file, { upsert: true, contentType: file.type });
+  if(upErr){ toast("Erro ao enviar: " + upErr.message); return; }
+  const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
+  // troca "limpa": remove vínculos antigos desse produto e grava o novo, pra nunca sobrar foto duplicada/errada
+  await sb.from("product_images").delete().eq("product_id", productId);
+  const { error: insErr } = await sb.from("product_images").insert({ product_id: productId, url: pub.publicUrl, is_primary: true });
+  if(insErr){ toast("Erro ao vincular: " + insErr.message); return; }
+  toast("Foto atualizada.");
+  openProduct(productId);
+}
+
+/* ---------------- new product ---------------- */
+function openNewProduct(){
+  const catOptions = renderCategoryOptions(null);
+  openDrawer(`
+    <div class="drawer-h"><h2>Novo produto</h2><button class="x" data-close>×</button></div>
+    <div class="section">
+      <div class="field"><label>Nome</label><input id="nName"></div>
+      <div class="grid2">
+        <div class="field"><label>SKU</label><input id="nSku"></div>
+        <div class="field"><label>EAN (opcional)</label><input id="nEan"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Preço (R$)</label><input id="nPrice" type="number" step="0.01"></div>
+        <div class="field"><label>Estoque inicial</label><input id="nStock" type="number" value="0"></div>
+      </div>
+      <div class="field"><label>Categoria</label><select id="nCat">${catOptions}</select></div>
+      <div class="field"><label>Descrição</label><textarea id="nDesc" rows="3"></textarea></div>
+      <div class="save-row"><button class="btn-gold" id="nSave" style="width:100%">Cadastrar produto</button></div>
+    </div>
+  `);
+  $("#nSave").onclick = async () => {
+    const name = $("#nName").value.trim(), sku = $("#nSku").value.trim();
+    if(!name || !sku){ toast("Nome e SKU são obrigatórios."); return; }
+    const site_product_id = "adm-" + crypto.randomUUID().slice(0,8);
+    const payload = {
+      site_product_id, name, sku,
+      ean: $("#nEan").value.trim() || null,
+      price: parseFloat($("#nPrice").value) || 0,
+      stock: 0,
+      category_id: $("#nCat").value,
+      description: $("#nDesc").value.trim() || null,
+      icon: "📦",
+    };
+    const { data, error } = await sb.from("products").insert(payload).select().single();
+    if(error){ toast("Erro ao cadastrar: " + error.message); return; }
+    const initial = parseInt($("#nStock").value, 10) || 0;
+    if(initial > 0){
+      await sb.rpc("registrar_movimento_estoque", { p_product_id: data.id, p_type: "entrada", p_quantity: initial, p_note: "Cadastro inicial" });
+    }
+    toast("Produto cadastrado.");
+    closeDrawer();
+    $("#searchBox").value = name;
+    runSearch(name, false);
+  };
+}
+
+boot();
+</script>
+</body>
+</html>
