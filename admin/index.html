@@ -134,6 +134,20 @@ a{color:var(--gold-2)}
 .dropzone{border:2px dashed var(--line);border-radius:12px;padding:24px;text-align:center;color:var(--muted);cursor:pointer}
 .dropzone:hover{border-color:var(--gold)}
 .tbl-wrap{overflow-x:auto;max-height:50vh;overflow-y:auto;border:1px solid var(--line);border-radius:10px}
+
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:10px}
+.cat-btn{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 10px;text-align:center}
+.cat-btn:hover{border-color:var(--gold)}
+.cat-btn .ic{font-size:26px;display:block;margin-bottom:6px}
+.cat-btn .nm{font-weight:600;font-size:14px;display:block}
+.cat-btn .ct{font-size:11px;color:var(--muted)}
+.chips{display:flex;gap:7px;overflow-x:auto;padding:4px 0 10px}
+.chip{flex:none;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:13px;color:var(--muted);white-space:nowrap}
+.chip.active{background:var(--gold);color:#241705;border-color:var(--gold);font-weight:600}
+.cat-head{display:flex;align-items:center;gap:10px;margin:4px 0 4px}
+.cat-head h2{font-size:24px}
+.prow .info .brand{font-size:11px;color:var(--gold-2)}
+.prow .right .cost{font-size:11px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -214,7 +228,7 @@ function renderAccessDenied(){
 }
 
 /* ---------------- main shell ---------------- */
-function renderMain(){
+async function renderMain(){
   app.innerHTML = `
     <div class="topbar">
       <div class="brand"><b>Brutt</b><span>admin</span></div>
@@ -228,7 +242,7 @@ function renderMain(){
       <button class="btn-gold btn-sm" id="newBtn">+ Novo produto</button>
       <button class="btn-ghost btn-sm" id="syncBtn">📥 Sincronizar planilha de compra</button>
     </div>
-    <div class="plist" id="plist"><div class="empty">Busque um produto por nome, SKU, ou bipe um EAN.</div></div>
+    <div id="browseArea"></div>
   `;
   $("#outBtn").onclick = async () => { await sb.auth.signOut(); renderLogin(); };
   $("#newBtn").onclick = () => openNewProduct();
@@ -236,15 +250,108 @@ function renderMain(){
 
   const box = $("#searchBox");
   let t;
-  box.addEventListener("input", () => { clearTimeout(t); t = setTimeout(()=>runSearch(box.value), 250); });
+  box.addEventListener("input", () => {
+    clearTimeout(t);
+    if(!box.value.trim()){ renderCategoryGrid(); return; }
+    t = setTimeout(()=>runSearch(box.value), 250);
+  });
   box.addEventListener("keydown", e => { if(e.key==="Enter"){ clearTimeout(t); runSearch(box.value, true); } });
+
+  await renderCategoryGrid();
+}
+
+/* ---------------- grade de categorias (tela inicial) ---------------- */
+const CAT_ICONS = {
+  essencias:"💨", narguile:"🫧", headshop:"🧰", tabacos:"🚬", charutos:"🍂",
+  palha:"🌾", cigarrilhas:"📜", cigarros:"🚬", isqueiros:"🔥", incensos:"🕯️",
+  doces:"🍬", bebidas:"🥃", conveniencia:"🔌",
+};
+async function renderCategoryGrid(){
+  state.lastView = renderCategoryGrid;
+  const area = $("#browseArea");
+  area.innerHTML = `<div class="loading">Carregando categorias…</div>`;
+  const parents = state.categories.filter(c=>!c.parent_id);
+  const { data: counts } = await sb.from("products").select("category_id");
+  const childToParent = {};
+  state.categories.forEach(c => { if(c.parent_id) childToParent[c.id] = c.parent_id; });
+  const countByParent = {};
+  (counts||[]).forEach(p => {
+    const parentId = childToParent[p.category_id] || p.category_id;
+    countByParent[parentId] = (countByParent[parentId]||0) + 1;
+  });
+
+  area.innerHTML = `<div class="cat-grid">${parents.map(p => `
+    <button class="cat-btn" data-pid="${p.id}" data-slug="${esc(p.slug)}">
+      <span class="ic">${CAT_ICONS[p.slug] || "📦"}</span>
+      <span class="nm">${esc(p.name)}</span>
+      <span class="ct">${countByParent[p.id]||0} produtos</span>
+    </button>
+  `).join("")}</div>`;
+  area.querySelectorAll(".cat-btn").forEach(b => b.onclick = () => openCategory(b.dataset.pid, b.dataset.slug));
+}
+
+async function openCategory(parentId, slug, childId){
+  state.lastView = () => openCategory(parentId, slug, childId);
+  const area = $("#browseArea");
+  area.innerHTML = `<div class="loading">Carregando…</div>`;
+  const parent = state.categories.find(c=>c.id===parentId);
+  const children = state.categories.filter(c=>c.parent_id===parentId);
+  const childIds = children.map(c=>c.id);
+
+  const filtroIds = childId ? [childId] : childIds;
+  const { data: rows } = await sb.from("products")
+    .select("*").in("category_id", filtroIds.length?filtroIds:["00000000-0000-0000-0000-000000000000"])
+    .order("brand", {nullsFirst:false}).order("name").limit(400);
+
+  area.innerHTML = `
+    <div class="cat-head">
+      <button class="btn-ghost btn-sm" id="catBack">← Categorias</button>
+      <h2>${esc(parent.name)}</h2>
+    </div>
+    <div class="chips" id="catChips">
+      <span class="chip ${!childId?'active':''}" data-cid="">Todas</span>
+      ${children.map(c => `<span class="chip ${c.id===childId?'active':''}" data-cid="${c.id}">${esc(c.name)}</span>`).join("")}
+    </div>
+    <div class="plist" id="plist"></div>
+  `;
+  $("#catBack").onclick = () => renderCategoryGrid();
+  $("#catChips").querySelectorAll(".chip").forEach(ch => ch.onclick = () => openCategory(parentId, slug, ch.dataset.cid || null));
+
+  renderProductRows(rows || [], $("#plist"), `Nenhum produto nessa categoria ainda.`);
+}
+
+/* ---------------- lista de produtos (usada pela busca e pelas categorias) ---------------- */
+async function renderProductRows(rows, container, emptyMsg){
+  if(rows.length === 0){ container.innerHTML = `<div class="empty">${emptyMsg}</div>`; return; }
+
+  const ids = rows.map(r=>r.id);
+  const { data: imgs } = await sb.from("product_images").select("product_id,url").in("product_id", ids);
+  const imgByProduct = {}; (imgs||[]).forEach(i => imgByProduct[i.product_id] = i.url);
+
+  container.innerHTML = rows.map(p => `
+    <div class="prow" data-id="${p.id}">
+      <div class="thumb">${imgByProduct[p.id] ? `<img src="${imgByProduct[p.id]}" alt="">` : esc(p.icon||"📦")}</div>
+      <div class="info">
+        <div class="n">${esc(p.name)}${!p.is_active ? '<span class="badge off">inativo</span>' : ''}</div>
+        ${p.brand ? `<div class="brand">${esc(p.brand)}</div>` : ""}
+        <div class="m">SKU ${esc(p.sku)}${p.ean ? " · EAN " + esc(p.ean) : ""}</div>
+      </div>
+      <div class="right">
+        <div class="price">${brl(p.promo_price || p.price)}</div>
+        ${p.cost_price!=null ? `<div class="cost">custo ${brl(p.cost_price)}</div>` : ""}
+        <div class="stock">estoque: ${p.stock}</div>
+      </div>
+    </div>
+  `).join("");
+  container.querySelectorAll(".prow").forEach(el => el.onclick = () => openProduct(el.dataset.id));
 }
 
 async function runSearch(qRaw, fromScan){
   const q = qRaw.trim();
-  const list = $("#plist");
-  if(!q){ list.innerHTML = `<div class="empty">Busque um produto por nome, SKU, ou bipe um EAN.</div>`; return; }
-  list.innerHTML = `<div class="loading">Buscando…</div>`;
+  const area = $("#browseArea");
+  if(!q){ renderCategoryGrid(); return; }
+  state.lastView = () => runSearch(qRaw, false);
+  area.innerHTML = `<div class="plist" id="plist"><div class="loading">Buscando…</div></div>`;
 
   // EAN bipado costuma ser só dígitos e vir seguido de Enter: tenta igualdade exata primeiro
   let rows = [];
@@ -260,28 +367,10 @@ async function runSearch(qRaw, fromScan){
     rows = data || [];
   }
   state.results = rows;
+  if(fromScan && rows.length === 1){ openProduct(rows[0].id); return; }
 
-  if(rows.length === 0){ list.innerHTML = `<div class="empty">Nada encontrado para "${esc(q)}".</div>`; return; }
-  if(fromScan && rows.length === 1){ openProduct(rows[0].id); }
-
-  const ids = rows.map(r=>r.id);
-  const { data: imgs } = await sb.from("product_images").select("product_id,url").in("product_id", ids);
-  const imgByProduct = {}; (imgs||[]).forEach(i => imgByProduct[i.product_id] = i.url);
-
-  list.innerHTML = rows.map(p => `
-    <div class="prow" data-id="${p.id}">
-      <div class="thumb">${imgByProduct[p.id] ? `<img src="${imgByProduct[p.id]}" alt="">` : esc(p.icon||"📦")}</div>
-      <div class="info">
-        <div class="n">${esc(p.name)}${!p.is_active ? '<span class="badge off">inativo</span>' : ''}</div>
-        <div class="m">SKU ${esc(p.sku)}${p.ean ? " · EAN " + esc(p.ean) : ""}</div>
-      </div>
-      <div class="right">
-        <div class="price">${brl(p.promo_price || p.price)}</div>
-        <div class="stock">estoque: ${p.stock}</div>
-      </div>
-    </div>
-  `).join("");
-  list.querySelectorAll(".prow").forEach(el => el.onclick = () => openProduct(el.dataset.id));
+  area.innerHTML = `<div class="plist" id="plist"></div>`;
+  renderProductRows(rows, $("#plist"), `Nada encontrado para "${esc(q)}".`);
 }
 
 /* ---------------- drawer helpers ---------------- */
@@ -406,7 +495,7 @@ async function saveProduct(id){
   if(error){ toast("Erro ao salvar: " + error.message); return; }
   toast("Produto atualizado.");
   closeDrawer();
-  runSearch($("#searchBox").value, false);
+  (state.lastView || renderCategoryGrid)();
 }
 
 async function registerMovement(productId){
