@@ -751,17 +751,19 @@ function openNewProduct(){
     if(initial > 0){
       await sb.rpc("registrar_movimento_estoque", { p_product_id: data.id, p_type: "entrada", p_quantity: initial, p_note: "Cadastro inicial" });
     }
+    let avisoFoto = "";
     if(novaFotoStaged){
       const path = `${data.id}.jpg`;
       const { error: upErr } = await sb.storage.from(BUCKET).upload(path, novaFotoStaged.blob, { upsert: true, contentType: "image/jpeg" });
       if(!upErr){
         const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
-        await sb.from("product_images").insert({ product_id: data.id, url: pub.publicUrl + "?v=" + Date.now(), is_primary: true });
+        const { error: insErr } = await sb.from("product_images").insert({ product_id: data.id, url: pub.publicUrl + "?v=" + Date.now(), is_primary: true });
+        if(insErr) avisoFoto = " Mas a foto não foi vinculada: " + insErr.message;
       } else {
-        toast("Produto criado, mas a foto falhou: " + upErr.message);
+        avisoFoto = " Mas a foto não subiu: " + upErr.message;
       }
     }
-    toast("Produto cadastrado.");
+    toast("Produto cadastrado." + avisoFoto);
     closeDrawer();
     $("#searchBox").value = name;
     runSearch(name, false);
