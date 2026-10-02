@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root{
   --bg:#120b07; --surface:#1c130c; --surface-2:#241a11; --line:#3a2a1a;
@@ -148,6 +149,41 @@ a{color:var(--gold-2)}
 .cat-head h2{font-size:24px}
 .prow .info .brand{font-size:11px;color:var(--gold-2)}
 .prow .right .cost{font-size:11px;color:var(--muted)}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi .lbl{font-size:12px;color:var(--muted);margin-bottom:4px}
+.kpi .val{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;color:var(--gold-2)}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.kpi.warn .val{color:var(--red)}
+.cov-bar{height:6px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin-top:8px}
+.cov-bar .fill{height:100%;background:var(--gold)}
+.dash-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.dash-table th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--line)}
+.dash-table td{padding:7px 8px;border-bottom:1px solid var(--line)}
+.dash-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.roi-pos{color:var(--green)}
+.roi-neg{color:var(--red)}
+
+.ean-row{display:flex;gap:6px}
+.ean-row input{flex:1}
+.btn-icon{flex:none;padding:10px 12px;font-size:16px}
+.scanner-veil{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px}
+.scanner-box{width:100%;max-width:420px;background:var(--surface);border-radius:14px;padding:14px;text-align:center}
+.scanner-box #scanRegion{width:100%;border-radius:10px;overflow:hidden;background:#000}
+.scanner-hint{font-size:12px;color:var(--muted);margin:10px 0}
+.crop-veil{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:14px}
+.crop-view{width:min(78vw,340px);height:min(78vw,340px);border-radius:12px;overflow:hidden;position:relative;background:#000;touch-action:none;cursor:grab;border:2px solid var(--gold)}
+.crop-view:active{cursor:grabbing}
+.crop-view img{position:absolute;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.crop-controls{width:min(78vw,340px);display:flex;align-items:center;gap:10px}
+.crop-controls input[type=range]{flex:1}
+.crop-actions{display:flex;gap:10px;width:min(78vw,340px)}
+.crop-actions button{flex:1}
+.crop-hint{font-size:12px;color:var(--muted);text-align:center}
+.photo-upload-box{border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;cursor:pointer}
+.photo-upload-box:hover{border-color:var(--gold)}
+.photo-upload-box img{max-width:120px;max-height:120px;border-radius:10px;display:block;margin:0 auto 8px}
 </style>
 </head>
 <body>
@@ -241,12 +277,16 @@ async function renderMain(){
     <div class="toolbar">
       <button class="btn-gold btn-sm" id="newBtn">+ Novo produto</button>
       <button class="btn-ghost btn-sm" id="syncBtn">📥 Sincronizar planilha de compra</button>
+      <button class="btn-ghost btn-sm" id="bestBtn">📊 Atualizar mais vendidos (NEX)</button>
+      <button class="btn-ghost btn-sm" id="dashBtn">📈 Dashboard</button>
     </div>
     <div id="browseArea"></div>
   `;
   $("#outBtn").onclick = async () => { await sb.auth.signOut(); renderLogin(); };
   $("#newBtn").onclick = () => openNewProduct();
   $("#syncBtn").onclick = () => renderSyncScreen();
+  $("#bestBtn").onclick = () => renderBestsellersScreen();
+  $("#dashBtn").onclick = () => renderDashboard();
 
   const box = $("#searchBox");
   let t;
@@ -510,32 +550,163 @@ async function registerMovement(productId){
   openProduct(productId);
 }
 
+/* ---------------- processa qualquer foto pra quadrado 1:1, sem depender do tamanho/proporção original ---------------- */
+/* ---------------- recorte interativo da foto (arrastar + zoom, tipo WhatsApp/Instagram) ---------------- */
+function abrirRecorteImagem(file, ladoMax = 1024, qualidade = 0.9){
+  return new Promise((resolve, reject) => {
+    if(!file){ reject(new Error("Nenhum arquivo selecionado.")); return; }
+    if(!file.type || !file.type.startsWith("image/")){ reject(new Error("Selecione um arquivo de imagem (jpg, png, webp...).")); return; }
+
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Não consegui abrir esse arquivo como imagem.")); };
+    img.onload = () => {
+      const iw = img.naturalWidth, ih = img.naturalHeight;
+      if(!iw || !ih){ URL.revokeObjectURL(url); reject(new Error("Imagem inválida.")); return; }
+
+      const veil = document.createElement("div");
+      veil.className = "crop-veil";
+      veil.innerHTML = `
+        <div class="crop-hint">Arraste pra posicionar e use o zoom pra enquadrar o produto.</div>
+        <div class="crop-view" id="cropView"><img id="cropImg" src="${url}" alt=""></div>
+        <div class="crop-controls">🔍<input type="range" id="cropZoom" min="1" max="3" step="0.01" value="1"></div>
+        <div class="crop-actions">
+          <button class="btn-ghost" id="cropCancelar">Cancelar</button>
+          <button class="btn-gold" id="cropConfirmar">Usar essa foto</button>
+        </div>`;
+      document.body.appendChild(veil);
+
+      const view = veil.querySelector("#cropView"), imgEl = veil.querySelector("#cropImg"), zoomEl = veil.querySelector("#cropZoom");
+      const S = view.clientWidth; // viewport é sempre quadrado
+      const baseScale = S / Math.min(iw, ih); // zoom=1 cobre o quadrado todo, tipo object-fit:cover
+      let z = 1, offX = (S - iw*baseScale)/2, offY = (S - ih*baseScale)/2;
+
+      function aplicar(){
+        const dispW = iw*baseScale*z, dispH = ih*baseScale*z;
+        offX = Math.min(0, Math.max(S - dispW, offX));
+        offY = Math.min(0, Math.max(S - dispH, offY));
+        imgEl.style.transform = `translate(${offX}px,${offY}px) scale(${baseScale*z})`;
+        imgEl.style.width = iw+"px"; imgEl.style.height = ih+"px";
+      }
+      aplicar();
+
+      let arrastando = false, px = 0, py = 0;
+      view.addEventListener("pointerdown", e => { arrastando = true; px = e.clientX; py = e.clientY; view.setPointerCapture(e.pointerId); });
+      view.addEventListener("pointermove", e => {
+        if(!arrastando) return;
+        offX += e.clientX - px; offY += e.clientY - py; px = e.clientX; py = e.clientY;
+        aplicar();
+      });
+      ["pointerup","pointercancel","pointerleave"].forEach(ev => view.addEventListener(ev, () => arrastando = false));
+      zoomEl.addEventListener("input", () => { z = parseFloat(zoomEl.value); aplicar(); });
+
+      function limpar(){ URL.revokeObjectURL(url); veil.remove(); }
+
+      veil.querySelector("#cropCancelar").onclick = () => { limpar(); resolve(null); };
+
+      veil.querySelector("#cropConfirmar").onclick = () => {
+        // mapeia o quadrado visível (0,0 a S,S na tela) de volta pras coordenadas originais da imagem
+        const sx = -offX/(baseScale*z), sy = -offY/(baseScale*z), lado = S/(baseScale*z);
+        const out = Math.min(ladoMax, Math.round(lado)); // nunca amplia além do que a imagem original tem
+        const canvas = document.createElement("canvas");
+        canvas.width = out; canvas.height = out;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, sx, sy, lado, lado, 0, 0, out, out);
+        canvas.toBlob(blob => {
+          limpar();
+          if(!blob){ reject(new Error("Não consegui processar essa imagem.")); return; }
+          resolve({ blob, previewUrl: canvas.toDataURL("image/jpeg", 0.8) });
+        }, "image/jpeg", qualidade);
+      };
+    };
+    img.src = url;
+  });
+}
+
+function processarFotoQuadrada(file, ladoMax = 1024, qualidade = 0.9){
+  return new Promise((resolve, reject) => {
+    if(!file){ reject(new Error("Nenhum arquivo selecionado.")); return; }
+    if(!file.type || !file.type.startsWith("image/")){ reject(new Error("Selecione um arquivo de imagem (jpg, png, webp...).")); return; }
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try{
+        const lado = Math.min(img.naturalWidth, img.naturalHeight);
+        if(!lado){ throw new Error("Imagem inválida."); }
+        const sx = (img.naturalWidth - lado) / 2, sy = (img.naturalHeight - lado) / 2;
+        const out = Math.min(ladoMax, lado); // nunca amplia além do que a imagem original tem
+        const canvas = document.createElement("canvas");
+        canvas.width = out; canvas.height = out;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, sx, sy, lado, lado, 0, 0, out, out);
+        canvas.toBlob(blob => {
+          URL.revokeObjectURL(url);
+          if(!blob){ reject(new Error("Não consegui processar essa imagem.")); return; }
+          resolve({ blob, previewUrl: canvas.toDataURL("image/jpeg", 0.8) });
+        }, "image/jpeg", qualidade);
+      }catch(e){ URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Não consegui abrir esse arquivo como imagem.")); };
+    img.src = url;
+  });
+}
+
 async function uploadPhoto(productId, file){
   if(!file) return;
+  let processada;
+  try{
+    processada = await abrirRecorteImagem(file);
+  }catch(e){ toast(e.message || "Não consegui processar essa foto."); return; }
+  if(!processada) return; // cancelou o enquadramento, sem toast de erro
   toast("Enviando foto…");
-  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-  const path = `${productId}.${ext}`;
-  const { error: upErr } = await sb.storage.from(BUCKET).upload(path, file, { upsert: true, contentType: file.type });
+  const path = `${productId}.jpg`;
+  const { error: upErr } = await sb.storage.from(BUCKET).upload(path, processada.blob, { upsert: true, contentType: "image/jpeg" });
   if(upErr){ toast("Erro ao enviar: " + upErr.message); return; }
   const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
+  const urlComVersao = pub.publicUrl + "?v=" + Date.now(); // evita foto antiga em cache quando o nome do arquivo se repete
   // troca "limpa": remove vínculos antigos desse produto e grava o novo, pra nunca sobrar foto duplicada/errada
   await sb.from("product_images").delete().eq("product_id", productId);
-  const { error: insErr } = await sb.from("product_images").insert({ product_id: productId, url: pub.publicUrl, is_primary: true });
+  const { error: insErr } = await sb.from("product_images").insert({ product_id: productId, url: urlComVersao, is_primary: true });
   if(insErr){ toast("Erro ao vincular: " + insErr.message); return; }
   toast("Foto atualizada.");
   openProduct(productId);
 }
 
 /* ---------------- new product ---------------- */
+let novaFotoStaged = null; // {blob, previewUrl} — só sobe depois que o produto existir de verdade
+
+function geraSkuAutomatico(){
+  const d = new Date();
+  const carimbo = d.toISOString().slice(2,10).replace(/-/g,""); // AAMMDD
+  const sufixo = Math.random().toString(36).slice(2,6).toUpperCase();
+  return `ADM-${carimbo}-${sufixo}`;
+}
+
 function openNewProduct(){
+  novaFotoStaged = null;
   const catOptions = renderCategoryOptions(null);
   openDrawer(`
     <div class="drawer-h"><h2>Novo produto</h2><button class="x" data-close>×</button></div>
     <div class="section">
+      <h3>Foto</h3>
+      <div class="photo-box">
+        <div class="ph" id="nPhotoPreview">📦</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn-ghost btn-sm" id="nPhotoBtn">📎 Anexar foto</button>
+          <input type="file" id="nPhotoFile" accept="image/*" hidden>
+          <span class="t" style="font-size:11px;color:var(--muted)">Abre uma janela pra você enquadrar (arrastar e dar zoom) antes de confirmar, em 1:1.</span>
+        </div>
+      </div>
+    </div>
+    <div class="section">
       <div class="field"><label>Nome</label><input id="nName"></div>
-      <div class="grid2">
-        <div class="field"><label>SKU</label><input id="nSku"></div>
-        <div class="field"><label>EAN (opcional)</label><input id="nEan"></div>
+      <div class="field">
+        <label>EAN (opcional)</label>
+        <div style="display:flex;gap:8px">
+          <input id="nEan" placeholder="Bipe com o leitor ou digite" style="flex:1">
+          <button class="btn-ghost btn-sm" id="nEanCam" title="Ler código de barras pela câmera">📷</button>
+        </div>
+        <span class="t" style="font-size:11px;color:var(--muted)">O leitor físico já funciona direto nesse campo — é só clicar nele e bipar.</span>
       </div>
       <div class="grid2">
         <div class="field"><label>Preço (R$)</label><input id="nPrice" type="number" step="0.01"></div>
@@ -546,12 +717,27 @@ function openNewProduct(){
       <div class="save-row"><button class="btn-gold" id="nSave" style="width:100%">Cadastrar produto</button></div>
     </div>
   `);
+
+  $("#nPhotoBtn").onclick = () => $("#nPhotoFile").click();
+  $("#nPhotoFile").onchange = async (e) => {
+    const file = e.target.files[0]; if(!file) return;
+    try{
+      const resultado = await abrirRecorteImagem(file);
+      if(!resultado) return; // cancelou o enquadramento
+      novaFotoStaged = resultado;
+      $("#nPhotoPreview").innerHTML = `<img src="${novaFotoStaged.previewUrl}" alt="">`;
+      toast("Foto pronta.");
+    }catch(err){ toast(err.message || "Não consegui processar essa foto."); novaFotoStaged = null; }
+  };
+
+  $("#nEanCam").onclick = () => abrirScannerCamera(code => { $("#nEan").value = code; });
+
   $("#nSave").onclick = async () => {
-    const name = $("#nName").value.trim(), sku = $("#nSku").value.trim();
-    if(!name || !sku){ toast("Nome e SKU são obrigatórios."); return; }
+    const name = $("#nName").value.trim();
+    if(!name){ toast("O nome é obrigatório."); return; }
     const site_product_id = "adm-" + crypto.randomUUID().slice(0,8);
     const payload = {
-      site_product_id, name, sku,
+      site_product_id, name, sku: geraSkuAutomatico(),
       ean: $("#nEan").value.trim() || null,
       price: parseFloat($("#nPrice").value) || 0,
       stock: 0,
@@ -564,6 +750,16 @@ function openNewProduct(){
     const initial = parseInt($("#nStock").value, 10) || 0;
     if(initial > 0){
       await sb.rpc("registrar_movimento_estoque", { p_product_id: data.id, p_type: "entrada", p_quantity: initial, p_note: "Cadastro inicial" });
+    }
+    if(novaFotoStaged){
+      const path = `${data.id}.jpg`;
+      const { error: upErr } = await sb.storage.from(BUCKET).upload(path, novaFotoStaged.blob, { upsert: true, contentType: "image/jpeg" });
+      if(!upErr){
+        const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
+        await sb.from("product_images").insert({ product_id: data.id, url: pub.publicUrl + "?v=" + Date.now(), is_primary: true });
+      } else {
+        toast("Produto criado, mas a foto falhou: " + upErr.message);
+      }
     }
     toast("Produto cadastrado.");
     closeDrawer();
@@ -578,6 +774,7 @@ const COL_HINTS = {
   cost: ["custo","compra","preco de custo","preço de custo"],
   qty: ["quant","qtd","estoque","unidade"],
   code: ["codigo","código","sku","ean","barras"],
+  vendas: ["vendas","vendido","qtd vendida","quantidade vendida","mais vendido","unidades vendidas"],
 };
 function normHeader(h){
   return (h||"").toString().toLowerCase()
@@ -751,6 +948,279 @@ async function confirmarSync(candidatos, tbody, fileName){
   }
   toast(`Sincronizado: ${ok} produto(s)${falhou ? `, ${falhou} com erro` : ""}.`);
   renderMain();
+}
+
+/* ---------------- atualizar "mais vendidos" do NEX ---------------- */
+function renderBestsellersScreen(){
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand"><b>Brutt</b><span>admin</span></div>
+      <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
+    </div>
+    <div style="padding:16px 0">
+      <h2 style="font-size:22px;margin-bottom:6px">Atualizar mais vendidos (NEX)</h2>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 16px">
+        Exporte a planilha de mais vendidos do NEX e solte aqui. Só produtos que já estão no catálogo online são
+        atualizados — o que não tiver correspondência fica de fora, pra você ver, sem inventar nada.
+      </p>
+      <div class="dropzone" id="dropzone">
+        <div>📄 Clique para escolher a planilha, ou arraste o arquivo aqui</div>
+        <input type="file" id="bestFile" accept=".xlsx,.xls,.csv" hidden>
+      </div>
+      <div id="bestBody"></div>
+    </div>
+  `;
+  $("#backBtn").onclick = () => renderMain();
+  const drop = $("#dropzone");
+  drop.onclick = () => $("#bestFile").click();
+  drop.ondragover = e => { e.preventDefault(); drop.style.borderColor = "var(--gold)"; };
+  drop.ondragleave = () => { drop.style.borderColor = "var(--line)"; };
+  drop.ondrop = e => { e.preventDefault(); drop.style.borderColor = "var(--line)"; if(e.dataTransfer.files[0]) handleBestsellersFile(e.dataTransfer.files[0]); };
+  $("#bestFile").onchange = e => { if(e.target.files[0]) handleBestsellersFile(e.target.files[0]); };
+}
+
+async function handleBestsellersFile(file){
+  const body = $("#bestBody");
+  body.innerHTML = `<div class="loading">Lendo planilha…</div>`;
+
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: "array" });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+  if(rows.length < 2){ body.innerHTML = `<div class="empty">Planilha vazia ou sem linhas de dados.</div>`; return; }
+
+  const headers = rows[0];
+  const iName = acharColuna(headers, COL_HINTS.name);
+  const iVend = acharColuna(headers, COL_HINTS.vendas);
+  const iCode = acharColuna(headers, COL_HINTS.code);
+
+  if(iName === -1 || iVend === -1){
+    body.innerHTML = `<div class="empty">Não encontrei colunas de nome e de quantidade vendida nessa planilha. Colunas vistas: ${headers.map(esc).join(", ")}</div>`;
+    return;
+  }
+
+  const linhas = rows.slice(1)
+    .filter(r => (r[iName]||"").toString().trim())
+    .map(r => ({
+      nome: (r[iName]||"").toString().trim(),
+      vendas: parseInt((r[iVend]||"").toString().replace(/\D/g,""),10) || 0,
+      codigo: iCode>-1 ? (r[iCode]||"").toString().trim() : "",
+    }));
+
+  body.innerHTML = `<div class="loading">Comparando ${linhas.length} itens com o catálogo online…</div>`;
+
+  const candidatos = [];
+  for(const linha of linhas){
+    let matches = [];
+    if(linha.codigo){
+      const { data } = await sb.from("products").select("id,name,sku,ean,stock,cost_price,price,sales_count").or(`sku.eq.${linha.codigo},ean.eq.${linha.codigo}`).limit(3);
+      if(data && data.length) matches = data.map(d => ({...d, score: 1}));
+    }
+    if(matches.length === 0){
+      const { data } = await sb.rpc("buscar_produto_similar", { busca: linha.nome });
+      matches = data || [];
+    }
+    candidatos.push({ linha, matches, escolhido: matches[0] || null });
+  }
+
+  renderBestsellersReview(candidatos, file.name);
+}
+
+function renderBestsellersReview(candidatos, fileName){
+  const body = $("#bestBody");
+  body.innerHTML = `
+    <div class="sync-summary">
+      <span><b>${candidatos.length}</b> itens lidos</span>
+      <span><b>${candidatos.filter(c=>c.escolhido).length}</b> com correspondência no catálogo online</span>
+      <span><b>${candidatos.filter(c=>!c.escolhido).length}</b> sem correspondência (ficam de fora)</span>
+    </div>
+    <div class="tbl-wrap">
+      <table class="sync-table">
+        <thead><tr>
+          <th><input type="checkbox" id="chkAllBest" checked></th>
+          <th>Na planilha</th><th>Produto no catálogo</th><th>Confiança</th><th>Vendas atual → nova</th>
+        </tr></thead>
+        <tbody id="bestRows"></tbody>
+      </table>
+    </div>
+    <div class="save-row">
+      <button class="btn-gold" id="bestConfirm">Confirmar e atualizar</button>
+    </div>
+  `;
+  const tbody = $("#bestRows");
+  tbody.innerHTML = candidatos.map((c, idx) => {
+    const sel = c.matches.map(m => `<option value="${m.id}" ${m.id===c.escolhido?.id?'selected':''}>${esc(m.name)}</option>`).join("");
+    const semMatch = !c.escolhido;
+    return `
+      <tr data-idx="${idx}">
+        <td><input type="checkbox" class="rowChk" ${semMatch?'disabled':'checked'}></td>
+        <td>${esc(c.linha.nome)}${c.linha.codigo?`<br><span class="t" style="color:var(--muted)">cód. ${esc(c.linha.codigo)}</span>`:''}</td>
+        <td>${c.matches.length ? `<select class="rowProd">${sel}</select>` : `<span style="color:var(--muted)">não encontrado no catálogo online</span>`}</td>
+        <td>${c.escolhido ? `<span class="score ${scoreClasse(c.escolhido.score)}">${Math.round(c.escolhido.score*100)}%</span>` : '—'}</td>
+        <td>${c.escolhido ? `${c.escolhido.sales_count ?? 0} → ${c.linha.vendas}` : '—'}</td>
+      </tr>`;
+  }).join("");
+
+  $("#chkAllBest").onchange = e => tbody.querySelectorAll(".rowChk:not(:disabled)").forEach(c => c.checked = e.target.checked);
+  tbody.querySelectorAll(".rowProd").forEach(sel => {
+    sel.onchange = () => {
+      const idx = sel.closest("tr").dataset.idx;
+      candidatos[idx].escolhido = candidatos[idx].matches.find(m => m.id === sel.value) || null;
+    };
+  });
+
+  $("#bestConfirm").onclick = () => confirmarBestsellers(candidatos, tbody);
+}
+
+async function confirmarBestsellers(candidatos, tbody){
+  const linhasSelecionadas = [...tbody.querySelectorAll("tr")].filter(tr => tr.querySelector(".rowChk").checked);
+  if(linhasSelecionadas.length === 0){ toast("Nada selecionado."); return; }
+
+  let ok = 0, falhou = 0;
+  for(const tr of linhasSelecionadas){
+    const idx = tr.dataset.idx;
+    const c = candidatos[idx];
+    if(!c.escolhido) continue;
+    const { error } = await sb.from("products").update({ sales_count: c.linha.vendas }).eq("id", c.escolhido.id);
+    if(error) falhou++; else ok++;
+  }
+  toast(`Atualizado: ${ok} produto(s)${falhou ? `, ${falhou} com erro` : ""}.`);
+  renderMain();
+}
+
+/* ---------------- dashboard: custo, valor em estoque, ROI ---------------- */
+async function renderDashboard(){
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand"><b>Brutt</b><span>admin</span></div>
+      <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
+    </div>
+    <div id="dashBody"><div class="loading">Calculando…</div></div>
+  `;
+  $("#backBtn").onclick = () => renderMain();
+
+  const { data: rows } = await sb.from("products").select("stock,price,promo_price,cost_price,category_id,is_active");
+  const body = $("#dashBody");
+  if(!rows){ body.innerHTML = `<div class="empty">Não consegui carregar os produtos.</div>`; return; }
+
+  const ativos = rows.filter(p => p.is_active);
+  const comCusto = ativos.filter(p => p.cost_price != null);
+
+  let custoTotal = 0, valorVendaTotalComCusto = 0, valorVendaTotalGeral = 0, estoqueTotal = 0, estoqueComCusto = 0;
+  ativos.forEach(p => {
+    const vFinal = (p.promo_price ?? p.price) || 0;
+    estoqueTotal += p.stock || 0;
+    valorVendaTotalGeral += vFinal * (p.stock||0);
+    if(p.cost_price != null){
+      custoTotal += p.cost_price * (p.stock||0);
+      valorVendaTotalComCusto += vFinal * (p.stock||0);
+      estoqueComCusto += p.stock || 0;
+    }
+  });
+  const lucroPotencial = valorVendaTotalComCusto - custoTotal;
+  const roi = custoTotal > 0 ? (lucroPotencial / custoTotal) * 100 : null;
+  const coberturaPct = estoqueTotal > 0 ? Math.round((estoqueComCusto/estoqueTotal)*100) : 0;
+
+  // por categoria (seção-mãe)
+  const parents = state.categories.filter(c=>!c.parent_id);
+  const childToParent = {}; state.categories.forEach(c => { if(c.parent_id) childToParent[c.id]=c.parent_id; });
+  const porCategoria = {};
+  parents.forEach(p => porCategoria[p.id] = { nome:p.name, custo:0, venda:0, estoque:0, temCusto:0 });
+  ativos.forEach(p => {
+    const parentId = childToParent[p.category_id] || p.category_id;
+    if(!porCategoria[parentId]) return;
+    const vFinal = (p.promo_price ?? p.price) || 0;
+    porCategoria[parentId].estoque += p.stock||0;
+    porCategoria[parentId].venda += vFinal*(p.stock||0);
+    if(p.cost_price != null){ porCategoria[parentId].custo += p.cost_price*(p.stock||0); porCategoria[parentId].temCusto++; }
+  });
+
+  body.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Valor de venda em estoque</div><div class="val">${brl(valorVendaTotalGeral)}</div><div class="sub">${estoqueTotal} unidades, preço final</div></div>
+      <div class="kpi"><div class="lbl">Custo total em estoque</div><div class="val">${brl(custoTotal)}</div><div class="sub">só produtos com custo cadastrado</div></div>
+      <div class="kpi"><div class="lbl">Lucro potencial</div><div class="val">${brl(lucroPotencial)}</div><div class="sub">venda − custo, nessa mesma fatia</div></div>
+      <div class="kpi ${roi!=null && roi<0 ? 'warn':''}"><div class="lbl">ROI</div><div class="val">${roi!=null ? roi.toFixed(0)+'%' : '—'}</div><div class="sub">lucro ÷ custo investido</div></div>
+    </div>
+    <div class="kpi" style="margin-bottom:16px">
+      <div class="lbl">Cobertura de custo cadastrado</div>
+      <div class="val" style="font-size:18px">${coberturaPct}% do estoque (${estoqueComCusto} de ${estoqueTotal} unidades)</div>
+      <div class="cov-bar"><div class="fill" style="width:${coberturaPct}%"></div></div>
+      <div class="sub" style="margin-top:6px">Os números acima valem só pra essa fatia — o resto do estoque ainda não tem preço de custo cadastrado (preencha sincronizando uma planilha de compra, ou editando o produto direto).</div>
+    </div>
+
+    <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Por categoria</h3>
+    <div class="tbl-wrap">
+      <table class="dash-table">
+        <thead><tr><th>Categoria</th><th class="num">Estoque</th><th class="num">Custo</th><th class="num">Venda</th><th class="num">ROI</th></tr></thead>
+        <tbody>
+          ${Object.values(porCategoria).filter(c=>c.estoque>0).sort((a,b)=>b.venda-a.venda).map(c => {
+            const roiCat = c.custo>0 ? ((c.venda-c.custo)/c.custo)*100 : null;
+            return `<tr>
+              <td>${esc(c.nome)}</td>
+              <td class="num">${c.estoque}</td>
+              <td class="num">${c.custo>0 ? brl(c.custo) : '—'}</td>
+              <td class="num">${brl(c.venda)}</td>
+              <td class="num ${roiCat==null?'':roiCat>=0?'roi-pos':'roi-neg'}">${roiCat!=null ? roiCat.toFixed(0)+'%' : '—'}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* ---------------- processa qualquer foto pra sempre sair 1:1, mesma resolução, boa qualidade ---------------- */
+/* Isso roda ANTES de subir pro Storage — garante que, não importa o tamanho/proporção original
+   da foto, o arquivo final é sempre igual (quadrado, 1000x1000, webp), então nunca pode quebrar
+   o layout do site por causa do tamanho de uma imagem. */
+async function processarImagem(file, lado=1000, qualidade=0.88){
+  const bitmap = await createImageBitmap(file);
+  const menor = Math.min(bitmap.width, bitmap.height);
+  const sx = (bitmap.width - menor) / 2, sy = (bitmap.height - menor) / 2;
+  const canvas = document.createElement("canvas");
+  canvas.width = lado; canvas.height = lado;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(bitmap, sx, sy, menor, menor, 0, 0, lado, lado);
+  return await new Promise(res => canvas.toBlob(res, "image/webp", qualidade));
+}
+
+/* ---------------- leitor de código de barras pela câmera do celular ---------------- */
+let scannerAtivo = null;
+function abrirScannerCamera(onResult){
+  const veil = document.createElement("div");
+  veil.className = "scanner-veil";
+  veil.innerHTML = `
+    <div class="scanner-box">
+      <div id="scanRegion"></div>
+      <div class="scanner-hint">Aponte a câmera pro código de barras.</div>
+      <button class="btn-ghost" id="scanCancelar">Cancelar</button>
+    </div>`;
+  document.body.appendChild(veil);
+
+  const html5Qr = new Html5Qrcode("scanRegion", {
+    formatsToSupport: [
+      Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E,
+      Html5QrcodeSupportedFormats.CODE_128,
+    ],
+  });
+  scannerAtivo = html5Qr;
+
+  function fechar(){
+    if(scannerAtivo){ scannerAtivo.stop().catch(()=>{}).finally(()=>scannerAtivo=null); }
+    veil.remove();
+  }
+  veil.querySelector("#scanCancelar").onclick = fechar;
+
+  html5Qr.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 250, height: 150 } },
+    (texto) => { onResult(texto); fechar(); },
+    () => {} // ignora falhas de leitura quadro a quadro
+  ).catch(() => {
+    veil.querySelector(".scanner-hint").textContent = "Não consegui acessar a câmera. Confirme a permissão do navegador.";
+  });
 }
 
 boot();
