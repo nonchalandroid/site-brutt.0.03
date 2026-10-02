@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#120b07; --surface:#1c130c; --surface-2:#241a11; --line:#3a2a1a;
@@ -119,6 +120,20 @@ a{color:var(--gold-2)}
 .btn-google{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f1f1f}
 .btn-google:hover{background:#f2f2f2}
 .btn-google svg{width:18px;height:18px}
+.sync-table{width:100%;border-collapse:collapse;font-size:13px}
+.sync-table th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;
+  padding:6px 8px;border-bottom:1px solid var(--line)}
+.sync-table td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.sync-table select,.sync-table input{padding:6px 8px;font-size:13px}
+.score{font-size:11px;padding:2px 6px;border-radius:999px;border:1px solid var(--line)}
+.score.alta{color:var(--green);border-color:var(--green)}
+.score.baixa{color:var(--red);border-color:var(--red)}
+.score.media{color:var(--gold-2);border-color:var(--gold-2)}
+.sync-summary{display:flex;gap:16px;margin:10px 0;font-size:13px;color:var(--muted)}
+.sync-summary b{color:var(--ink)}
+.dropzone{border:2px dashed var(--line);border-radius:12px;padding:24px;text-align:center;color:var(--muted);cursor:pointer}
+.dropzone:hover{border-color:var(--gold)}
+.tbl-wrap{overflow-x:auto;max-height:50vh;overflow-y:auto;border:1px solid var(--line);border-radius:10px}
 </style>
 </head>
 <body>
@@ -211,11 +226,13 @@ function renderMain(){
     </div>
     <div class="toolbar">
       <button class="btn-gold btn-sm" id="newBtn">+ Novo produto</button>
+      <button class="btn-ghost btn-sm" id="syncBtn">📥 Sincronizar planilha de compra</button>
     </div>
     <div class="plist" id="plist"><div class="empty">Busque um produto por nome, SKU, ou bipe um EAN.</div></div>
   `;
   $("#outBtn").onclick = async () => { await sb.auth.signOut(); renderLogin(); };
   $("#newBtn").onclick = () => openNewProduct();
+  $("#syncBtn").onclick = () => renderSyncScreen();
 
   const box = $("#searchBox");
   let t;
@@ -464,6 +481,187 @@ function openNewProduct(){
     $("#searchBox").value = name;
     runSearch(name, false);
   };
+}
+
+/* ---------------- sincronizar planilha de compra ---------------- */
+const COL_HINTS = {
+  name: ["nome","produto","descri","item"],
+  cost: ["custo","compra","preco de custo","preço de custo"],
+  qty: ["quant","qtd","estoque","unidade"],
+  code: ["codigo","código","sku","ean","barras"],
+};
+function normHeader(h){
+  return (h||"").toString().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+}
+function acharColuna(headers, chaves){
+  for(let i=0;i<headers.length;i++){
+    const h = normHeader(headers[i]);
+    if(chaves.some(c => h.includes(normHeader(c)))) return i;
+  }
+  return -1;
+}
+function scoreClasse(s){ return s>=0.5 ? "alta" : s>=0.25 ? "media" : "baixa"; }
+
+function renderSyncScreen(){
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand"><b>Brutt</b><span>admin</span></div>
+      <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
+    </div>
+    <div style="padding:16px 0">
+      <h2 style="font-size:22px;margin-bottom:6px">Sincronizar planilha de compra</h2>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 16px">
+        Aceita .xlsx ou .csv do NEX ou de qualquer planilha de compra, com colunas de nome, preço de custo e quantidade
+        (os nomes das colunas podem variar — o sistema tenta identificar sozinho).
+      </p>
+      <div class="dropzone" id="dropzone">
+        <div>📄 Clique para escolher a planilha, ou arraste o arquivo aqui</div>
+        <input type="file" id="syncFile" accept=".xlsx,.xls,.csv" hidden>
+      </div>
+      <div id="syncBody"></div>
+    </div>
+  `;
+  $("#backBtn").onclick = () => renderMain();
+  const drop = $("#dropzone");
+  drop.onclick = () => $("#syncFile").click();
+  drop.ondragover = e => { e.preventDefault(); drop.style.borderColor = "var(--gold)"; };
+  drop.ondragleave = () => { drop.style.borderColor = "var(--line)"; };
+  drop.ondrop = e => { e.preventDefault(); drop.style.borderColor = "var(--line)"; if(e.dataTransfer.files[0]) handleSyncFile(e.dataTransfer.files[0]); };
+  $("#syncFile").onchange = e => { if(e.target.files[0]) handleSyncFile(e.target.files[0]); };
+}
+
+async function handleSyncFile(file){
+  const body = $("#syncBody");
+  body.innerHTML = `<div class="loading">Lendo planilha…</div>`;
+
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: "array" });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+  if(rows.length < 2){ body.innerHTML = `<div class="empty">Planilha vazia ou sem linhas de dados.</div>`; return; }
+
+  const headers = rows[0];
+  const iName = acharColuna(headers, COL_HINTS.name);
+  const iCost = acharColuna(headers, COL_HINTS.cost);
+  const iQty  = acharColuna(headers, COL_HINTS.qty);
+  const iCode = acharColuna(headers, COL_HINTS.code);
+
+  if(iName === -1){
+    body.innerHTML = `<div class="empty">Não encontrei uma coluna de nome/produto nessa planilha. Colunas vistas: ${headers.map(esc).join(", ")}</div>`;
+    return;
+  }
+
+  const linhas = rows.slice(1)
+    .filter(r => (r[iName]||"").toString().trim())
+    .map(r => ({
+      nome: (r[iName]||"").toString().trim(),
+      custo: iCost>-1 ? parseFloat((r[iCost]||"").toString().replace(",",".")) || null : null,
+      qtd: iQty>-1 ? parseInt((r[iQty]||"").toString().replace(/\D/g,""),10) || 0 : 0,
+      codigo: iCode>-1 ? (r[iCode]||"").toString().trim() : "",
+    }));
+
+  body.innerHTML = `<div class="loading">Comparando ${linhas.length} itens com o catálogo…</div>`;
+
+  const candidatos = [];
+  for(const linha of linhas){
+    let matches = [];
+    if(linha.codigo){
+      const { data } = await sb.from("products").select("id,name,sku,ean,stock,cost_price,price").or(`sku.eq.${linha.codigo},ean.eq.${linha.codigo}`).limit(3);
+      if(data && data.length) matches = data.map(d => ({...d, score: 1}));
+    }
+    if(matches.length === 0){
+      const { data } = await sb.rpc("buscar_produto_similar", { busca: linha.nome });
+      matches = data || [];
+    }
+    candidatos.push({ linha, matches, escolhido: matches[0] || null });
+  }
+
+  renderSyncReview(candidatos, file.name);
+}
+
+function renderSyncReview(candidatos, fileName){
+  const body = $("#syncBody");
+  body.innerHTML = `
+    <div class="sync-summary">
+      <span><b>${candidatos.length}</b> itens lidos</span>
+      <span><b>${candidatos.filter(c=>c.escolhido).length}</b> com correspondência encontrada</span>
+      <span><b>${candidatos.filter(c=>!c.escolhido).length}</b> sem correspondência</span>
+    </div>
+    <div class="tbl-wrap">
+      <table class="sync-table">
+        <thead><tr>
+          <th><input type="checkbox" id="chkAll" checked></th>
+          <th>Na planilha</th><th>Produto no catálogo</th><th>Confiança</th>
+          <th>Estoque atual → novo</th><th>Custo</th>
+        </tr></thead>
+        <tbody id="syncRows"></tbody>
+      </table>
+    </div>
+    <div class="save-row">
+      <button class="btn-gold" id="syncConfirm">Confirmar e sincronizar</button>
+    </div>
+  `;
+  const tbody = $("#syncRows");
+  tbody.innerHTML = candidatos.map((c, idx) => {
+    const sel = c.matches.map(m => `<option value="${m.id}" ${m.id===c.escolhido?.id?'selected':''}>${esc(m.name)} (estoque ${m.stock})</option>`).join("");
+    const semMatch = !c.escolhido;
+    return `
+      <tr data-idx="${idx}">
+        <td><input type="checkbox" class="rowChk" ${semMatch?'disabled':'checked'}></td>
+        <td>${esc(c.linha.nome)}${c.linha.codigo?`<br><span class="t" style="color:var(--muted)">cód. ${esc(c.linha.codigo)}</span>`:''}</td>
+        <td>
+          ${c.matches.length ? `<select class="rowProd">${sel}</select><option value="">— nenhum —</option>` : `<span style="color:var(--muted)">sem sugestão</span>`}
+        </td>
+        <td>${c.escolhido ? `<span class="score ${scoreClasse(c.escolhido.score)}">${Math.round(c.escolhido.score*100)}%</span>` : '—'}</td>
+        <td>${c.escolhido ? `${c.escolhido.stock} → ${c.escolhido.stock + (c.linha.qtd||0)}` : '—'}</td>
+        <td><input type="number" step="0.01" class="rowCusto" value="${c.linha.custo ?? ''}" style="width:90px"></td>
+      </tr>`;
+  }).join("");
+
+  $("#chkAll").onchange = e => tbody.querySelectorAll(".rowChk:not(:disabled)").forEach(c => c.checked = e.target.checked);
+
+  tbody.querySelectorAll(".rowProd").forEach(sel => {
+    sel.onchange = () => {
+      const idx = sel.closest("tr").dataset.idx;
+      const novo = candidatos[idx].matches.find(m => m.id === sel.value) || null;
+      candidatos[idx].escolhido = novo;
+      const row = sel.closest("tr");
+      row.querySelector(".rowChk").disabled = !novo;
+      if(novo) row.querySelector(".rowChk").checked = true;
+    };
+  });
+
+  $("#syncConfirm").onclick = () => confirmarSync(candidatos, tbody, fileName);
+}
+
+async function confirmarSync(candidatos, tbody, fileName){
+  const linhasSelecionadas = [...tbody.querySelectorAll("tr")].filter(tr => tr.querySelector(".rowChk").checked);
+  if(linhasSelecionadas.length === 0){ toast("Nada selecionado."); return; }
+
+  let ok = 0, falhou = 0;
+  for(const tr of linhasSelecionadas){
+    const idx = tr.dataset.idx;
+    const c = candidatos[idx];
+    if(!c.escolhido) continue;
+    const custo = parseFloat(tr.querySelector(".rowCusto").value);
+    try{
+      if(c.linha.qtd > 0){
+        const { error } = await sb.rpc("registrar_movimento_estoque", {
+          p_product_id: c.escolhido.id, p_type: "entrada", p_quantity: c.linha.qtd,
+          p_note: `Planilha: ${fileName}`
+        });
+        if(error) throw error;
+      }
+      if(!isNaN(custo)){
+        const { error: e2 } = await sb.from("products").update({ cost_price: custo }).eq("id", c.escolhido.id);
+        if(e2) throw e2;
+      }
+      ok++;
+    } catch(e){ falhou++; }
+  }
+  toast(`Sincronizado: ${ok} produto(s)${falhou ? `, ${falhou} com erro` : ""}.`);
+  renderMain();
 }
 
 boot();
