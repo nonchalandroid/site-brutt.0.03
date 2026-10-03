@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root{
@@ -166,6 +167,30 @@ a{color:var(--gold-2)}
 .roi-pos{color:var(--green)}
 .roi-neg{color:var(--red)}
 
+.bulk-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:7px}
+.bulk-row .thumb-mini{width:44px;height:44px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex:none;cursor:pointer;border:2px solid transparent}
+.bulk-row .thumb-mini:hover{border-color:var(--gold)}
+.bulk-row .thumb-mini img{width:100%;height:100%;object-fit:cover}
+.bulk-row .nm{flex:1;min-width:110px;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bulk-row .campos{display:flex;gap:6px;flex-wrap:wrap}
+.bulk-row .campos .f{display:flex;flex-direction:column;gap:2px}
+.bulk-row .campos .f label{font-size:9px;color:var(--muted);text-transform:uppercase}
+.bulk-row .campos .f input{width:84px;padding:6px 7px;font-size:13px}
+.bulk-row.dirty{border-color:var(--gold)}
+.bulk-row.selected{border-color:var(--gold);background:var(--surface-2)}
+.bulk-row .bulkSaveBtn{flex:none}
+.bulk-row .bulkSaveBtn.saved{background:var(--green);color:#fff}
+.bulk-chk{width:20px;height:20px;flex:none}
+.pub-badge{display:block;font-size:10px;margin-top:2px}
+.pub-badge.off{color:var(--muted)}
+.bulk-actionbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--gold);
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  box-shadow:0 -4px 16px rgba(0,0,0,.4)}
+.bulk-count{font-weight:700;color:var(--gold-2);margin-right:4px}
+@media (min-width:860px){
+  .bulk-actionbar{left:auto;right:16px;bottom:16px;width:fit-content;border-radius:14px;border:1px solid var(--gold)}
+}
+
 .ean-row{display:flex;gap:6px}
 .ean-row input{flex:1}
 .btn-icon{flex:none;padding:10px 12px;font-size:16px}
@@ -220,12 +245,10 @@ sb.auth.onAuthStateChange((_evt, session) => { state.session = session; });
 
 async function loadStaffAndContinue(){
   app.innerHTML = `<div class="loading">Carregando…</div>`;
-  const [{ data: staffRows }, { data: cats }] = await Promise.all([
-    sb.from("staff").select("*").eq("user_id", state.session.user.id),
-    sb.from("categories").select("id,name,slug,parent_id").order("name"),
-  ]);
+  const { data: staffRows } = await sb.from("staff").select("*").eq("user_id", state.session.user.id);
   state.staff = (staffRows && staffRows[0]) || null;
   if(!state.staff){ renderAccessDenied(); return; }
+  const { data: cats } = await sb.from("categories").select("id,name,slug,parent_id").order("name");
   state.categories = cats || [];
   renderMain();
 }
@@ -281,7 +304,8 @@ async function renderMain(){
       <button class="btn-gold btn-sm" id="newBtn">+ Novo produto</button>
       <button class="btn-ghost btn-sm" id="syncBtn">📥 Sincronizar planilha de compra</button>
       <button class="btn-ghost btn-sm" id="bestBtn">📊 Atualizar mais vendidos (NEX)</button>
-      <button class="btn-ghost btn-sm" id="dashBtn">📈 Dashboard</button>
+      <button class="btn-ghost btn-sm" id="bulkBtn">✏️ Edição em massa</button>
+      <button class="btn-ghost btn-sm" id="lowStockBtn">⚠️ Estoque baixo</button>
     </div>
     <div id="browseArea"></div>
   `;
@@ -289,7 +313,8 @@ async function renderMain(){
   $("#newBtn").onclick = () => openNewProduct();
   $("#syncBtn").onclick = () => renderSyncScreen();
   $("#bestBtn").onclick = () => renderBestsellersScreen();
-  $("#dashBtn").onclick = () => renderDashboard();
+  $("#bulkBtn").onclick = () => renderBulkCategoryPicker();
+  $("#lowStockBtn").onclick = () => renderLowStock();
 
   const box = $("#searchBox");
   let t;
@@ -436,11 +461,9 @@ function closeDrawer(){
 /* ---------------- product detail / edit ---------------- */
 async function openProduct(id){
   openDrawer(`<div class="loading">Carregando…</div>`);
-  const [{ data: p }, { data: imgRows }, { data: hist }] = await Promise.all([
-    sb.from("products").select("*").eq("id", id).single(),
-    sb.from("product_images").select("*").eq("product_id", id),
-    sb.from("stock_movements").select("*").eq("product_id", id).order("created_at",{ascending:false}).limit(8),
-  ]);
+  const { data: p } = await sb.from("products").select("*").eq("id", id).single();
+  const { data: imgRows } = await sb.from("product_images").select("*").eq("product_id", id);
+  const { data: hist } = await sb.from("stock_movements").select("*").eq("product_id", id).order("created_at",{ascending:false}).limit(8);
   state.current = p;
   const img = (imgRows && imgRows[0]) || null;
 
@@ -698,8 +721,10 @@ function geraSkuAutomatico(){
   return `ADM-${carimbo}-${sufixo}`;
 }
 
+let fichaGerada = null;
 function openNewProduct(){
   novaFotoStaged = null;
+  fichaGerada = null;
   const catOptions = renderCategoryOptions(null);
   openDrawer(`
     <div class="drawer-h"><h2>Novo produto</h2><button class="x" data-close>×</button></div>
@@ -716,6 +741,7 @@ function openNewProduct(){
     </div>
     <div class="section">
       <div class="field"><label>Nome</label><input id="nName"></div>
+      <div class="field"><label>Marca</label><input id="nBrand"></div>
       <div class="field">
         <label>EAN (opcional)</label>
         <div style="display:flex;gap:8px">
@@ -729,6 +755,16 @@ function openNewProduct(){
         <div class="field"><label>Estoque inicial</label><input id="nStock" type="number" value="0"></div>
       </div>
       <div class="field"><label>Categoria</label><select id="nCat">${catOptions}</select></div>
+    </div>
+
+    <div class="section">
+      <h3>Sommelier IA</h3>
+      <div class="field"><label>Notas pra IA (opcional)</label><textarea id="nNotas" rows="2" placeholder="Ex.: sabor de melancia com toque de menta, bem refrescante"></textarea></div>
+      <button class="btn-ghost btn-sm" id="nGerarBtn" style="width:100%">✨ Gerar descrição e ficha com IA</button>
+      <div id="nSommelierPreview" style="margin-top:10px"></div>
+    </div>
+
+    <div class="section">
       <div class="field"><label>Descrição</label><textarea id="nDesc" rows="3"></textarea></div>
       <div class="save-row"><button class="btn-gold" id="nSave" style="width:100%">Cadastrar produto</button></div>
     </div>
@@ -748,18 +784,60 @@ function openNewProduct(){
 
   $("#nEanCam").onclick = () => abrirScannerCamera(code => { $("#nEan").value = code; });
 
+  $("#nGerarBtn").onclick = async () => {
+    const name = $("#nName").value.trim();
+    if(!name){ toast("Preenche o nome do produto primeiro."); return; }
+    const catSel = $("#nCat").selectedOptions[0];
+    const categoria = catSel ? catSel.closest("optgroup")?.label : "";
+    const subcategoria = catSel ? catSel.textContent : "";
+    const preview = $("#nSommelierPreview");
+    preview.innerHTML = `<div class="loading" style="padding:16px 0">Gerando com IA…</div>`;
+    $("#nGerarBtn").disabled = true;
+    try{
+      const { data, error } = await sb.functions.invoke("gerar-ficha-sommelier", {
+        body: { name, brand: $("#nBrand").value.trim(), categoria, subcategoria, notas: $("#nNotas").value.trim() }
+      });
+      if(error) throw error;
+      if(data?.erro) throw new Error(data.erro);
+      fichaGerada = { specs: data.specs || [], flavor_profile: data.flavor_profile || null };
+      $("#nDesc").value = data.description || "";
+      const barras = data.flavor_profile ? `
+        <div style="margin-top:8px">
+          ${Object.entries(data.flavor_profile).map(([k,v]) => `
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="width:70px;font-size:11px;color:var(--muted);text-transform:capitalize">${esc(k)}</span>
+              <div style="flex:1;height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden">
+                <div style="width:${(v/10)*100}%;height:100%;background:var(--gold)"></div>
+              </div>
+            </div>`).join("")}
+        </div>` : "";
+      preview.innerHTML = `
+        <div class="t" style="color:var(--green);margin-bottom:6px">✓ Gerado — revise antes de salvar</div>
+        ${(data.specs||[]).length ? `<div class="t" style="font-size:12px">${data.specs.map(s=>`<b>${esc(s[0])}:</b> ${esc(s[1])}`).join(" · ")}</div>` : ""}
+        ${barras}`;
+      toast("Descrição e ficha geradas — confere antes de salvar.");
+    }catch(e){
+      preview.innerHTML = `<div class="t" style="color:var(--red)">Erro ao gerar: ${esc(e.message||String(e))}</div>`;
+    }finally{
+      $("#nGerarBtn").disabled = false;
+    }
+  };
+
   $("#nSave").onclick = async () => {
     const name = $("#nName").value.trim();
     if(!name){ toast("O nome é obrigatório."); return; }
     const site_product_id = "adm-" + crypto.randomUUID().slice(0,8);
     const payload = {
       site_product_id, name, sku: geraSkuAutomatico(),
+      brand: $("#nBrand").value.trim() || null,
       ean: $("#nEan").value.trim() || null,
       price: parseFloat($("#nPrice").value) || 0,
       stock: 0,
       category_id: $("#nCat").value,
       description: $("#nDesc").value.trim() || null,
       icon: "📦",
+      specs: fichaGerada?.specs || [],
+      flavor_profile: fichaGerada?.flavor_profile || null,
     };
     const { data, error } = await sb.from("products").insert(payload).select().single();
     if(error){ toast("Erro ao cadastrar: " + error.message); return; }
@@ -835,26 +913,10 @@ function renderSyncScreen(){
   $("#syncFile").onchange = e => { if(e.target.files[0]) handleSyncFile(e.target.files[0]); };
 }
 
-let _xlsxPromise = null;
-function ensureXLSX(){
-  if(window.XLSX) return Promise.resolve();
-  if(!_xlsxPromise){
-    _xlsxPromise = new Promise((res, rej) => {
-      const s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
-      s.onload = res;
-      s.onerror = () => { _xlsxPromise = null; rej(new Error("Falha ao carregar o leitor de planilha")); };
-      document.head.appendChild(s);
-    });
-  }
-  return _xlsxPromise;
-}
-
 async function handleSyncFile(file){
   const body = $("#syncBody");
   body.innerHTML = `<div class="loading">Lendo planilha…</div>`;
 
-  await ensureXLSX();
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
   const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -1017,7 +1079,6 @@ async function handleBestsellersFile(file){
   const body = $("#bestBody");
   body.innerHTML = `<div class="loading">Lendo planilha…</div>`;
 
-  await ensureXLSX();
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
   const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -1123,88 +1184,6 @@ async function confirmarBestsellers(candidatos, tbody){
   renderMain();
 }
 
-/* ---------------- dashboard: custo, valor em estoque, ROI ---------------- */
-async function renderDashboard(){
-  app.innerHTML = `
-    <div class="topbar">
-      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
-      <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
-    </div>
-    <div id="dashBody"><div class="loading">Calculando…</div></div>
-  `;
-  $("#backBtn").onclick = () => renderMain();
-
-  const { data: rows } = await sb.from("products").select("stock,price,promo_price,cost_price,category_id,is_active");
-  const body = $("#dashBody");
-  if(!rows){ body.innerHTML = `<div class="empty">Não consegui carregar os produtos.</div>`; return; }
-
-  const ativos = rows.filter(p => p.is_active);
-  const comCusto = ativos.filter(p => p.cost_price != null);
-
-  let custoTotal = 0, valorVendaTotalComCusto = 0, valorVendaTotalGeral = 0, estoqueTotal = 0, estoqueComCusto = 0;
-  ativos.forEach(p => {
-    const vFinal = (p.promo_price ?? p.price) || 0;
-    estoqueTotal += p.stock || 0;
-    valorVendaTotalGeral += vFinal * (p.stock||0);
-    if(p.cost_price != null){
-      custoTotal += p.cost_price * (p.stock||0);
-      valorVendaTotalComCusto += vFinal * (p.stock||0);
-      estoqueComCusto += p.stock || 0;
-    }
-  });
-  const lucroPotencial = valorVendaTotalComCusto - custoTotal;
-  const roi = custoTotal > 0 ? (lucroPotencial / custoTotal) * 100 : null;
-  const coberturaPct = estoqueTotal > 0 ? Math.round((estoqueComCusto/estoqueTotal)*100) : 0;
-
-  // por categoria (seção-mãe)
-  const parents = state.categories.filter(c=>!c.parent_id);
-  const childToParent = {}; state.categories.forEach(c => { if(c.parent_id) childToParent[c.id]=c.parent_id; });
-  const porCategoria = {};
-  parents.forEach(p => porCategoria[p.id] = { nome:p.name, custo:0, venda:0, estoque:0, temCusto:0 });
-  ativos.forEach(p => {
-    const parentId = childToParent[p.category_id] || p.category_id;
-    if(!porCategoria[parentId]) return;
-    const vFinal = (p.promo_price ?? p.price) || 0;
-    porCategoria[parentId].estoque += p.stock||0;
-    porCategoria[parentId].venda += vFinal*(p.stock||0);
-    if(p.cost_price != null){ porCategoria[parentId].custo += p.cost_price*(p.stock||0); porCategoria[parentId].temCusto++; }
-  });
-
-  body.innerHTML = `
-    <div class="kpi-grid">
-      <div class="kpi"><div class="lbl">Valor de venda em estoque</div><div class="val">${brl(valorVendaTotalGeral)}</div><div class="sub">${estoqueTotal} unidades, preço final</div></div>
-      <div class="kpi"><div class="lbl">Custo total em estoque</div><div class="val">${brl(custoTotal)}</div><div class="sub">só produtos com custo cadastrado</div></div>
-      <div class="kpi"><div class="lbl">Lucro potencial</div><div class="val">${brl(lucroPotencial)}</div><div class="sub">venda − custo, nessa mesma fatia</div></div>
-      <div class="kpi ${roi!=null && roi<0 ? 'warn':''}"><div class="lbl">ROI</div><div class="val">${roi!=null ? roi.toFixed(0)+'%' : '—'}</div><div class="sub">lucro ÷ custo investido</div></div>
-    </div>
-    <div class="kpi" style="margin-bottom:16px">
-      <div class="lbl">Cobertura de custo cadastrado</div>
-      <div class="val" style="font-size:18px">${coberturaPct}% do estoque (${estoqueComCusto} de ${estoqueTotal} unidades)</div>
-      <div class="cov-bar"><div class="fill" style="width:${coberturaPct}%"></div></div>
-      <div class="sub" style="margin-top:6px">Os números acima valem só pra essa fatia — o resto do estoque ainda não tem preço de custo cadastrado (preencha sincronizando uma planilha de compra, ou editando o produto direto).</div>
-    </div>
-
-    <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Por categoria</h3>
-    <div class="tbl-wrap">
-      <table class="dash-table">
-        <thead><tr><th>Categoria</th><th class="num">Estoque</th><th class="num">Custo</th><th class="num">Venda</th><th class="num">ROI</th></tr></thead>
-        <tbody>
-          ${Object.values(porCategoria).filter(c=>c.estoque>0).sort((a,b)=>b.venda-a.venda).map(c => {
-            const roiCat = c.custo>0 ? ((c.venda-c.custo)/c.custo)*100 : null;
-            return `<tr>
-              <td>${esc(c.nome)}</td>
-              <td class="num">${c.estoque}</td>
-              <td class="num">${c.custo>0 ? brl(c.custo) : '—'}</td>
-              <td class="num">${brl(c.venda)}</td>
-              <td class="num ${roiCat==null?'':roiCat>=0?'roi-pos':'roi-neg'}">${roiCat!=null ? roiCat.toFixed(0)+'%' : '—'}</td>
-            </tr>`;
-          }).join("")}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
 /* ---------------- processa qualquer foto pra sempre sair 1:1, mesma resolução, boa qualidade ---------------- */
 /* Isso roda ANTES de subir pro Storage — garante que, não importa o tamanho/proporção original
    da foto, o arquivo final é sempre igual (quadrado, 1000x1000, webp), então nunca pode quebrar
@@ -1256,6 +1235,220 @@ function abrirScannerCamera(onResult){
   ).catch(() => {
     veil.querySelector(".scanner-hint").textContent = "Não consegui acessar a câmera. Confirme a permissão do navegador.";
   });
+}
+
+/* ---------------- edição em massa: foto + preço + custo + promocional, por categoria ---------------- */
+async function renderBulkCategoryPicker(){
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
+      <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
+    </div>
+    <div style="padding:16px 0">
+      <h2 style="font-size:22px;margin-bottom:10px">Edição em massa — escolha a categoria</h2>
+      <div class="cat-grid" id="bulkCatGrid"><div class="loading">Carregando…</div></div>
+    </div>`;
+  $("#backBtn").onclick = () => renderMain();
+
+  const parents = state.categories.filter(c=>!c.parent_id);
+  const { data: counts } = await sb.from("products").select("category_id");
+  const childToParent = {}; state.categories.forEach(c => { if(c.parent_id) childToParent[c.id]=c.parent_id; });
+  const countByParent = {};
+  (counts||[]).forEach(p => { const pid = childToParent[p.category_id] || p.category_id; countByParent[pid] = (countByParent[pid]||0)+1; });
+
+  $("#bulkCatGrid").innerHTML = parents.map(p => `
+    <button class="cat-btn" data-pid="${p.id}">
+      <span class="ic">${CAT_ICONS[p.slug] || "📦"}</span>
+      <span class="nm">${esc(p.name)}</span>
+      <span class="ct">${countByParent[p.id]||0} produtos</span>
+    </button>`).join("");
+  $("#bulkCatGrid").querySelectorAll(".cat-btn").forEach(b => b.onclick = () => renderBulkEdit(b.dataset.pid));
+}
+
+let bulkSelecionados = new Set();
+
+async function renderBulkEdit(parentId){
+  bulkSelecionados = new Set();
+  const parent = state.categories.find(c=>c.id===parentId);
+  const children = state.categories.filter(c=>c.parent_id===parentId);
+  const childIds = children.map(c=>c.id);
+
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
+      <button class="btn-ghost btn-sm" id="backBtn">← Categorias</button>
+    </div>
+    <div style="padding:16px 0 70px">
+      <h2 style="font-size:20px;margin-bottom:4px">Edição em massa — ${esc(parent.name)}</h2>
+      <p class="t" style="font-size:12px;color:var(--muted);margin:0 0 12px">Clica na foto pra anexar ou reajustar. Marca a caixinha pra selecionar vários e aplicar uma ação de uma vez.</p>
+      <div id="bulkList"><div class="loading">Carregando produtos…</div></div>
+    </div>
+    <div id="bulkBar" class="bulk-actionbar" hidden></div>`;
+  $("#backBtn").onclick = () => renderBulkCategoryPicker();
+
+  const { data: rows } = await sb.from("products")
+    .select("*").in("category_id", childIds.length?childIds:["00000000-0000-0000-0000-000000000000"])
+    .order("name").limit(400);
+  const ids = (rows||[]).map(r=>r.id);
+  const { data: imgs } = await sb.from("product_images").select("product_id,url").in("product_id", ids.length?ids:["00000000-0000-0000-0000-000000000000"]);
+  const imgByProduct = {}; (imgs||[]).forEach(i => imgByProduct[i.product_id] = i.url);
+
+  const list = $("#bulkList");
+  if(!rows || rows.length===0){ list.innerHTML = `<div class="empty">Nenhum produto nessa categoria.</div>`; return; }
+
+  list.innerHTML = rows.map(p => `
+    <div class="bulk-row" data-id="${p.id}">
+      <input type="checkbox" class="bulk-chk" data-sel>
+      <div class="thumb-mini" data-thumb>${imgByProduct[p.id] ? `<img src="${imgByProduct[p.id]}" alt="">` : esc(p.icon||"📦")}</div>
+      <div class="nm" title="${esc(p.name)}">
+        ${esc(p.name)}
+        <span class="pub-badge ${p.is_active?'on':'off'}" data-pub>${p.is_active?'🟢 Publicado':'⚪ Despublicado'}</span>
+      </div>
+      <div class="campos">
+        <div class="f"><label>Preço</label><input type="number" step="0.01" data-f="price" value="${p.price}"></div>
+        <div class="f"><label>Custo</label><input type="number" step="0.01" data-f="cost_price" value="${p.cost_price ?? ''}"></div>
+        <div class="f"><label>Promo</label><input type="number" step="0.01" data-f="promo_price" value="${p.promo_price ?? ''}"></div>
+      </div>
+      <button class="btn-gold btn-sm bulkSaveBtn" data-save>Salvar</button>
+      <input type="file" accept="image/*" hidden data-filein>
+    </div>`).join("");
+
+  list.querySelectorAll(".bulk-row").forEach(row => {
+    const id = row.dataset.id;
+    const img = imgByProduct[id];
+    const marcaSuja = () => { row.classList.add("dirty"); const b=row.querySelector("[data-save]"); b.textContent="Salvar"; b.classList.remove("saved"); };
+    row.querySelectorAll("input[data-f]").forEach(inp => inp.addEventListener("input", marcaSuja));
+
+    row.querySelector("[data-sel]").onchange = (e) => {
+      if(e.target.checked) bulkSelecionados.add(id); else bulkSelecionados.delete(id);
+      row.classList.toggle("selected", e.target.checked);
+      renderBulkBar(parentId);
+    };
+
+    row.querySelector("[data-save]").onclick = async () => {
+      const campos = {};
+      row.querySelectorAll("input[data-f]").forEach(inp => {
+        const v = inp.value.trim();
+        campos[inp.dataset.f] = v === "" ? null : parseFloat(v);
+      });
+      if(campos.price == null) campos.price = 0;
+      const { error } = await sb.from("products").update(campos).eq("id", id);
+      const b = row.querySelector("[data-save]");
+      if(error){ toast("Erro: " + error.message); return; }
+      row.classList.remove("dirty"); b.textContent="✓ Salvo"; b.classList.add("saved");
+    };
+
+    row.querySelector("[data-thumb]").onclick = async () => {
+      if(img){
+        try{
+          const resp = await fetch(img);
+          if(!resp.ok) throw new Error("não consegui baixar a foto atual");
+          const blob = await resp.blob();
+          await uploadPhoto(id, blob); // reajustar a foto que já existe
+        }catch(e){ toast("Não consegui carregar a foto atual: " + e.message); return; }
+      } else {
+        row.querySelector("[data-filein]").click();
+        return; // o onchange abaixo cuida do resto
+      }
+      renderBulkEdit(parentId);
+    };
+    row.querySelector("[data-filein]").onchange = async (e) => {
+      const file = e.target.files[0]; if(!file) return;
+      await uploadPhoto(id, file);
+      renderBulkEdit(parentId); // recarrega a lista pra já mostrar a foto nova
+    };
+  });
+}
+
+function renderBulkBar(parentId){
+  const bar = $("#bulkBar");
+  const n = bulkSelecionados.size;
+  if(n === 0){ bar.hidden = true; bar.innerHTML = ""; return; }
+  bar.hidden = false;
+  bar.innerHTML = `
+    <span class="bulk-count">${n} selecionado${n>1?'s':''}</span>
+    <button class="btn-ghost btn-sm" data-act="preco">Alterar preço</button>
+    <button class="btn-ghost btn-sm" data-act="custo">Alterar custo</button>
+    <button class="btn-ghost btn-sm" data-act="publicar">Publicar</button>
+    <button class="btn-ghost btn-sm" data-act="despublicar">Despublicar</button>
+    <button class="btn-ghost btn-sm" data-act="cancelar">Cancelar</button>
+  `;
+  bar.querySelector('[data-act="cancelar"]').onclick = () => renderBulkEdit(parentId);
+  bar.querySelector('[data-act="publicar"]').onclick = () => confirmarBulkPublicacao(parentId, true);
+  bar.querySelector('[data-act="despublicar"]').onclick = () => confirmarBulkPublicacao(parentId, false);
+  bar.querySelector('[data-act="preco"]').onclick = () => abrirBulkValor(parentId, "price", "Novo preço de venda");
+  bar.querySelector('[data-act="custo"]').onclick = () => abrirBulkValor(parentId, "cost_price", "Novo preço de custo");
+}
+
+function abrirBulkValor(parentId, campo, titulo){
+  const n = bulkSelecionados.size;
+  const veil = document.createElement("div");
+  veil.className = "crop-veil";
+  veil.innerHTML = `
+    <div class="card" style="width:min(90vw,340px)">
+      <h3 style="margin-bottom:10px">${titulo}</h3>
+      <input type="number" step="0.01" id="bulkValorInput" placeholder="R$ 0,00" style="margin-bottom:12px">
+      <div class="save-row">
+        <button class="btn-ghost" id="bulkValorCancelar" style="flex:1">Cancelar</button>
+        <button class="btn-gold" id="bulkValorConfirmar" style="flex:1">Aplicar a ${n} produto${n>1?'s':''}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(veil);
+  const input = veil.querySelector("#bulkValorInput");
+  input.focus();
+  veil.querySelector("#bulkValorCancelar").onclick = () => veil.remove();
+  veil.querySelector("#bulkValorConfirmar").onclick = async () => {
+    const v = parseFloat(input.value);
+    if(isNaN(v) || v < 0){ toast("Informe um valor válido."); return; }
+    if(!confirm(`Aplicar R$ ${v.toFixed(2)} a ${n} produto${n>1?'s':''}?`)) return;
+    const { error } = await sb.from("products").update({ [campo]: v }).in("id", [...bulkSelecionados]);
+    veil.remove();
+    if(error){ toast("Erro: " + error.message); return; }
+    toast(`${campo==='price'?'Preço':'Custo'} atualizado em ${n} produto${n>1?'s':''}.`);
+    renderBulkEdit(parentId);
+  };
+}
+
+async function confirmarBulkPublicacao(parentId, publicar){
+  const n = bulkSelecionados.size;
+  const acao = publicar ? "Publicar" : "Despublicar";
+  if(!confirm(`${acao} ${n} produto${n>1?'s':''}?`)) return;
+  const { error } = await sb.from("products").update({ is_active: publicar }).in("id", [...bulkSelecionados]);
+  if(error){ toast("Erro: " + error.message); return; }
+  toast(`${n} produto${n>1?'s':''} ${publicar?'publicado(s)':'despublicado(s)'}.`);
+  renderBulkEdit(parentId);
+}
+
+/* ---------------- estoque baixo (menos de 10, exceto destilados e vinho) ---------------- */
+const LOW_STOCK_LIMIT = 10;
+const LOW_STOCK_EXCLUDE_SUB = ["whisky","gin","vodka","vinho"];
+
+async function renderLowStock(){
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
+      <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
+    </div>
+    <div style="padding:16px 0">
+      <h2 style="font-size:20px;margin-bottom:4px">⚠️ Estoque baixo</h2>
+      <p class="t" style="font-size:12px;color:var(--muted);margin:0 0 12px">
+        Produtos ativos com menos de ${LOW_STOCK_LIMIT} unidades (não conta whisky, gin, vodka, vinho e Red Bull — esses vendem em volume bem menor).
+      </p>
+      <div class="plist" id="plist"><div class="loading">Carregando…</div></div>
+    </div>`;
+  $("#backBtn").onclick = () => renderMain();
+
+  const excluirIds = state.categories
+    .filter(c => LOW_STOCK_EXCLUDE_SUB.includes((c.name||"").toLowerCase()))
+    .map(c => c.id);
+
+  let q = sb.from("products").select("*").lt("stock", LOW_STOCK_LIMIT).eq("is_active", true).order("stock");
+  if(excluirIds.length) q = q.not("category_id", "in", `(${excluirIds.join(",")})`);
+  q = q.not("name", "ilike", "%redbull%").not("name", "ilike", "%red bull%");
+  const { data: rows, error } = await q;
+
+  if(error){ $("#plist").innerHTML = `<div class="empty">Erro ao carregar: ${esc(error.message)}</div>`; return; }
+  renderProductRows(rows || [], $("#plist"), "Nenhum produto com estoque baixo agora — tudo certo por aqui.");
 }
 
 boot();
