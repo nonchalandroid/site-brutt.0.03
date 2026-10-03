@@ -4,34 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Brutt · Admin</title>
+<meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root{
-  --bg:#03060a; --surface:#0a0f16; --surface-2:#121a24; --line:#1d2a38;
-  --gold:#00ff9d; --gold-2:#7cffd4; --ink:#dce8f0; --muted:#5a6b7a;
-  --red:#ff3864; --green:#00ff9d;
-  --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  --bg:#120b07; --surface:#1c130c; --surface-2:#241a11; --line:#3a2a1a;
+  --gold:#d8a638; --gold-2:#f0cc74; --ink:#f3e4c8; --muted:#b8a184;
+  --red:#c0453a; --green:#3f7a4e;
   box-sizing:border-box;
 }
-body{background:
-  radial-gradient(1200px 500px at 15% -10%, rgba(0,255,157,.07), transparent 60%),
-  radial-gradient(900px 400px at 100% 0%, rgba(0,212,255,.05), transparent 55%),
-  var(--bg);
-}
-.price,.cost,.stock,.m,.kpi .val,.dash-table td.num,.stock-now .n,#fName+.field input,input[type=number]{font-family:var(--mono)}
-.btn-gold{box-shadow:0 0 14px rgba(0,255,157,.35),0 0 2px rgba(0,255,157,.6)}
-.btn-gold:hover{box-shadow:0 0 22px rgba(0,255,157,.55),0 0 4px rgba(0,255,157,.8)}
-.kpi{box-shadow:0 0 0 1px rgba(0,255,157,.08) inset}
-.kpi .val{text-shadow:0 0 12px rgba(0,255,157,.35)}
-.prow:hover{box-shadow:0 0 0 1px rgba(0,255,157,.25) inset,0 0 18px rgba(0,255,157,.12)}
-input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px rgba(0,255,157,.35)}
-.brand-logo{width:30px;height:30px;border-radius:50%;box-shadow:0 0 10px rgba(0,255,157,.5);flex:none}
-.brand b{font-family:var(--mono);letter-spacing:2px;text-shadow:0 0 10px rgba(0,255,157,.5)}
-.brand span{font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;font-size:10px}
+.brand-logo{width:30px;height:30px;border-radius:50%;flex:none}
 @media (prefers-color-scheme: light){ :root{} }
 *{box-sizing:inherit}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Barlow',system-ui,sans-serif;min-height:100%;
@@ -283,7 +269,7 @@ function renderAccessDenied(){
 async function renderMain(){
   app.innerHTML = `
     <div class="topbar">
-      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>BRUTT</b><span>ADMIN TERMINAL</span></div>
+      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
       <div class="who">${esc(state.staff.name)} <button class="btn-ghost btn-sm" id="outBtn">Sair</button></div>
     </div>
     <div class="scan-wrap">
@@ -466,6 +452,7 @@ async function openProduct(id){
         <div class="ph">${img ? `<img src="${img.url}" alt="">` : esc(p.icon||"📦")}</div>
         <div>
           <button class="btn-ghost btn-sm" id="photoBtn">Trocar foto</button>
+          ${img ? `<button class="btn-ghost btn-sm" id="reajustarBtn">🔧 Reajustar</button>` : ""}
           <input type="file" id="photoFile" accept="image/*" hidden>
         </div>
       </div>
@@ -512,6 +499,16 @@ async function openProduct(id){
 
   $("#photoBtn").onclick = () => $("#photoFile").click();
   $("#photoFile").onchange = (e) => uploadPhoto(p.id, e.target.files[0]);
+  if($("#reajustarBtn")){
+    $("#reajustarBtn").onclick = async () => {
+      try{
+        const resp = await fetch(img.url);
+        if(!resp.ok) throw new Error("não consegui baixar a foto atual");
+        const blob = await resp.blob();
+        uploadPhoto(p.id, blob); // mesmo fluxo de sempre: abre o recorte, e ao confirmar, já sobe e vincula
+      }catch(e){ toast("Não consegui carregar a foto atual pra reajustar: " + e.message); }
+    };
+  }
 
   {
     const tabs = document.querySelectorAll("[data-mv]");
@@ -810,7 +807,7 @@ function scoreClasse(s){ return s>=0.5 ? "alta" : s>=0.25 ? "media" : "baixa"; }
 function renderSyncScreen(){
   app.innerHTML = `
     <div class="topbar">
-      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>BRUTT</b><span>ADMIN TERMINAL</span></div>
+      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
       <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
     </div>
     <div style="padding:16px 0">
@@ -972,7 +969,7 @@ async function confirmarSync(candidatos, tbody, fileName){
 function renderBestsellersScreen(){
   app.innerHTML = `
     <div class="topbar">
-      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>BRUTT</b><span>ADMIN TERMINAL</span></div>
+      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
       <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
     </div>
     <div style="padding:16px 0">
@@ -1110,7 +1107,7 @@ async function confirmarBestsellers(candidatos, tbody){
 async function renderDashboard(){
   app.innerHTML = `
     <div class="topbar">
-      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>BRUTT</b><span>ADMIN TERMINAL</span></div>
+      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
       <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
     </div>
     <div id="dashBody"><div class="loading">Calculando…</div></div>
