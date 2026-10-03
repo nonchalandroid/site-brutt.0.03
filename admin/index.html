@@ -313,7 +313,7 @@ async function renderMain(){
   $("#newBtn").onclick = () => openNewProduct();
   $("#syncBtn").onclick = () => renderSyncScreen();
   $("#bestBtn").onclick = () => renderBestsellersScreen();
-  $("#bulkBtn").onclick = () => renderBulkCategoryPicker();
+  $("#bulkBtn").onclick = () => renderBulkEdit(null);
   $("#lowStockBtn").onclick = () => renderLowStock();
 
   const box = $("#searchBox");
@@ -1269,26 +1269,30 @@ let bulkSelecionados = new Set();
 
 async function renderBulkEdit(parentId){
   bulkSelecionados = new Set();
-  const parent = state.categories.find(c=>c.id===parentId);
-  const children = state.categories.filter(c=>c.parent_id===parentId);
-  const childIds = children.map(c=>c.id);
+  const parents = state.categories.filter(c=>!c.parent_id);
+  const parentOptions = `<option value="">Todas as categorias</option>` +
+    parents.map(p => `<option value="${p.id}" ${p.id===parentId?'selected':''}>${esc(p.name)}</option>`).join("");
 
   app.innerHTML = `
     <div class="topbar">
       <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
-      <button class="btn-ghost btn-sm" id="backBtn">← Categorias</button>
+      <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
     </div>
     <div style="padding:16px 0 70px">
-      <h2 style="font-size:20px;margin-bottom:4px">Edição em massa — ${esc(parent.name)}</h2>
+      <h2 style="font-size:20px;margin-bottom:8px">Edição em massa</h2>
+      <select id="bulkCatFiltro" style="margin-bottom:10px">${parentOptions}</select>
       <p class="t" style="font-size:12px;color:var(--muted);margin:0 0 12px">Clica na foto pra anexar ou reajustar. Marca a caixinha pra selecionar vários e aplicar uma ação de uma vez.</p>
       <div id="bulkList"><div class="loading">Carregando produtos…</div></div>
     </div>
     <div id="bulkBar" class="bulk-actionbar" hidden></div>`;
-  $("#backBtn").onclick = () => renderBulkCategoryPicker();
+  $("#backBtn").onclick = () => renderMain();
+  $("#bulkCatFiltro").onchange = (e) => renderBulkEdit(e.target.value || null);
 
-  const { data: rows } = await sb.from("products")
-    .select("*").in("category_id", childIds.length?childIds:["00000000-0000-0000-0000-000000000000"])
-    .order("name").limit(400);
+  const childIds = parentId ? state.categories.filter(c=>c.parent_id===parentId).map(c=>c.id) : null;
+
+  let q = sb.from("products").select("*").order("name").limit(600);
+  if(childIds) q = q.in("category_id", childIds.length?childIds:["00000000-0000-0000-0000-000000000000"]);
+  const { data: rows } = await q;
   const ids = (rows||[]).map(r=>r.id);
   const { data: imgs } = await sb.from("product_images").select("product_id,url").in("product_id", ids.length?ids:["00000000-0000-0000-0000-000000000000"]);
   const imgByProduct = {}; (imgs||[]).forEach(i => imgByProduct[i.product_id] = i.url);
