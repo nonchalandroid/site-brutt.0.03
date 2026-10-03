@@ -8,7 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root{
@@ -221,10 +220,12 @@ sb.auth.onAuthStateChange((_evt, session) => { state.session = session; });
 
 async function loadStaffAndContinue(){
   app.innerHTML = `<div class="loading">Carregando…</div>`;
-  const { data: staffRows } = await sb.from("staff").select("*").eq("user_id", state.session.user.id);
+  const [{ data: staffRows }, { data: cats }] = await Promise.all([
+    sb.from("staff").select("*").eq("user_id", state.session.user.id),
+    sb.from("categories").select("id,name,slug,parent_id").order("name"),
+  ]);
   state.staff = (staffRows && staffRows[0]) || null;
   if(!state.staff){ renderAccessDenied(); return; }
-  const { data: cats } = await sb.from("categories").select("id,name,slug,parent_id").order("name");
   state.categories = cats || [];
   renderMain();
 }
@@ -435,9 +436,11 @@ function closeDrawer(){
 /* ---------------- product detail / edit ---------------- */
 async function openProduct(id){
   openDrawer(`<div class="loading">Carregando…</div>`);
-  const { data: p } = await sb.from("products").select("*").eq("id", id).single();
-  const { data: imgRows } = await sb.from("product_images").select("*").eq("product_id", id);
-  const { data: hist } = await sb.from("stock_movements").select("*").eq("product_id", id).order("created_at",{ascending:false}).limit(8);
+  const [{ data: p }, { data: imgRows }, { data: hist }] = await Promise.all([
+    sb.from("products").select("*").eq("id", id).single(),
+    sb.from("product_images").select("*").eq("product_id", id),
+    sb.from("stock_movements").select("*").eq("product_id", id).order("created_at",{ascending:false}).limit(8),
+  ]);
   state.current = p;
   const img = (imgRows && imgRows[0]) || null;
 
@@ -832,10 +835,26 @@ function renderSyncScreen(){
   $("#syncFile").onchange = e => { if(e.target.files[0]) handleSyncFile(e.target.files[0]); };
 }
 
+let _xlsxPromise = null;
+function ensureXLSX(){
+  if(window.XLSX) return Promise.resolve();
+  if(!_xlsxPromise){
+    _xlsxPromise = new Promise((res, rej) => {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+      s.onload = res;
+      s.onerror = () => { _xlsxPromise = null; rej(new Error("Falha ao carregar o leitor de planilha")); };
+      document.head.appendChild(s);
+    });
+  }
+  return _xlsxPromise;
+}
+
 async function handleSyncFile(file){
   const body = $("#syncBody");
   body.innerHTML = `<div class="loading">Lendo planilha…</div>`;
 
+  await ensureXLSX();
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
   const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -998,6 +1017,7 @@ async function handleBestsellersFile(file){
   const body = $("#bestBody");
   body.innerHTML = `<div class="loading">Lendo planilha…</div>`;
 
+  await ensureXLSX();
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
   const sheet = wb.Sheets[wb.SheetNames[0]];
