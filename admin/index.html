@@ -304,7 +304,6 @@ async function renderMain(){
       <button class="btn-gold btn-sm" id="newBtn">+ Novo produto</button>
       <button class="btn-ghost btn-sm" id="syncBtn">📥 Sincronizar planilha de compra</button>
       <button class="btn-ghost btn-sm" id="bestBtn">📊 Atualizar mais vendidos (NEX)</button>
-      <button class="btn-ghost btn-sm" id="bulkBtn">✏️ Edição em massa</button>
       <button class="btn-ghost btn-sm" id="lowStockBtn">⚠️ Estoque baixo</button>
     </div>
     <div id="browseArea"></div>
@@ -313,19 +312,18 @@ async function renderMain(){
   $("#newBtn").onclick = () => openNewProduct();
   $("#syncBtn").onclick = () => renderSyncScreen();
   $("#bestBtn").onclick = () => renderBestsellersScreen();
-  $("#bulkBtn").onclick = () => renderBulkEdit(null);
   $("#lowStockBtn").onclick = () => renderLowStock();
+
+  gestaoFiltro = { parentId: null, busca: "" };
+  renderGestaoRapida();
 
   const box = $("#searchBox");
   let t;
   box.addEventListener("input", () => {
     clearTimeout(t);
-    if(!box.value.trim()){ renderCategoryGrid(); return; }
-    t = setTimeout(()=>runSearch(box.value), 250);
+    t = setTimeout(()=>{ gestaoFiltro.busca = box.value.trim(); renderGestaoRapida(); }, 250);
   });
-  box.addEventListener("keydown", e => { if(e.key==="Enter"){ clearTimeout(t); runSearch(box.value, true); } });
-
-  await renderCategoryGrid();
+  box.addEventListener("keydown", e => { if(e.key==="Enter"){ clearTimeout(t); gestaoFiltro.busca = box.value.trim(); renderGestaoRapida(); } });
 }
 
 /* ---------------- grade de categorias (tela inicial) ---------------- */
@@ -1266,39 +1264,45 @@ async function renderBulkCategoryPicker(){
 }
 
 let bulkSelecionados = new Set();
+let gestaoFiltro = { parentId: null, busca: "" };
 
-async function renderBulkEdit(parentId){
+async function renderGestaoRapida(){
+  const { parentId, busca } = gestaoFiltro;
   bulkSelecionados = new Set();
   const parents = state.categories.filter(c=>!c.parent_id);
   const parentOptions = `<option value="">Todas as categorias</option>` +
     parents.map(p => `<option value="${p.id}" ${p.id===parentId?'selected':''}>${esc(p.name)}</option>`).join("");
 
-  app.innerHTML = `
-    <div class="topbar">
-      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
-      <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
-    </div>
-    <div style="padding:16px 0 70px">
-      <h2 style="font-size:20px;margin-bottom:8px">Edição em massa</h2>
-      <select id="bulkCatFiltro" style="margin-bottom:10px">${parentOptions}</select>
-      <p class="t" style="font-size:12px;color:var(--muted);margin:0 0 12px">Clica na foto pra anexar ou reajustar. Marca a caixinha pra selecionar vários e aplicar uma ação de uma vez.</p>
-      <div id="bulkList"><div class="loading">Carregando produtos…</div></div>
-    </div>
+  const area = $("#browseArea");
+  area.innerHTML = `
+    <select id="bulkCatFiltro" style="margin:10px 0">${parentOptions}</select>
+    <div id="bulkList"><div class="loading">Carregando produtos…</div></div>
     <div id="bulkBar" class="bulk-actionbar" hidden></div>`;
-  $("#backBtn").onclick = () => renderMain();
-  $("#bulkCatFiltro").onchange = (e) => renderBulkEdit(e.target.value || null);
+  $("#bulkCatFiltro").onchange = (e) => { gestaoFiltro.parentId = e.target.value || null; renderGestaoRapida(); };
 
   const childIds = parentId ? state.categories.filter(c=>c.parent_id===parentId).map(c=>c.id) : null;
 
-  let q = sb.from("products").select("*").order("name").limit(600);
-  if(childIds) q = q.in("category_id", childIds.length?childIds:["00000000-0000-0000-0000-000000000000"]);
-  const { data: rows } = await q;
+  let rows;
+  if(busca && /^\d{6,}$/.test(busca)){
+    const { data } = await sb.from("products").select("*").or(`ean.eq.${busca},sku.eq.${busca}`).limit(50);
+    rows = data;
+  } else if(busca){
+    let q2 = sb.from("products").select("*").or(`name.ilike.%${busca}%,sku.ilike.%${busca}%,ean.ilike.%${busca}%`).order("name").limit(600);
+    if(childIds) q2 = q2.in("category_id", childIds.length?childIds:["00000000-0000-0000-0000-000000000000"]);
+    const { data } = await q2;
+    rows = data;
+  } else {
+    let q = sb.from("products").select("*").order("name").limit(600);
+    if(childIds) q = q.in("category_id", childIds.length?childIds:["00000000-0000-0000-0000-000000000000"]);
+    const { data } = await q;
+    rows = data;
+  }
   const ids = (rows||[]).map(r=>r.id);
   const { data: imgs } = await sb.from("product_images").select("product_id,url").in("product_id", ids.length?ids:["00000000-0000-0000-0000-000000000000"]);
   const imgByProduct = {}; (imgs||[]).forEach(i => imgByProduct[i.product_id] = i.url);
 
   const list = $("#bulkList");
-  if(!rows || rows.length===0){ list.innerHTML = `<div class="empty">Nenhum produto nessa categoria.</div>`; return; }
+  if(!rows || rows.length===0){ list.innerHTML = `<div class="empty">Nenhum produto encontrado.</div>`; return; }
 
   list.innerHTML = rows.map(p => `
     <div class="bulk-row" data-id="${p.id}">
@@ -1326,7 +1330,7 @@ async function renderBulkEdit(parentId){
     row.querySelector("[data-sel]").onchange = (e) => {
       if(e.target.checked) bulkSelecionados.add(id); else bulkSelecionados.delete(id);
       row.classList.toggle("selected", e.target.checked);
-      renderBulkBar(parentId);
+      renderBulkBar();
     };
 
     row.querySelector("[data-save]").onclick = async () => {
@@ -1342,29 +1346,16 @@ async function renderBulkEdit(parentId){
       row.classList.remove("dirty"); b.textContent="✓ Salvo"; b.classList.add("saved");
     };
 
-    row.querySelector("[data-thumb]").onclick = async () => {
-      if(img){
-        try{
-          const resp = await fetch(img);
-          if(!resp.ok) throw new Error("não consegui baixar a foto atual");
-          const blob = await resp.blob();
-          await uploadPhoto(id, blob); // reajustar a foto que já existe
-        }catch(e){ toast("Não consegui carregar a foto atual: " + e.message); return; }
-      } else {
-        row.querySelector("[data-filein]").click();
-        return; // o onchange abaixo cuida do resto
-      }
-      renderBulkEdit(parentId);
-    };
+    row.querySelector("[data-thumb]").onclick = () => row.querySelector("[data-filein]").click();
     row.querySelector("[data-filein]").onchange = async (e) => {
       const file = e.target.files[0]; if(!file) return;
       await uploadPhoto(id, file);
-      renderBulkEdit(parentId); // recarrega a lista pra já mostrar a foto nova
+      renderGestaoRapida(); // recarrega a lista pra já mostrar a foto nova
     };
   });
 }
 
-function renderBulkBar(parentId){
+function renderBulkBar(){
   const bar = $("#bulkBar");
   const n = bulkSelecionados.size;
   if(n === 0){ bar.hidden = true; bar.innerHTML = ""; return; }
@@ -1377,14 +1368,14 @@ function renderBulkBar(parentId){
     <button class="btn-ghost btn-sm" data-act="despublicar">Despublicar</button>
     <button class="btn-ghost btn-sm" data-act="cancelar">Cancelar</button>
   `;
-  bar.querySelector('[data-act="cancelar"]').onclick = () => renderBulkEdit(parentId);
-  bar.querySelector('[data-act="publicar"]').onclick = () => confirmarBulkPublicacao(parentId, true);
-  bar.querySelector('[data-act="despublicar"]').onclick = () => confirmarBulkPublicacao(parentId, false);
-  bar.querySelector('[data-act="preco"]').onclick = () => abrirBulkValor(parentId, "price", "Novo preço de venda");
-  bar.querySelector('[data-act="custo"]').onclick = () => abrirBulkValor(parentId, "cost_price", "Novo preço de custo");
+  bar.querySelector('[data-act="cancelar"]').onclick = () => renderGestaoRapida();
+  bar.querySelector('[data-act="publicar"]').onclick = () => confirmarBulkPublicacao(true);
+  bar.querySelector('[data-act="despublicar"]').onclick = () => confirmarBulkPublicacao(false);
+  bar.querySelector('[data-act="preco"]').onclick = () => abrirBulkValor("price", "Novo preço de venda");
+  bar.querySelector('[data-act="custo"]').onclick = () => abrirBulkValor("cost_price", "Novo preço de custo");
 }
 
-function abrirBulkValor(parentId, campo, titulo){
+function abrirBulkValor(campo, titulo){
   const n = bulkSelecionados.size;
   const veil = document.createElement("div");
   veil.className = "crop-veil";
@@ -1409,18 +1400,18 @@ function abrirBulkValor(parentId, campo, titulo){
     veil.remove();
     if(error){ toast("Erro: " + error.message); return; }
     toast(`${campo==='price'?'Preço':'Custo'} atualizado em ${n} produto${n>1?'s':''}.`);
-    renderBulkEdit(parentId);
+    renderGestaoRapida();
   };
 }
 
-async function confirmarBulkPublicacao(parentId, publicar){
+async function confirmarBulkPublicacao(publicar){
   const n = bulkSelecionados.size;
   const acao = publicar ? "Publicar" : "Despublicar";
   if(!confirm(`${acao} ${n} produto${n>1?'s':''}?`)) return;
   const { error } = await sb.from("products").update({ is_active: publicar }).in("id", [...bulkSelecionados]);
   if(error){ toast("Erro: " + error.message); return; }
   toast(`${n} produto${n>1?'s':''} ${publicar?'publicado(s)':'despublicado(s)'}.`);
-  renderBulkEdit(parentId);
+  renderGestaoRapida();
 }
 
 /* ---------------- estoque baixo (menos de 10, exceto destilados e vinho) ---------------- */
