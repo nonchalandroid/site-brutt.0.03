@@ -143,6 +143,11 @@ input.t,textarea.t{width:100%;padding:11px 12px;border-radius:10px;border:1px so
 .pm-x{position:absolute;top:8px;right:8px;z-index:3;width:44px;height:44px;border-radius:50%;background:rgba(10,6,4,.6);backdrop-filter:blur(2px);color:#f3e4c8;border:0;font-size:22px;line-height:1;cursor:pointer;display:grid;place-items:center}
 .pm-grid{display:grid;grid-template-columns:1fr;gap:10px;padding:12px}
 .m-img{width:100%;max-width:320px;aspect-ratio:1/1;margin:0 auto;display:grid;place-items:center;font-size:64px;background:var(--tint,#3a241c);border-radius:12px;overflow:hidden}
+.pm-back{position:sticky;top:0;z-index:5;display:block;width:100%;text-align:left;background:var(--surface);color:var(--ink);
+  padding:12px 16px;font:600 15px var(--body);border:0;border-bottom:1px solid var(--line);border-radius:18px 18px 0 0;cursor:pointer}
+@media (max-width:640px){
+  .m-img{max-width:170px}
+}
 .m-img.foto{background:#f3e6cc}
 .pm-info{display:flex;flex-direction:column;gap:8px;min-width:0}
 .m-b{padding:0}
@@ -1178,6 +1183,34 @@ function updateMinBar(){
 }
 function openModal(el){$("#veil").classList.add("on");el.classList.add("on");el.setAttribute("aria-hidden","false");updateMinBar()}
 function closeAll(){["#drawer","#pm"].forEach(s=>$(s).classList.remove("on"));$("#veil").classList.remove("on");updateMinBar()}
+
+/* arrastar pra baixo fecha o modal de produto, só quando já está no topo (não briga com o scroll normal) */
+(function(){
+  const pm = $("#pm");
+  let startY=null, dragging=false;
+  pm.addEventListener("pointerdown", e=>{
+    if(pm.scrollTop>0) return;
+    startY = e.clientY; dragging=true;
+    pm.style.transition="none";
+  });
+  pm.addEventListener("pointermove", e=>{
+    if(!dragging || startY===null) return;
+    const dy = e.clientY - startY;
+    if(dy<=0) return; // só reage arrastando pra baixo
+    pm.style.transform = `translate(-50%,calc(-50% + ${Math.min(dy,220)}px))`;
+    pm.style.opacity = String(Math.max(1-dy/400,.4));
+  });
+  function soltar(e){
+    if(!dragging) return;
+    dragging=false;
+    const dy = startY!==null ? (e.clientY-startY) : 0;
+    pm.style.transition="transform .2s ease, opacity .2s ease";
+    if(dy>100){ closeAll(); }
+    pm.style.transform=""; pm.style.opacity=""; startY=null;
+  }
+  pm.addEventListener("pointerup", soltar);
+  pm.addEventListener("pointercancel", soltar);
+})();
 function drawCart(view){
   cartView = view||"";
   const items = Object.entries(cart);
@@ -1303,7 +1336,7 @@ function sendOrder(){
 function openProduct(id){
   const p = byId[id];
   recent = [id,...recent.filter(x=>x!==id)].slice(0,10); sSet("brutt_recent",recent); renderRecent();
-  $("#pm").innerHTML = `<button class="pm-x" data-close aria-label="Fechar">×</button>
+  $("#pm").innerHTML = `<button class="pm-back" data-close>← Voltar pro catálogo</button>
     <div class="pm-grid">
       <div class="pm-left">
         <div class="m-img thumb${fotoUrl(p)?" foto":""}" style="${glowOf(p)}">${media(p)}</div>
