@@ -143,8 +143,15 @@ input.t,textarea.t{width:100%;padding:11px 12px;border-radius:10px;border:1px so
 .pm-x{position:absolute;top:8px;right:8px;z-index:3;width:44px;height:44px;border-radius:50%;background:rgba(10,6,4,.6);backdrop-filter:blur(2px);color:#f3e4c8;border:0;font-size:22px;line-height:1;cursor:pointer;display:grid;place-items:center}
 .pm-grid{display:grid;grid-template-columns:1fr;gap:10px;padding:12px}
 .m-img{width:100%;max-width:320px;aspect-ratio:1/1;margin:0 auto;display:grid;place-items:center;font-size:64px;background:var(--tint,#3a241c);border-radius:12px;overflow:hidden}
-.pm-back{position:sticky;top:0;z-index:5;display:block;width:100%;text-align:left;background:var(--surface);color:var(--ink);
-  padding:12px 16px;font:600 15px var(--body);border:0;border-bottom:1px solid var(--line);border-radius:18px 18px 0 0;cursor:pointer}
+.pm-topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;background:var(--surface);
+  border-bottom:1px solid var(--line);border-radius:18px 18px 0 0;padding:4px 6px 4px 0}
+.pm-back{flex:1;display:block;text-align:left;background:none;color:var(--ink);
+  padding:12px 10px;font:600 15px var(--body);border:0;cursor:pointer}
+.pm-share{flex:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:none;
+  color:var(--ink);font-size:17px;cursor:pointer}
+.pm-share:hover{border-color:var(--gold)}
+.sec-share{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--ink);font-size:15px;cursor:pointer}
+.sec-share:hover{border-color:var(--gold)}
 @media (max-width:640px){
   .m-img{max-width:170px}
 }
@@ -1052,7 +1059,7 @@ function secHTML(sec){
     ? `<h3 class="bname">${sec.sub}</h3><p>${sec.s}</p>`
     : `<h2><span class="ib">${ic(SEC_IC[sec.sec||sec.id])}</span>${sec.t}</h2><p>${sec.s}</p>`;
   return `<section class="sec${sec.sec==="essencias"?" brandrow":""}" id="${sec.id}"><div class="sec-h${sec.sec==="essencias"?" brand-h":""}"><div>${titulo}</div>
-  <div class="tools"><div class="arrows"><button data-scroll="-1" aria-label="Voltar">‹</button><button data-scroll="1" aria-label="Avançar">›</button></div>${sortSel(sec.id,sortBy[sec.id])}</div></div>
+  <div class="tools"><div class="arrows"><button data-scroll="-1" aria-label="Voltar">‹</button><button data-scroll="1" aria-label="Avançar">›</button></div>${sortSel(sec.id,sortBy[sec.id])}<button class="sec-share" data-share-sec="${sec.id}" title="Copiar link desta seção">🔗</button></div></div>
   ${chipsHTML(sec)}<div class="rail">${railHTML(sec)}</div></section>`;
 }
 const has = s => CATALOGO.some(p=>p.sec===(s.sec||s.id) && (!s.sub || p.sub===s.sub));
@@ -1596,7 +1603,7 @@ function sendOrder(){
 function openProduct(id){
   const p = byId[id];
   recent = [id,...recent.filter(x=>x!==id)].slice(0,10); sSet("brutt_recent",recent); renderRecent();
-  $("#pm").innerHTML = `<button class="pm-back" data-close>← Voltar pro catálogo</button>
+  $("#pm").innerHTML = `<div class="pm-topbar"><button class="pm-back" data-close>← Voltar pro catálogo</button><button class="pm-share" data-share="${p.id}" title="Copiar link deste produto">🔗</button></div>
     <div class="pm-grid">
       <div class="pm-left">
         <div class="m-img thumb${fotoUrl(p)?" foto":""}" style="${glowOf(p)}">${media(p)}</div>
@@ -1648,6 +1655,8 @@ document.addEventListener("click",e=>{
   else if(t.hasAttribute("data-novo")){ cart={}; minHit=false; updateCart(); closeAll(); fecharFeito(); toast("Carrinho limpo"); }
   else if(t.hasAttribute("data-send")){ sendOrder(); }
   else if(t.hasAttribute("data-close")){ closeAll(); }
+  else if(t.dataset.share){ copiar(linkProduto(t.dataset.share),t); toast("Link do produto copiado!"); }
+  else if(t.dataset.shareSec){ copiar(location.origin+location.pathname+"#"+t.dataset.shareSec,t); toast("Link da seção copiado!"); }
 });
 
 /* ---------- menu do topo (abre ao passar o mouse) ---------- */
@@ -1873,6 +1882,27 @@ async function bootCatalogo(){
   }
   render();
   const el=document.getElementById("perkN"); if(el) el.textContent=String(Math.floor(CATALOGO.length/50)*50);
+  abrirPorLink();
+}
+
+/* ---------- link compartilhável: #produto-nome-do-produto--ID abre o produto; #id-da-secao rola até a seção ---------- */
+function slugify(s){ return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+function abrirPorLink(){
+  const h = location.hash.replace("#","");
+  if(!h) return;
+  if(h.startsWith("produto-")){
+    const resto = h.slice("produto-".length);
+    const id = resto.includes("--") ? resto.split("--").pop() : resto; // "--" separa o nome do código; sem "--" = link antigo, só o código
+    if(byId[id]) setTimeout(()=>openProduct(id), 50); // só a página pronta: abre o modal certo
+    return;
+  }
+  const el = document.getElementById(h);
+  if(el) setTimeout(()=>el.scrollIntoView({behavior:"instant",block:"start"}), 50);
+}
+function linkProduto(id){
+  const p = byId[id];
+  const slug = p ? slugify(p.n) : "";
+  return location.origin + location.pathname + "#produto-" + (slug ? slug+"--" : "") + id;
 }
 /* ---------- Sommelier Brutt: chat flutuante ---------- */
 let somMsgs = [];
