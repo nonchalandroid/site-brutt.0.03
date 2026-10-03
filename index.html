@@ -767,28 +767,6 @@ img{-webkit-user-drag:none;user-drag:none;-webkit-touch-callout:none}
 #lbox .lz-x{position:absolute;top:12px;right:16px;font-size:32px;color:#f3e4c8;line-height:1;pointer-events:none;text-shadow:0 2px 8px rgba(0,0,0,.6)}
 @media (prefers-reduced-motion:reduce){#lbox{animation:none}}
 @media (prefers-reduced-motion:reduce){.sec,.card{animation:none}}
-/* ---- Sommelier Brutt: botão flutuante + painel de chat ---- */
-.som-fab{display:none !important;position:fixed;right:16px;bottom:16px;z-index:50;background:var(--brand);color:#241705;border:0;
-  border-radius:999px;padding:13px 18px;font-weight:700;font-size:14px;box-shadow:0 4px 18px rgba(0,0,0,.4);
-  display:flex;align-items:center;gap:7px;cursor:pointer}
-.som-fab:hover{background:var(--brand-2)}
-.som-panel{position:fixed;z-index:65;background:var(--surface);display:none;flex-direction:column;
-  right:16px;bottom:16px;width:min(380px,calc(100vw - 24px));height:min(560px,calc(100vh - 32px));
-  border-radius:16px;border:1px solid var(--line);box-shadow:0 10px 40px rgba(0,0,0,.5);overflow:hidden}
-.som-panel.on{display:flex}
-@media (max-width:640px){.som-panel{right:8px;left:8px;bottom:8px;width:auto;height:min(72vh,560px)}}
-.som-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--cocoa)}
-.som-head b{font-family:var(--head);letter-spacing:.3px;color:var(--brand-2)}
-.som-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
-.som-bubble{max-width:85%;padding:9px 12px;border-radius:13px;font-size:14px;line-height:1.4}
-.som-bubble.user{align-self:flex-end;background:var(--brand);color:#241705}
-.som-bubble.model{align-self:flex-start;background:var(--cocoa);color:var(--ink);border:1px solid var(--line)}
-.som-cards{align-self:flex-start;max-width:100%;display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
-.som-cards .card{flex:0 0 150px}
-.som-input-row{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
-.som-input-row input{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px 12px;font:inherit}
-.som-input-row button{background:var(--brand);color:#241705;border:0;border-radius:10px;padding:0 16px;font-weight:700;cursor:pointer}
-.som-loading{align-self:flex-start;font-size:13px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -871,15 +849,6 @@ img{-webkit-user-drag:none;user-drag:none;-webkit-touch-callout:none}
 </main>
 
 <div class="veil" id="veil"></div>
-<button class="som-fab" id="somFab">✨ Sommelier Brutt</button>
-<div class="som-panel" id="somPanel">
-  <div class="som-head"><b>✨ Sommelier Brutt</b><button class="x" id="somClose" aria-label="Fechar">×</button></div>
-  <div class="som-msgs" id="somMsgs"></div>
-  <div class="som-input-row">
-    <input id="somInput" placeholder="Quero uma essência doce..." autocomplete="off">
-    <button id="somSend">Enviar</button>
-  </div>
-</div>
 
 <aside class="drawer" id="drawer" aria-label="Carrinho" aria-hidden="true">
   <div class="d-h"><h3 id="dTitle">Seu carrinho</h3><button class="x" id="dClose" aria-label="Fechar">×</button></div>
@@ -2138,57 +2107,6 @@ function compartilhar(btn, url, titulo){
   menu.querySelector('[data-act="copiar"]').onclick = e=>{ e.stopPropagation(); copiar(url,btn); toast("Link copiado!"); fecharShareMenus(); };
   setTimeout(()=>document.addEventListener("click", fecharShareMenus, {once:true}), 0);
 }
-
-/* ---------- Sommelier Brutt: chat flutuante ---------- */
-let somMsgs = [];
-function somAbrir(){
-  $("#somPanel").classList.add("on");
-  if(somMsgs.length===0){
-    somMsgs.push({role:"model", text:"E aí! Sou o Sommelier Brutt 🙂 Me conta o que você tá procurando — pode ser essência, carvão, bebida, whisky, qualquer coisa que a gente tenha na loja."});
-    somRenderMsgs();
-  }
-  $("#somInput").focus();
-}
-function somFechar(){ $("#somPanel").classList.remove("on"); }
-function somRenderMsgs(){
-  const box = $("#somMsgs");
-  box.innerHTML = somMsgs.map(m => {
-    if(m.produtos && m.produtos.length){
-      const reais = m.produtos.map(pr=>byId[pr.id]).filter(Boolean);
-      if(reais.length) return `<div class="som-bubble model">${esc(m.text)}</div><div class="som-cards">${reais.map(p=>card(p,"som")).join("")}</div>`;
-    }
-    return `<div class="som-bubble ${m.role==="user"?"user":"model"}">${esc(m.text)}</div>`;
-  }).join("");
-  box.scrollTop = box.scrollHeight;
-}
-async function somEnviar(){
-  const input = $("#somInput");
-  const texto = input.value.trim();
-  if(!texto || !sb) return;
-  input.value = "";
-  somMsgs.push({role:"user", text:texto});
-  somRenderMsgs();
-  const box = $("#somMsgs");
-  box.insertAdjacentHTML("beforeend", `<div class="som-loading" id="somCarregando">digitando…</div>`);
-  box.scrollTop = box.scrollHeight;
-  try{
-    const { data, error } = await sb.functions.invoke("sommelier-chat", {
-      body: { mensagens: somMsgs.map(m=>({role:m.role, text:m.text})) }
-    });
-    $("#somCarregando")?.remove();
-    if(error || data?.erro) throw new Error(data?.erro || error.message);
-    somMsgs.push({role:"model", text:data.resposta, produtos:data.produtos});
-    somRenderMsgs();
-  }catch(e){
-    $("#somCarregando")?.remove();
-    somMsgs.push({role:"model", text:"Deu ruim aqui do meu lado 😕 pode tentar de novo?"});
-    somRenderMsgs();
-  }
-}
-$("#somFab").onclick = somAbrir;
-$("#somClose").onclick = somFechar;
-$("#somSend").onclick = somEnviar;
-$("#somInput").addEventListener("keydown", e=>{ if(e.key==="Enter") somEnviar(); });
 
 bootCatalogo();
 </script>
