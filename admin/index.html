@@ -1276,6 +1276,7 @@ async function renderGestaoRapida(){
   const area = $("#browseArea");
   area.innerHTML = `
     <select id="bulkCatFiltro" style="margin:10px 0">${parentOptions}</select>
+    <div id="bulkCount" class="t" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
     <div id="bulkList"><div class="loading">Carregando produtos…</div></div>
     <div id="bulkBar" class="bulk-actionbar" hidden></div>`;
   $("#bulkCatFiltro").onchange = (e) => { gestaoFiltro.parentId = e.target.value || null; renderGestaoRapida(); };
@@ -1297,6 +1298,8 @@ async function renderGestaoRapida(){
     const { data } = await q;
     rows = data;
   }
+  const n = (rows||[]).length;
+  $("#bulkCount").textContent = `${n} produto${n===1?'':'s'}${busca?` encontrado${n===1?'':'s'} pra "${busca}"`:''}`;
   const ids = (rows||[]).map(r=>r.id);
   const { data: imgs } = await sb.from("product_images").select("product_id,url").in("product_id", ids.length?ids:["00000000-0000-0000-0000-000000000000"]);
   const imgByProduct = {}; (imgs||[]).forEach(i => imgByProduct[i.product_id] = i.url);
@@ -1308,7 +1311,7 @@ async function renderGestaoRapida(){
     <div class="bulk-row" data-id="${p.id}">
       <input type="checkbox" class="bulk-chk" data-sel>
       <div class="thumb-mini" data-thumb>${imgByProduct[p.id] ? `<img src="${imgByProduct[p.id]}" alt="">` : esc(p.icon||"📦")}</div>
-      <div class="nm" title="${esc(p.name)}">
+      <div class="nm" title="${esc(p.name)} — clique pra abrir a ficha completa" data-abrir style="cursor:pointer;text-decoration:underline;text-decoration-color:transparent" onmouseover="this.style.textDecorationColor='var(--gold)'" onmouseout="this.style.textDecorationColor='transparent'">
         ${esc(p.name)}
         <span class="pub-badge ${p.is_active?'on':'off'}" data-pub>${p.is_active?'🟢 Publicado':'⚪ Despublicado'}</span>
       </div>
@@ -1326,6 +1329,8 @@ async function renderGestaoRapida(){
     const img = imgByProduct[id];
     const marcaSuja = () => { row.classList.add("dirty"); const b=row.querySelector("[data-save]"); b.textContent="Salvar"; b.classList.remove("saved"); };
     row.querySelectorAll("input[data-f]").forEach(inp => inp.addEventListener("input", marcaSuja));
+
+    row.querySelector("[data-abrir]").onclick = () => openProduct(id);
 
     row.querySelector("[data-sel]").onchange = (e) => {
       if(e.target.checked) bulkSelecionados.add(id); else bulkSelecionados.delete(id);
