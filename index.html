@@ -16,6 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <script>
 /* Catálogo: a busca começa aqui no topo, em paralelo com o resto da página (sem esperar biblioteca nenhuma) */
+window.__SUPA={url:"https://vedlxtljilsanykmddtj.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZGx4dGxqaWxzYW55a21kZHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NjYzNzUsImV4cCI6MjEwNjE0MjM3NX0.JlUPvGdomBHLlu5ei5dEb1qFR4FZ2nC45JTZUJ-IN6g"};
 window.__buscaCatalogo=function(){
   var U="https://vedlxtljilsanykmddtj.supabase.co/rest/v1/",K="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZGx4dGxqaWxzYW55a21kZHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NjYzNzUsImV4cCI6MjEwNjE0MjM3NX0.JlUPvGdomBHLlu5ei5dEb1qFR4FZ2nC45JTZUJ-IN6g",H={apikey:K,Authorization:"Bearer "+K};
   function get(q){return fetch(U+q,{headers:H}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();});}
@@ -866,6 +867,71 @@ html.is-locked body{position:fixed;left:0;right:0;width:100%;overflow:hidden;scr
 .pm-ask:hover{background:rgba(227,172,61,.20)}
 .pm-ask:active{transform:scale(.96);background:rgba(227,172,61,.32)}
 .pm-ask:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+/* ===== Endereço de entrega (v2): compacto, busca como no app de referência, resultado verde em destaque ===== */
+.dlv-ov{backdrop-filter:none;-webkit-backdrop-filter:none;border:0;padding:0;margin:0;outline:0;border-radius:0}   /* era um <button> sem border:0: ganhava a moldura clara padrão do navegador (a "borda branca") */
+.dlv-card{border-radius:16px}
+.ent-top{display:flex;align-items:center;gap:2px;padding:4px 12px 4px 4px;border-bottom:1px solid var(--line);flex:none}
+.ent-back{width:44px;height:44px;border:0;background:none;color:var(--ink);display:grid;place-items:center;border-radius:12px;cursor:pointer}
+.ent-back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.ent-top h3{margin:0;font:700 17px var(--head);letter-spacing:.3px}
+.ent-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:10px 14px 12px}
+.ent-lbl{display:block;font:700 13px var(--body);margin:0 0 5px;color:var(--ink)}
+.ent-busca{display:flex;align-items:center;gap:6px;height:48px;padding:0 6px 0 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1.5px solid var(--line)}
+.ent-busca:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(227,172,61,.15)}
+.ent-lupa,.ent-pin{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.ent-lupa{color:var(--muted)}
+.ent-busca input{flex:1;min-width:0;height:100%;border:0;outline:0;background:none;color:var(--ink);font-size:16px}
+.ent-busca input::placeholder{color:var(--muted)}
+.ent-calc{flex:none;height:36px;padding:0 14px;border:0;border-radius:9px;background:var(--gold);color:#241705;font:700 14px var(--body);cursor:pointer}
+.ent-calc:active{transform:scale(.96)}
+.ent-ajuda{margin:6px 0 0;font-size:12.5px;line-height:1.3;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 12px}
+.ent-ajuda span::before{content:"• ";opacity:.7}
+.ent-sug{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.ent-sug button{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:6px 12px;text-align:left;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer;font:inherit}
+.ent-sug button:hover,.ent-sug button:active{border-color:var(--gold);background:rgba(227,172,61,.10)}
+.ent-sug button .ent-pin{color:var(--gold)}
+.ent-sug b{display:block;font-size:14px}.ent-sug small{display:block;color:var(--muted);font-size:12px}
+.ent-status{margin-top:10px;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.35}
+.ent-status[hidden]{display:none}
+.ent-status.load{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink)}
+.ent-spin{width:24px;height:24px;flex:none;color:var(--gold);animation:entGira 1s linear infinite}
+@keyframes entGira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.ent-spin{animation-duration:3s}}
+.ent-status.ok{background:var(--ok);color:#fff;padding:10px 14px;box-shadow:0 4px 18px rgba(31,122,77,.35)}
+.ent-ok-t{font:700 13px var(--body)}
+.ent-ok-row{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:2px 14px;margin-top:3px}
+.ent-ok-row>div{min-width:0}
+.ent-ok-row small{display:block;font:600 10.5px var(--body);letter-spacing:.07em;text-transform:uppercase;opacity:.85}
+.ent-ok-row b{display:block;font:800 30px/1.05 var(--body);white-space:nowrap}
+.ent-ok-row small{white-space:nowrap}
+.ent-km{text-align:right}.ent-km b{font-size:19px}
+.ent-status.ok p{margin:6px 0 0;font-size:11.5px;line-height:1.3;opacity:.92}
+.ent-status.no,.ent-status.err{background:rgba(214,57,43,.14);border:1px solid rgba(214,57,43,.55);color:#ffb4aa}
+.ent-status.no b,.ent-status.err b{display:block;color:#ffd0ca}.ent-status.no span,.ent-status.err span{display:block;font-size:13px;margin-top:2px}
+.ent-resumo{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--ink)}
+.ent-resumo[hidden]{display:none}
+.ent-resumo span{display:block;min-width:0;line-height:1.35}.ent-resumo b{font-weight:700}
+.ent-resumo .ent-pin{color:var(--gold);vertical-align:-3px;margin-right:6px}
+.ent-resumo button{flex:none;border:0;background:none;color:var(--gold);font:700 13px var(--body);padding:8px 4px;cursor:pointer}
+.ent-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:10px}
+.ent-grid[data-sel="0"]{display:none}
+.ent-grid[data-modo="busca"] .man{display:none}
+.ent-grid[data-modo="busca"] .man.falta{display:flex}
+.ent-grid .s2{grid-column:span 2}.ent-grid .s3{grid-column:span 3}.ent-grid .s4{grid-column:span 4}.ent-grid .s6{grid-column:span 6}
+.ent-f{display:flex;flex-direction:column;gap:3px;min-width:0;font-size:12.5px}
+.ent-f span{font-weight:600;color:var(--ink)}.ent-f em{font-style:normal;font-weight:400;color:var(--muted)}
+.ent-f input{width:100%;min-width:0;height:44px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font-size:16px;outline:none}
+.ent-f input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(227,172,61,.15)}
+.ent-f.bad input{border-color:var(--hot);box-shadow:0 0 0 2px rgba(214,57,43,.28)}
+.ent-manual{width:100%;margin-top:10px;min-height:46px;border:0;border-radius:10px;background:rgba(255,255,255,.08);color:var(--ink);font:700 14px var(--body);display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.ent-manual:active{background:rgba(255,255,255,.14)}
+.ent-foot{flex:none;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--surface)}
+.ent-go{width:100%;min-height:52px;border:0;border-radius:999px;font:700 16px var(--body);background:rgba(255,255,255,.10);color:var(--muted);cursor:not-allowed;display:flex;align-items:center;justify-content:center;gap:8px}
+.ent-go.ok{background:var(--ok);color:#fff;cursor:pointer;box-shadow:0 4px 16px rgba(31,122,77,.4)}
+.ent-go.ok::after{content:"›";font-size:26px;line-height:1;margin-left:2px}
+.ent-go.ok:active{transform:scale(.98)}
+.ent-go.no{background:rgba(214,57,43,.18);color:#ffb4aa}
 </style>
 </head>
 <body>
@@ -930,8 +996,8 @@ html.is-locked body{position:fixed;left:0;right:0;width:100%;overflow:hidden;scr
       <div class="ir">
         <div class="ir-t"><span class="ib" data-ic="pin"></span><div><h2>Como chegar</h2><p>Tabacaria Brutt · Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ · Conjunto Campinho</p></div></div>
         <div class="ir-b">
-          <a class="ibtn" href="https://www.google.com/maps/dir/?api=1&destination=Tabacaria%20Brutt&destination_place_id=ChIJ2ZoYwxLjmwARXZoZR_SDnp0" target="_blank" rel="noopener"><span data-ic="pin"></span>Google Maps</a>
-          <a class="ibtn" href="https://waze.com/ul?ll=-22.881489,-43.613750&navigate=yes&zoom=17" target="_blank" rel="noopener"><span data-ic="waze"></span>Waze</a>
+          <a class="ibtn" href="https://www.google.com/maps/dir//Tabacaria+Brutt,+Rua+18,+145+-+Campo+Grande,+Rio+de+Janeiro+-+RJ,+23067-030/@-22.8716397,-43.5895216,15z/data=!4m8!4m7!1m0!1m5!1m1!1s0x9be312c3189ad9:0x9d9e83f447199a5d!2m2!1d-43.6137391!2d-22.8814745?entry=ttu&amp;g_ep=EgoyMDI2MDkzMC4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener"><span data-ic="pin"></span>Google Maps</a>
+          <a class="ibtn" href="https://ul.waze.com/ul?venue_id=207357475.2073509216.41035760&amp;overview=yes&amp;utm_campaign=default&amp;utm_source=waze_website&amp;utm_medium=lm_share_location" target="_blank" rel="noopener"><span data-ic="waze"></span>Waze</a>
           <button type="button" class="ibtn" data-copy="end"><span data-ic="copy"></span>Copiar endereço</button>
         </div>
       </div>
@@ -1082,7 +1148,8 @@ function whiskyHTML(p){
 }
 function flavorBars(p){
   const f=p.flavor; if(!f) return "";
-  const eixos=[["citrico","🍊","Cítrico","#FF7700"],["tropical","🏝️","Tropical","#FFD700"],["doce","🍇","Adocicado","#8A2BE2"],["mentolado","🍃","Mentolado","#00FF7F"]]
+  const eixos=[["citrico","🍊","Cítrico","#FF7700"],["tropical","🏝️","Tropical","#FFD700"],["doce","🍇","Adocicado","#8A2BE2"],["frutado","🍓","Frutado","#E83E5A"],["mentolado","🍃","Mentolado","#00FF7F"]]
+    .filter(([k])=> k!=="frutado" || ("frutado" in f))      /* essências antigas (só 4 eixos) não ganham uma barra "Frutado 0" falsa */
     .map(([k,emoji,lbl,cor])=>({k,emoji,lbl,cor,v:Math.max(0,Math.min(10,f[k]||0))}));
   const max=Math.max(...eixos.map(x=>x.v));
   const domK = max>0 ? eixos.find(x=>x.v===max).k : null;
@@ -1281,6 +1348,7 @@ const FLAVOR_KW=[
   [["citrico","citrica","citricos","citricas"],"citrico","cítrico"],
   [["adocicado","adocicada","adocicados","adocicadas"],"doce","adocicado"],
   [["tropical","tropicais"],"tropical","tropical"],
+  [["frutado","frutada","frutados","frutadas"],"frutado","frutado"],
   [["mentolado","mentolada","mentolados","mentoladas"],"mentolado","mentolado"]
 ];
 /* a palavra digitada (mín. 4 letras, mesmo incompleta: "citr", "adoc", "trop", "ment") aponta pro perfil aromático */
@@ -1582,166 +1650,225 @@ async function geocodificar(d){
   try{ const r=await fetch("https://brasilapi.com.br/api/cep/v2/"+d.cep); const j=await r.json(); if(j&&j.location&&j.location.coordinates) return {lat:+j.location.coordinates.latitude,lng:+j.location.coordinates.longitude}; }catch(e){}
   return null;
 }
+/* ---------- Endereço de entrega (v2): busca, cálculo automático e "Avançar: R$ X" ---------- */
+let dlvGeo = null, _dlvGeoChave = "", _dlvModo = "busca", _dlvSel = false, _dlvEstado = "vazio", _calcTok = 0, _calcT = null, _dlvChave = "", _dlvLista = [];
+const $d = id => document.getElementById(id);
+const DLV_LUPA = '<svg class="ent-lupa" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+const DLV_PIN = '<svg class="ent-pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/></svg>';
+const DLV_SPIN = '<svg class="ent-spin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="4.2 4.2" stroke-linecap="round"/></svg>';
+
 function ensureDlv(){
-  if($("#dlv")) return;
+  if($d("dlv")) return;
   document.body.insertAdjacentHTML("beforeend",`<div id="dlv" hidden>
     <button type="button" class="dlv-ov" data-dlv-close aria-label="Fechar"></button>
     <div class="dlv-card" role="dialog" aria-modal="true" aria-labelledby="dlvTitle">
-      <div class="dlv-top"><h3 id="dlvTitle">📍 Endereço de entrega</h3><button type="button" class="dlv-x" data-dlv-close aria-label="Fechar">×</button></div>
-      <div class="dlv-scroll" id="dlvScroll">
-        <button type="button" class="dlv-geo-btn" id="dlvGeoBtn">🔎 Não sei o CEP: buscar pelo nome da rua</button>
-        <div id="dlvGeo" hidden>
-          <div class="dlv-geo-row"><input id="dlvGeoQ" placeholder="Nome da rua" enterkeyhint="search"><button type="button" class="dlv-geo-go" id="dlvGeoGo">Buscar</button></div>
-          <div id="dlvGeoRes" class="dlv-geo-res"></div>
-        </div>
-        <div class="dlv-grid">
-          <label class="dlv-f s3"><span>CEP</span><input id="dlvCep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" maxlength="9" enterkeyhint="next"></label>
-          <label class="dlv-f s3"><span>Número</span><input id="dlvNum" inputmode="numeric" autocomplete="address-line2" enterkeyhint="next"></label>
-          <label class="dlv-f s6"><span>Rua</span><input id="dlvRua" autocomplete="address-line1" enterkeyhint="next"></label>
-          <label class="dlv-f s6"><span>Bairro</span><input id="dlvBairro" enterkeyhint="next"></label>
-          <label class="dlv-f s4"><span>Cidade</span><input id="dlvCidade" enterkeyhint="next"></label>
-          <label class="dlv-f s2"><span>UF</span><input id="dlvUf" maxlength="2" placeholder="RJ" autocapitalize="characters" style="text-transform:uppercase" enterkeyhint="next"></label>
-          <label class="dlv-f s6"><span>Complemento <em>(se tiver)</em></span><input id="dlvComp" placeholder="Apto, bloco, casa 2…" enterkeyhint="done"></label>
+      <div class="ent-top"><button type="button" class="ent-back" data-dlv-close aria-label="Voltar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg></button><h3 id="dlvTitle">Entrega</h3></div>
+      <div class="ent-scroll" id="dlvScroll">
+        <label class="ent-lbl" for="dlvBusca">Buscar endereço</label>
+        <div class="ent-busca">${DLV_LUPA}<input id="dlvBusca" type="search" placeholder="Digite um local" enterkeyhint="search" autocomplete="off"><button type="button" class="ent-calc" id="dlvCalc">Calcular</button></div>
+        <p class="ent-ajuda">Você pode buscar usando: <span>Rua/Avenida</span><span>Bairro</span><span>Cidade</span><span>CEP</span></p>
+        <div id="dlvSug" class="ent-sug" hidden></div>
+        <div id="dlvStatus" class="ent-status" role="status" aria-live="polite" hidden></div>
+        <div id="dlvResumo" class="ent-resumo" hidden></div>
+        <div class="ent-grid" id="dlvGrid" data-modo="busca" data-sel="0">
+          <label class="ent-f s3 man"><span>CEP</span><input id="dlvCep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" maxlength="9" enterkeyhint="next"></label>
+          <label class="ent-f s3"><span>Número</span><input id="dlvNum" inputmode="numeric" autocomplete="address-line2" enterkeyhint="next"></label>
+          <label class="ent-f s6 man"><span>Rua</span><input id="dlvRua" autocomplete="address-line1" enterkeyhint="next"></label>
+          <label class="ent-f s6 man"><span>Bairro</span><input id="dlvBairro" enterkeyhint="next"></label>
+          <label class="ent-f s4 man"><span>Cidade</span><input id="dlvCidade" enterkeyhint="next"></label>
+          <label class="ent-f s2 man"><span>UF</span><input id="dlvUf" maxlength="2" placeholder="RJ" autocapitalize="characters" style="text-transform:uppercase" enterkeyhint="next"></label>
+          <label class="ent-f s6"><span>Complemento <em>(se tiver)</em></span><input id="dlvComp" placeholder="Apto, bloco, casa 2…" enterkeyhint="done"></label>
         </div>
         <p id="dlvMsg" class="dlv-msg" role="alert" hidden></p>
-        <div id="dlvRes" class="dlv-res" hidden></div>
+        <button type="button" class="ent-manual" id="dlvManual">${DLV_PIN}<span>Preencher o endereço manualmente</span></button>
       </div>
-      <div class="dlv-foot"><button type="button" class="dlv-verify" id="dlvBtn">${ic("search")}Verificar disponibilidade</button></div>
+      <div class="ent-foot"><button type="button" class="ent-go" id="dlvAvancar" disabled>Avançar</button></div>
     </div>
   </div>`);
+  const busca = $d("dlvBusca");
+  busca.addEventListener("keydown", ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); busca.blur(); dlvBuscar(); } });
+  busca.addEventListener("input", ()=>{ const s=$d("dlvSug"); s.hidden = true; s.innerHTML = ""; });
+  $d("dlvCalc").onclick = dlvBuscar;
+  $d("dlvManual").onclick = dlvAlternaModo;
+  $d("dlvAvancar").onclick = dlvAvancar;
+  $d("dlvComp").addEventListener("keydown", ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); dlvAvancar(); } });
+  ["dlvCep","dlvRua","dlvBairro","dlvCidade","dlvUf"].forEach(id=> $d(id).addEventListener("input", dlvInputEndereco));
+  ["dlvNum","dlvComp"].forEach(id=> $d(id).addEventListener("input", ()=>{ dlvLimpaAviso(); dlvBotao(); }));
+}
 
-  ["dlvCep","dlvRua","dlvNum","dlvBairro","dlvCidade","dlvUf","dlvComp"].forEach(id=>{ const el=$("#"+id); if(el) el.addEventListener("input",dlvInput); });
-  $("#dlvBtn").onclick = dlvPrimario;
-  $("#dlvComp").addEventListener("keydown",ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); dlvPrimario(); } });
-  $("#dlvGeoBtn").onclick = dlvGeoToggle;
-  $("#dlvGeoGo").onclick = buscarRua;
-  $("#dlvGeoQ").addEventListener("keydown",ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); buscarRua(); } });
+/* ---- leitura e checagem dos campos ---- */
+function dlvDados(){ const v=id=>($d(id).value||"").trim(); return { cep:v("dlvCep").replace(/\D/g,""), rua:v("dlvRua"), numero:v("dlvNum"), bairro:v("dlvBairro"), cidade:v("dlvCidade"), uf:v("dlvUf").toUpperCase(), complemento:v("dlvComp") }; }
+const dlvPodeCalcular = d => d.cep.length===8 || (!!d.rua && !!d.cidade && d.uf.length===2);
+const dlvChaveDe = d => [d.cep,d.rua,d.bairro,d.cidade,d.uf].join("|").toLowerCase();
+function dlvAviso(msg, campo){
+  const m=$d("dlvMsg"); m.textContent=msg; m.hidden=false;
+  const el=campo && $d(campo); if(el){ const l=el.closest(".ent-f"); if(l){ l.classList.add("bad","falta"); } dlvVisibilidade(); el.focus(); }
 }
-let dlvGeo=null;
-function dlvGeoToggle(){
-  const g=$("#dlvGeo"); g.hidden=!g.hidden;
-  if(!g.hidden) $("#dlvGeoQ").focus();
+function dlvLimpaAviso(){ const m=$d("dlvMsg"); if(m){ m.hidden=true; m.textContent=""; } document.querySelectorAll("#dlvGrid .ent-f.bad").forEach(l=>l.classList.remove("bad")); }
+function dlvStatus(tipo, html){ const s=$d("dlvStatus"); if(!tipo){ s.hidden=true; s.className="ent-status"; s.innerHTML=""; return; } s.hidden=false; s.className="ent-status "+tipo; s.innerHTML=html; }
+
+/* ---- o que aparece: só a busca; ao escolher um endereço entram Número/Complemento (e o que faltar) ---- */
+function dlvVisibilidade(){
+  const g=$d("dlvGrid"); if(!g) return;
+  const d=dlvDados(), temDado=_dlvSel || !!d.rua || d.cep.length===8;
+  g.dataset.modo=_dlvModo; g.dataset.sel=(temDado||_dlvModo==="manual")?"1":"0";
+  g.querySelectorAll(".ent-f.man").forEach(l=>{ const vazio=!l.querySelector("input").value.trim(); l.classList.toggle("falta", temDado && vazio); });
+  const r=$d("dlvResumo");
+  if(temDado && _dlvModo==="busca" && d.rua){ r.hidden=false; r.innerHTML=`<span>${DLV_PIN}<b>${esc(d.rua)}</b>${d.bairro?" · "+esc(d.bairro):""}${d.cidade?" — "+esc(d.cidade)+(d.uf?"/"+esc(d.uf):""):""}</span><button type="button" id="dlvTrocar">Trocar</button>`; $d("dlvTrocar").onclick=dlvLimpaSelecao; }
+  else { r.hidden=true; r.innerHTML=""; }
+  $d("dlvManual").querySelector("span").textContent = _dlvModo==="manual" ? "Voltar para a busca" : "Preencher o endereço manualmente";
 }
-async function buscarRua(){
-  const q=($("#dlvGeoQ").value||"").trim();
-  const box=$("#dlvGeoRes");
-  if(q.length<3){ box.innerHTML='<p class="dlv-geo-err">⚠️ Digite pelo menos 3 letras da rua.</p>'; return; }
-  box.innerHTML='<p class="dlv-geo-err">🔎 Buscando…</p>';
-  const preencher=(r)=>{
-    const a=r.address||{};
-    const sigla=Object.keys(UF_NOME).find(k=>UF_NOME[k]===a.state)||a.state||"";
-    $("#dlvRua").value=a.road||r.name||"";
-    $("#dlvBairro").value=a.suburb||a.neighbourhood||a.quarter||"";
-    $("#dlvCidade").value=a.city||a.town||a.village||a.municipality||"";
-    $("#dlvUf").value=sigla;
-    if(a.postcode){ const v=(a.postcode||"").replace(/\D/g,"").slice(0,8); $("#dlvCep").value=v.length>5?v.slice(0,5)+"-"+v.slice(5):v; }
-    dlvGeo={lat:+r.lat,lng:+r.lon};
-    box.innerHTML='<p class="dlv-geo-err">✅ Endereço encontrado! Confira e complete o que falta (número, por exemplo).</p>';
-    dlvRefresh();
-    $("#dlvNum").focus();
-  };
-  const trySearch=(coords)=>{
-    const lat=coords?coords.lat:-22.881489, lng=coords?coords.lng:-43.613750, d=coords?0.075:0.14;
-    const url="https://nominatim.openstreetmap.org/search?format=json&limit=6&addressdetails=1&countrycodes=br&q="+encodeURIComponent(q+", Rio de Janeiro")+`&viewbox=${lng-d},${lat+d},${lng+d},${lat-d}&bounded=1`;
-    return fetch(url,{headers:{Accept:"application/json"}}).then(r=>r.json());
-  };
-  try{
-    let results=null;
-    try{
-      const pos=await new Promise((ok,fail)=>navigator.geolocation.getCurrentPosition(ok,fail,{timeout:7000,maximumAge:300000}));
-      results=await trySearch({lat:pos.coords.latitude,lng:pos.coords.longitude});
-      if(!results||!results.length) results=await trySearch(null);
-    }catch(e){ results=await trySearch(null); }
-    if(!results||!results.length){ box.innerHTML='<p class="dlv-geo-err">😕 Não encontrei essa rua. Tente outro nome ou preencha manualmente.</p>'; return; }
-    box.innerHTML=results.map((r,i)=>{
-      const a=r.address||{};
-      return `<button type="button" class="dlv-geo-item" data-i="${i}">${ic("pin")}<span><b>${esc(a.road||r.name||"Rua")}</b>${a.suburb?` · ${esc(a.suburb)}`:""}<br><small>${esc([a.suburb,a.city||a.town,a.state].filter(Boolean).join(" · "))}</small></span></button>`;
-    }).join("");
-    box.querySelectorAll(".dlv-geo-item").forEach(b=>b.addEventListener("click",()=>preencher(results[+b.dataset.i])));
-  }catch(e){ box.innerHTML='<p class="dlv-geo-err">😕 Erro na busca. Tente novamente ou preencha manualmente.</p>'; }
+function dlvAlternaModo(){
+  _dlvModo = _dlvModo==="manual" ? "busca" : "manual"; dlvVisibilidade();
+  if(_dlvModo==="manual") setTimeout(()=>$d("dlvCep").focus(),60);
 }
-function dlvDados(){ return { cep:($("#dlvCep").value||"").replace(/\D/g,""), rua:($("#dlvRua").value||"").trim(), numero:($("#dlvNum").value||"").trim(), bairro:($("#dlvBairro").value||"").trim(), cidade:($("#dlvCidade").value||"").trim(), uf:($("#dlvUf").value||"").trim().toUpperCase(), complemento:($("#dlvComp").value||"").trim() }; }
-function dlvCompleto(d){ return d.cep.length===8 && !!d.rua && !!d.numero && !!d.bairro && !!d.cidade && d.uf.length===2; }
-function dlvInput(e){
-  const cep=$("#dlvCep");
-  const v=(cep.value||"").replace(/\D/g,"").slice(0,8);
-  cep.value = v.length>5 ? v.slice(0,5)+"-"+v.slice(5) : v;
-  if(e && e.target===cep){
-    if(v.length===8 && !cep.dataset.done){
-      cep.dataset.done="1";
-      fetch("https://brasilapi.com.br/api/cep/v2/"+v).then(r=>r.json()).then(j=>{
-        if(!j||j.type==="service_error") return;
-        if(j.street && !$("#dlvRua").value) $("#dlvRua").value=j.street;
-        if(j.neighborhood && !$("#dlvBairro").value) $("#dlvBairro").value=j.neighborhood;
-        if(j.city && !$("#dlvCidade").value) $("#dlvCidade").value=j.city;
-        if(j.state && !$("#dlvUf").value) $("#dlvUf").value=j.state;
-      }).catch(()=>{}).finally(()=>{ setTimeout(()=>{ delete cep.dataset.done; },400); });
-    } else if(v.length<8){ delete cep.dataset.done; }
+function dlvLimpaSelecao(){
+  _dlvSel=false; dlvGeo=null; _calcTok++; dlvPend=null; _dlvEstado="vazio";
+  ["dlvCep","dlvRua","dlvBairro","dlvCidade","dlvUf","dlvNum","dlvComp"].forEach(id=>$d(id).value="");
+  dlvStatus(null); dlvLimpaAviso(); dlvVisibilidade(); dlvBotao(); $d("dlvBusca").value=""; $d("dlvBusca").focus();
+}
+
+/* ---- botão de baixo: Avançar: R$ X ---- */
+function dlvBotao(){
+  const b=$d("dlvAvancar"); if(!b) return;
+  b.className="ent-go"; b.disabled=true;
+  if(_dlvEstado==="calculando"){ b.textContent="Calculando…"; }
+  else if(_dlvEstado==="fora"){ b.textContent="Entrega indisponível"; b.classList.add("no"); }
+  else if(_dlvEstado==="ok" && dlvPend){ b.disabled=false; b.classList.add("ok"); b.textContent="Avançar: "+R(total()+dlvPend.taxa); }
+  else b.textContent="Avançar";
+}
+
+/* ---- busca (rua/bairro/cidade ou CEP): 1 consulta por vez, só quando a pessoa manda (Enter / Calcular) ---- */
+async function dlvBuscar(){
+  const q=($d("dlvBusca").value||"").trim(); dlvLimpaAviso();
+  if(!q){                                                    /* sem texto na busca: calcula com o que está preenchido */
+    const d=dlvDados();
+    if(dlvPodeCalcular(d)) return dlvCalcular({forcar:true});
+    return dlvStatus("err","<b>Digite um endereço pra buscar</b><span>Rua, bairro, cidade ou CEP. Ou toque em “Preencher o endereço manualmente”.</span>");
   }
-  dlvRefresh();
+  const semNum=q.replace(/[\d\-\s]/g,"");
+  if(!semNum && q.replace(/\D/g,"").length===8) return dlvBuscarCep(q.replace(/\D/g,""));
+  return dlvBuscarTexto(q);
 }
-/* validação com mensagem clara (o botão não fica mais "apagado" sem explicar o motivo) */
-function dlvValida(d){
-  if(d.cep.length!==8) return {msg:"Digite um CEP válido, com 8 números.",campo:"dlvCep"};
-  if(!d.rua)           return {msg:"Preencha o nome da rua.",campo:"dlvRua"};
-  if(!d.numero)        return {msg:"Preencha o número da casa ou do prédio.",campo:"dlvNum"};
-  if(!d.bairro)        return {msg:"Preencha o bairro.",campo:"dlvBairro"};
-  if(!d.cidade)        return {msg:"Preencha a cidade.",campo:"dlvCidade"};
-  if(d.uf.length!==2)  return {msg:"Digite a sigla do estado, com 2 letras (exemplo: RJ).",campo:"dlvUf"};
-  return null;
+async function dlvBuscarCep(c){
+  dlvStatus("load", DLV_SPIN+"<span>Buscando o CEP…</span>");
+  try{
+    const r=await fetch("https://brasilapi.com.br/api/cep/v2/"+c); const j=await r.json();
+    if(!r.ok || !j || j.type==="service_error" || !j.street) throw 0;
+    dlvPreenche({rua:j.street,bairro:j.neighborhood,cidade:j.city,uf:j.state,cep:c});
+    const co=j.location&&j.location.coordinates; const geo=(co&&co.latitude)?{lat:+co.latitude,lng:+co.longitude}:null;
+    dlvEscolheu(geo);
+  }catch(e){ dlvStatus("err","<b>Não encontramos esse CEP</b><span>Confira os números ou busque pelo nome da rua.</span>"); }
 }
-function dlvMostraErro(msg,campo){
-  const m=$("#dlvMsg"); m.textContent=msg; m.hidden=false;
-  const el=$("#"+campo); if(el){ const l=el.closest(".dlv-f"); if(l) l.classList.add("bad"); el.focus(); }
+async function dlvBuscarTexto(q){
+  dlvStatus("load", DLV_SPIN+"<span>Buscando o endereço…</span>");
+  const lat=ENTREGA_LOJA.lat, lng=ENTREGA_LOJA.lng, d=0.30;
+  const url="https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=1&countrycodes=br&q="+encodeURIComponent(q+", Rio de Janeiro")+`&viewbox=${lng-d},${lat+d},${lng+d},${lat-d}&bounded=1`;
+  try{
+    const r=await fetch(url,{headers:{Accept:"application/json"}}); const res=await r.json();
+    const lista=(res||[]).filter(x=>x.address && (x.address.road||x.name));
+    if(!lista.length){ dlvStatus("err","<b>Não encontramos esse endereço</b><span>Tente outro nome ou toque em “Preencher o endereço manualmente”.</span>"); return; }
+    if(lista.length===1) return dlvEscolhe(lista[0]);
+    _dlvLista=lista; dlvStatus(null);
+    const s=$d("dlvSug"); s.hidden=false;
+    s.innerHTML=lista.map((x,i)=>{ const a=x.address; return `<button type="button" data-i="${i}">${DLV_PIN}<span><b>${esc(a.road||x.name)}</b><small>${esc([a.suburb||a.neighbourhood||a.quarter,a.city||a.town||a.village||a.municipality,a.state].filter(Boolean).join(" · "))}</small></span></button>`; }).join("");
+    s.querySelectorAll("button").forEach(b=>b.onclick=()=>dlvEscolhe(lista[+b.dataset.i]));
+  }catch(e){ dlvStatus("err","<b>A busca não respondeu agora</b><span>Tente de novo ou preencha o endereço manualmente.</span>"); }
 }
-function dlvModoVerificar(){ const b=$("#dlvBtn"); if(!b) return; b.dataset.mode=""; b.className="dlv-verify"; b.disabled=false; b.innerHTML=ic("search")+"Verificar disponibilidade"; }
-function dlvModoConfirmar(){ const b=$("#dlvBtn"); b.dataset.mode="confirmar"; b.className="dlv-verify ok"; b.disabled=false; b.innerHTML="Confirmar entrega ✔"; }
-function dlvPrimario(){ const b=$("#dlvBtn"); if(b.dataset.mode==="confirmar") confirmarEntrega(); else verificarEntrega(); }
-function dlvRefresh(){
-  const m=$("#dlvMsg"); if(m){ m.hidden=true; m.textContent=""; }
-  document.querySelectorAll("#dlv .dlv-f.bad").forEach(l=>l.classList.remove("bad"));
-  const b=$("#dlvBtn");
-  if(b && b.dataset.mode==="confirmar"){ dlvPend=null; $("#dlvRes").hidden=true; $("#dlvRes").innerHTML=""; dlvModoVerificar(); }   /* mudou algo no endereço: precisa verificar de novo */
+function dlvEscolhe(r){
+  const a=r.address||{};
+  const sigla=Object.keys(UF_NOME).find(k=>UF_NOME[k]===a.state)||"";
+  const cep=(a.postcode||"").replace(/\D/g,"").slice(0,8);
+  dlvPreenche({rua:a.road||r.name||"",bairro:a.suburb||a.neighbourhood||a.quarter||"",cidade:a.city||a.town||a.village||a.municipality||"",uf:sigla,cep:cep.length===8?cep:""});
+  dlvEscolheu({lat:+r.lat,lng:+r.lon});
+}
+function dlvPreenche(v){
+  $d("dlvRua").value=v.rua||""; $d("dlvBairro").value=v.bairro||""; $d("dlvCidade").value=v.cidade||""; $d("dlvUf").value=v.uf||"";
+  const c=v.cep||""; $d("dlvCep").value=c.length>5?c.slice(0,5)+"-"+c.slice(5):c;
+}
+function dlvEscolheu(geo){                                    /* endereço escolhido: já calcula, sem precisar de outro clique */
+  _dlvSel=true; const s=$d("dlvSug"); s.hidden=true; s.innerHTML=""; dlvLimpaAviso();
+  dlvGeo=geo; _dlvGeoChave=dlvChaveDe(dlvDados());
+  dlvVisibilidade(); dlvCalcular({forcar:true});
+  setTimeout(()=>{ const n=$d("dlvNum"); if(!n.value) n.focus(); },120);
 }
 
-function abrirEntregaModal(){
-  ensureDlv();
-  const w=$("#dlv"); w.hidden=false;
-  $("#dlvRes").hidden=true; $("#dlvRes").innerHTML="";
-  dlvPend=null; dlvModoVerificar(); dlvRefresh();
-  ($("#dlvCep").value?$("#dlvNum"):$("#dlvCep")).focus();
+/* ---- digitou/mudou o endereço na mão: máscara do CEP, preenche pelo CEP e recalcula sozinho ---- */
+function dlvInputEndereco(e){
+  const cep=$d("dlvCep"), v=(cep.value||"").replace(/\D/g,"").slice(0,8);
+  cep.value = v.length>5 ? v.slice(0,5)+"-"+v.slice(5) : v;
+  dlvLimpaAviso(); dlvGeo=null; _dlvEstado="vazio"; dlvPend=null; dlvStatus(null); dlvBotao();
+  if(e && e.target===cep && v.length===8 && !cep.dataset.done){
+    cep.dataset.done="1";
+    fetch("https://brasilapi.com.br/api/cep/v2/"+v).then(r=>r.json()).then(j=>{
+      if(!j||j.type==="service_error") return;
+      if(j.street && !$d("dlvRua").value) $d("dlvRua").value=j.street;
+      if(j.neighborhood && !$d("dlvBairro").value) $d("dlvBairro").value=j.neighborhood;
+      if(j.city && !$d("dlvCidade").value) $d("dlvCidade").value=j.city;
+      if(j.state && !$d("dlvUf").value) $d("dlvUf").value=j.state;
+      dlvAgenda(150);
+    }).catch(()=>{ dlvAgenda(300); }).finally(()=>{ setTimeout(()=>{ delete cep.dataset.done; },400); });
+  } else if(v.length<8 && e && e.target===cep){ delete cep.dataset.done; clearTimeout(_calcT); }
+  else dlvAgenda(900);
 }
-function fecharEntregaModal(){ const w=$("#dlv"); if(!w) return; w.hidden=true; }
-async function verificarEntrega(){
-  const d=dlvDados(); const falha=dlvValida(d); if(falha){ dlvMostraErro(falha.msg,falha.campo); return; }
-  const btn=$("#dlvBtn"); btn.disabled=true; btn.textContent="Verificando…";
-  const res=$("#dlvRes"); res.hidden=true; res.innerHTML="";
-  const geo=await geocodificar(d);
-  btn.innerHTML=ic("search")+"Verificar disponibilidade";
-  res.hidden=false;
-  if(!geo){ res.className="dlv-res err"; res.innerHTML="Não conseguimos localizar seu endereço agora. Confira os dados e tente novamente em instantes."; btn.disabled=false; return; }
+function dlvAgenda(ms){ clearTimeout(_calcT); _calcT=setTimeout(()=>{ if(dlvPodeCalcular(dlvDados())) dlvCalcular({}); }, ms); }
+
+/* ---- o cálculo: coordenadas -> distância pela rota -> taxa ---- */
+async function dlvCalcular(op){
+  op=op||{}; clearTimeout(_calcT);
+  const d=dlvDados();
+  if(!dlvPodeCalcular(d)){ if(op.forcar) dlvAviso("Digite um CEP válido (8 números) ou preencha rua, cidade e estado.","dlvCep"); return; }
+  const chave=dlvChaveDe(d);
+  if(!op.forcar && dlvPend && _dlvChave===chave) return;
+  const tok=++_calcTok; _dlvEstado="calculando"; dlvPend=null; dlvBotao();
+  dlvStatus("load", DLV_SPIN+"<span>Calculando a entrega…</span>");
+  let geo = (dlvGeo && _dlvGeoChave===chave) ? dlvGeo : await geocodificar(d);
+  if(tok!==_calcTok) return;                                  /* chegou resposta velha: ignora */
+  if(!geo){ _dlvEstado="erro"; dlvStatus("err","<b>Não conseguimos localizar esse endereço agora</b><span>Confira os dados e tente de novo em instantes.</span>"); dlvBotao(); return; }
+  dlvGeo=geo; _dlvGeoChave=chave;
   const km=Math.round((await distanciaRotaKm(geo))*10)/10;
+  if(tok!==_calcTok) return;
   if(km>ENTREGA_LOJA.raioMaxKm){
-    res.className="dlv-res no";
-    res.innerHTML="<b>❌ No momento, a entrega para esta região está indisponível.</b><span class=\"dlv-sub\">Você ainda pode pedir pelo Uber Flash ou 99 Entregas no modo <b>Cotar frete</b>.</span>";
-    btn.disabled=false; return;
+    _dlvEstado="fora"; dlvStatus("no","<b>Entrega indisponível para esta região</b><span>Você ainda pode pedir pelo Uber Flash ou 99 Entregas na opção <b>Cotar frete</b>.</span>"); dlvBotao(); return;
   }
   const taxa=Math.round(taxaEntrega(km)*100)/100;
-  dlvPend={...d,km,taxa,geo};
-  res.className="dlv-res ok";
-  res.innerHTML=`<b>✅ Entrega disponível!</b>
-    <div class="dlv-line">📏 <span>Distância pela rota:</span> <b>${String(km).replace(".",",")} km</b></div>
-    <div class="dlv-line">🚚 <span>Taxa de entrega:</span> <b class="dlv-fee">${R(taxa)}</b></div>
-    <span class="dlv-sub">⏱️ O tempo de entrega pode variar de acordo com o horário e o volume de pedidos no momento.</span>`;
-  dlvModoConfirmar();
-  try{ res.scrollIntoView({block:"nearest",behavior:"smooth"}); }catch(e){}
+  dlvPend={...d,km,taxa,geo}; _dlvChave=chave; _dlvEstado="ok";
+  dlvStatus("ok",`<div class="ent-ok-t">✅ Entrega disponível</div>
+    <div class="ent-ok-row"><div><small>Taxa de entrega</small><b>${R(taxa)}</b></div><div class="ent-km"><small>Distância</small><b>${String(km).replace(".",",")} km</b></div></div>
+    <p>O tempo de entrega pode variar de acordo com o horário e o volume de pedidos no momento.</p>`);
+  dlvBotao();
+}
+
+/* ---- Avançar: confere o que falta pro pedido e volta pro checkout ---- */
+function dlvAvancar(){
+  if(_dlvEstado!=="ok" || !dlvPend){ if(_dlvEstado==="vazio") dlvBuscar(); return; }
+  const d=dlvDados();
+  if(!d.numero){ dlvAviso("Preencha o número da casa ou do prédio.","dlvNum"); return; }
+  if(!d.rua){ dlvAviso("Preencha o nome da rua.","dlvRua"); return; }
+  if(!d.bairro){ dlvAviso("Preencha o bairro.","dlvBairro"); return; }
+  if(!d.cidade){ dlvAviso("Preencha a cidade.","dlvCidade"); return; }
+  if(d.uf.length!==2){ dlvAviso("Digite a sigla do estado, com 2 letras (exemplo: RJ).","dlvUf"); return; }
+  dlvPend={...dlvPend,...d}; confirmarEntrega();
 }
 function confirmarEntrega(){
   if(!dlvPend) return;
   entrega={verificada:true,distKm:dlvPend.km,taxa:dlvPend.taxa,geo:dlvPend.geo||dlvGeo,endereco:{cep:dlvPend.cep,rua:dlvPend.rua,numero:dlvPend.numero,bairro:dlvPend.bairro,cidade:dlvPend.cidade,uf:dlvPend.uf,complemento:dlvPend.complemento}};
   dlvPend=null; fecharEntregaModal(); drawCheckout();
-  toast("Entrega confirmada! Taxa incluída no total.");
+  toast("Endereço confirmado! A taxa já está no total.");
 }
+function fecharEntregaModal(){ const w=$d("dlv"); if(!w) return; w.hidden=true; clearTimeout(_calcT); }
+function abrirEntregaModal(){
+  ensureDlv(); const w=$d("dlv"); w.hidden=false; dlvLimpaAviso();
+  if(entrega.verificada && entrega.endereco){                 /* "Alterar endereço": volta com tudo preenchido e o resultado à mostra */
+    const e=entrega.endereco; dlvPreenche(e); $d("dlvNum").value=e.numero||""; $d("dlvComp").value=e.complemento||"";
+    dlvGeo=entrega.geo||null; _dlvSel=true; _dlvGeoChave=dlvChaveDe(dlvDados()); _dlvChave=_dlvGeoChave;
+    dlvPend={...e,km:entrega.distKm,taxa:entrega.taxa,geo:entrega.geo}; _dlvEstado="ok";
+    dlvStatus("ok",`<div class="ent-ok-t">✅ Entrega disponível</div><div class="ent-ok-row"><div><small>Taxa de entrega</small><b>${R(entrega.taxa)}</b></div><div class="ent-km"><small>Distância</small><b>${String(entrega.distKm).replace(".",",")} km</b></div></div><p>O tempo de entrega pode variar de acordo com o horário e o volume de pedidos no momento.</p>`);
+  }
+  dlvVisibilidade(); dlvBotao();
+  if(!dlvPend) setTimeout(()=>$d("dlvBusca").focus(),150);
+}
+
 function entregaBoxHTML(){
   if(!entrega.verificada) return `<button type="button" class="dlv-open" data-dlv-open>${ic("pin")}Adicionar endereço</button>`;
   const e=entrega.endereco;
@@ -1761,6 +1888,7 @@ function marcarEntrega(){
   const fn=$("#freteNote"); if(fn) fn.hidden = ship!=="frete";
 }
 function drawCheckout(){
+  reservarPedido();
   const t = total() + taxaAtual();
   const nomeInit = nomeVal!==null ? nomeVal : "";
   $("#dBody").innerHTML = `<button class="chip" data-back>‹ Voltar ao carrinho</button>
@@ -1813,13 +1941,23 @@ function montarMsg(nome,numeroPedido){
     `*Pagamento:* Pix`
   ].join("\n");
 }
-let _seqMem=0;
+/* número do pedido: um contador ÚNICO no Supabase (antes cada celular contava sozinho e todo cliente recebia BR-000001).
+   O número é reservado quando o checkout abre, assim já está pronto na hora de enviar. */
+let _pedidoRes = null, _pedidoBusy = false;
+function reservarPedido(){
+  if(_pedidoRes || _pedidoBusy || !window.__SUPA) return;
+  _pedidoBusy = true;
+  const S = window.__SUPA;
+  fetch(S.url+"/rest/v1/rpc/proximo_numero_pedido",{method:"POST",headers:{apikey:S.key,Authorization:"Bearer "+S.key,"Content-Type":"application/json"},body:"{}"})
+    .then(r=>{ if(!r.ok) throw 0; return r.json(); })
+    .then(n=>{ if(Number.isFinite(+n)) _pedidoRes = "BR-"+String(n).padStart(6,"0"); })
+    .catch(()=>{})
+    .finally(()=>{ _pedidoBusy = false; });
+}
 function proximoPedido(){
-  /* número sequencial persistente (BR-000001, BR-000002, ...); se o navegador bloquear o localStorage, segue numerando só nesta sessão */
-  let n;
-  try{ n=parseInt(localStorage.getItem("brutt_pedido_seq")||"0",10)||0; n++; localStorage.setItem("brutt_pedido_seq",String(n)); }
-  catch(e){ _seqMem++; n=_seqMem; }
-  return "BR-"+String(n).padStart(6,"0");
+  const n = _pedidoRes || ("BR-"+Date.now().toString(36).toUpperCase().slice(-6));   /* sem internet: código único pelo horário, nunca repete */
+  _pedidoRes = null;                                                                  /* o próximo pedido pega outro número */
+  return n;
 }
 function mostrarFeito(numero){
   $("#feitoS").textContent = `Pedido #${numero}`;
