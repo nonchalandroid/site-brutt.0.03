@@ -210,6 +210,32 @@ a{color:var(--gold-2)}
 .photo-upload-box{border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;cursor:pointer}
 .photo-upload-box:hover{border-color:var(--gold)}
 .photo-upload-box img{max-width:120px;max-height:120px;border-radius:10px;display:block;margin:0 auto 8px}
+
+/* ===== Sommelier IA ===== */
+.som-r{color:#ff8a7d;font-weight:700}.som-g{color:#6fd39a;font-weight:700}
+.som-pesq{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:0 0 8px}
+.som-pesq input,.som-card input[type=checkbox]{width:auto !important;flex:none;margin:0;height:auto}
+.som-pesq{line-height:1.35}
+.som-card{border:1px solid rgba(227,172,61,.35);background:rgba(227,172,61,.06);border-radius:12px;padding:12px;margin-top:10px}
+.som-top{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-bottom:8px}
+.som-badge{font:700 12px var(--body,system-ui);padding:3px 10px;border-radius:999px}
+.som-badge.ok{background:#1f7a4d;color:#fff}.som-badge.mid{background:#a87b12;color:#fff}.som-badge.low{background:#9b2c22;color:#fff}
+.som-src{font-size:12px;color:var(--muted)}
+.som-avisos{list-style:none;margin:0 0 10px;padding:8px 10px;border-radius:8px;background:rgba(214,57,43,.12);border:1px solid rgba(214,57,43,.4);font-size:12.5px;color:#ffc9c2}
+.som-avisos li{margin:2px 0}
+.som-blk{display:flex;align-items:center;gap:8px;margin:12px 0 4px;font-size:13px}.som-blk em{font-style:normal;color:var(--muted);font-size:12px}
+.som-card textarea{width:100%}
+.som-cnt{font-size:12px;color:var(--muted);margin-top:2px}.som-cnt .over{color:#ff8a7d;font-weight:700}
+.som-link{border:0;background:none;color:var(--gold);font-weight:700;cursor:pointer;padding:2px 6px}
+.som-spec{display:grid;grid-template-columns:1fr 1.4fr 36px;gap:6px;margin-bottom:6px}
+.som-spec input{min-width:0}.som-spec .sx{border:0;border-radius:8px;background:rgba(255,255,255,.08);color:var(--ink,#fff);font-size:18px;cursor:pointer}
+.som-eixo{display:grid;grid-template-columns:110px 1fr 24px;align-items:center;gap:8px;font-size:13px;margin:4px 0}
+.som-eixo input[type=range]{width:100%;accent-color:var(--gold,#e3ac3d)}.som-eixo b{text-align:right}
+.som-wgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+.som-fontes{margin-top:10px;font-size:12px;color:var(--muted)}.som-fontes a{color:var(--gold)}
+.som-btns{display:flex;gap:8px;margin-top:12px}.som-btns .btn-gold{flex:1}
+.som-erro{margin-top:10px;padding:10px;border-radius:8px;background:rgba(214,57,43,.14);border:1px solid rgba(214,57,43,.5);color:#ffc9c2;font-size:13px}
+.som-ok{margin-top:10px;padding:10px;border-radius:8px;background:rgba(31,122,77,.2);border:1px solid #1f7a4d;color:#9be3bd;font-size:13px}
 </style>
 </head>
 <body>
@@ -456,6 +482,145 @@ function closeDrawer(){
   const d = $("#drawer"); if(d) d.classList.remove("on");
 }
 
+/* ===================== Sommelier IA: ficha de QUALQUER produto ===================== */
+const SOM_EIXOS = [["citrico","🍊","Cítrico"],["tropical","🏝️","Tropical"],["doce","🍇","Adocicado"],["frutado","🍓","Frutado"],["mentolado","🍃","Mentolado"]];
+const SOM_DESC_MAX = 170;            /* o site corta com "…" tudo que passar disso */
+const SOM_PESQUISAR_PADRAO = true;   /* pesquisa na internet LIGADA (o projeto do Gemini agora tem faturamento). Se a pesquisa for recusada, a função segue sem ela e avisa na tela. */
+const SOM_WHISKY = [["origem","País/Região"],["tipo","Tipo"],["destilaria","Destilaria"],["composicao","Composição"],["barril","Barril"],["idade","Idade"],["abv","ABV"],["cor","Cor"],["intro","Introdução"],["nariz","Nariz"],["paladar","Paladar"],["finalizacao","Finalização"],["perfil","Perfil"],["sugestao","Sugestão de consumo"],["obs","Observação"]];
+
+function somCompacta(txt, max){
+  max = max || SOM_DESC_MAX;
+  const s = String(txt||"").replace(/\s+/g," ").trim();
+  if(s.length <= max) return s;
+  const corte = s.slice(0,max), fim = Math.max(corte.lastIndexOf(". "),corte.lastIndexOf("! "),corte.lastIndexOf("? "));
+  if(fim >= 60) return corte.slice(0,fim+1);
+  const sp = corte.lastIndexOf(" ");
+  return corte.slice(0, sp>60 ? sp : max).replace(/[,;:–-]\s*$/,"").replace(/\.+$/,"") + ".";
+}
+function somCatInfo(categoryId){
+  const c = state.categories.find(x=>x.id===categoryId), pa = c && state.categories.find(x=>x.id===c.parent_id);
+  const slugPai = pa ? pa.slug : (c ? c.slug : "");
+  return { categoria: pa ? pa.name : (c ? c.name : ""), subcategoria: pa && c ? c.name : "", essencia: slugPai==="essencias", whisky: /whisk/i.test((c&&c.name)||"") };
+}
+async function somChamar(corpo){
+  let r;
+  try{ r = await sb.functions.invoke("gerar-ficha-sommelier",{ body: corpo }); }
+  catch(e){ throw new Error("Não consegui falar com o Sommelier. Confira a internet e tente de novo."); }
+  if(r.error){
+    let msg = r.error.message || "erro desconhecido";
+    try{ if(r.error.context && typeof r.error.context.json==="function"){ const j = await r.error.context.json(); if(j && j.erro) msg = j.erro; } }catch(_){}
+    if(/Failed to send|Failed to fetch|NetworkError/i.test(msg)) msg = "Não consegui falar com o Sommelier. A função pode não estar publicada ou a internet caiu.";
+    throw new Error(msg);
+  }
+  if(r.data && r.data.erro) throw new Error(r.data.erro);
+  return r.data;
+}
+function somFiltraFalta(rows, falta){
+  if(!falta) return rows;
+  return rows.filter(p=>{
+    const info = somCatInfo(p.category_id), d = (p.description||"").trim().length, f = (p.specs||[]).length;
+    switch(falta){
+      case "desc": return d <= 80;
+      case "cortada": return d > SOM_DESC_MAX;
+      case "ficha": return f <= 2;
+      case "perfil": return info.essencia && !p.flavor_profile;
+      case "frutado": return info.essencia && !!p.flavor_profile && !("frutado" in p.flavor_profile);
+      case "whisky": return info.whisky && !p.whisky_details;
+      default: return true;
+    }
+  });
+}
+function somResumoTxt(p, info){
+  const d = (p.description||"").trim().length, f = (p.specs||[]).length, r = t=>`<b class="som-r">${t}</b>`, g = t=>`<b class="som-g">${t}</b>`;
+  const partes = [
+    d===0 ? "Descrição: "+r("faltando") : d<=80 ? "Descrição: "+r(`rasa (${d} car.)`) : d>SOM_DESC_MAX ? "Descrição: "+r(`cortada no site (${d} car.)`) : "Descrição: "+g(`ok (${d} car.)`),
+    "Ficha: " + (f>2 ? g(f+" itens") : r(f+(f===1?" item":" itens")))
+  ];
+  if(info.essencia) partes.push("Perfil de sabor: " + (p.flavor_profile ? ("frutado" in p.flavor_profile ? g("5 eixos") : r("4 eixos, sem Frutado")) : r("faltando")));
+  if(info.whisky) partes.push("Whisky: " + (p.whisky_details ? g("ok") : r("sem detalhes")));
+  return partes.join(" · ");
+}
+
+/* mostra a sugestão da IA dentro de `box`, TUDO editável; só entra no produto quando a pessoa confirma */
+function somPreview(box, d, atual, opts){
+  atual = atual || {};
+  const ess = d.tipo==="essencia", wh = d.tipo==="whisky";
+  const conf = ({alta:["Confiança alta","ok"],media:["Confiança média","mid"],baixa:["Confiança baixa","low"]})[d.confianca] || ["Confiança média","mid"];
+  const fp = d.flavor_profile || {};
+  const trocaD = (atual.description||"").trim() ? ` <em>(troca a atual de ${(atual.description||"").trim().length} car.)</em>` : "";
+  const trocaF = (atual.specs||[]).length ? ` <em>(troca a atual de ${atual.specs.length} itens)</em>` : "";
+  box.innerHTML = `<div class="som-card">
+    <div class="som-top"><span class="som-badge ${conf[1]}">${conf[0]}</span><span class="som-src">${d.pesquisou?"🔎 pesquisou na internet":"📚 sem pesquisa na internet"}${d.modelo?" · "+esc(d.modelo):""}</span></div>
+    ${(d.avisos||[]).length ? `<ul class="som-avisos">${d.avisos.map(a=>`<li>⚠ ${esc(a)}</li>`).join("")}</ul>` : ""}
+    <label class="som-blk"><input type="checkbox" id="smChkD" checked> <b>Descrição</b>${trocaD}</label>
+    <textarea id="smDesc" rows="3">${esc(d.description||"")}</textarea>
+    <div class="som-cnt" id="smCnt"></div>
+    <label class="som-blk"><input type="checkbox" id="smChkF" checked> <b>Ficha técnica</b>${trocaF}</label>
+    <div id="smSpecs"></div><button type="button" class="btn-ghost btn-sm" id="smAddSpec">+ item na ficha</button>
+    ${ess ? `<label class="som-blk"><input type="checkbox" id="smChkP" checked> <b>Perfil de sabor</b>${atual.flavor_profile?" <em>(troca o atual)</em>":""}</label>
+      <div id="smEixos">${SOM_EIXOS.map(([k,emo,lbl])=>`<div class="som-eixo"><span>${emo} ${lbl}</span><input type="range" min="0" max="10" step="1" value="${fp[k]||0}" data-eixo="${k}" aria-label="${lbl}"><b data-val>${fp[k]||0}</b></div>`).join("")}</div>` : ""}
+    ${wh ? `<label class="som-blk"><input type="checkbox" id="smChkW" checked> <b>Detalhes do whisky</b>${atual.whisky_details?" <em>(troca os atuais)</em>":""}</label>
+      <div id="smWhisky" class="som-wgrid">${SOM_WHISKY.map(([k,lbl])=>`<div class="field"><label>${lbl}</label><input data-wk="${k}" value="${esc((d.whisky_details||{})[k]||"")}"></div>`).join("")}</div>` : ""}
+    ${(d.fontes||[]).length ? `<div class="som-fontes">Fontes: ${d.fontes.map(f=>`<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.titulo)}</a>`).join(" · ")}</div>` : ""}
+    <div class="save-row som-btns"><button type="button" class="btn-gold" id="smUsar">${esc(opts.rotuloUsar)}</button><button type="button" class="btn-ghost" id="smDescartar">Descartar</button></div>
+  </div>`;
+  const q = s => box.querySelector(s), specsBox = q("#smSpecs");
+  const addRow = (k,v) => { const r=document.createElement("div"); r.className="som-spec"; r.innerHTML=`<input class="sk" placeholder="Rótulo" value="${esc(k)}"><input class="sv" placeholder="Valor" value="${esc(v)}"><button type="button" class="sx" aria-label="Remover item">×</button>`; r.querySelector(".sx").onclick=()=>r.remove(); specsBox.appendChild(r); };
+  (d.specs||[]).forEach(([k,v])=>addRow(k,v)); q("#smAddSpec").onclick = () => addRow("","");
+  const ta = q("#smDesc"), cnt = q("#smCnt");
+  const conta = () => { const n=ta.value.trim().length;
+    if(n>SOM_DESC_MAX){ cnt.innerHTML=`<span class="over">${n}/${SOM_DESC_MAX}: o site corta depois de ${SOM_DESC_MAX} caracteres.</span> <button type="button" class="som-link" id="smCortar">Ajustar</button>`; q("#smCortar").onclick=()=>{ ta.value=somCompacta(ta.value); conta(); }; }
+    else cnt.innerHTML=`<span>${n}/${SOM_DESC_MAX}</span>`; };
+  ta.addEventListener("input", conta); conta();
+  box.querySelectorAll("[data-eixo]").forEach(r => r.addEventListener("input", () => { r.parentElement.querySelector("[data-val]").textContent = r.value; }));
+  q("#smDescartar").onclick = () => { box.innerHTML = ""; };
+  q("#smUsar").onclick = () => {
+    const out = { aplicar:{ desc:q("#smChkD").checked, ficha:q("#smChkF").checked, perfil:!!(q("#smChkP")&&q("#smChkP").checked), whisky:!!(q("#smChkW")&&q("#smChkW").checked) } };
+    out.description = ta.value.trim();
+    out.specs = [...specsBox.querySelectorAll(".som-spec")].map(r=>[r.querySelector(".sk").value.trim(), r.querySelector(".sv").value.trim()]).filter(([k,v])=>k&&v);
+    if(ess){ const f={}; box.querySelectorAll("[data-eixo]").forEach(r=>f[r.dataset.eixo]=parseInt(r.value,10)||0); out.flavor_profile=f; }
+    if(wh){ const w={}; box.querySelectorAll("[data-wk]").forEach(i=>{ const v=i.value.trim(); if(v) w[i.dataset.wk]=v; }); out.whisky_details=Object.keys(w).length?w:null; }
+    if(out.aplicar.desc && out.description.length>SOM_DESC_MAX){ toast(`A descrição tem ${out.description.length} caracteres e o site corta depois de ${SOM_DESC_MAX}. Toque em “Ajustar” ou resuma.`); return; }
+    opts.onUsar(out);
+  };
+}
+
+/* ---- Sommelier dentro do editor de um produto que já existe ---- */
+function somIniciaNoEditor(p){
+  const infoAtual = () => somCatInfo(($("#fCat") && $("#fCat").value) || p.category_id);
+  $("#somResumo").innerHTML = somResumoTxt(p, infoAtual());
+  const fila = state.fila || [], pos = fila.indexOf(p.id);
+  if(pos>=0 && pos<fila.length-1){
+    $("#somFila").innerHTML = `<button type="button" class="btn-ghost btn-sm" id="somProx" style="width:100%;margin-top:8px">Próximo da lista (${pos+2}/${fila.length}) →</button>`;
+    $("#somProx").onclick = () => openProduct(fila[pos+1]);
+  }
+  $("#somPesq").checked = SOM_PESQUISAR_PADRAO;
+  $("#somBtn").onclick = async () => {
+    const out = $("#somOut"), info = infoAtual(), atual = state.current || p;
+    out.innerHTML = `<div class="loading" style="padding:14px 0">Analisando… pode levar até 20 segundos.</div>`; $("#somBtn").disabled = true;
+    try{
+      const data = await somChamar({ name: ($("#fName").value||p.name).trim(), brand: p.brand||"", ean: p.ean||"", categoria: info.categoria, subcategoria: info.subcategoria, pesquisar: $("#somPesq").checked,
+        existente: { description: atual.description||"", specs: atual.specs||[], flavor_profile: atual.flavor_profile||null, whisky_details: atual.whisky_details||null } });
+      somPreview(out, data, atual, { rotuloUsar:"Aplicar e salvar", onUsar: async (res) => {
+        const upd = {};
+        if(res.aplicar.desc) upd.description = res.description || null;
+        if(res.aplicar.ficha) upd.specs = res.specs;
+        if(res.aplicar.perfil) upd.flavor_profile = res.flavor_profile;
+        if(res.aplicar.whisky) upd.whisky_details = res.whisky_details;
+        if(!Object.keys(upd).length){ toast("Marque pelo menos um bloco pra aplicar."); return; }
+        $("#smUsar").disabled = true;
+        const { error } = await sb.from("products").update(upd).eq("id", p.id);
+        if(error){ $("#smUsar").disabled = false; toast("Erro ao salvar: " + error.message); return; }
+        Object.assign(state.current, upd);
+        if(upd.description !== undefined && $("#fDesc")) $("#fDesc").value = upd.description || "";
+        $("#somResumo").innerHTML = somResumoTxt(state.current, infoAtual());
+        out.innerHTML = `<div class="som-ok">✓ Salvo no produto.</div>`; toast("Ficha salva.");
+      }});
+    }catch(e){ out.innerHTML = `<div class="som-erro">${esc(e.message||String(e))}</div>`; }
+    finally{ $("#somBtn").disabled = false; }
+  };
+}
+
 /* ---------------- product detail / edit ---------------- */
 async function openProduct(id){
   openDrawer(`<div class="loading">Carregando…</div>`);
@@ -519,6 +684,14 @@ async function openProduct(id){
       </div>
       <div class="save-row"><button class="btn-gold" id="saveBtn" style="width:100%">Salvar alterações</button></div>
     </div>
+
+    <div class="section" id="somSec">
+      <h3>✨ Sommelier: ficha do produto</h3>
+      <p class="t" id="somResumo" style="font-size:12.5px;line-height:1.5;margin:0 0 8px"></p>
+      <label class="som-pesq"><input type="checkbox" id="somPesq"> Pesquisar na internet (mais preciso; um pouco mais lento)</label>
+      <button class="btn-gold" id="somBtn" style="width:100%">✨ Analisar com Sommelier</button>
+      <div id="somOut"></div><div id="somFila"></div>
+    </div>
   `);
 
   $("#photoBtn").onclick = () => $("#photoFile").click();
@@ -541,6 +714,7 @@ async function openProduct(id){
   $("#mvBtn").onclick = () => registerMovement(p.id);
 
   $("#saveBtn").onclick = () => saveProduct(p.id);
+  somIniciaNoEditor(p);
 }
 
 function renderCategoryOptions(selectedId){
@@ -756,9 +930,10 @@ function openNewProduct(){
     </div>
 
     <div class="section">
-      <h3>Sommelier IA</h3>
+      <h3>✨ Sommelier IA</h3>
+      <p class="t" style="font-size:12px;color:var(--muted);margin:0 0 8px;line-height:1.45">Escolha a categoria, digite o nome e clique abaixo: ele monta a descrição (até 170 caracteres), a ficha e, nas essências, as barrinhas de sabor (cítrico, tropical, doce, frutado e mentolado). Você revisa e edita tudo antes de cadastrar.</p>
       <div class="field"><label>Notas pra IA (opcional)</label><textarea id="nNotas" rows="2" placeholder="Ex.: sabor de melancia com toque de menta, bem refrescante"></textarea></div>
-      <button class="btn-ghost btn-sm" id="nGerarBtn" style="width:100%">✨ Gerar descrição e ficha com IA</button>
+      <button class="btn-gold" id="nGerarBtn" style="width:100%">✨ Gerar descrição, ficha e perfil de sabor</button>
       <div id="nSommelierPreview" style="margin-top:10px"></div>
     </div>
 
@@ -785,40 +960,17 @@ function openNewProduct(){
   $("#nGerarBtn").onclick = async () => {
     const name = $("#nName").value.trim();
     if(!name){ toast("Preenche o nome do produto primeiro."); return; }
-    const catSel = $("#nCat").selectedOptions[0];
-    const categoria = catSel ? catSel.closest("optgroup")?.label : "";
-    const subcategoria = catSel ? catSel.textContent : "";
-    const preview = $("#nSommelierPreview");
-    preview.innerHTML = `<div class="loading" style="padding:16px 0">Gerando com IA…</div>`;
-    $("#nGerarBtn").disabled = true;
+    const info = somCatInfo($("#nCat").value), out = $("#nSommelierPreview");
+    out.innerHTML = `<div class="loading" style="padding:14px 0">Gerando com IA… pode levar até 20 segundos.</div>`; $("#nGerarBtn").disabled = true;
     try{
-      const { data, error } = await sb.functions.invoke("gerar-ficha-sommelier", {
-        body: { name, brand: $("#nBrand").value.trim(), categoria, subcategoria, notas: $("#nNotas").value.trim() }
-      });
-      if(error) throw error;
-      if(data?.erro) throw new Error(data.erro);
-      fichaGerada = { specs: data.specs || [], flavor_profile: data.flavor_profile || null };
-      $("#nDesc").value = data.description || "";
-      const barras = data.flavor_profile ? `
-        <div style="margin-top:8px">
-          ${Object.entries(data.flavor_profile).map(([k,v]) => `
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-              <span style="width:70px;font-size:11px;color:var(--muted);text-transform:capitalize">${esc(k)}</span>
-              <div style="flex:1;height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden">
-                <div style="width:${(v/10)*100}%;height:100%;background:var(--gold)"></div>
-              </div>
-            </div>`).join("")}
-        </div>` : "";
-      preview.innerHTML = `
-        <div class="t" style="color:var(--green);margin-bottom:6px">✓ Gerado — revise antes de salvar</div>
-        ${(data.specs||[]).length ? `<div class="t" style="font-size:12px">${data.specs.map(s=>`<b>${esc(s[0])}:</b> ${esc(s[1])}`).join(" · ")}</div>` : ""}
-        ${barras}`;
-      toast("Descrição e ficha geradas — confere antes de salvar.");
-    }catch(e){
-      preview.innerHTML = `<div class="t" style="color:var(--red)">Erro ao gerar: ${esc(e.message||String(e))}</div>`;
-    }finally{
-      $("#nGerarBtn").disabled = false;
-    }
+      const data = await somChamar({ name, brand: $("#nBrand").value.trim(), ean: $("#nEan").value.trim(), categoria: info.categoria, subcategoria: info.subcategoria, notas: $("#nNotas").value.trim(), pesquisar: SOM_PESQUISAR_PADRAO });
+      somPreview(out, data, {}, { rotuloUsar:"Usar no cadastro", onUsar: (res) => {
+        if(res.aplicar.desc) $("#nDesc").value = res.description;
+        fichaGerada = { specs: res.aplicar.ficha ? res.specs : [], flavor_profile: res.aplicar.perfil ? res.flavor_profile : null, whisky_details: res.aplicar.whisky ? res.whisky_details : null };
+        out.innerHTML = `<div class="som-ok">✓ Aplicado ao cadastro. Confira os campos e clique em “Cadastrar produto”.</div>`; toast("Ficha aplicada ao cadastro.");
+      }});
+    }catch(e){ out.innerHTML = `<div class="som-erro">${esc(e.message||String(e))}</div>`; }
+    finally{ $("#nGerarBtn").disabled = false; }
   };
 
   $("#nSave").onclick = async () => {
@@ -836,6 +988,7 @@ function openNewProduct(){
       icon: "📦",
       specs: fichaGerada?.specs || [],
       flavor_profile: fichaGerada?.flavor_profile || null,
+      whisky_details: fichaGerada?.whisky_details || null,
     };
     const { data, error } = await sb.from("products").insert(payload).select().single();
     if(error){ toast("Erro ao cadastrar: " + error.message); return; }
@@ -1264,10 +1417,10 @@ async function renderBulkCategoryPicker(){
 }
 
 let bulkSelecionados = new Set();
-let gestaoFiltro = { parentId: null, busca: "" };
+let gestaoFiltro = { parentId: null, busca: "", falta: "" };
 
 async function renderGestaoRapida(){
-  const { parentId, busca } = gestaoFiltro;
+  const { parentId, busca, falta } = gestaoFiltro;
   bulkSelecionados = new Set();
   const parents = state.categories.filter(c=>!c.parent_id);
   const parentOptions = `<option value="">Todas as categorias</option>` +
@@ -1275,11 +1428,21 @@ async function renderGestaoRapida(){
 
   const area = $("#browseArea");
   area.innerHTML = `
-    <select id="bulkCatFiltro" style="margin:10px 0">${parentOptions}</select>
+    <select id="bulkCatFiltro" style="margin:10px 0 8px">${parentOptions}</select>
+    <select id="bulkFalta" style="margin:0 0 10px" title="Mostra só os produtos que precisam passar pelo Sommelier">
+      <option value="">Todos os produtos</option>
+      <option value="desc" ${falta==="desc"?"selected":""}>✨ Sem descrição ou rasa (até 80 caracteres)</option>
+      <option value="cortada" ${falta==="cortada"?"selected":""}>✨ Descrição cortada no site (mais de 170)</option>
+      <option value="ficha" ${falta==="ficha"?"selected":""}>✨ Ficha curta (até 2 itens)</option>
+      <option value="perfil" ${falta==="perfil"?"selected":""}>✨ Essências sem perfil de sabor</option>
+      <option value="frutado" ${falta==="frutado"?"selected":""}>✨ Essências sem a barra Frutado</option>
+      <option value="whisky" ${falta==="whisky"?"selected":""}>✨ Whisky sem detalhes</option>
+    </select>
     <div id="bulkCount" class="t" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
     <div id="bulkList"><div class="loading">Carregando produtos…</div></div>
     <div id="bulkBar" class="bulk-actionbar" hidden></div>`;
   $("#bulkCatFiltro").onchange = (e) => { gestaoFiltro.parentId = e.target.value || null; renderGestaoRapida(); };
+  $("#bulkFalta").onchange = (e) => { gestaoFiltro.falta = e.target.value || ""; renderGestaoRapida(); };
 
   const childIds = parentId ? state.categories.filter(c=>c.parent_id===parentId).map(c=>c.id) : null;
 
@@ -1298,8 +1461,10 @@ async function renderGestaoRapida(){
     const { data } = await q;
     rows = data;
   }
+  rows = somFiltraFalta(rows||[], falta);
+  state.fila = falta ? rows.map(r=>r.id) : null;     /* com filtro ligado, o editor oferece "Próximo da lista" */
   const n = (rows||[]).length;
-  $("#bulkCount").textContent = `${n} produto${n===1?'':'s'}${busca?` encontrado${n===1?'':'s'} pra "${busca}"`:''}`;
+  $("#bulkCount").textContent = `${n} produto${n===1?'':'s'}${busca?` encontrado${n===1?'':'s'} pra "${busca}"`:''}${falta?" com esse problema (toque num nome e use o Sommelier; o botão “Próximo da lista” leva pro seguinte)":""}`;
   const ids = (rows||[]).map(r=>r.id);
   const { data: imgs } = await sb.from("product_images").select("product_id,url").in("product_id", ids.length?ids:["00000000-0000-0000-0000-000000000000"]);
   const imgByProduct = {}; (imgs||[]).forEach(i => imgByProduct[i.product_id] = i.url);
