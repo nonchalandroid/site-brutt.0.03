@@ -1687,7 +1687,7 @@ function ensureDlv(){
   </div>`);
   const busca = $d("dlvBusca");
   busca.addEventListener("keydown", ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); busca.blur(); dlvBuscar(); } });
-  busca.addEventListener("input", ()=>{ const s=$d("dlvSug"); s.hidden = true; s.innerHTML = ""; });
+  busca.addEventListener("input", ()=>{ const s=$d("dlvSug"); s.hidden = true; s.innerHTML = ""; dlvAutoAgenda(); });
   $d("dlvCalc").onclick = dlvBuscar;
   $d("dlvManual").onclick = dlvAlternaModo;
   $d("dlvAvancar").onclick = dlvAvancar;
@@ -1762,6 +1762,8 @@ async function dlvBuscarCep(c){
 }
 async function dlvBuscarTexto(q){
   dlvStatus("load", DLV_SPIN+"<span>Buscando o endereço…</span>");
+  const auto = await dlvGeoapify(q);                           /* 1º o Geoapify (via proxy); sem resposta/sem chave, segue o caminho de sempre abaixo */
+  if(auto && auto.length){ dlvStatus(null); if(auto.length===1) return dlvEscolheAuto(auto[0]); return dlvMostraSugestoes(auto); }
   const lat=ENTREGA_LOJA.lat, lng=ENTREGA_LOJA.lng, d=0.30;
   const url="https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=1&countrycodes=br&q="+encodeURIComponent(q+", Rio de Janeiro")+`&viewbox=${lng-d},${lat+d},${lng+d},${lat-d}&bounded=1`;
   try{
@@ -1781,6 +1783,43 @@ function dlvEscolhe(r){
   const cep=(a.postcode||"").replace(/\D/g,"").slice(0,8);
   dlvPreenche({rua:a.road||r.name||"",bairro:a.suburb||a.neighbourhood||a.quarter||"",cidade:a.city||a.town||a.village||a.municipality||"",uf:sigla,cep:cep.length===8?cep:""});
   dlvEscolheu({lat:+r.lat,lng:+r.lon});
+}
+/* ---------- Sugestões de endereço enquanto digita (Geoapify, via função do Supabase que guarda a chave) ----------
+   Só ALIMENTA o fluxo que já existe: ao escolher uma sugestão, preenche os mesmos campos e chama dlvEscolheu(),
+   que dispara o MESMO cálculo de frete de sempre (rota -> taxaEntrega). Se a função não responder, nada muda:
+   Enter/Calcular seguem como antes. */
+let _acT = null, _acTok = 0, _acCtl = null;
+async function dlvGeoapify(q, sinal){
+  const S = window.__SUPA; if(!S) return null;
+  try{
+    const r = await fetch(S.url+"/functions/v1/geoapify-autocomplete?text="+encodeURIComponent(q), { headers:{ apikey:S.key, Authorization:"Bearer "+S.key }, signal:sinal });
+    if(!r.ok) return null;
+    const j = await r.json(); return Array.isArray(j.resultados) ? j.resultados : null;
+  }catch(e){ return null; }
+}
+function dlvAutoAgenda(){
+  clearTimeout(_acT); _acTok++; if(_acCtl){ _acCtl.abort(); _acCtl = null; }
+  const q = ($d("dlvBusca").value||"").replace(/\s+/g," ").trim();
+  if(q.length < 3 || !q.replace(/[\d\-\s.]/g,"")) return;        /* menos de 3 caracteres, ou só números (CEP): não busca */
+  const tok = _acTok;
+  _acT = setTimeout(async () => {
+    _acCtl = new AbortController();
+    const lista = await dlvGeoapify(q, _acCtl.signal);
+    if(tok !== _acTok || !lista || !lista.length) return;       /* digitou outra coisa nesse meio tempo, ou nada veio: ignora */
+    const w = $d("dlv"); if(!w || w.hidden) return;
+    dlvMostraSugestoes(lista);
+  }, 400);
+}
+function dlvMostraSugestoes(lista){
+  const s = $d("dlvSug"); s.hidden = false;
+  s.innerHTML = lista.map((x,i)=>`<button type="button" data-i="${i}">${DLV_PIN}<span><b>${esc(x.rua)}${x.numero?", "+esc(x.numero):""}</b><small>${esc([x.bairro,x.cidade,x.uf].filter(Boolean).join(" · "))}</small></span></button>`).join("");
+  s.querySelectorAll("button").forEach(b => b.onclick = () => dlvEscolheAuto(lista[+b.dataset.i]));
+}
+function dlvEscolheAuto(x){
+  _acTok++; clearTimeout(_acT); if(_acCtl){ _acCtl.abort(); _acCtl = null; }
+  dlvPreenche({ rua:x.rua, bairro:x.bairro, cidade:x.cidade, uf:x.uf, cep:x.cep });
+  if(x.numero) $d("dlvNum").value = x.numero;
+  dlvEscolheu({ lat:x.lat, lng:x.lng });
 }
 function dlvPreenche(v){
   $d("dlvRua").value=v.rua||""; $d("dlvBairro").value=v.bairro||""; $d("dlvCidade").value=v.cidade||""; $d("dlvUf").value=v.uf||"";
