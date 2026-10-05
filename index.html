@@ -951,6 +951,21 @@ html.is-locked body{position:fixed;left:0;right:0;width:100%;overflow:hidden;scr
 @keyframes ffShine{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
 @keyframes ffGlow{0%,100%{opacity:.4}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.ffill{transition:none}.ffill .fshine{display:none}.ffill.dom::after{animation:none;opacity:.7}}
+
+/* ---- produto: rodapé de compra compacto e CENTRALIZADO (preço + botão), em vez do botão gigante de ponta a ponta ---- */
+.pm-buy{justify-content:center;gap:14px;padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+.pm-buy .price{font-size:18px}
+.pm-buy .add{flex:0 0 auto;min-width:170px;min-height:40px;padding:0 22px;font-size:14px;border-radius:10px}
+@media (pointer:coarse){.pm-buy .add{min-height:44px}}
+@media (max-width:400px){.pm-buy{gap:10px}.pm-buy .add{min-width:0;padding:0 14px;font-size:13.5px}}
+/* ---- "+" que voa até o carrinho (no lugar do aviso amarelo). Cor perolada: contrasta com o dourado/verde do site ---- */
+.fly-plus{position:fixed;z-index:90;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;pointer-events:none;color:#1b0f08;background:radial-gradient(circle at 30% 24%,#ffffff,#e6def4);box-shadow:0 0 0 1.5px rgba(255,255,255,.6),0 0 22px rgba(255,255,255,.5),0 3px 10px rgba(0,0,0,.55)}
+.fly-plus svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
+/* ---- rolagem estilo TikTok: cada seção "encaixa" e a próxima vem direto ---- */
+#snap-topo{position:absolute;top:0;left:0;width:1px;height:1px;pointer-events:none}
+html.snap-on{scroll-snap-type:y mandatory}
+html.snap-on #snap-topo,html.snap-on #recent-sec,html.snap-on section.sec,html.snap-on #como-chegar,html.snap-on footer{scroll-snap-align:start;scroll-snap-stop:always}
+@media (prefers-reduced-motion:reduce){html.snap-on #snap-topo,html.snap-on #recent-sec,html.snap-on section.sec,html.snap-on #como-chegar,html.snap-on footer{scroll-snap-stop:normal}}
 </style>
 </head>
 <body>
@@ -1348,6 +1363,15 @@ function render(){
   renderRecent(); updateCart();
   splitHeroTitle();
 }
+/* "Vistos recentemente" fica lá no topo da página e cresce quando se abre o 1º produto (+400px). Sem compensar, o conteúdo empurrado pra baixo
+   fazia a pessoa, ao fechar o produto, aparecer num trecho bem mais acima ("voltou pro topo"). Aqui a rolagem acompanha a mudança de altura. */
+function renderRecentEstavel(){
+  const sec=$("#recent-sec"), ref=$("#sections"), y=window.pageYOffset;
+  const topo=ref.getBoundingClientRect().top+y, antes=sec.offsetHeight;
+  renderRecent();
+  const delta=sec.offsetHeight-antes;
+  if(delta && y>topo){ const h=document.documentElement, sb=h.style.scrollBehavior; h.style.scrollBehavior="auto"; window.scrollTo(0,y+delta); h.style.scrollBehavior=sb; }
+}
 function renderRecent(){
   $("#recent-sec").style.display = recent.length && !$("#q").value.trim() ? "" : "none";
   $("#recent").innerHTML = recent.map(id=>card(byId[id])).join("");
@@ -1515,27 +1539,26 @@ function bump(){
   if(reduzMov) return;
   ["#cartN","#cartBtn"].forEach((s,i)=>{ const el=$(s); el.classList.remove(i?"shake":"bump"); void el.offsetWidth; el.classList.add(i?"shake":"bump"); });
 }
-function flyToCart(from){
+const FLY_PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+function flyToCart(from){                              /* um "+" elegante sai de onde a pessoa tocou e voa até o carrinho (mesmo movimento de antes) */
   if(reduzMov||!from||!from.getBoundingClientRect||!Element.prototype.animate) return;
-  const b=$("#cartBtn").getBoundingClientRect();
-  const img=from.closest(".card")?.querySelector(".thumb img");
-  const a=(img||from).getBoundingClientRect();
-  const d=document.createElement("div"); d.className="fly-stretch";
-  if(img) d.appendChild(img.cloneNode());
-  d.style.left=a.left+"px"; d.style.top=a.top+"px"; d.style.width=a.width+"px"; d.style.height=a.height+"px";
+  const b=$("#cartBtn").getBoundingClientRect(), a=from.getBoundingClientRect(), S=34;
+  const d=document.createElement("div"); d.className="fly-plus"; d.innerHTML=FLY_PLUS;
+  d.style.left=(a.left+a.width/2-S/2)+"px"; d.style.top=(a.top+a.height/2-S/2)+"px";
   document.body.appendChild(d);
   const dx=b.left+b.width/2-(a.left+a.width/2), dy=b.top+b.height/2-(a.top+a.height/2);
   const an=d.animate([
-    {transform:"translate(0,0) scale(1)",opacity:.95},
-    {transform:`translate(${dx*.55}px,${dy*.55}px) scale(.5,1.35)`,opacity:.85,offset:.45},
-    {transform:`translate(${dx}px,${dy}px) scale(.05,.2)`,opacity:.15}
-  ],{duration:620,easing:"cubic-bezier(.5,0,.75,.5)"});
+    {transform:"translate(0,0) scale(.5)",opacity:0},
+    {transform:"translate(0,0) scale(1.08)",opacity:1,offset:.16},
+    {transform:`translate(${dx*.55}px,${dy*.55}px) scale(.62,1.3)`,opacity:.95,offset:.5},
+    {transform:`translate(${dx}px,${dy}px) scale(.1,.22)`,opacity:.15}
+  ],{duration:640,easing:"cubic-bezier(.5,0,.75,.5)"});
   an.onfinish=()=>{ d.remove(); bump(); };
 }
 function add(id,from){
   const p=byId[id]; if(p.st<=0){ toast("Produto esgotado no momento"); return; }
   if((cart[id]||0)>=p.st){ toast(`Só temos ${p.st} em estoque`); return; }
-  cart[id]=(cart[id]||0)+1; updateCart(); toast(`${p.n} no carrinho`);
+  cart[id]=(cart[id]||0)+1; updateCart();                 /* sem aviso em texto: o "+" voando até o carrinho já avisa */
   if(from&&!reduzMov) flyToCart(from); else bump();
 }
 function updateCart(){
@@ -1713,6 +1736,8 @@ function ensureDlv(){
   $d("dlvComp").addEventListener("keydown", ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); dlvAvancar(); } });
   ["dlvCep","dlvRua","dlvBairro","dlvCidade","dlvUf"].forEach(id=> $d(id).addEventListener("input", dlvInputEndereco));
   ["dlvNum","dlvComp"].forEach(id=> $d(id).addEventListener("input", ()=>{ dlvLimpaAviso(); dlvBotao(); }));
+  $d("dlvNum").addEventListener("input", dlvAgendaNumero);
+  $d("dlvNum").addEventListener("blur", ()=>{ if(_numT){ clearTimeout(_numT); _numT=null; dlvNumeroPronto(); } });
 }
 
 /* ---- leitura e checagem dos campos ---- */
@@ -1742,7 +1767,7 @@ function dlvAlternaModo(){
   if(_dlvModo==="manual") setTimeout(()=>$d("dlvCep").focus(),60);
 }
 function dlvLimpaSelecao(){
-  _dlvSel=false; dlvGeo=null; _calcTok++; dlvPend=null; _dlvEstado="vazio";
+  _dlvSel=false; dlvGeo=null; _dlvGeoRua=null; _dlvOrigem="rua"; _numTok++; clearTimeout(_numT); _calcTok++; dlvPend=null; _dlvEstado="vazio";
   ["dlvCep","dlvRua","dlvBairro","dlvCidade","dlvUf","dlvNum","dlvComp"].forEach(id=>$d(id).value="");
   dlvStatus(null); dlvLimpaAviso(); dlvVisibilidade(); dlvBotao(); $d("dlvBusca").value=""; $d("dlvBusca").focus();
 }
@@ -1866,7 +1891,8 @@ function dlvEscolheAuto(x){
   dlvAutoCancela();
   dlvPreenche({ rua:x.rua, bairro:x.bairro, cidade:x.cidade, uf:x.uf, cep:x.cep });
   if(x.numero) $d("dlvNum").value = x.numero;
-  dlvEscolheu({ lat:x.lat, lng:x.lng });
+  _dlvNumExato = x.numero || "";
+  dlvEscolheu({ lat:x.lat, lng:x.lng }, x.numero ? "exato" : "rua");
 }
 /* ---------- "Usar minha localização atual" (como Uber/99/iFood) ----------
    GPS do aparelho -> nome da rua (Nominatim, 1 consulta por toque) -> preenche os mesmos campos -> dlvEscolheu(),
@@ -1897,18 +1923,53 @@ async function dlvUsarLocalizacao(){
     const sigla=Object.keys(UF_NOME).find(k=>UF_NOME[k]===a.state)||"", cep=(a.postcode||"").replace(/\D/g,"").slice(0,8);
     dlvPreenche({rua, bairro:a.suburb||a.neighbourhood||a.quarter||a.city_district||"", cidade:a.city||a.town||a.village||a.municipality||"", uf:sigla, cep:cep.length===8?cep:""});
     if(a.house_number) $d("dlvNum").value=a.house_number;
-    dlvEscolheu({lat,lng});
+    dlvEscolheu({lat,lng},"gps");
     if(prec>150) dlvAviso("A localização está pouco precisa (±"+prec+" m). Confira a rua e o número.");
   }catch(e){ dlvStatus("err","<b>Achei a sua posição, mas não descobri o nome da rua</b><span>Digite o endereço na busca.</span>"); }
+}
+/* ---------- o frete só é calculado COM o número (uma rua pode ter 20 km) ----------
+   Rua escolhida sem número -> pede o número. Número digitado -> procura o endereço EXATO (rua + número) e usa essa posição no
+   mesmo cálculo de frete de sempre. Só se o número não existir no mapa usa a posição da rua (e avisa que é estimativa).
+   GPS: a posição do aparelho já é precisa, então vale direto. */
+let _dlvGeoRua = null, _dlvOrigem = "rua", _numT = null, _numTok = 0, _dlvNumExato = "";   /* _dlvNumExato: número da sugestão "casa exata" (a posição só vale pra ESSE número) */
+function dlvPedeNumero(){ _dlvEstado="vazio"; dlvPend=null; dlvStatus("load","<span>Digite o <b>número</b> da casa para calcular o frete.</span>"); dlvBotao(); }
+function dlvAgendaNumero(){
+  clearTimeout(_numT); _numT=null; _numTok++;
+  const d=dlvDados();
+  if(!dlvPodeCalcular(d)) return;                       /* ainda não tem rua/CEP */
+  if(!d.numero){ dlvPedeNumero(); return; }             /* apagou o número: some o preço */
+  _dlvEstado="calculando"; dlvPend=null; dlvBotao();
+  dlvStatus("load", DLV_SPIN+"<span>Calculando o frete…</span>");
+  _numT=setTimeout(()=>{ _numT=null; dlvNumeroPronto(); }, 500);
+}
+async function dlvGeoNumero(d){                         /* posição do número exato, se o mapa conhece */
+  const lista=await dlvGeoapify([d.rua,d.numero,d.bairro].filter(Boolean).join(" "));
+  if(!lista) return null;
+  const ns=_norm(d.rua), nn=_norm(d.numero);
+  const ach=lista.find(x=>_norm(x.numero)===nn && (_norm(x.rua)===ns || _norm(x.rua).includes(ns) || ns.includes(_norm(x.rua))));
+  return ach ? {lat:ach.lat, lng:ach.lng} : null;
+}
+async function dlvNumeroPronto(){
+  const tok=_numTok, d=dlvDados(); if(!d.numero || !dlvPodeCalcular(d)) return;
+  let geo=null, prec="rua";
+  if(_dlvOrigem==="gps" && _dlvGeoRua){ geo=_dlvGeoRua; prec="gps"; }
+  else if(_dlvOrigem==="exato" && _dlvGeoRua && _norm(d.numero)===_norm(_dlvNumExato)){ geo=_dlvGeoRua; prec="numero"; }    /* só vale enquanto o número for o da sugestão; se trocou, procura o novo */
+  else { const e=await dlvGeoNumero(d); if(tok!==_numTok) return; if(e){ geo=e; prec="numero"; } }
+  if(tok!==_numTok) return;
+  dlvGeo = geo || _dlvGeoRua || null; _dlvGeoChave=dlvChaveDe(d);
+  await dlvCalcular({forcar:true});
+  if(tok!==_numTok) return;
+  if(_dlvEstado==="ok" && prec==="rua" && _dlvGeoRua) $d("dlvStatus").insertAdjacentHTML("beforeend",'<p style="margin:4px 0 0;font-size:11.5px;opacity:.9">Não achei esse número no mapa: o valor foi estimado pela rua.</p>');
 }
 function dlvPreenche(v){
   $d("dlvRua").value=v.rua||""; $d("dlvBairro").value=v.bairro||""; $d("dlvCidade").value=v.cidade||""; $d("dlvUf").value=v.uf||"";
   const c=v.cep||""; $d("dlvCep").value=c.length>5?c.slice(0,5)+"-"+c.slice(5):c;
 }
-function dlvEscolheu(geo){                                    /* endereço escolhido: já calcula, sem precisar de outro clique */
+function dlvEscolheu(geo, origem){                            /* endereço escolhido: COM número já calcula; SEM número espera o número (uma rua pode ter quilômetros) */
   _dlvSel=true; const s=$d("dlvSug"); s.hidden=true; s.innerHTML=""; dlvLimpaAviso();
-  dlvGeo=geo; _dlvGeoChave=dlvChaveDe(dlvDados());
-  dlvVisibilidade(); dlvCalcular({forcar:true});
+  dlvGeo=geo; _dlvGeoChave=dlvChaveDe(dlvDados()); _dlvGeoRua=geo; _dlvOrigem=origem||"rua"; _numTok++; clearTimeout(_numT);
+  dlvVisibilidade();
+  if(($d("dlvNum").value||"").trim()) dlvCalcular({forcar:true}); else dlvPedeNumero();
   setTimeout(()=>{ const n=$d("dlvNum"); if(!n.value) n.focus(); },120);
 }
 
@@ -1916,7 +1977,7 @@ function dlvEscolheu(geo){                                    /* endereço escol
 function dlvInputEndereco(e){
   const cep=$d("dlvCep"), v=(cep.value||"").replace(/\D/g,"").slice(0,8);
   cep.value = v.length>5 ? v.slice(0,5)+"-"+v.slice(5) : v;
-  dlvLimpaAviso(); dlvGeo=null; _dlvEstado="vazio"; dlvPend=null; dlvStatus(null); dlvBotao();
+  dlvLimpaAviso(); dlvGeo=null; _dlvGeoRua=null; _dlvEstado="vazio"; dlvPend=null; dlvStatus(null); dlvBotao();
   if(e && e.target===cep && v.length===8 && !cep.dataset.done){
     cep.dataset.done="1";
     fetch("https://brasilapi.com.br/api/cep/v2/"+v).then(r=>r.json()).then(j=>{
@@ -1930,7 +1991,7 @@ function dlvInputEndereco(e){
   } else if(v.length<8 && e && e.target===cep){ delete cep.dataset.done; clearTimeout(_calcT); }
   else dlvAgenda(900);
 }
-function dlvAgenda(ms){ clearTimeout(_calcT); _calcT=setTimeout(()=>{ if(dlvPodeCalcular(dlvDados())) dlvCalcular({}); }, ms); }
+function dlvAgenda(ms){ clearTimeout(_calcT); _calcT=setTimeout(()=>{ const d=dlvDados(); if(!dlvPodeCalcular(d)) return; if(d.numero) dlvCalcular({}); else dlvPedeNumero(); }, ms); }
 
 /* ---- o cálculo: coordenadas -> distância pela rota -> taxa ---- */
 async function dlvCalcular(op){
@@ -1980,7 +2041,7 @@ function abrirEntregaModal(){
   ensureDlv(); const w=$d("dlv"); w.hidden=false; dlvLimpaAviso();
   if(entrega.verificada && entrega.endereco){                 /* "Alterar endereço": volta com tudo preenchido e o resultado à mostra */
     const e=entrega.endereco; dlvPreenche(e); $d("dlvNum").value=e.numero||""; $d("dlvComp").value=e.complemento||"";
-    dlvGeo=entrega.geo||null; _dlvSel=true; _dlvGeoChave=dlvChaveDe(dlvDados()); _dlvChave=_dlvGeoChave;
+    dlvGeo=entrega.geo||null; _dlvGeoRua=entrega.geo||null; _dlvOrigem="rua"; _dlvSel=true; _dlvGeoChave=dlvChaveDe(dlvDados()); _dlvChave=_dlvGeoChave;
     dlvPend={...e,km:entrega.distKm,taxa:entrega.taxa,geo:entrega.geo}; _dlvEstado="ok";
     dlvStatus("ok",`<div class="ent-ok-t">✅ Entrega disponível</div><div class="ent-ok-row"><div><small>Taxa de entrega</small><b>${R(entrega.taxa)}</b></div><div class="ent-km"><small>Distância</small><b>${String(entrega.distKm).replace(".",",")} km</b></div></div><p>O tempo de entrega pode variar de acordo com o horário e o volume de pedidos no momento.</p>`);
   }
@@ -2124,9 +2185,9 @@ function abrirLightbox(src,alt){
 
 function openProduct(id){
   const p = byId[id];
-  recent = [id,...recent.filter(x=>x!==id)].slice(0,10); sSet("brutt_recent",recent); renderRecent();
+  recent = [id,...recent.filter(x=>x!==id)].slice(0,10); sSet("brutt_recent",recent); renderRecentEstavel();
   urlProdutoAbre(id);
-  $("#pm").innerHTML = `<div class="pm-topbar"><button class="pm-back" data-close><b>← Voltar pro catálogo</b><small>ou clique fora da janela</small></button><a class="pm-ask" href="${perguntarUrl(p)}" target="_blank" rel="noopener">${ic("chat")}<span>Quero saber mais</span></a></div>
+  $("#pm").innerHTML = `<div class="pm-topbar"><button class="pm-back" data-close><b>← Voltar pro catálogo</b></button><a class="pm-ask" href="${perguntarUrl(p)}" target="_blank" rel="noopener">${ic("chat")}<span>Quero saber mais</span></a></div>
     <div class="pm-grid">
       <div class="pm-left">
         <div class="m-img thumb${fotoUrl(p)?" foto":""}" style="${glowOf(p)}" ${fotoUrl(p)?`data-zoom="${esc(fotoUrl(p))}" data-zoomalt="${esc(p.n)}"`:""}>${media(p)}${fotoUrl(p)?`<span class="m-hint">${ic("search")}Clique para ampliar</span>`:""}</div>
@@ -2149,6 +2210,38 @@ function openProduct(id){
   animarSabor();
 }
 
+/* ---------- rolagem estilo TikTok: cada seção "encaixa" e a próxima vem direto (para desligar, troque por false) ---------- */
+const SNAP_SECOES = true;
+if(SNAP_SECOES){ document.documentElement.classList.add("snap-on"); document.body.insertAdjacentHTML("afterbegin",'<i id="snap-topo" aria-hidden="true"></i>'); }
+/* posições onde a página "encaixa" (início de cada seção, já descontando a barra do topo) */
+function snapPosicoes(){
+  const pad=parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)||0, max=document.documentElement.scrollHeight-innerHeight, y=window.pageYOffset, set=new Set([0]);
+  document.querySelectorAll("section.sec,#como-chegar,footer").forEach(e=>{ if(!e.offsetHeight) return; set.add(Math.max(0,Math.min(max,Math.round(e.getBoundingClientRect().top+y-pad-(parseFloat(getComputedStyle(e).scrollMarginTop)||0))))); });
+  return [...set].sort((a,b)=>a-b);
+}
+/* Só computador (mouse/trackpad): sem isto, um giro de roda (~100px) não sai de uma seção de ~450px (o navegador volta pro encaixe mais próximo).
+   Aqui cada giro vai DIRETO pra seção seguinte/anterior; a inércia do trackpad é ignorada até a rolagem parar. */
+(function(){
+  if(!SNAP_SECOES || !window.matchMedia("(hover:hover) and (pointer:fine)").matches) return;
+  let trava=0, acc=0, tAcc=null;
+  const rolavel=el=>{ for(;el&&el!==document.body&&el!==document.documentElement;el=el.parentElement){ const o=getComputedStyle(el).overflowY; if((o==="auto"||o==="scroll")&&el.scrollHeight>el.clientHeight+1) return true; } return false; };
+  window.addEventListener("wheel",e=>{
+    if(e.ctrlKey||e.metaKey||e.defaultPrevented) return;                               /* zoom do navegador */
+    if(Math.abs(e.deltaX)>Math.abs(e.deltaY)) return;                                  /* rolagem lateral (carrosséis) */
+    if(document.documentElement.classList.contains("is-locked")||rolavel(e.target)) return;   /* modal/carrinho aberto ou caixa com rolagem própria */
+    e.preventDefault();
+    const agora=performance.now();
+    if(agora<trava){ trava=Math.max(trava,agora+140); return; }                       /* em movimento (inclui a inércia): espera parar */
+    acc+=e.deltaY; clearTimeout(tAcc); tAcc=setTimeout(()=>{acc=0;},180);
+    if(Math.abs(acc)<24) return;                                                       /* ignora tremidinha */
+    const dir=acc>0?1:-1; acc=0;
+    const y=window.pageYOffset, pos=snapPosicoes();
+    let alvo=dir>0 ? pos.find(p=>p>y+2) : [...pos].reverse().find(p=>p<y-2);
+    if(alvo===undefined) return;                                                       /* já está no começo/fim */
+    if(Math.abs(alvo-y)>innerHeight*0.9) alvo=y+dir*innerHeight*0.8;                   /* seção mais alta que a tela: avança por partes */
+    trava=agora+750; window.scrollTo({top:alvo,behavior:"smooth"});
+  },{passive:false});
+})();
 /* ---------- eventos ---------- */
 document.addEventListener("click",e=>{
   const t = e.target.closest("button,h3,a"); if(!t) return;
