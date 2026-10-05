@@ -932,6 +932,12 @@ html.is-locked body{position:fixed;left:0;right:0;width:100%;overflow:hidden;scr
 .ent-go.ok::after{content:"›";font-size:26px;line-height:1;margin-left:2px}
 .ent-go.ok:active{transform:scale(.98)}
 .ent-go.no{background:rgba(214,57,43,.18);color:#ffb4aa}
+
+/* ---- produto: a barra do topo cobre a fresta de meio pixel (a foto aparecia acima de "Voltar pro catálogo") ---- */
+.pm-topbar{box-shadow:0 -3px 0 0 var(--surface)}
+/* ---- carrinho: foto do produto maior (era 44px) ---- */
+.line .e{width:64px;height:64px}
+.line .e .ic{width:32px;height:32px}
 </style>
 </head>
 <body>
@@ -1764,6 +1770,7 @@ async function dlvBuscarTexto(q){
   dlvStatus("load", DLV_SPIN+"<span>Buscando o endereço…</span>");
   const auto = await dlvGeoapify(q);                           /* 1º o Geoapify (via proxy); sem resposta/sem chave, segue o caminho de sempre abaixo */
   if(auto && auto.length){ dlvStatus(null); if(auto.length===1) return dlvEscolheAuto(auto[0]); return dlvMostraSugestoes(auto); }
+  if(auto){ dlvStatus("err","<b>Não encontramos esse endereço na Zona Oeste do Rio</b><span>Atendemos só a Zona Oeste do Rio de Janeiro. Confira o nome da rua ou toque em “Preencher o endereço manualmente”.</span>"); return; }   /* a função respondeu, mas nada dentro da área atendida */
   const lat=ENTREGA_LOJA.lat, lng=ENTREGA_LOJA.lng, d=0.30;
   const url="https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=1&countrycodes=br&q="+encodeURIComponent(q+", Rio de Janeiro")+`&viewbox=${lng-d},${lat+d},${lng+d},${lat-d}&bounded=1`;
   try{
@@ -2050,7 +2057,6 @@ function openProduct(id){
     <div class="pm-grid">
       <div class="pm-left">
         <div class="m-img thumb${fotoUrl(p)?" foto":""}" style="${glowOf(p)}" ${fotoUrl(p)?`data-zoom="${esc(fotoUrl(p))}" data-zoomalt="${esc(p.n)}"`:""}>${media(p)}${fotoUrl(p)?`<span class="m-hint">${ic("search")}Clique para ampliar</span>`:""}</div>
-        ${talvezGoste(p)}
       </div>
       <div class="pm-info">
         ${MOSTRAR_MARCA&&p.b?`<span class="brand" style="color:var(--muted);font-size:13px">${esc(p.b)}</span>`:""}
@@ -2063,7 +2069,6 @@ function openProduct(id){
         ${(p.st>0&&p.st<=3)?`<p class="mnote">${ic("alert")} ${p.st===1?"Última unidade":"Restam "+p.st+" unidades"}</p>`:""}
       </div>
     </div>
-    <div class="pm-up">${upHTML(suggest([p],8),"Combina com este produto","Sugestões da casa")}</div>
     <div class="pm-buy"><div class="price">${R(p.price)}${p.pr>0?`<span class="old">${R(p.p)}</span>`:""}</div><button class="add"${p.st<=0?" disabled":""} data-add="${p.id}" data-close-after>${p.st<=0?"Esgotado":"Adicionar ao carrinho"}</button></div>`;
   const mi = $("#pm .m-img");
   if(mi && mi.dataset.zoom) mi.addEventListener("click",()=>abrirLightbox(mi.dataset.zoom,mi.dataset.zoomalt));
