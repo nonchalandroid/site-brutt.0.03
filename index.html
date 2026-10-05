@@ -938,6 +938,19 @@ html.is-locked body{position:fixed;left:0;right:0;width:100%;overflow:hidden;scr
 /* ---- carrinho: foto do produto maior (era 44px) ---- */
 .line .e{width:64px;height:64px}
 .line .e .ic{width:32px;height:32px}
+/* ---- carrinho: seção do produto (Essências, Doces, Cigarros…) em letra pequena ---- */
+.line .n small.sec{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);opacity:.9;margin:1px 0 2px}
+
+/* ---- barras do perfil de sabor: movimento SUAVE e mais lento. Só transform/opacity (rodam na GPU, não recalculam o layout a cada quadro).
+   Antes: width + box-shadow + gradiente animados = a CPU do celular engasgava (~15 fps). ---- */
+.ffill{position:relative;width:100%;transform:translateX(-100%);transition:transform 1.8s cubic-bezier(.22,.61,.36,1);will-change:transform;backface-visibility:hidden}
+.ffill.dom{animation:none;background-size:100% 100%}
+.ffill .fshine{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none}
+.ffill .fshine::before{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:translateX(-120%);animation:ffShine 3.4s linear infinite;will-change:transform}
+.ffill.dom::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:0 0 14px 4px var(--fc);opacity:.45;animation:ffGlow 2.6s ease-in-out infinite;pointer-events:none;will-change:opacity}
+@keyframes ffShine{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
+@keyframes ffGlow{0%,100%{opacity:.4}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.ffill{transition:none}.ffill .fshine{display:none}.ffill.dom::after{animation:none;opacity:.7}}
 </style>
 </head>
 <body>
@@ -1154,12 +1167,11 @@ function whiskyHTML(p){
 }
 function flavorBars(p){
   const f=p.flavor; if(!f) return "";
-  const eixos=[["citrico","🍊","Cítrico","#FF7700"],["tropical","🏝️","Tropical","#FFD700"],["doce","🍇","Adocicado","#8A2BE2"],["frutado","🍓","Frutado","#E83E5A"],["mentolado","🍃","Mentolado","#00FF7F"]]
-    .filter(([k])=> k!=="frutado" || ("frutado" in f))      /* essências antigas (só 4 eixos) não ganham uma barra "Frutado 0" falsa */
+  const eixos=[["citrico","🍊","Cítrico","#FF7700"],["tropical","🏝️","Tropical","#FFD700"],["doce","🍓","Adocicado","#FF4F9A"],["mentolado","🍃","Mentolado","#00FF7F"]]
     .map(([k,emoji,lbl,cor])=>({k,emoji,lbl,cor,v:Math.max(0,Math.min(10,f[k]||0))}));
   const max=Math.max(...eixos.map(x=>x.v));
   const domK = max>0 ? eixos.find(x=>x.v===max).k : null;
-  const row=(x)=>`<div class="frow"><span class="flbl">${x.emoji} ${x.lbl}</span><div class="ftrack"><div class="ffill${x.k===domK?" dom":""}" data-val="${x.v}" style="--fc:${x.cor};background:${x.k===domK?"":x.cor}"></div></div></div>`;
+  const row=(x)=>`<div class="frow"><span class="flbl">${x.emoji} ${x.lbl}</span><div class="ftrack"><div class="ffill${x.k===domK?" dom":""}" data-val="${x.v}" style="--fc:${x.cor};background:${x.k===domK?"":x.cor}">${x.k===domK?`<i class="fshine"></i>`:""}</div></div></div>`;
   return `<div class="flavor"><div class="ft">Perfil de sabor</div>${eixos.map(row).join("")}</div>`;
 }
 function talvezGoste(p){
@@ -1196,7 +1208,7 @@ function talvezGoste(p){
 }
 function animarSabor(){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    document.querySelectorAll("#pm .ffill").forEach(el=>{ el.style.width=(el.dataset.val*10)+"%"; });
+    document.querySelectorAll("#pm .ffill").forEach(el=>{ const v=+el.dataset.val||0; el.style.opacity=v>0?"1":"0"; el.style.transform="translateX("+(-(100-v*10))+"%)"; });
   }));
 }
 const SEC_IC = {essencias:'drop',narguile:'hookah',headshop:'cap',tabacos:'leaf',charutos:'cigar',palha:'wheat',cigarrilhas:'cigar',cigarros:'cigarette',isqueiros:'lighter',incensos:'incense',doces:'candy',bebidas:'glass',conveniencia:'phone',outros:'box'};
@@ -1354,7 +1366,6 @@ const FLAVOR_KW=[
   [["citrico","citrica","citricos","citricas"],"citrico","cítrico"],
   [["adocicado","adocicada","adocicados","adocicadas"],"doce","adocicado"],
   [["tropical","tropicais"],"tropical","tropical"],
-  [["frutado","frutada","frutados","frutadas"],"frutado","frutado"],
   [["mentolado","mentolada","mentolados","mentoladas"],"mentolado","mentolado"]
 ];
 /* a palavra digitada (mín. 4 letras, mesmo incompleta: "citr", "adoc", "trop", "ment") aponta pro perfil aromático */
@@ -1589,6 +1600,8 @@ function closeAll(){["#drawer","#pm"].forEach(s=>$(s).classList.remove("on"));$(
   pm.addEventListener("pointerup", soltar);
   pm.addEventListener("pointercancel", soltar);
 })();
+/* nome curto da seção, o mesmo do menu, mostrado em cada item do carrinho */
+const SEC_ROTULO = {essencias:"Essências",narguile:"Narguile",headshop:"Headshop",tabacos:"Tabacos",charutos:"Charutos",palha:"Cigarros de Palha",cigarrilhas:"Cigarrilhas",cigarros:"Cigarros",isqueiros:"Isqueiros",incensos:"Incensos",doces:"Doces",bebidas:"Bebidas",conveniencia:"Conveniência",outros:"Outros"};
 function drawCart(view){
   cartView = view||"";
   const items = Object.entries(cart);
@@ -1597,7 +1610,7 @@ function drawCart(view){
   if(!items.length){
     $("#dBody").innerHTML = `<p class="empty">Seu carrinho está vazio. Que tal escolher alguma coisa?</p>`; $("#dFoot").innerHTML=""; return;
   }
-  $("#dBody").innerHTML = `<div class="clr-row"><span>${count()} ${count()===1?"item":"itens"} no carrinho</span><button type="button" class="clr" data-clear>${ic("trash")}Limpar carrinho</button></div>` + items.map(([id,q])=>{const p=byId[id];return `<div class="line"><span class="e${fotoUrl(p)?" foto":""}">${mini(p)}</span><div class="n">${esc(p.n)}<small>${R(p.price)} cada</small></div>
+  $("#dBody").innerHTML = `<div class="clr-row"><span>${count()} ${count()===1?"item":"itens"} no carrinho</span><button type="button" class="clr" data-clear>${ic("trash")}Limpar carrinho</button></div>` + items.map(([id,q])=>{const p=byId[id];return `<div class="line"><span class="e${fotoUrl(p)?" foto":""}">${mini(p)}</span><div class="n">${esc(p.n)}${SEC_ROTULO[p.sec]?`<small class="sec">${esc(SEC_ROTULO[p.sec])}</small>`:""}<small>${R(p.price)} cada</small></div>
     <div class="qty"><button data-dec="${id}" aria-label="Diminuir">−</button><b>${q}</b><button data-inc="${id}" aria-label="Aumentar">+</button></div></div>`}).join("");
   $("#dBody").innerHTML += crossHTML(items.map(([id])=>byId[id]));
   const t = total(), falta = MIN - t;
@@ -1671,30 +1684,30 @@ function ensureDlv(){
       <div class="ent-top"><button type="button" class="ent-back" data-dlv-close aria-label="Voltar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg></button><h3 id="dlvTitle">Entrega</h3></div>
       <div class="ent-scroll" id="dlvScroll">
         <label class="ent-lbl" for="dlvBusca">Buscar endereço</label>
-        <div class="ent-busca">${DLV_LUPA}<input id="dlvBusca" type="search" placeholder="Digite um local" enterkeyhint="search" autocomplete="off"><button type="button" class="ent-calc" id="dlvCalc">Calcular</button></div>
+        <div class="ent-busca">${DLV_LUPA}<input id="dlvBusca" type="search" placeholder="Digite um local" enterkeyhint="search" autocomplete="off"><span id="dlvLd" aria-hidden="true" style="display:none;flex:none;align-items:center;padding:0 8px">${DLV_SPIN}</span></div>
         <p class="ent-ajuda">Você pode buscar usando: <span>Rua/Avenida</span><span>Bairro</span><span>Cidade</span><span>CEP</span></p>
         <div id="dlvSug" class="ent-sug" hidden></div>
         <div id="dlvStatus" class="ent-status" role="status" aria-live="polite" hidden></div>
         <div id="dlvResumo" class="ent-resumo" hidden></div>
         <div class="ent-grid" id="dlvGrid" data-modo="busca" data-sel="0">
           <label class="ent-f s3 man"><span>CEP</span><input id="dlvCep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" maxlength="9" enterkeyhint="next"></label>
-          <label class="ent-f s3"><span>Número</span><input id="dlvNum" inputmode="numeric" autocomplete="address-line2" enterkeyhint="next"></label>
+          <label class="ent-f s3"><span>Número <em style="color:var(--gold);font-weight:600">(obrigatório)</em></span><input id="dlvNum" inputmode="numeric" autocomplete="address-line2" enterkeyhint="next"></label>
           <label class="ent-f s6 man"><span>Rua</span><input id="dlvRua" autocomplete="address-line1" enterkeyhint="next"></label>
           <label class="ent-f s6 man"><span>Bairro</span><input id="dlvBairro" enterkeyhint="next"></label>
           <label class="ent-f s4 man"><span>Cidade</span><input id="dlvCidade" enterkeyhint="next"></label>
           <label class="ent-f s2 man"><span>UF</span><input id="dlvUf" maxlength="2" placeholder="RJ" autocapitalize="characters" style="text-transform:uppercase" enterkeyhint="next"></label>
-          <label class="ent-f s6"><span>Complemento <em>(se tiver)</em></span><input id="dlvComp" placeholder="Apto, bloco, casa 2…" enterkeyhint="done"></label>
+          <label class="ent-f s6"><span>Complemento <em>(opcional)</em></span><input id="dlvComp" placeholder="Apto, bloco, casa 2…" enterkeyhint="done"></label>
         </div>
         <p id="dlvMsg" class="dlv-msg" role="alert" hidden></p>
         <button type="button" class="ent-manual" id="dlvManual">${DLV_PIN}<span>Preencher o endereço manualmente</span></button>
       </div>
-      <div class="ent-foot"><button type="button" class="ent-go" id="dlvAvancar" disabled>Avançar</button></div>
+      <div class="ent-foot" hidden><button type="button" class="ent-go" id="dlvAvancar" disabled>Avançar</button></div>
     </div>
   </div>`);
   const busca = $d("dlvBusca");
-  busca.addEventListener("keydown", ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); busca.blur(); dlvBuscar(); } });
-  busca.addEventListener("input", ()=>{ const s=$d("dlvSug"); s.hidden = true; s.innerHTML = ""; dlvAutoAgenda(); });
-  $d("dlvCalc").onclick = dlvBuscar;
+  busca.addEventListener("keydown", ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); busca.blur(); dlvAutoCancela(); dlvBuscar(); } });
+  busca.addEventListener("input", ()=>{ const s=$d("dlvSug"); s.hidden = true; s.innerHTML = ""; dlvAutoAgenda(); if(!busca.value.trim()) dlvMostraLocalizacao(); });
+  busca.addEventListener("focus", dlvMostraLocalizacao);
   $d("dlvManual").onclick = dlvAlternaModo;
   $d("dlvAvancar").onclick = dlvAvancar;
   $d("dlvComp").addEventListener("keydown", ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); dlvAvancar(); } });
@@ -1737,10 +1750,15 @@ function dlvLimpaSelecao(){
 /* ---- botão de baixo: Avançar: R$ X ---- */
 function dlvBotao(){
   const b=$d("dlvAvancar"); if(!b) return;
+  const num=($d("dlvNum").value||"").trim(), foot=b.parentElement;
   b.className="ent-go"; b.disabled=true;
+  foot.hidden = !(_dlvEstado==="calculando" || _dlvEstado==="fora" || (_dlvEstado==="ok" && dlvPend));   /* o botão só aparece no fim, quando há frete calculado */
   if(_dlvEstado==="calculando"){ b.textContent="Calculando…"; }
   else if(_dlvEstado==="fora"){ b.textContent="Entrega indisponível"; b.classList.add("no"); }
-  else if(_dlvEstado==="ok" && dlvPend){ b.disabled=false; b.classList.add("ok"); b.textContent="Avançar: "+R(total()+dlvPend.taxa); }
+  else if(_dlvEstado==="ok" && dlvPend){
+    if(!num) b.textContent="Informe o número para continuar";                                            /* número é obrigatório */
+    else { b.disabled=false; b.classList.add("ok"); b.textContent="Avançar: "+R(total()+dlvPend.taxa); }
+  }
   else b.textContent="Avançar";
 }
 
@@ -1775,7 +1793,8 @@ async function dlvBuscarTexto(q){
   const url="https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=1&countrycodes=br&q="+encodeURIComponent(q+", Rio de Janeiro")+`&viewbox=${lng-d},${lat+d},${lng+d},${lat-d}&bounded=1`;
   try{
     const r=await fetch(url,{headers:{Accept:"application/json"}}); const res=await r.json();
-    const lista=(res||[]).filter(x=>x.address && (x.address.road||x.name));
+    const _vistos=new Set(), _sa=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+    const lista=(res||[]).filter(x=>x.address && (x.address.road||x.name)).filter(x=>{ const a=x.address, k=[a.road||x.name,a.suburb||a.neighbourhood||a.quarter,a.city||a.town||a.village||a.municipality].map(_sa).join("|"); if(_vistos.has(k)) return false; _vistos.add(k); return true; });   /* trechos repetidos da mesma rua viram 1 só */
     if(!lista.length){ dlvStatus("err","<b>Não encontramos esse endereço</b><span>Tente outro nome ou toque em “Preencher o endereço manualmente”.</span>"); return; }
     if(lista.length===1) return dlvEscolhe(lista[0]);
     _dlvLista=lista; dlvStatus(null);
@@ -1804,18 +1823,39 @@ async function dlvGeoapify(q, sinal){
     const j = await r.json(); return Array.isArray(j.resultados) ? j.resultados : null;
   }catch(e){ return null; }
 }
+let _acUlt = null;                                   /* último resultado: serve de "prévia" instantânea enquanto a resposta nova chega */
+const _norm = s => String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+function dlvCarregando(on){ const e=$d("dlvLd"); if(e) e.style.display = on ? "flex" : "none"; }
+function dlvAutoCancela(){ clearTimeout(_acT); _acTok++; if(_acCtl){ _acCtl.abort(); _acCtl = null; } dlvCarregando(false); }
+function dlvMostraAviso(tipo){
+  const s=$d("dlvSug"); if(!s) return; s.hidden=false;
+  const msg = tipo==="espera" ? "Buscando endereços… aguarde as sugestões aparecerem"
+    : tipo==="vazio" ? "Nenhum endereço encontrado na Zona Oeste. Confira o nome da rua ou toque em “Preencher o endereço manualmente”."
+    : "Não consegui buscar agora. Tente de novo ou toque em “Preencher o endereço manualmente”.";
+  s.innerHTML = `<div style="padding:10px 12px;color:var(--muted);font-size:13px;line-height:1.35">${msg}</div>`;
+}
+function dlvPrevia(q){                               /* se a pessoa só continuou digitando, o que já achamos e ainda combina aparece na hora */
+  if(!_acUlt) return [];
+  const nq=_norm(q); if(!nq.startsWith(_norm(_acUlt.q))) return [];
+  const pal=nq.split(" ").filter(Boolean);
+  return _acUlt.lista.filter(x=>{ const alvo=_norm([x.rua,x.numero,x.bairro].join(" ")); return pal.every(p=>alvo.includes(p)); });
+}
 function dlvAutoAgenda(){
-  clearTimeout(_acT); _acTok++; if(_acCtl){ _acCtl.abort(); _acCtl = null; }
+  dlvAutoCancela();
   const q = ($d("dlvBusca").value||"").replace(/\s+/g," ").trim();
   if(q.length < 3 || !q.replace(/[\d\-\s.]/g,"")) return;        /* menos de 3 caracteres, ou só números (CEP): não busca */
   const tok = _acTok;
+  dlvCarregando(true);                                /* a pessoa já vê que está buscando */
+  const previa = dlvPrevia(q); if(previa.length) dlvMostraSugestoes(previa); else dlvMostraAviso("espera");
   _acT = setTimeout(async () => {
     _acCtl = new AbortController();
     const lista = await dlvGeoapify(q, _acCtl.signal);
-    if(tok !== _acTok || !lista || !lista.length) return;       /* digitou outra coisa nesse meio tempo, ou nada veio: ignora */
+    if(tok !== _acTok) return;                        /* digitou outra coisa nesse meio tempo */
     const w = $d("dlv"); if(!w || w.hidden) return;
-    dlvMostraSugestoes(lista);
-  }, 400);
+    dlvCarregando(false);
+    if(lista && lista.length){ _acUlt = {q, lista}; dlvMostraSugestoes(lista); }
+    else dlvMostraAviso(lista ? "vazio" : "falha");
+  }, 200);
 }
 function dlvMostraSugestoes(lista){
   const s = $d("dlvSug"); s.hidden = false;
@@ -1823,10 +1863,43 @@ function dlvMostraSugestoes(lista){
   s.querySelectorAll("button").forEach(b => b.onclick = () => dlvEscolheAuto(lista[+b.dataset.i]));
 }
 function dlvEscolheAuto(x){
-  _acTok++; clearTimeout(_acT); if(_acCtl){ _acCtl.abort(); _acCtl = null; }
+  dlvAutoCancela();
   dlvPreenche({ rua:x.rua, bairro:x.bairro, cidade:x.cidade, uf:x.uf, cep:x.cep });
   if(x.numero) $d("dlvNum").value = x.numero;
   dlvEscolheu({ lat:x.lat, lng:x.lng });
+}
+/* ---------- "Usar minha localização atual" (como Uber/99/iFood) ----------
+   GPS do aparelho -> nome da rua (Nominatim, 1 consulta por toque) -> preenche os mesmos campos -> dlvEscolheu(),
+   que dispara o MESMO cálculo de frete de sempre, usando a posição do GPS. */
+const DLV_ALVO = '<svg class="ent-pin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="7.5"/><path d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3"/></svg>';
+function dlvMostraLocalizacao(){
+  const b=$d("dlvBusca"), s=$d("dlvSug"), w=$d("dlv");
+  if(!b || !s || !w || w.hidden || !navigator.geolocation) return;
+  if((b.value||"").trim()) return;                              /* só com o campo vazio */
+  s.hidden=false;
+  s.innerHTML=`<button type="button" id="dlvLoc">${DLV_ALVO}<span><b>Usar minha localização atual</b><small>Mais rápido: a gente preenche a rua pra você</small></span></button>`;
+  $d("dlvLoc").onclick=dlvUsarLocalizacao;
+}
+async function dlvUsarLocalizacao(){
+  dlvAutoCancela();
+  const s=$d("dlvSug"); s.hidden=true; s.innerHTML=""; dlvLimpaAviso();
+  if(!navigator.geolocation) return dlvStatus("err","<b>Seu aparelho não deixou o site pegar a localização</b><span>Digite o endereço na busca.</span>");
+  dlvStatus("load", DLV_SPIN+"<span>Pegando a sua localização…</span>");
+  const pos = await new Promise(res=>navigator.geolocation.getCurrentPosition(p=>res({p}), e=>res({e}), {enableHighAccuracy:true, timeout:12000, maximumAge:30000}));
+  if(!pos.p) return dlvStatus("err", (pos.e && pos.e.code===1)
+    ? "<b>Sem permissão de localização</b><span>Libere a localização para este site nas configurações do navegador, ou digite o endereço na busca.</span>"
+    : "<b>Não consegui pegar a sua localização agora</b><span>Tente de novo ou digite o endereço na busca.</span>");
+  const lat=pos.p.coords.latitude, lng=pos.p.coords.longitude, prec=Math.round(pos.p.coords.accuracy||0);
+  dlvStatus("load", DLV_SPIN+"<span>Descobrindo o seu endereço…</span>");
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&accept-language=pt-BR&lat=${lat}&lon=${lng}`,{headers:{Accept:"application/json"}});
+    if(!r.ok) throw 0; const j=await r.json(), a=j&&j.address, rua=a&&(a.road||a.pedestrian||a.footway); if(!rua) throw 0;
+    const sigla=Object.keys(UF_NOME).find(k=>UF_NOME[k]===a.state)||"", cep=(a.postcode||"").replace(/\D/g,"").slice(0,8);
+    dlvPreenche({rua, bairro:a.suburb||a.neighbourhood||a.quarter||a.city_district||"", cidade:a.city||a.town||a.village||a.municipality||"", uf:sigla, cep:cep.length===8?cep:""});
+    if(a.house_number) $d("dlvNum").value=a.house_number;
+    dlvEscolheu({lat,lng});
+    if(prec>150) dlvAviso("A localização está pouco precisa (±"+prec+" m). Confira a rua e o número.");
+  }catch(e){ dlvStatus("err","<b>Achei a sua posição, mas não descobri o nome da rua</b><span>Digite o endereço na busca.</span>"); }
 }
 function dlvPreenche(v){
   $d("dlvRua").value=v.rua||""; $d("dlvBairro").value=v.bairro||""; $d("dlvCidade").value=v.cidade||""; $d("dlvUf").value=v.uf||"";
