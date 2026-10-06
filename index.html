@@ -966,6 +966,12 @@ html.is-locked body{position:fixed;left:0;right:0;width:100%;overflow:hidden;scr
 html.snap-on{scroll-snap-type:y mandatory}
 html.snap-on #snap-topo,html.snap-on #recent-sec,html.snap-on section.sec,html.snap-on #como-chegar,html.snap-on footer{scroll-snap-align:start;scroll-snap-stop:always}
 @media (prefers-reduced-motion:reduce){html.snap-on #snap-topo,html.snap-on #recent-sec,html.snap-on section.sec,html.snap-on #como-chegar,html.snap-on footer{scroll-snap-stop:normal}}
+
+/* ---- computador: preço + botão ao lado da foto (coluna da direita), centralizados, acima da linha amarela ---- */
+@media (min-width:641px){
+  .pm-info .pm-buy{position:sticky;bottom:14px;margin-top:auto;align-self:center;justify-content:center;gap:14px;padding:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:none;z-index:3}
+  #pm::after{content:"";display:block;position:sticky;bottom:0;height:0;border-top:1px solid var(--gold);box-shadow:0 -6px 16px rgba(0,0,0,.35)}
+}
 </style>
 </head>
 <body>
@@ -2107,7 +2113,11 @@ function montarMsg(nome,numeroPedido){
   const taxa = taxaAtual();
   let envio;
   if(ship==="loja"){ envio = `Retirada na loja`+(horarioEscolhido?` às ${horarioEscolhido}`:""); }
-  else if(ship==="entrega"&&entrega.verificada){ const e=entrega.endereco; const g=entrega.geo; const link=g?`https://www.google.com/maps?q=${g.lat},${g.lng}`:""; envio = `Entrega pela loja — ${e.rua}, ${e.numero}${e.complemento?" ("+e.complemento+")":""}, ${e.bairro}, ${e.cidade}/${e.uf}. CEP ${e.cep||""}. Distância ≈ ${String(entrega.distKm).replace(".",",")} km. Taxa de entrega: ${R(entrega.taxa)} (já incluída no total).${link?`\n🗺️ Localização: ${link}`:""}`; }
+  else if(ship==="entrega"&&entrega.verificada){ const e=entrega.endereco;
+    /* link do Google Maps pelo ENDEREÇO ESCRITO (o mesmo da mensagem), sem coordenadas: busca exatamente esse endereço */
+    const cepF=(e.cep||"").length===8 ? e.cep.slice(0,5)+"-"+e.cep.slice(5) : (e.cep||"");
+    const enderecoMapa=[`${e.rua}, ${e.numero}`, e.bairro, `${e.cidade} - ${e.uf}`, cepF].filter(Boolean).join(", ");
+    const link=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoMapa).replace(/%20/g,"+")}`; envio = `Entrega pela loja — ${e.rua}, ${e.numero}${e.complemento?" ("+e.complemento+")":""}, ${e.bairro}, ${e.cidade}/${e.uf}. CEP ${e.cep||""}. Distância ≈ ${String(entrega.distKm).replace(".",",")} km. Taxa de entrega: ${R(entrega.taxa)} (já incluída no total).${link?`\n🗺️ Localização: ${link}`:""}`; }
   else { envio = `Vou cotar o frete no ${app} — frete por minha conta. Eu sou o destinatário, a Tabacaria Brutt é o ponto de coleta.`; }
   return [
     `📦 NOVO PEDIDO #${numeroPedido}`,
@@ -2183,6 +2193,15 @@ function abrirLightbox(src,alt){
   w.addEventListener("click",()=>{ w.remove(); document.body.style.overflow=prevOverflow; });
 }
 
+/* Computador: preço + botão ficam na coluna da direita, ao lado da foto, centralizados e acima da linha amarela.
+   Celular: continuam como barra fixa no pé do modal (mesmo elemento, só muda de lugar). */
+const mqPmDesk = window.matchMedia("(min-width:641px)");
+function posicionaCompra(){
+  const pm=$("#pm"), buy=pm.querySelector(".pm-buy"), info=pm.querySelector(".pm-info"); if(!buy||!info) return;
+  if(mqPmDesk.matches){ if(buy.parentElement!==info) info.appendChild(buy); }
+  else if(buy.parentElement!==pm) pm.appendChild(buy);
+}
+mqPmDesk.addEventListener("change",posicionaCompra);
 function openProduct(id){
   const p = byId[id];
   recent = [id,...recent.filter(x=>x!==id)].slice(0,10); sSet("brutt_recent",recent); renderRecentEstavel();
@@ -2204,6 +2223,7 @@ function openProduct(id){
       </div>
     </div>
     <div class="pm-buy"><div class="price">${R(p.price)}${p.pr>0?`<span class="old">${R(p.p)}</span>`:""}</div><button class="add"${p.st<=0?" disabled":""} data-add="${p.id}" data-close-after>${p.st<=0?"Esgotado":"Adicionar ao carrinho"}</button></div>`;
+  posicionaCompra();
   const mi = $("#pm .m-img");
   if(mi && mi.dataset.zoom) mi.addEventListener("click",()=>abrirLightbox(mi.dataset.zoom,mi.dataset.zoomalt));
   openModal($("#pm"));
@@ -2614,13 +2634,18 @@ function marcasNovasViramSecao(){
 /* ================= USABILIDADE MOBILE: travar a página de trás, teclado, compartilhar ================= */
 
 /* enquanto houver QUALQUER janela aberta (carrinho, produto, endereço, imagem ampliada, +18), a página de trás fica parada */
-let _lockY = null;
+let _lockY = null, _lockAnc = null;
 function syncLock(){
   const dlv = document.getElementById("dlv");
   const aberto = !!document.querySelector(".drawer.on, .modal.on, #lbox") || !!(dlv && !dlv.hidden);
   const html = document.documentElement, body = document.body;
   if(aberto && _lockY === null){
     _lockY = window.pageYOffset || html.scrollTop || 0;
+    /* âncora: a seção que a pessoa está vendo e em que ponto da tela ela está. Se algo acima mudar de altura enquanto a janela está aberta
+       (imagens/fontes carregando, estoque atualizando), ao fechar a página é reposicionada pra essa seção voltar ao MESMO lugar */
+    const hb = (document.querySelector("header")||html).getBoundingClientRect().bottom;
+    const sa = [...document.querySelectorAll("section.sec[id]")].find(e=>e.offsetHeight && e.getBoundingClientRect().bottom>hb+8);
+    _lockAnc = sa ? { id:sa.id, off:sa.getBoundingClientRect().top } : null;
     const sbw = window.innerWidth - html.clientWidth;          /* barra de rolagem (computador): evita o "pulo" lateral */
     body.style.top = "-" + _lockY + "px";
     if(sbw > 0) body.style.paddingRight = sbw + "px";
@@ -2629,9 +2654,10 @@ function syncLock(){
   } else if(!aberto && _lockY !== null){
     html.classList.remove("is-locked");
     body.style.top = ""; body.style.paddingRight = "";
-    const y = _lockY; _lockY = null;
+    const y = _lockY, anc = _lockAnc; _lockY = null; _lockAnc = null;
     const sb = html.style.scrollBehavior; html.style.scrollBehavior = "auto";
     window.scrollTo(0, y);
+    if(anc){ const el = document.getElementById(anc.id); if(el){ const d = el.getBoundingClientRect().top - anc.off; if(Math.abs(d) > 1) window.scrollTo(0, window.pageYOffset + d); } }
     html.style.scrollBehavior = sb;
     html.classList.remove("kb-open");
   }
