@@ -36,7 +36,7 @@ button{cursor:pointer;border:0;border-radius:10px;padding:10px 16px;font-weight:
 a{color:var(--gold-2)}
 
 /* ---------- shell ---------- */
-#app{max-width:980px;margin:0 auto;padding:0 14px 60px}
+#app{max-width:min(1280px,100%);margin:0 auto;padding:0 14px 60px}
 .topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;
   padding:14px 14px calc(14px + env(safe-area-inset-top,0px));background:var(--bg);border-bottom:1px solid var(--line)}
 .topbar .brand{display:flex;align-items:baseline;gap:8px}
@@ -200,22 +200,147 @@ details.nx-box summary{cursor:pointer;font-weight:600}
 .roi-pos{color:var(--green)}
 .roi-neg{color:var(--red)}
 
-.bulk-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:7px}
-.bulk-row .thumb-mini{width:44px;height:44px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex:none;cursor:pointer;border:2px solid transparent}
-.bulk-row .thumb-mini:hover{border-color:var(--gold)}
-.bulk-row .thumb-mini img{width:100%;height:100%;object-fit:cover}
-.bulk-row .nm{flex:1;min-width:110px;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bulk-row .campos{display:flex;gap:6px;flex-wrap:wrap}
-.bulk-row .campos .f{display:flex;flex-direction:column;gap:2px}
-.bulk-row .campos .f label{font-size:9px;color:var(--muted);text-transform:uppercase}
-.bulk-row .campos .f input{width:84px;padding:6px 7px;font-size:13px}
-.bulk-row.dirty{border-color:var(--gold)}
-.bulk-row.selected{border-color:var(--gold);background:var(--surface-2)}
-.bulk-row .bulkSaveBtn{flex:none}
-.bulk-row .bulkSaveBtn.saved{background:var(--green);color:#fff}
-.bulk-chk{width:20px;height:20px;flex:none}
-.pub-badge{display:block;font-size:10px;margin-top:2px}
-.pub-badge.off{color:var(--muted)}
+/* ---------- lista de produtos (gestão rápida) — visual "painel técnico", mesma paleta ---------- */
+.gr-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:2px 0 10px}
+.gr-hint{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center;border:1px dashed var(--line);border-radius:10px;padding:7px 10px;margin:0 0 10px;line-height:1.35}
+.gr-hint i{font-style:normal;color:var(--gold-2)}
+.gr{position:relative;display:grid;grid-template-columns:auto 64px minmax(0,1fr) 96px auto auto;grid-template-areas:"sel ph id stk pr act" "dsc dsc dsc dsc dsc dsc";align-items:center;gap:6px 14px;
+  padding:10px 14px 10px 16px;margin-bottom:8px;background:linear-gradient(90deg,rgba(216,166,56,.04),transparent 40%),var(--surface);border:1px solid var(--line);border-radius:12px;
+  transition:border-color .18s,box-shadow .18s,transform .18s;animation:grIn .35s both}
+.gr::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0;background:var(--line);transition:background .18s,box-shadow .18s}
+.gr:hover{border-color:rgba(216,166,56,.55);box-shadow:0 0 0 1px rgba(216,166,56,.10),0 8px 22px rgba(0,0,0,.38)}
+.gr:hover::before,.gr.dirty::before,.gr.selected::before{background:var(--gold);box-shadow:0 0 10px rgba(216,166,56,.6)}
+.gr.selected{background:linear-gradient(90deg,rgba(216,166,56,.10),transparent 55%),var(--surface-2);border-color:var(--gold)}
+.gr.dirty{border-color:var(--gold)}
+.gr.inativo .gr-id .nm{opacity:.62}
+@keyframes grIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.gr:nth-child(n+14){animation:none}
+.gr-sel{grid-area:sel;display:flex;align-items:center}
+.gr-sel input{appearance:none;-webkit-appearance:none;width:22px;height:22px;border:1.5px solid var(--line);border-radius:6px;background:var(--surface-2);display:grid;place-content:center;padding:0;cursor:pointer;transition:.15s}
+.gr-sel input:hover{border-color:var(--gold)}
+.gr-sel input:checked{background:var(--gold);border-color:var(--gold)}
+.gr-sel input:checked::after{content:"";width:6px;height:11px;border:solid #241705;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.gr-ph{grid-area:ph;position:relative;width:64px;height:64px;padding:0;border-radius:12px;overflow:hidden;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:26px;transition:.18s}
+.gr-ph:hover{border-color:var(--gold);box-shadow:0 0 0 2px rgba(216,166,56,.25)}
+.gr-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.gr-ph.vazio{background:var(--surface-2);border-style:dashed}
+.gr-ph .cam{position:absolute;right:3px;bottom:3px;width:22px;height:22px;border-radius:7px;background:rgba(18,11,7,.82);border:1px solid var(--line);font-size:12px;display:flex;align-items:center;justify-content:center;line-height:1}
+.gr-ph:hover .cam{border-color:var(--gold)}
+.gr-ph.subindo::after{content:"";position:absolute;inset:0;background:rgba(18,11,7,.6) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3a9 9 0 1 0 9 9' fill='none' stroke='%23d8a638' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") center/26px no-repeat;animation:grSpin .8s linear infinite}
+@keyframes grSpin{to{transform:rotate(360deg)}}
+.gr-id{grid-area:id;min-width:0}
+.gr-id .nm{font-size:15px;font-weight:700;line-height:1.2;cursor:pointer;display:block;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:normal;transition:color .15s}
+.gr-id .nm:hover{color:var(--gold-2)}
+.gr-name{font-size:15px;font-weight:700;line-height:1.2;padding:6px 8px;margin:-6px 0 4px -8px;width:calc(100% + 8px);background:transparent;border-color:transparent;text-overflow:ellipsis}
+.gr-name:hover{border-color:var(--line)}.gr-name:focus{background:var(--surface-2)}
+.gr-name.bad,.gr-dsc textarea.bad{border-color:var(--red);box-shadow:0 0 0 2px rgba(192,69,58,.25)}
+.gr.inativo .gr-name{opacity:.62}
+.gr-open,.gr-dtog{font:inherit;font-size:11px;letter-spacing:.4px;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:2px 9px;cursor:pointer;transition:color .15s,border-color .15s}
+.gr-open:hover,.gr-dtog:hover,.gr-dtog[aria-expanded=true]{color:var(--gold-2);border-color:var(--gold)}
+.gr-dsc{grid-area:dsc;margin-top:4px}
+.gr-dsc[hidden]{display:none}
+.gr-dsc textarea{min-height:64px;resize:vertical;font-size:13px;line-height:1.4}
+.gr-dsc .cnt{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--muted);margin-top:4px}
+.gr-dsc .cnt b.over{color:var(--red)}
+.gr-meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;margin-top:5px;font-size:11px;color:var(--muted)}
+.gr-meta .tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:999px;border:1px solid var(--line)}
+.gr-meta .tag.on{color:var(--gold-2);border-color:rgba(216,166,56,.5)}
+.gr-meta .tag.on::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.gr-meta .tag.off::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--muted)}
+.gr-meta code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;color:var(--muted)}
+.gr-meta .mg{font-variant-numeric:tabular-nums;color:var(--gold-2)}
+.gr-meta .mg.neg{color:var(--red)}
+.gr-stock{grid-area:stk;text-align:center;border:1px solid var(--line);border-radius:10px;padding:5px 6px 6px;background:var(--surface-2);line-height:1}
+.gr-stock b{display:block;font-family:'Barlow Condensed',sans-serif;font-size:26px;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.gr-stock span{display:block;margin-top:3px;font-size:9px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted)}
+.gr-stock.ok{border-color:rgba(63,122,78,.7)}
+.gr-stock.ok b{color:var(--ink)}
+.gr-stock.low{border-color:rgba(216,166,56,.7)}
+.gr-stock.low b{color:var(--gold-2)}
+.gr-stock.zero{border-color:var(--red);background:rgba(192,69,58,.08)}
+.gr-stock.zero b,.gr-stock.zero span{color:var(--red)}
+.gr-prices{grid-area:pr;display:grid;grid-template-columns:repeat(3,minmax(78px,96px));gap:8px}
+.gr-prices .f label{display:block;font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.gr-prices .money{position:relative}
+.gr-prices .money::before{content:"R$";position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--muted);pointer-events:none}
+.gr-prices input{padding:7px 8px 7px 26px;font-size:14px;text-align:right;font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;border-radius:8px;transition:border-color .15s,box-shadow .15s}
+.gr-prices input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(216,166,56,.18)}
+.gr-prices input.bad{border-color:var(--red);box-shadow:0 0 0 3px rgba(192,69,58,.2)}
+.gr-act{grid-area:act;display:flex;flex-direction:column;gap:6px}
+.gr-act button{white-space:nowrap}
+.gr-act .saved{background:var(--green);color:#fff}
+@media (max-width:1100px){
+  .gr{grid-template-columns:auto 64px minmax(0,1fr) 96px;grid-template-areas:"sel ph id stk" "pr pr pr act" "dsc dsc dsc dsc"}
+  .gr-prices{grid-template-columns:repeat(3,minmax(70px,1fr))}
+  .gr-act{flex-direction:column}
+}
+@media (max-width:560px){
+  .gr{grid-template-columns:auto 56px minmax(0,1fr);grid-template-areas:"sel ph id" "stk stk stk" "pr pr pr" "act act act" "dsc dsc dsc";padding:10px 12px 12px 14px}
+  .gr-ph{width:56px;height:56px}
+  .gr-stock{display:flex;justify-content:space-between;align-items:center;text-align:left;padding:7px 12px}
+  .gr-stock b{font-size:22px;display:inline}.gr-stock span{margin:0}
+  .gr-act{flex-direction:row}
+  .gr-act button{flex:1;padding:10px}
+}
+@media (prefers-reduced-motion:reduce){.gr,.gr-ph.subindo::after{animation:none}}
+
+/* ---------- fotos em lote ---------- */
+.ft-intro h2{font-size:28px;color:var(--gold-2);margin:14px 0 4px}
+.ft-intro p{color:var(--muted);font-size:14px;line-height:1.45;margin:0 0 12px;max-width:760px}
+.ft-alvo{background:var(--surface-2);border:1px solid var(--gold);border-radius:10px;padding:8px 12px;font-size:13px;margin-bottom:10px}
+.ft-lk{background:none;border:0;padding:0;color:var(--gold-2);text-decoration:underline;font-size:inherit;font-weight:600}
+.ft-opts{display:grid;gap:6px;margin-bottom:12px;font-size:13px;color:var(--muted)}
+.ft-opts label,.ft-chk{display:flex;gap:8px;align-items:center;cursor:pointer}
+.ft-opts input,.ft-chk input{width:auto;accent-color:var(--gold)}
+.ft-drop{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;border:2px dashed var(--line);border-radius:16px;padding:26px 16px;cursor:pointer;background:linear-gradient(180deg,rgba(216,166,56,.05),transparent);transition:.2s}
+.ft-drop:hover,.ft-drop.over{border-color:var(--gold);box-shadow:inset 0 0 40px rgba(216,166,56,.08),0 0 0 3px rgba(216,166,56,.12)}
+.ft-ic{font-size:26px;color:var(--gold-2)}
+.ft-drop small{color:var(--muted);font-size:12px;max-width:520px}
+.ft-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:12px;margin:14px 0 90px}
+.ft-card{display:grid;grid-template-columns:128px minmax(0,1fr);gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;animation:grIn .3s both;transition:border-color .2s,box-shadow .2s}
+.ft-card.on{border-color:rgba(216,166,56,.65);box-shadow:0 0 0 1px rgba(216,166,56,.1)}
+.ft-card.enviada{border-color:rgba(63,122,78,.8)}
+.ft-card.falhou,.ft-card.erro{border-color:var(--red)}
+.ft-img{position:relative;width:128px;height:128px;border-radius:10px;overflow:hidden;background:#fff}
+.ft-img img{width:100%;height:100%;object-fit:cover;display:block}
+.ft-sk{width:100%;height:100%;background:linear-gradient(100deg,var(--surface-2) 30%,var(--line) 50%,var(--surface-2) 70%) 0 0/200% 100%;animation:ftSh 1.2s linear infinite}
+@keyframes ftSh{to{background-position:-200% 0}}
+.ft-sz{position:absolute;left:0;right:0;bottom:0;padding:3px 5px;font-size:10px;text-align:center;background:rgba(18,11,7,.85);color:var(--muted);font-variant-numeric:tabular-nums}
+.ft-sz b{color:var(--gold-2)}
+.ft-body{min-width:0;display:flex;flex-direction:column;gap:6px}
+.ft-top{display:flex;align-items:center;gap:8px;min-width:0}
+.ft-fn{flex:1;min-width:0;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ft-x{padding:2px 7px;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:7px;font-size:12px}
+.ft-x:hover{border-color:var(--red);color:var(--red)}
+.ft-chip{flex:none;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.ft-chip.ok{color:var(--ink);border-color:var(--green);background:rgba(63,122,78,.18)}
+.ft-chip.warn{color:var(--gold-2);border-color:var(--gold)}
+.ft-chip.bad{color:var(--red);border-color:var(--red)}
+.ft-chip.busy{animation:ftPulse 1.1s ease-in-out infinite}
+@keyframes ftPulse{50%{opacity:.45}}
+.ft-lido{font-size:11px;color:var(--muted);font-style:italic}
+.ft-av{font-size:12px;color:var(--gold-2)}
+.ft-sel{display:flex;gap:8px;align-items:baseline;justify-content:space-between;font-size:14px}
+.ft-ja{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted);margin-top:4px}
+.ft-ja img{width:22px;height:22px;border-radius:5px;object-fit:cover}
+.ft-busca{position:relative}
+.ft-busca input{padding:8px 10px;font-size:14px}
+.ft-dd{position:absolute;z-index:6;left:0;right:0;top:100%;margin-top:4px;background:var(--surface-2);border:1px solid var(--gold);border-radius:10px;overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,.5);max-height:260px;overflow-y:auto}
+.ft-dd button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:0;padding:9px 12px;font-weight:500;font-size:13px;border-bottom:1px solid var(--line)}
+.ft-dd button:hover{background:var(--surface)}
+.ft-dd i,.ft-cand i{font-style:normal;font-size:10px;color:var(--muted);margin-left:4px}
+.ft-vazio{padding:10px 12px;font-size:12px;color:var(--muted)}
+.ft-cands{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.ft-cand{padding:5px 9px;font-size:12px;font-weight:600;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;text-align:left}
+.ft-cand:hover{border-color:var(--gold)}
+.ft-acts{display:flex;align-items:center;justify-content:space-between;margin-top:auto;gap:8px;font-size:13px}
+.ft-foot{position:fixed;left:0;right:0;bottom:0;z-index:15;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--gold);box-shadow:0 -6px 20px rgba(0,0,0,.45)}
+.ft-foot[hidden]{display:none}
+.ft-n{margin-right:auto;font-size:13px;color:var(--muted)}.ft-n b{color:var(--gold-2);font-size:16px}.ft-n em{color:var(--red);font-style:normal}
+.ft-foot button:disabled{opacity:.5;cursor:not-allowed}
+@media (max-width:480px){.ft-card{grid-template-columns:96px minmax(0,1fr)}.ft-img{width:96px;height:96px}}
+@media (prefers-reduced-motion:reduce){.ft-card,.ft-sk,.ft-chip.busy{animation:none}}
+
 .bulk-actionbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--gold);
   padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   box-shadow:0 -4px 16px rgba(0,0,0,.4)}
@@ -647,6 +772,7 @@ function somFiltraFalta(rows, falta){
       case "ficha": return f <= 2;
       case "perfil": return info.essencia && !p.flavor_profile;
       case "whisky": return info.whisky && !p.whisky_details;
+      case "emestoque": case "semfoto": return (Number(p.stock)||0) > 0;   /* só o que tem unidades no Nex */
       default: return true;
     }
   });
@@ -855,10 +981,21 @@ function renderCategoryOptions(selectedId){
 }
 
 async function saveProduct(id){
+  const nome = normalizaNome($("#fName").value);
+  if(nome.length < 2){ toast("O nome precisa ter pelo menos 2 letras."); return; }
+  if(nome.length > 120){ toast("Nome muito longo (máx. 120 caracteres)."); return; }
+  if(/^[\d\s.,]+$/.test(nome)){ toast("O nome não pode ser só números."); return; }
+  const v = { price: parsePreco($("#fPrice").value), cost: state.current?.cost_price != null ? Number(state.current.cost_price) : null, promo: parsePreco($("#fPromo").value) };
+  const chk = checaPrecos(v, state.current);
+  if(chk.erros.length){ toast(chk.erros[0]); return; }
+  const dup = await sb.from("products").select("id").ilike("name", nome.replace(/[%_\\]/g, m => "\\" + m)).neq("id", id).limit(1);
+  const avisos = [...chk.avisos]; if(dup.data && dup.data.length) avisos.push("Já existe outro produto com este mesmo nome.");
+  if(avisos.length && !confirm(avisos.map(a => "• " + a).join("\n") + "\n\nSalvar mesmo assim?")) return;
+  $("#fName").value = nome;
   const payload = {
-    name: $("#fName").value.trim(),
-    price: parseFloat($("#fPrice").value) || 0,
-    promo_price: $("#fPromo").value ? parseFloat($("#fPromo").value) : null,
+    name: nome,
+    price: v.price,
+    promo_price: v.promo,
     category_id: $("#fCat").value,
     description: $("#fDesc").value.trim() || null,
     is_active: $("#fActive").checked,
@@ -884,7 +1021,7 @@ async function registerMovement(productId){
 
 /* ---------------- processa qualquer foto pra quadrado 1:1, sem depender do tamanho/proporção original ---------------- */
 /* ---------------- recorte interativo da foto (arrastar + zoom, tipo WhatsApp/Instagram) ---------------- */
-function abrirRecorteImagem(file, ladoMax = 1024, qualidade = 0.9){
+function abrirRecorteImagem(file, ladoMax = 1000, qualidade = 0.86){
   return new Promise((resolve, reject) => {
     if(!file){ reject(new Error("Nenhum arquivo selecionado.")); return; }
     if(!file.type || !file.type.startsWith("image/")){ reject(new Error("Selecione um arquivo de imagem (jpg, png, webp...).")); return; }
@@ -944,11 +1081,9 @@ function abrirRecorteImagem(file, ladoMax = 1024, qualidade = 0.9){
         canvas.width = out; canvas.height = out;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, sx, sy, lado, lado, 0, 0, out, out);
-        canvas.toBlob(blob => {
-          limpar();
-          if(!blob){ reject(new Error("Não consegui processar essa imagem.")); return; }
-          resolve({ blob, previewUrl: canvas.toDataURL("image/jpeg", 0.8) });
-        }, "image/jpeg", qualidade);
+        const fim = blob => { limpar(); if(!blob){ reject(new Error("Não consegui processar essa imagem.")); return; }
+          resolve({ blob, ext: blob.type === "image/webp" ? "webp" : "jpg", type: blob.type || "image/jpeg", previewUrl: canvas.toDataURL("image/jpeg", 0.8) }); };
+        canvas.toBlob(b => { if(b && b.type === "image/webp") fim(b); else canvas.toBlob(fim, "image/jpeg", 0.88); }, "image/webp", qualidade);   /* WebP: ~40% menor que JPEG na mesma qualidade */
       };
     };
     img.src = url;
@@ -983,25 +1118,28 @@ function processarFotoQuadrada(file, ladoMax = 1024, qualidade = 0.9){
   });
 }
 
-async function uploadPhoto(productId, file){
-  if(!file) return;
+async function uploadPhoto(productId, file, opts = {}){
+  if(!file) return null;
   let processada;
   try{
     processada = await abrirRecorteImagem(file);
-  }catch(e){ toast(e.message || "Não consegui processar essa foto."); return; }
-  if(!processada) return; // cancelou o enquadramento, sem toast de erro
+  }catch(e){ toast(e.message || "Não consegui processar essa foto."); return null; }
+  if(!processada) return null; // cancelou o enquadramento, sem toast de erro
+  if(opts.onEnvio) opts.onEnvio();
   toast("Enviando foto…");
-  const path = `${productId}.jpg`;
-  const { error: upErr } = await sb.storage.from(BUCKET).upload(path, processada.blob, { upsert: true, contentType: "image/jpeg" });
-  if(upErr){ toast("Erro ao enviar: " + upErr.message); return; }
+  const ext = processada.ext || "jpg", path = `${productId}.${ext}`;
+  const { error: upErr } = await sb.storage.from(BUCKET).upload(path, processada.blob, { upsert: true, contentType: processada.type || "image/jpeg", cacheControl: "31536000" });
+  if(upErr){ toast("Erro ao enviar: " + upErr.message); return null; }
   const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
   const urlComVersao = pub.publicUrl + "?v=" + Date.now(); // evita foto antiga em cache quando o nome do arquivo se repete
   // troca "limpa": remove vínculos antigos desse produto e grava o novo, pra nunca sobrar foto duplicada/errada
   await sb.from("product_images").delete().eq("product_id", productId);
   const { error: insErr } = await sb.from("product_images").insert({ product_id: productId, url: urlComVersao, is_primary: true });
-  if(insErr){ toast("Erro ao vincular: " + insErr.message); return; }
-  toast("Foto atualizada.");
-  openProduct(productId);
+  if(insErr){ toast("Erro ao vincular: " + insErr.message); return null; }
+  sb.storage.from(BUCKET).remove([`${productId}.${ext === "webp" ? "jpg" : "webp"}`]).catch(()=>{});
+  toast("Foto atualizada (" + Math.max(1, Math.round(processada.blob.size/1024)) + " KB).");
+  if(!opts.semAbrir) openProduct(productId);
+  return urlComVersao;
 }
 
 /* ---------------- new product ---------------- */
@@ -1119,8 +1257,8 @@ function openNewProduct(){
     }
     let avisoFoto = "";
     if(novaFotoStaged){
-      const path = `${data.id}.jpg`;
-      const { error: upErr } = await sb.storage.from(BUCKET).upload(path, novaFotoStaged.blob, { upsert: true, contentType: "image/jpeg" });
+      const path = `${data.id}.${novaFotoStaged.ext || "jpg"}`;
+      const { error: upErr } = await sb.storage.from(BUCKET).upload(path, novaFotoStaged.blob, { upsert: true, contentType: novaFotoStaged.type || "image/jpeg", cacheControl: "31536000" });
       if(!upErr){
         const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
         const { error: insErr } = await sb.from("product_images").insert({ product_id: data.id, url: pub.publicUrl + "?v=" + Date.now(), is_primary: true });
@@ -1155,6 +1293,14 @@ function acharColuna(headers, chaves){
   }
   return -1;
 }
+/* acha a coluna certa SEM confundir parecidas do Nex: "Custo" ≠ "Custo Total", "Estoque Atual" ≠ "Est. Adquirido" (total já comprado) ≠ "Disponível".
+   1º procura o título exato; depois, um que contenha a palavra e não seja de total/adquirido/markup/revenda. */
+const COL_EVITAR = ["total","adquirid","markup","revenda","pedido","disponivel"];
+function acharColunaExata(headers, exatas, contem){
+  const hs = headers.map(normHeader);
+  let i = hs.findIndex(h => exatas.includes(h)); if(i > -1) return i;
+  return hs.findIndex(h => contem.some(c => h.includes(c)) && !COL_EVITAR.some(x => h.includes(x)));
+}
 function scoreClasse(s){ return s>=0.5 ? "alta" : s>=0.25 ? "media" : "baixa"; }
 
 function renderSyncScreen(){
@@ -1163,7 +1309,7 @@ function renderSyncScreen(){
     <div style="padding:16px 0">
       <h2 style="font-size:22px;margin-bottom:6px">Sincronizar planilha de compra</h2>
       <p style="color:var(--muted);font-size:13px;margin:0 0 16px">
-        Aceita .xlsx ou .csv do NEX ou de qualquer planilha de compra, com colunas de nome, preço de custo e quantidade
+        Aceita .xlsx ou .csv do NEX ou de qualquer planilha de compra, com colunas de nome e de custo. Só o <b>custo</b> é atualizado: o estoque vem do Nex, sozinho, a cada 15 min
         (os nomes das colunas podem variar — o sistema tenta identificar sozinho).
       </p>
       <div class="dropzone" id="dropzone">
@@ -1193,9 +1339,9 @@ async function handleSyncFile(file){
   if(rows.length < 2){ body.innerHTML = `<div class="empty">Planilha vazia ou sem linhas de dados.</div>`; return; }
 
   const headers = rows[0];
-  const iName = acharColuna(headers, COL_HINTS.name);
-  const iCost = acharColuna(headers, COL_HINTS.cost);
-  const iQty  = acharColuna(headers, COL_HINTS.qty);
+  const iName = acharColunaExata(headers, ["produto","nome","descricao","item"], ["produto","nome","descri","item"]);
+  const iCost = acharColunaExata(headers, ["custo","preco de custo","custo unitario","custo medio","custo un"], ["custo","compra"]);
+  const iQty  = -1;   /* estoque NÃO é lido daqui: quem manda no estoque é o Nex (sincroniza sozinho). Antes isto somava "Estoque Atual" da planilha de novo no site. */
   const iCode = acharColuna(headers, COL_HINTS.code);
 
   if(iName === -1){
@@ -1244,7 +1390,7 @@ function renderSyncReview(candidatos, fileName){
         <thead><tr>
           <th><input type="checkbox" id="chkAll" checked></th>
           <th>Na planilha</th><th>Produto no catálogo</th><th>Confiança</th>
-          <th>Estoque atual → novo</th><th>Custo</th>
+          <th>Estoque no site (Nex)</th><th>Custo</th>
         </tr></thead>
         <tbody id="syncRows"></tbody>
       </table>
@@ -1265,7 +1411,7 @@ function renderSyncReview(candidatos, fileName){
           ${c.matches.length ? `<select class="rowProd">${sel}</select><option value="">— nenhum —</option>` : `<span style="color:var(--muted)">sem sugestão</span>`}
         </td>
         <td>${c.escolhido ? `<span class="score ${scoreClasse(c.escolhido.score)}">${Math.round(c.escolhido.score*100)}%</span>` : '—'}</td>
-        <td>${c.escolhido ? `${c.escolhido.stock} → ${c.escolhido.stock + (c.linha.qtd||0)}` : '—'}</td>
+        <td>${c.escolhido ? `${c.escolhido.stock}` : '—'}</td>
         <td><input type="number" step="0.01" class="rowCusto" value="${c.linha.custo ?? ''}" style="width:90px"></td>
       </tr>`;
   }).join("");
@@ -1297,13 +1443,6 @@ async function confirmarSync(candidatos, tbody, fileName){
     if(!c.escolhido) continue;
     const custo = parseFloat(tr.querySelector(".rowCusto").value);
     try{
-      if(c.linha.qtd > 0){
-        const { error } = await sb.rpc("registrar_movimento_estoque", {
-          p_product_id: c.escolhido.id, p_type: "entrada", p_quantity: c.linha.qtd,
-          p_note: `Planilha: ${fileName}`
-        });
-        if(error) throw error;
-      }
       if(!isNaN(custo)){
         const { error: e2 } = await sb.from("products").update({ cost_price: custo }).eq("id", c.escolhido.id);
         if(e2) throw e2;
@@ -1503,6 +1642,39 @@ function abrirScannerCamera(onResult){
   });
 }
 
+/* ---------------- números e nomes: aceita jeito de brasileiro e pega erro humano antes de gravar ---------------- */
+function parsePreco(v){                       /* "25,90" "R$ 1.234,56" "12.5" "" -> número | null (vazio) | NaN (lixo) */
+  let t = String(v ?? "").trim().replace(/[R$\s]/g, ""); if(t === "") return null;
+  if(!/^[\d.,]+$/.test(t)) return NaN;
+  if(t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+  else if((t.match(/\./g)||[]).length > 1) t = t.replace(/\./g, "");
+  else if(/^\d{1,3}\.\d{3}$/.test(t)) t = t.replace(".", "");          /* "1.234" é mil duzentos e trinta e quatro */
+  const n = Number(t); return Number.isFinite(n) ? Math.round(n*100)/100 : NaN;
+}
+const fmtNum = n => (n == null || n === "" || isNaN(+n)) ? "" : Number(n).toLocaleString("pt-BR", { minimumFractionDigits:2, maximumFractionDigits:2 });
+function checaPrecos(v, antigo){
+  const erros = [], avisos = [], campos = [], nome = {price:"Preço", cost:"Custo", promo:"Promo"};
+  for(const k of ["price","cost","promo"]) if(Number.isNaN(v[k]) || (v[k] != null && v[k] < 0)){ erros.push(`${nome[k]} inválido: use só números, por exemplo 25,90.`); campos.push(k); }
+  if(!erros.length){
+    if(v.price == null){ erros.push("Informe o preço de venda."); campos.push("price"); }
+    else if(v.promo != null && v.promo >= v.price && v.price > 0){ erros.push("A promoção precisa ser menor que o preço normal."); campos.push("promo"); }
+  }
+  if(!erros.length){
+    if(v.price === 0) avisos.push("Preço zerado: o produto aparece sem valor no site.");
+    if(v.price > 3000) avisos.push(`Preço de R$ ${fmtNum(v.price)} é muito alto. Foi digitado um zero a mais?`);
+    if(v.cost != null && v.cost > v.price && v.price > 0) avisos.push(`Custo (R$ ${fmtNum(v.cost)}) maior que o preço de venda: dá prejuízo.`);
+    if(v.promo != null && v.cost != null && v.promo < v.cost) avisos.push("A promoção fica abaixo do custo.");
+    const a = Number(antigo?.price);
+    if(a > 0 && v.price > 0 && (v.price/a > 1.6 || v.price/a < .6)) avisos.push(`O preço mudou de R$ ${fmtNum(a)} para R$ ${fmtNum(v.price)}.`);
+  }
+  return { erros, avisos, campos };
+}
+function normalizaNome(s){                    /* espaços sobrando, pontuação solta, primeira letra */
+  let t = String(s ?? "").replace(/\s+/g, " ").trim().replace(/^[\-–—.,;:|\/\\]+|[\-–—,;:|\/\\]+$/g, "").trim();
+  t = t.replace(/\s+([,.;:!?])/g, "$1").replace(/([!?]){2,}/g, "$1");
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+}
+
 let bulkSelecionados = new Set();
 let gestaoFiltro = { parentId: null, busca: "", falta: "" };
 let gestaoSeq = 0;   /* descarta resposta velha se o usuário já digitou de novo ou saiu da tela */
@@ -1517,6 +1689,8 @@ async function renderGestaoRapida(){
 
   const area = $("#browseArea");
   area.innerHTML = `
+    <div class="gr-top"><b style="font-family:'Barlow Condensed',sans-serif;font-size:20px;letter-spacing:.3px">Produtos</b><button class="btn-ghost btn-sm" id="irFotos">📷 Fotos em lote</button></div>
+    <div class="gr-hint"><i>ℹ</i><span>Estoque e preço vêm do <b>Nex</b> e são atualizados sozinhos a cada 15 min — uma edição manual de preço/estoque vale só até a próxima sincronização.</span></div>
     <select id="bulkCatFiltro" style="margin:10px 0 8px">${parentOptions}</select>
     <select id="bulkFalta" style="margin:0 0 10px" title="Mostra só os produtos que precisam passar pelo Sommelier">
       <option value="">Todos os produtos</option>
@@ -1525,10 +1699,13 @@ async function renderGestaoRapida(){
       <option value="ficha" ${falta==="ficha"?"selected":""}>✨ Ficha curta (até 2 itens)</option>
       <option value="perfil" ${falta==="perfil"?"selected":""}>✨ Essências sem perfil de sabor</option>
       <option value="whisky" ${falta==="whisky"?"selected":""}>✨ Whisky sem detalhes</option>
+      <option value="emestoque" ${falta==="emestoque"?"selected":""}>📦 Só o que está em estoque</option>
+      <option value="semfoto" ${falta==="semfoto"?"selected":""}>📷 Em estoque e sem foto</option>
     </select>
     <div id="bulkCount" class="t" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
     <div id="bulkList"><div class="loading">Carregando produtos…</div></div>
     <div id="bulkBar" class="bulk-actionbar" hidden></div>`;
+  $("#irFotos").onclick = () => { window.__fotosAlvos = null; go("fotos"); };
   $("#bulkCatFiltro").onchange = (e) => { gestaoFiltro.parentId = e.target.value || null; renderGestaoRapida(); };
   $("#bulkFalta").onchange = (e) => { gestaoFiltro.falta = e.target.value || ""; renderGestaoRapida(); };
 
@@ -1551,40 +1728,67 @@ async function renderGestaoRapida(){
   }
   if(meu !== gestaoSeq || !$("#bulkList")) return;
   rows = somFiltraFalta(rows||[], falta);
-  state.fila = falta ? rows.map(r=>r.id) : null;     /* com filtro ligado, o editor oferece "Próximo da lista" */
+  state.fila = (falta && !["emestoque","semfoto"].includes(falta)) ? rows.map(r=>r.id) : null;     /* com filtro ligado, o editor oferece "Próximo da lista" */
   const n = (rows||[]).length;
-  $("#bulkCount").textContent = `${n} produto${n===1?'':'s'}${busca?` encontrado${n===1?'':'s'} pra "${busca}"`:''}${falta?" com esse problema (toque num nome e use o Sommelier; o botão “Próximo da lista” leva pro seguinte)":""}`;
+  $("#bulkCount").textContent = `${n} produto${n===1?'':'s'}${busca?` encontrado${n===1?'':'s'} pra "${busca}"`:''}${falta && !["emestoque","semfoto"].includes(falta)?" com esse problema (toque num nome e use o Sommelier; o botão “Próximo da lista” leva pro seguinte)":""}`;
   const ids = (rows||[]).map(r=>r.id);
   const { data: imgs } = await sb.from("product_images").select("product_id,url").in("product_id", ids.length?ids:["00000000-0000-0000-0000-000000000000"]);
   const imgByProduct = {}; (imgs||[]).forEach(i => imgByProduct[i.product_id] = i.url);
+  if(falta === "semfoto"){ rows = rows.filter(r => !imgByProduct[r.id]); const n2 = rows.length; $("#bulkCount").textContent = `${n2} produto${n2===1?"":"s"} em estoque sem foto — marque e use 📷 Fotos para enviar em lote`; }
 
   if(meu !== gestaoSeq || !$("#bulkList")) return;
   const list = $("#bulkList");
   if(!rows || rows.length===0){ list.innerHTML = `<div class="empty">Nenhum produto encontrado.</div>`; return; }
 
-  list.innerHTML = rows.map(p => `
-    <div class="bulk-row" data-id="${p.id}">
-      <input type="checkbox" class="bulk-chk" data-sel>
-      <div class="thumb-mini" data-thumb>${imgByProduct[p.id] ? `<img src="${imgByProduct[p.id]}" alt="">` : esc(p.icon||"📦")}</div>
-      <div class="nm" title="${esc(p.name)} — clique pra abrir a ficha completa" data-abrir style="cursor:pointer;text-decoration:underline;text-decoration-color:transparent" onmouseover="this.style.textDecorationColor='var(--gold)'" onmouseout="this.style.textDecorationColor='transparent'">
-        ${esc(p.name)}
-        <span class="pub-badge ${p.is_active?'on':'off'}" data-pub>${p.is_active?'🟢 Publicado':'⚪ Despublicado'}</span>
+  const prodById = {}; rows.forEach(r => prodById[r.id] = r);
+  list.innerHTML = rows.map(p => {
+    const est = Number.isFinite(+p.stock) ? +p.stock : 0, nivel = est <= 0 ? "zero" : est < LOW_STOCK_LIMIT ? "low" : "ok";
+    return `
+    <article class="gr ${p.is_active?'':'inativo'}" data-id="${p.id}">
+      <label class="gr-sel" title="Selecionar"><input type="checkbox" class="bulk-chk" data-sel aria-label="Selecionar ${esc(p.name)}"></label>
+      <button type="button" class="gr-ph ${imgByProduct[p.id]?'':'vazio'}" data-thumb title="Trocar ou atualizar a foto" aria-label="Trocar foto">${imgByProduct[p.id] ? `<img src="${esc(imgByProduct[p.id])}" alt="" loading="lazy">` : esc(p.icon||"📦")}<span class="cam">📷</span></button>
+      <div class="gr-id">
+        <input type="text" class="gr-name" data-name maxlength="140" autocomplete="off" value="${esc(p.name)}" aria-label="Nome do produto" title="Clique para editar o nome">
+        <div class="gr-meta"><button type="button" class="gr-dtog" data-dtog aria-expanded="false">✎ descrição${(p.description||"").trim()?"":" (vazia)"}</button><button type="button" class="gr-open" data-abrir title="Abrir a ficha completa (Sommelier, ficha técnica, estoque)">↗ ficha</button><span class="tag ${p.is_active?'on':'off'}" data-pub>${p.is_active?'Publicado':'Despublicado'}</span>${p.ean?`<code>${esc(p.ean)}</code>`:""}<span data-mg></span></div>
       </div>
-      <div class="campos">
-        <div class="f"><label>Preço</label><input type="number" step="0.01" data-f="price" value="${p.price}"></div>
-        <div class="f"><label>Custo</label><input type="number" step="0.01" data-f="cost_price" value="${p.cost_price ?? ''}"></div>
-        <div class="f"><label>Promo</label><input type="number" step="0.01" data-f="promo_price" value="${p.promo_price ?? ''}"></div>
+      <div class="gr-stock ${nivel}" title="Estoque (o Nex atualiza sozinho a cada 15 min)"><b>${est}</b><span>${est<=0?"sem estoque":est===1?"unidade":"unidades"}</span></div>
+      <div class="gr-prices">
+        <div class="f"><label>Preço</label><div class="money"><input type="text" inputmode="decimal" autocomplete="off" data-f="price" value="${fmtNum(p.price)}"></div></div>
+        <div class="f"><label>Custo</label><div class="money"><input type="text" inputmode="decimal" autocomplete="off" data-f="cost_price" value="${fmtNum(p.cost_price)}"></div></div>
+        <div class="f"><label>Promo</label><div class="money"><input type="text" inputmode="decimal" autocomplete="off" data-f="promo_price" value="${fmtNum(p.promo_price)}"></div></div>
       </div>
-      <button class="btn-gold btn-sm bulkSaveBtn" data-save>Salvar</button>
+      <div class="gr-act"><button type="button" class="btn-ghost btn-sm" data-foto>📷 Foto</button><button type="button" class="btn-gold btn-sm bulkSaveBtn" data-save>Salvar</button></div>
       <input type="file" accept="image/*" hidden data-filein>
-    </div>`).join("");
+      <div class="gr-dsc" data-dsc hidden>
+        <textarea data-desc maxlength="600" placeholder="Descrição que aparece no site (até ${SOM_DESC_MAX} caracteres — o site corta o que passar disso)">${esc(p.description||"")}</textarea>
+        <div class="cnt"><span>Dica: abra a “↗ ficha” para o Sommelier gerar a descrição.</span><span><b data-cnt>0</b>/${SOM_DESC_MAX}</span></div>
+      </div>
+    </article>`; }).join("");
 
-  list.querySelectorAll(".bulk-row").forEach(row => {
+  list.querySelectorAll(".gr").forEach(row => {
     const id = row.dataset.id;
-    const img = imgByProduct[id];
-    const marcaSuja = () => { row.classList.add("dirty"); const b=row.querySelector("[data-save]"); b.textContent="Salvar"; b.classList.remove("saved"); };
-    row.querySelectorAll("input[data-f]").forEach(inp => inp.addEventListener("input", marcaSuja));
+    const inputs = [...row.querySelectorAll("input[data-f]")];
+    const nameEl = row.querySelector("[data-name]"), descEl = row.querySelector("[data-desc]"), dscBox = row.querySelector("[data-dsc]"), dtog = row.querySelector("[data-dtog]"), cntEl = row.querySelector("[data-cnt]");
+    const atualizaCnt = () => { const n = descEl.value.trim().length; cntEl.textContent = n; cntEl.classList.toggle("over", n > SOM_DESC_MAX); };
+    atualizaCnt();
+    dtog.onclick = () => { const abre = dscBox.hidden; dscBox.hidden = !abre; dtog.setAttribute("aria-expanded", abre); if(abre) descEl.focus(); };
+    const lerPrecos = () => ({ price: parsePreco(inputs[0].value), cost: parsePreco(inputs[1].value), promo: parsePreco(inputs[2].value) });
+    const atualizaMargem = () => {
+      const v = lerPrecos(), el = row.querySelector("[data-mg]"), base = (v.promo != null && !isNaN(v.promo) && v.promo > 0) ? v.promo : v.price;
+      if(v.cost > 0 && base > 0 && !isNaN(base) && !isNaN(v.cost)){ const m = (base - v.cost)/base*100; el.innerHTML = `<span class="mg ${m<0?'neg':''}" title="Margem sobre o preço de venda">margem ${m.toFixed(0)}%</span>`; }
+      else el.innerHTML = "";
+    };
+    atualizaMargem();
+    const marcaSuja = () => { nameEl.classList.remove("bad"); descEl.classList.remove("bad"); atualizaCnt(); row.classList.add("dirty"); const b=row.querySelector("[data-save]"); b.textContent="Salvar"; b.classList.remove("saved"); inputs.forEach(i => i.classList.remove("bad")); atualizaMargem(); };
+    inputs.forEach(inp => {
+      inp.addEventListener("input", marcaSuja);
+      inp.addEventListener("blur", () => { const n = parsePreco(inp.value); if(n != null && !isNaN(n)) inp.value = fmtNum(n); });   /* "25" -> "25,00", "1.234,5" -> "1.234,50" */
+      inp.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); row.querySelector("[data-save]").click(); } });
+    });
 
+    nameEl.addEventListener("input", marcaSuja); descEl.addEventListener("input", marcaSuja);
+    nameEl.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); row.querySelector("[data-save]").click(); } });
+    nameEl.addEventListener("blur", () => { nameEl.value = normalizaNome(nameEl.value); });
     row.querySelector("[data-abrir]").onclick = () => openProduct(id);
 
     row.querySelector("[data-sel]").onchange = (e) => {
@@ -1594,23 +1798,39 @@ async function renderGestaoRapida(){
     };
 
     row.querySelector("[data-save]").onclick = async () => {
-      const campos = {};
-      row.querySelectorAll("input[data-f]").forEach(inp => {
-        const v = inp.value.trim();
-        campos[inp.dataset.f] = v === "" ? null : parseFloat(v);
-      });
-      if(campos.price == null) campos.price = 0;
+      const antigo = prodById[id], v = lerPrecos(), chk = checaPrecos(v, antigo);
+      inputs.forEach(i => i.classList.remove("bad")); nameEl.classList.remove("bad"); descEl.classList.remove("bad");
+      const nome = normalizaNome(nameEl.value), desc = descEl.value.replace(/\s+\n/g, "\n").trim();
+      if(nome.length < 2){ nameEl.classList.add("bad"); toast("O nome precisa ter pelo menos 2 letras."); return; }
+      if(nome.length > 120){ nameEl.classList.add("bad"); toast("Nome muito longo (máx. 120 caracteres)."); return; }
+      if(/^[\d\s.,]+$/.test(nome)){ nameEl.classList.add("bad"); toast("O nome não pode ser só números."); return; }
+      if(chk.erros.length){ chk.campos.forEach(k => inputs[{price:0,cost:1,promo:2}[k]]?.classList.add("bad")); toast(chk.erros[0]); return; }
+      const avisos = [...chk.avisos];
+      if(nome !== antigo.name){
+        const dup = await sb.from("products").select("id").ilike("name", nome.replace(/[%_\\]/g, m => "\\" + m)).neq("id", id).limit(1);
+        if(dup.data && dup.data.length) avisos.push("Já existe outro produto com este mesmo nome.");
+      }
+      if(desc.length > SOM_DESC_MAX){ descEl.classList.add("bad"); dscBox.hidden = false; dtog.setAttribute("aria-expanded", true); avisos.push(`A descrição tem ${desc.length} caracteres e o site corta depois de ${SOM_DESC_MAX} (vai aparecer com “…”).`); }
+      if(avisos.length && !confirm(avisos.map(a => "• " + a).join("\n") + "\n\nSalvar mesmo assim?")) return;
+      const campos = { name: nome, description: desc || null, price: v.price, cost_price: v.cost, promo_price: v.promo };
       const { error } = await sb.from("products").update(campos).eq("id", id);
       const b = row.querySelector("[data-save]");
       if(error){ toast("Erro: " + error.message); return; }
+      Object.assign(antigo, campos);
+      nameEl.value = nome; descEl.value = desc; atualizaCnt(); dtog.textContent = "✎ descrição" + (desc ? "" : " (vazia)");
+      inputs[0].value = fmtNum(v.price); inputs[1].value = fmtNum(v.cost); inputs[2].value = fmtNum(v.promo); atualizaMargem();
       row.classList.remove("dirty"); b.textContent="✓ Salvo"; b.classList.add("saved");
     };
 
-    row.querySelector("[data-thumb]").onclick = () => row.querySelector("[data-filein]").click();
+    const abreFoto = () => row.querySelector("[data-filein]").click();
+    row.querySelector("[data-thumb]").onclick = abreFoto;
+    row.querySelector("[data-foto]").onclick = abreFoto;
     row.querySelector("[data-filein]").onchange = async (e) => {
-      const file = e.target.files[0]; if(!file) return;
-      await uploadPhoto(id, file);
-      renderGestaoRapida(); // recarrega a lista pra já mostrar a foto nova
+      const file = e.target.files[0]; e.target.value = ""; if(!file) return;
+      const ph = row.querySelector("[data-thumb]");
+      const url = await uploadPhoto(id, file, { semAbrir:true, onEnvio: () => ph.classList.add("subindo") });   /* enquadra (arrastar + zoom), comprime e envia */
+      ph.classList.remove("subindo");
+      if(url){ ph.classList.remove("vazio"); ph.innerHTML = `<img src="${esc(url)}" alt=""><span class="cam">📷</span>`; }   /* troca só a miniatura, sem recarregar a lista */
     };
   });
 }
@@ -1624,11 +1844,13 @@ function renderBulkBar(){
     <span class="bulk-count">${n} selecionado${n>1?'s':''}</span>
     <button class="btn-ghost btn-sm" data-act="preco">Alterar preço</button>
     <button class="btn-ghost btn-sm" data-act="custo">Alterar custo</button>
+    <button class="btn-ghost btn-sm" data-act="fotos">📷 Fotos</button>
     <button class="btn-ghost btn-sm" data-act="publicar">Publicar</button>
     <button class="btn-ghost btn-sm" data-act="despublicar">Despublicar</button>
     <button class="btn-ghost btn-sm" data-act="cancelar">Cancelar</button>
   `;
   bar.querySelector('[data-act="cancelar"]').onclick = () => renderGestaoRapida();
+  bar.querySelector('[data-act="fotos"]').onclick = () => { window.__fotosAlvos = [...bulkSelecionados]; go("fotos"); };
   bar.querySelector('[data-act="publicar"]').onclick = () => confirmarBulkPublicacao(true);
   bar.querySelector('[data-act="despublicar"]').onclick = () => confirmarBulkPublicacao(false);
   bar.querySelector('[data-act="preco"]').onclick = () => abrirBulkValor("price", "Novo preço de venda");
@@ -1871,6 +2093,274 @@ async function nexDisparar(modo){
   }
 }
 
+/* ================= FOTOS EM LOTE =================
+   Arrasta várias fotos de uma vez. Pra cada uma o admin: (1) comprime (WebP, 1000×1000, ~60–150 KB), (2) descobre de qual produto ela é
+   — primeiro pelo nome do arquivo / código de barras, depois lendo a embalagem com IA (função identificar-foto) —
+   (3) deixa você conferir, e só então envia. Nada vai pro site sem você apertar "Enviar". */
+const FT = { itens:[], cat:[], imgs:{}, alvos:null, ia:true, substituir:false, seq:0, enviando:false };
+const ftNorm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+const FT_LIXO = new Set(["img","image","imagem","foto","photo","dsc","whatsapp","wa","copy","copia","screenshot","jpg","jpeg","png","webp","heic","de","da","do","e","com","para","the","at","pm","am"]);
+function ftTokens(s){ return ftNorm(s).split(" ").filter(t => t && !FT_LIXO.has(t) && !/^\d{6,}$/.test(t)); }
+const ftPool = () => FT.alvos ? FT.cat.filter(p => FT.alvos.includes(p.id)) : FT.cat;
+const ftKB = b => b >= 1048576 ? (b/1048576).toFixed(1).replace(".",",")+" MB" : Math.max(1,Math.round(b/1024))+" KB";
+
+function ftMatchArquivo(nome){
+  const base = String(nome||"").replace(/\.[^.]+$/,""), pool = ftPool();
+  for(const d of (base.match(/\d{8,14}/g)||[])){
+    const p = pool.find(x => x.ean === d || x.sku === d);
+    if(p) return [{ id:p.id, name:p.name, confianca:1, fonte:"código" }];
+  }
+  const tk = ftTokens(base); if(!tk.length) return [];
+  const out = [];
+  for(const p of pool){
+    const pt = p._t; if(!pt.size) continue;
+    let inter = 0; for(const t of tk) if(pt.has(t) || (t.length > 3 && [...pt].some(x => x.length > 3 && (x.startsWith(t) || t.startsWith(x))))) inter++;
+    if(!inter) continue;
+    const P = inter/tk.length, R = inter/pt.size; let f = 2*P*R/(P+R);
+    if(P === 1) f = Math.max(f, R === 1 ? .98 : .86 + .1*R);          /* tudo que está no nome do arquivo existe no produto */
+    if(f >= .5) out.push({ id:p.id, name:p.name, confianca:Math.min(.98, +f.toFixed(2)), fonte:"arquivo", exato: P === 1 && R === 1 });
+  }
+  out.sort((a,b) => b.confianca - a.confianca);
+  const top = out[0];
+  if(top) for(const o of out.slice(1)){                                 /* dois produtos quase iguais: não escolhe sozinho */
+    if(top.confianca - o.confianca < .05 && !(top.exato && !o.exato)){ top.confianca = Math.min(top.confianca, .7); o.confianca = Math.min(o.confianca, .7); }
+  }
+  return out.slice(0,3).map(({exato, ...c}) => c);
+}
+
+/* comprime e enquadra: quase quadrada -> corta no centro; muito retangular -> centraliza inteira sobre a cor do fundo (sem cortar o produto) */
+async function ftPreparar(file){
+  const bmp = await createImageBitmap(file, { imageOrientation:"from-image" }).catch(() => createImageBitmap(file));
+  const w = bmp.width, h = bmp.height, razao = w/h;
+  const cover = razao >= .85 && razao <= 1.18;
+  const lado = cover ? Math.min(1000, Math.min(w,h)) : Math.min(1000, Math.max(w,h));
+  const c = document.createElement("canvas"); c.width = c.height = Math.max(300, lado);
+  const x = c.getContext("2d");
+  if(cover){
+    const m = Math.min(w,h); x.drawImage(bmp, (w-m)/2, (h-m)/2, m, m, 0, 0, c.width, c.height);
+  } else {
+    const t = document.createElement("canvas"); t.width = 4; t.height = 4; const tx = t.getContext("2d");
+    tx.drawImage(bmp, 0, 0, 4, 4);                                         /* 4×4 médio: os cantos dizem a cor do fundo */
+    const d = tx.getImageData(0,0,4,4).data, cantos = [0, 3, 12, 15].map(i => [d[i*4], d[i*4+1], d[i*4+2]]);
+    const med = [0,1,2].map(k => Math.round(cantos.reduce((s,q) => s+q[k], 0)/4));
+    const var_ = Math.max(...[0,1,2].map(k => Math.max(...cantos.map(q => q[k])) - Math.min(...cantos.map(q => q[k]))));
+    x.fillStyle = var_ < 40 ? `rgb(${med})` : "#fff"; x.fillRect(0,0,c.width,c.height);
+    const s = Math.min(c.width/w, c.height/h), dw = w*s, dh = h*s;
+    x.imageSmoothingQuality = "high"; x.drawImage(bmp, (c.width-dw)/2, (c.height-dh)/2, dw, dh);
+  }
+  const blobDe = (tipo, q) => new Promise(r => c.toBlob(r, tipo, q));
+  let blob = await blobDe("image/webp", .86);
+  if(!blob || blob.type !== "image/webp") blob = await blobDe("image/jpeg", .88);
+  for(const q of [.78, .68]) if(blob.size > 220*1024 && blob.type === "image/webp") blob = await blobDe("image/webp", q);
+  const mini = document.createElement("canvas"), r2 = Math.min(1, 640/Math.max(w,h));
+  mini.width = Math.round(w*r2); mini.height = Math.round(h*r2); mini.getContext("2d").drawImage(bmp, 0, 0, mini.width, mini.height);
+  const b64 = mini.toDataURL("image/jpeg", .72).split(",")[1];
+  bmp.close && bmp.close();
+  return { blob, b64, modo: cover ? "corte" : "inteira" };
+}
+
+async function ftIA(it){
+  const { data:{ session } } = await sb.auth.getSession();
+  for(let tent = 0; tent < 3; tent++){
+    const r = await fetch(SUPA_URL + "/functions/v1/identificar-foto", { method:"POST",
+      headers:{ "Content-Type":"application/json", apikey:SUPA_KEY, Authorization:"Bearer " + session.access_token },
+      body: JSON.stringify({ imagem: it.b64, mime:"image/jpeg", nome_arquivo: it.file.name, alvos: FT.alvos || undefined }) });
+    const j = await r.json().catch(() => ({}));
+    if(r.status === 429 && tent < 2){ await new Promise(z => setTimeout(z, 12000)); continue; }
+    if(!r.ok) throw new Error(j.erro || ("IA indisponível (" + r.status + ")"));
+    return j;
+  }
+}
+
+async function ftProcessa(it){
+  try{
+    it.estado = "comprimindo"; ftAtualizaCard(it);
+    const p = await ftPreparar(it.file);
+    it.blob = p.blob; it.b64 = p.b64; it.modo = p.modo;
+    if(it.url) URL.revokeObjectURL(it.url); it.url = URL.createObjectURL(it.blob);
+    it.estado = "identificando"; ftAtualizaCard(it);
+    let cands = ftMatchArquivo(it.file.name), lido = "";
+    const bomLocal = !!cands[0] && cands[0].confianca >= .9;      /* empate entre dois produtos já foi rebaixado para .7 em ftMatchArquivo */
+    if(!bomLocal && FT.ia){
+      try{
+        const r = await ftIA(it); lido = r.lido || "";
+        const ids = new Set((r.candidatos||[]).map(c => c.id));
+        cands = [...(r.candidatos||[]).map(c => ({ ...c, fonte:"IA" })), ...cands.filter(c => !ids.has(c.id))].slice(0,3);
+      }catch(e){ it.aviso = e.message || "IA indisponível"; }
+    }
+    it.lido = lido; it.cands = cands;
+    const top = cands[0];
+    if(top && top.confianca >= .75){ it.pid = top.id; it.on = !FT.imgs[top.id] || FT.substituir; it.estado = "ok"; }
+    else { it.pid = null; it.on = false; it.estado = top ? "revisar" : "semmatch"; }
+    ftDuplicados();
+  }catch(e){ it.estado = "erro"; it.aviso = "Não consegui ler essa foto (" + (e.message||"erro") + ")."; }
+  ftAtualizaCard(it); ftRodape();
+}
+
+function ftDuplicados(){
+  const vistos = new Set();
+  for(const it of FT.itens){
+    it.dup = false;
+    if(it.pid && it.on){ if(vistos.has(it.pid)){ it.dup = true; it.on = false; } else vistos.add(it.pid); }
+  }
+}
+function ftProduto(id){ return FT.cat.find(p => p.id === id); }
+
+function ftCardHTML(it){
+  const p = it.pid ? ftProduto(it.pid) : null, jaTem = p && FT.imgs[p.id];
+  const chip = { comprimindo:["⏳ Comprimindo…","busy"], identificando:["🔎 Identificando…","busy"], ok:["✓ Identificada","ok"], revisar:["? Confira","warn"], semmatch:["✗ Não achei","bad"], erro:["⚠ Erro","bad"], enviando:["⬆ Enviando…","busy"], enviada:["✓ Enviada","ok"], falhou:["⚠ Falhou","bad"] }[it.estado] || ["",""];
+  const pronto = ["ok","revisar","semmatch"].includes(it.estado);
+  const redu = it.blob ? Math.max(0, Math.round(100 - it.blob.size/it.file.size*100)) : 0;
+  return `<article class="ft-card ${it.estado} ${it.on?'on':''}" data-k="${it.k}">
+    <div class="ft-img">${it.url ? `<img src="${it.url}" alt="">` : `<div class="ft-sk"></div>`}
+      ${it.blob ? `<span class="ft-sz">${ftKB(it.file.size)} → <b>${ftKB(it.blob.size)}</b>${redu>5?` · −${redu}%`:""}</span>` : ""}</div>
+    <div class="ft-body">
+      <div class="ft-top"><span class="ft-chip ${chip[1]}">${chip[0]}</span><span class="ft-fn" title="${esc(it.file.name)}">${esc(it.file.name)}</span>
+        <button class="ft-x" data-x title="Remover da lista" aria-label="Remover">✕</button></div>
+      ${it.lido ? `<div class="ft-lido">IA leu: “${esc(it.lido)}”</div>` : ""}
+      ${it.aviso ? `<div class="ft-av">${esc(it.aviso)}</div>` : ""}
+      ${pronto || it.estado==="enviada" || it.estado==="falhou" ? `
+      <div class="ft-prod">
+        ${p ? `<div class="ft-sel"><b>${esc(p.name)}</b><button data-limpar class="ft-lk">trocar</button></div>
+               ${jaTem ? `<div class="ft-ja"><img src="${esc(FT.imgs[p.id])}" alt=""> já tem foto${it.on?" — será substituída":""}</div>` : ""}
+               ${it.dup ? `<div class="ft-av">Outra foto já vai para este produto.</div>` : ""}`
+          : `<div class="ft-busca"><input class="ft-q" placeholder="Buscar o produto desta foto…" autocomplete="off" inputmode="search"><div class="ft-dd" hidden></div></div>`}
+        ${!p && it.cands?.length ? `<div class="ft-cands">${it.cands.map(c => `<button data-cand="${c.id}" class="ft-cand">${esc(c.name)} <i>${Math.round(c.confianca*100)}%</i></button>`).join("")}</div>` : ""}
+      </div>
+      <div class="ft-acts">
+        <label class="ft-chk"><input type="checkbox" class="ft-on" ${it.on?"checked":""} ${p?"":"disabled"}> Enviar</label>
+        <button class="btn-ghost btn-sm" data-crop>✂ Enquadrar</button>
+      </div>` : ""}
+    </div></article>`;
+}
+function ftAtualizaCard(it){
+  const g = $("#ftGrid"); if(!g) return;
+  const el = g.querySelector(`[data-k="${it.k}"]`), nov = document.createElement("div"); nov.innerHTML = ftCardHTML(it);
+  if(el) el.replaceWith(nov.firstElementChild); else g.appendChild(nov.firstElementChild);
+}
+function ftRodape(){
+  const f = $("#ftFoot"); if(!f) return;
+  const total = FT.itens.length, envia = FT.itens.filter(i => i.on && i.pid && i.blob && ["ok","revisar","semmatch"].includes(i.estado)).length;
+  const rev = FT.itens.filter(i => ["revisar","semmatch"].includes(i.estado) && !i.pid).length;
+  const ocup = FT.itens.filter(i => ["comprimindo","identificando"].includes(i.estado)).length;
+  f.hidden = total === 0;
+  f.innerHTML = `<span class="ft-n"><b>${total}</b> foto${total===1?"":"s"}${ocup?` · ${ocup} processando`:""}${rev?` · <em>${rev} sem produto</em>`:""}</span>
+    <button class="btn-ghost btn-sm" id="ftLimpa" ${FT.enviando?"disabled":""}>Limpar tudo</button>
+    <button class="btn-gold" id="ftEnvia" ${envia && !FT.enviando && !ocup ? "" : "disabled"}>${FT.enviando ? "Enviando…" : `Enviar ${envia} foto${envia===1?"":"s"}`}</button>`;
+  $("#ftLimpa").onclick = () => { FT.itens.forEach(i => i.url && URL.revokeObjectURL(i.url)); FT.itens = []; $("#ftGrid").innerHTML = ""; ftRodape(); };
+  $("#ftEnvia").onclick = ftEnviar;
+}
+
+async function ftEnviar(){
+  const fila = FT.itens.filter(i => i.on && i.pid && i.blob && ["ok","revisar","semmatch"].includes(i.estado));
+  if(!fila.length) return;
+  FT.enviando = true; ftRodape(); let ok = 0, falhou = 0, idx = 0;
+  const um = async () => {
+    while(idx < fila.length){
+      const it = fila[idx++]; it.estado = "enviando"; ftAtualizaCard(it);
+      try{
+        const ext = it.blob.type === "image/webp" ? "webp" : "jpg", path = `${it.pid}.${ext}`;
+        const { error:e1 } = await sb.storage.from(BUCKET).upload(path, it.blob, { upsert:true, contentType: it.blob.type, cacheControl:"31536000" });
+        if(e1) throw e1;
+        const { data:pub } = sb.storage.from(BUCKET).getPublicUrl(path), url = pub.publicUrl + "?v=" + Date.now();
+        await sb.from("product_images").delete().eq("product_id", it.pid);
+        const { error:e2 } = await sb.from("product_images").insert({ product_id: it.pid, url, is_primary:true });
+        if(e2) throw e2;
+        sb.storage.from(BUCKET).remove([`${it.pid}.${ext === "webp" ? "jpg" : "webp"}`]).catch(() => {});   /* arquivo antigo do outro formato, se existir */
+        FT.imgs[it.pid] = url; it.estado = "enviada"; it.on = false; ok++;
+      }catch(e){ it.estado = "falhou"; it.aviso = e.message || "erro ao enviar"; falhou++; }
+      ftAtualizaCard(it);
+    }
+  };
+  await Promise.all([um(), um(), um()]);
+  FT.enviando = false; ftRodape();
+  toast(`${ok} foto${ok===1?"":"s"} enviada${ok===1?"":"s"}${falhou?`, ${falhou} com erro`:""}.`);
+}
+
+function ftAdiciona(files){
+  const imgs = [...files].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name));
+  if(!imgs.length){ toast("Escolha arquivos de imagem."); return; }
+  const novos = imgs.map(f => ({ k: ++FT.seq, file: f, estado:"comprimindo", on:false, pid:null, cands:[] }));
+  FT.itens.push(...novos); novos.forEach(ftAtualizaCard); ftRodape();
+  let i = 0;
+  const trab = async () => { while(i < novos.length) await ftProcessa(novos[i++]); };
+  Promise.all([trab(), trab(), trab()]).then(ftRodape);
+}
+
+async function ftCarregaCatalogo(){
+  const cat = [];
+  for(let de = 0; ; de += 1000){
+    const { data, error } = await sb.from("products").select("id,name,brand,ean,sku").order("name").range(de, de+999);
+    if(error || !data) break; cat.push(...data); if(data.length < 1000) break;
+  }
+  cat.forEach(p => { p._t = new Set(ftTokens(p.name)); p._n = ftNorm(p.name); });
+  FT.cat = cat; FT.imgs = {};
+  for(let de = 0; ; de += 1000){
+    const { data } = await sb.from("product_images").select("product_id,url").range(de, de+999);
+    if(!data) break; data.forEach(r => FT.imgs[r.product_id] = r.url); if(data.length < 1000) break;
+  }
+}
+
+async function renderFotos(){
+  FT.itens.forEach(i => i.url && URL.revokeObjectURL(i.url)); FT.itens = [];
+  const alvos = window.__fotosAlvos; window.__fotosAlvos = null; FT.alvos = alvos && alvos.length ? alvos : null;
+  app.innerHTML = `${topbarHTML("Fotos em lote")}
+    <section class="ft-intro">
+      <h2>Fotos em lote</h2>
+      <p>Arraste várias fotos de uma vez. O admin <b>comprime</b> cada uma (sem perder qualidade visível), <b>descobre de qual produto é</b> — pelo nome do arquivo, pelo código de barras no nome ou lendo a embalagem com IA — e você só confere antes de enviar.</p>
+      ${FT.alvos ? `<div class="ft-alvo">Limitado a <b>${FT.alvos.length}</b> produto${FT.alvos.length>1?"s":""} que você marcou na lista. <button class="ft-lk" id="ftTodos">usar todos os produtos</button></div>` : ""}
+      <div class="ft-opts">
+        <label><input type="checkbox" id="ftIA" ${FT.ia?"checked":""}> Ler a embalagem com IA quando o nome do arquivo não ajudar</label>
+        <label><input type="checkbox" id="ftSub" ${FT.substituir?"checked":""}> Marcar para enviar também os produtos que <b>já têm foto</b> (substitui)</label>
+      </div>
+      <label class="ft-drop" id="ftDrop"><input type="file" id="ftFile" accept="image/*" multiple hidden>
+        <span class="ft-ic">⬆</span><b>Toque ou arraste as fotos aqui</b><small>JPG, PNG, WebP ou HEIC · quantas quiser · dica: nomeie o arquivo com o nome do produto ou o código de barras</small></label>
+    </section>
+    <div id="ftGrid" class="ft-grid"><div class="loading">Carregando catálogo…</div></div>
+    <div id="ftFoot" class="ft-foot" hidden></div>`;
+  bindTopbar();
+  await ftCarregaCatalogo(); if(rotaAtual() !== "fotos") return;
+  $("#ftGrid").innerHTML = "";
+  const inp = $("#ftFile"), drop = $("#ftDrop");
+  inp.onchange = () => { ftAdiciona(inp.files); inp.value = ""; };
+  ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => ftAdiciona(e.dataTransfer.files));
+  $("#ftIA").onchange = e => FT.ia = e.target.checked;
+  $("#ftSub").onchange = e => { FT.substituir = e.target.checked; };
+  if($("#ftTodos")) $("#ftTodos").onclick = () => { FT.alvos = null; renderFotos(); };
+
+  const grid = $("#ftGrid"), achar = k => FT.itens.find(i => i.k === +k);
+  const escolhe = (it, pid) => {
+    it.pid = pid; it.estado = it.estado === "semmatch" ? "revisar" : it.estado;
+    it.on = !FT.imgs[pid] || FT.substituir; ftDuplicados(); ftAtualizaCard(it); ftRodape();
+  };
+  grid.addEventListener("click", async e => {
+    const card = e.target.closest(".ft-card"); if(!card) return; const it = achar(card.dataset.k); if(!it) return;
+    if(e.target.closest("[data-x]")){ if(it.url) URL.revokeObjectURL(it.url); FT.itens = FT.itens.filter(i => i !== it); card.remove(); ftRodape(); return; }
+    const cand = e.target.closest("[data-cand]"); if(cand){ escolhe(it, cand.dataset.cand); return; }
+    const pick = e.target.closest("[data-pick]"); if(pick){ escolhe(it, pick.dataset.pick); return; }
+    if(e.target.closest("[data-limpar]")){ it.pid = null; it.on = false; ftDuplicados(); ftAtualizaCard(it); ftRodape(); return; }
+    if(e.target.closest("[data-crop]")){
+      const r = await abrirRecorteImagem(it.file, 1000, .86).catch(err => (toast(err.message), null));
+      if(r){ it.blob = r.blob; if(it.url) URL.revokeObjectURL(it.url); it.url = URL.createObjectURL(r.blob); ftAtualizaCard(it); }
+    }
+  });
+  grid.addEventListener("change", e => {
+    if(!e.target.classList.contains("ft-on")) return;
+    const it = achar(e.target.closest(".ft-card").dataset.k); it.on = e.target.checked; ftDuplicados(); ftAtualizaCard(it); ftRodape();
+  });
+  grid.addEventListener("input", e => {
+    if(!e.target.classList.contains("ft-q")) return;
+    const dd = e.target.parentElement.querySelector(".ft-dd"), toks = ftNorm(e.target.value).split(" ").filter(Boolean);
+    if(!toks.length){ dd.hidden = true; return; }
+    const r = ftPool().filter(p => toks.every(t => p._n.includes(t))).slice(0, 8);
+    dd.hidden = false;
+    dd.innerHTML = r.length ? r.map(p => `<button data-pick="${p.id}">${esc(p.name)}${FT.imgs[p.id]?` <i>tem foto</i>`:""}</button>`).join("") : `<div class="ft-vazio">Nenhum produto com esse nome.</div>`;
+  });
+  FT.itens.length || ftRodape();
+}
+
 /* tabela de rotas — toda tela nova entra aqui */
 Object.assign(ROUTES, {
   "home": renderMain,
@@ -1879,6 +2369,7 @@ Object.assign(ROUTES, {
   "estoque-baixo": renderLowStock,
   "planilha": renderSyncScreen,
   "vendidos": renderBestsellersScreen,
+  "fotos": renderFotos,
 });
 
 boot();
