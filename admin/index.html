@@ -44,6 +44,39 @@ a{color:var(--gold-2)}
 .topbar .brand span{font-size:12px;color:var(--muted)}
 .topbar .who{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
 
+
+/* ---------- navegação / início ---------- */
+.topbar .brand-btn{display:flex;align-items:baseline;gap:8px;background:none;border:0;padding:0;color:inherit;border-radius:8px}
+.topbar .brand-btn img{align-self:center}
+.topbar .brand-btn b{font-family:'Barlow Condensed',sans-serif;font-size:22px;color:var(--gold-2);text-transform:uppercase}
+.topbar .brand-btn span{font-size:12px;color:var(--muted)}
+.crumb{display:flex;align-items:center;gap:8px;padding:12px 0 0;font-size:14px;color:var(--muted)}
+.crumb b{color:var(--ink);font-weight:600}
+.statusgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 4px}
+@media (max-width:560px){.statusgrid{grid-template-columns:1fr}}
+.stcard{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--ink)}
+.stcard:hover{border-color:var(--gold)}
+.stcard .k{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.stcard .v{font-size:16px;font-weight:700;margin-top:2px}
+.stcard .d{font-size:12px;color:var(--muted);margin-top:2px}
+.stcard.bad{border-color:var(--red)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--muted)}
+.dot.ok{background:#7fd69a}.dot.bad{background:#e58b82}
+details.manual{margin:0 0 14px;border:1px dashed var(--line);border-radius:10px;padding:8px 12px}
+details.manual summary{cursor:pointer;color:var(--muted);font-size:13px}
+details.manual .toolbar{margin:10px 0 2px}
+.nx-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:12px 0}
+.nx-kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.nx-kpi b{display:block;font-size:22px;font-family:'Barlow Condensed',sans-serif;color:var(--gold-2)}
+.nx-kpi span{font-size:12px;color:var(--muted)}
+.nx-list{margin:8px 0 0;padding:0 0 0 18px;font-size:13px;color:var(--ink)}
+.nx-list li{margin:3px 0}
+details.nx-box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0}
+details.nx-box summary{cursor:pointer;font-weight:600}
+.nx-hist{width:100%;border-collapse:collapse;font-size:13px}
+.nx-hist td,.nx-hist th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.nx-hist th{font-size:11px;text-transform:uppercase;color:var(--muted)}
+
 /* ---------- login ---------- */
 .center-screen{min-height:70vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px}
@@ -236,6 +269,16 @@ a{color:var(--gold-2)}
 .som-btns{display:flex;gap:8px;margin-top:12px}.som-btns .btn-gold{flex:1}
 .som-erro{margin-top:10px;padding:10px;border-radius:8px;background:rgba(214,57,43,.14);border:1px solid rgba(214,57,43,.5);color:#ffc9c2;font-size:13px}
 .som-ok{margin-top:10px;padding:10px;border-radius:8px;background:rgba(31,122,77,.2);border:1px solid #1f7a4d;color:#9be3bd;font-size:13px}
+
+/* horário de funcionamento */
+.hr-row{display:grid;grid-template-columns:minmax(150px,1.1fr) 1fr 1fr;gap:10px 12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.hr-row.hr-hoje{border-color:var(--gold)}
+.hr-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hr-dia{font-weight:700}.hr-dia small{color:var(--gold);font-weight:600;margin-left:4px}
+.hr-tempo label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
+.hr-tempo input[type=time]{width:100%}
+.hr-dica{grid-column:1 / -1;font-size:12px;color:var(--muted)}.hr-dica:empty{display:none}
+@media (max-width:560px){.hr-row{grid-template-columns:1fr 1fr}.hr-top{grid-column:1 / -1}}
 </style>
 </head>
 <body>
@@ -260,6 +303,41 @@ function toast(msg){
 function esc(s){ return (s??"").toString().replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function brl(v){ return (v==null) ? "—" : "R$ " + Number(v).toFixed(2).replace(".", ","); }
 
+
+/* ---------------- navegação: UM roteador (hash) + UMA barra de topo para todas as telas ----------------
+   Toda tela é registrada em ROUTES. Quem navega chama go("nome"). O botão voltar do celular/navegador funciona
+   (hashchange) e o logo/“Início” sempre leva à tela inicial — não existe tela sem caminho de volta. */
+const ROUTES = {};
+function rotaAtual(){ const h = location.hash.replace(/^#\/?/, ""); return ROUTES[h] ? h : "home"; }
+function dispatch(){
+  if(!state.staff) return;
+  try{ closeDrawer(); }catch(_){}
+  Promise.resolve(ROUTES[rotaAtual()]()).catch(e => { console.error(e); toast("Erro ao abrir a tela."); });
+  window.scrollTo(0, 0);
+}
+function go(nome){
+  const alvo = nome === "home" ? "#/" : "#/" + nome;
+  if(location.hash === alvo) dispatch(); else location.hash = alvo;   // hashchange chama dispatch()
+}
+window.addEventListener("hashchange", dispatch);
+function topbarHTML(titulo){
+  return `
+    <div class="topbar">
+      <button class="brand-btn" data-home aria-label="Ir para o início"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></button>
+      <div class="who">${esc(state.staff?.name||"")} <button class="btn-ghost btn-sm" id="outBtn">Sair</button></div>
+    </div>
+    ${titulo ? `<nav class="crumb" aria-label="Você está em"><button class="btn-ghost btn-sm" data-home>🏠 Início</button><span>›</span><b>${esc(titulo)}</b></nav>` : ""}`;
+}
+function bindTopbar(){
+  document.querySelectorAll("[data-home]").forEach(b => b.onclick = () => go("home"));
+  const out = $("#outBtn"); if(out) out.onclick = async () => { await sb.auth.signOut(); state.staff = null; location.hash = ""; renderLogin(); };
+}
+const fmtQuando = iso => iso ? new Date(iso).toLocaleString("pt-BR", {timeZone:"America/Sao_Paulo", day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"}) : "—";
+function haQuanto(iso){
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime())/60000));
+  return m < 1 ? "agora mesmo" : m < 60 ? `há ${m} min` : m < 1440 ? `há ${Math.floor(m/60)} h` : `há ${Math.floor(m/1440)} d`;
+}
+
 /* ---------------- boot ---------------- */
 async function boot(){
   const { data:{ session } } = await sb.auth.getSession();
@@ -276,7 +354,8 @@ async function loadStaffAndContinue(){
   if(!state.staff){ renderAccessDenied(); return; }
   const { data: cats } = await sb.from("categories").select("id,name,slug,parent_id").order("name");
   state.categories = cats || [];
-  renderMain();
+  if(!location.hash || location.hash==="#") location.hash = "#/";
+  dispatch();
 }
 
 /* ---------------- login ---------------- */
@@ -315,12 +394,13 @@ function renderAccessDenied(){
   $("#loOut").onclick = async () => { await sb.auth.signOut(); renderLogin(); };
 }
 
-/* ---------------- main shell ---------------- */
+/* ---------------- tela inicial ---------------- */
 async function renderMain(){
   app.innerHTML = `
-    <div class="topbar">
-      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
-      <div class="who">${esc(state.staff.name)} <button class="btn-ghost btn-sm" id="outBtn">Sair</button></div>
+    ${topbarHTML(null)}
+    <div class="statusgrid">
+      <button class="stcard" id="stLoja"><div class="k">Loja agora</div><div class="v">Carregando…</div></button>
+      <button class="stcard" id="stNex"><div class="k">Estoque × Nex</div><div class="v">Carregando…</div></button>
     </div>
     <div class="scan-wrap">
       <input id="searchBox" placeholder="Bipar EAN, ou buscar por nome / SKU…" autofocus>
@@ -328,17 +408,28 @@ async function renderMain(){
     </div>
     <div class="toolbar">
       <button class="btn-gold btn-sm" id="newBtn">+ Novo produto</button>
-      <button class="btn-ghost btn-sm" id="syncBtn">📥 Sincronizar planilha de compra</button>
-      <button class="btn-ghost btn-sm" id="bestBtn">📊 Atualizar mais vendidos (NEX)</button>
+      <button class="btn-ghost btn-sm" id="nexBtn">🔄 Sincronização Nex</button>
       <button class="btn-ghost btn-sm" id="lowStockBtn">⚠️ Estoque baixo</button>
+      <button class="btn-ghost btn-sm" id="horarioBtn">🕐 Horário de funcionamento</button>
     </div>
+    <details class="manual"><summary>Ferramentas manuais (planilhas) — o estoque já sincroniza sozinho</summary>
+      <div class="toolbar">
+        <button class="btn-ghost btn-sm" id="syncBtn">📥 Planilha de compra (custo)</button>
+        <button class="btn-ghost btn-sm" id="bestBtn">📊 Atualizar mais vendidos (planilha NEX)</button>
+      </div>
+    </details>
     <div id="browseArea"></div>
   `;
-  $("#outBtn").onclick = async () => { await sb.auth.signOut(); renderLogin(); };
+  bindTopbar();
   $("#newBtn").onclick = () => openNewProduct();
-  $("#syncBtn").onclick = () => renderSyncScreen();
-  $("#bestBtn").onclick = () => renderBestsellersScreen();
-  $("#lowStockBtn").onclick = () => renderLowStock();
+  $("#nexBtn").onclick = () => go("nex");
+  $("#stNex").onclick = () => go("nex");
+  $("#stLoja").onclick = () => go("horarios");
+  $("#syncBtn").onclick = () => go("planilha");
+  $("#bestBtn").onclick = () => go("vendidos");
+  $("#lowStockBtn").onclick = () => go("estoque-baixo");
+  $("#horarioBtn").onclick = () => go("horarios");
+  carregarStatusInicio();
 
   gestaoFiltro = { parentId: null, busca: "" };
   renderGestaoRapida();
@@ -350,6 +441,37 @@ async function renderMain(){
     t = setTimeout(()=>{ gestaoFiltro.busca = box.value.trim(); renderGestaoRapida(); }, 250);
   });
   box.addEventListener("keydown", e => { if(e.key==="Enter"){ clearTimeout(t); gestaoFiltro.busca = box.value.trim(); renderGestaoRapida(); } });
+}
+
+/* cartões de status da tela inicial (loja aberta? / última sincronização com o Nex) */
+async function carregarStatusInicio(){
+  const rota = rotaAtual();
+  const [h, l] = await Promise.all([
+    sb.from("loja_horarios").select("*"),
+    sb.from("nex_sync_log").select("ran_at,ok,erro,modo,origem,estoque_alterado,preco_alterado,casados,nex_total").order("id",{ascending:false}).limit(1),
+  ]);
+  if(rotaAtual() !== rota || !$("#stLoja")) return;   // o usuário já saiu da tela inicial
+  // loja
+  try{
+    const porDia = {}; (h.data||[]).forEach(r => porDia[r.dia] = r);
+    const linhas = HR_DIAS.map(({d}) => { const r = porDia[d], pad = HR_PADRAO[d];
+      return { d, aberto: r ? !!r.aberto : !!pad, a: r ? r.abre_min : (pad?pad[0]:840), b: r ? r.fecha_min : (pad?pad[1]:1440) }; });
+    const st = hrStatus(linhas);
+    $("#stLoja").innerHTML = `<div class="k">Loja agora</div><div class="v"><span class="dot ${st.aberto?"ok":"bad"}"></span>${st.aberto?"ABERTA":"FECHADA"}</div>
+      <div class="d">${st.aberto ? "até "+st.fim : (st.nunca ? "nenhum dia aberto" : "abre "+st.quando+" às "+st.hora)} · toque para editar</div>`;
+    $("#stLoja").classList.toggle("bad", false);
+  }catch(_){ $("#stLoja").innerHTML = `<div class="k">Loja agora</div><div class="v">—</div>`; }
+  // nex
+  const r = l.data && l.data[0];
+  if(l.error || !r){
+    $("#stNex").innerHTML = `<div class="k">Estoque × Nex</div><div class="v">Sem registro ainda</div><div class="d">toque para sincronizar</div>`; return;
+  }
+  const velho = (Date.now() - new Date(r.ran_at).getTime()) > 45*60000;
+  const ruim = !r.ok || velho;
+  $("#stNex").classList.toggle("bad", ruim);
+  $("#stNex").innerHTML = `<div class="k">Estoque × Nex</div>
+    <div class="v"><span class="dot ${ruim?"bad":"ok"}"></span>${!r.ok ? "Última rodada falhou" : velho ? "Parou de sincronizar?" : "Em dia"}</div>
+    <div class="d">${haQuanto(r.ran_at)} · ${r.modo==="teste" ? "simulação" : (r.estoque_alterado ?? 0)+" estoque(s) e "+(r.preco_alterado ?? 0)+" preço(s) alterado(s)"}</div>`;
 }
 
 /* ---------------- grade de categorias (tela inicial) ---------------- */
@@ -483,7 +605,7 @@ function closeDrawer(){
 }
 
 /* ===================== Sommelier IA: ficha de QUALQUER produto ===================== */
-const SOM_EIXOS = [["citrico","🍊","Cítrico"],["tropical","🏝️","Tropical"],["doce","🍇","Adocicado"],["frutado","🍓","Frutado"],["mentolado","🍃","Mentolado"]];
+const SOM_EIXOS = [["citrico","🍊","Cítrico"],["tropical","🏝️","Tropical"],["doce","🍓","Adocicado"],["mentolado","🍃","Mentolado"]];
 const SOM_DESC_MAX = 170;            /* o site corta com "…" tudo que passar disso */
 const SOM_PESQUISAR_PADRAO = true;   /* pesquisa na internet LIGADA (o projeto do Gemini agora tem faturamento). Se a pesquisa for recusada, a função segue sem ela e avisa na tela. */
 const SOM_WHISKY = [["origem","País/Região"],["tipo","Tipo"],["destilaria","Destilaria"],["composicao","Composição"],["barril","Barril"],["idade","Idade"],["abv","ABV"],["cor","Cor"],["intro","Introdução"],["nariz","Nariz"],["paladar","Paladar"],["finalizacao","Finalização"],["perfil","Perfil"],["sugestao","Sugestão de consumo"],["obs","Observação"]];
@@ -524,7 +646,6 @@ function somFiltraFalta(rows, falta){
       case "cortada": return d > SOM_DESC_MAX;
       case "ficha": return f <= 2;
       case "perfil": return info.essencia && !p.flavor_profile;
-      case "frutado": return info.essencia && !!p.flavor_profile && !("frutado" in p.flavor_profile);
       case "whisky": return info.whisky && !p.whisky_details;
       default: return true;
     }
@@ -536,7 +657,7 @@ function somResumoTxt(p, info){
     d===0 ? "Descrição: "+r("faltando") : d<=80 ? "Descrição: "+r(`rasa (${d} car.)`) : d>SOM_DESC_MAX ? "Descrição: "+r(`cortada no site (${d} car.)`) : "Descrição: "+g(`ok (${d} car.)`),
     "Ficha: " + (f>2 ? g(f+" itens") : r(f+(f===1?" item":" itens")))
   ];
-  if(info.essencia) partes.push("Perfil de sabor: " + (p.flavor_profile ? ("frutado" in p.flavor_profile ? g("5 eixos") : r("4 eixos, sem Frutado")) : r("faltando")));
+  if(info.essencia) partes.push("Perfil de sabor: " + (p.flavor_profile ? g("ok") : r("faltando")));
   if(info.whisky) partes.push("Whisky: " + (p.whisky_details ? g("ok") : r("sem detalhes")));
   return partes.join(" · ");
 }
@@ -931,7 +1052,7 @@ function openNewProduct(){
 
     <div class="section">
       <h3>✨ Sommelier IA</h3>
-      <p class="t" style="font-size:12px;color:var(--muted);margin:0 0 8px;line-height:1.45">Escolha a categoria, digite o nome e clique abaixo: ele monta a descrição (até 170 caracteres), a ficha e, nas essências, as barrinhas de sabor (cítrico, tropical, doce, frutado e mentolado). Você revisa e edita tudo antes de cadastrar.</p>
+      <p class="t" style="font-size:12px;color:var(--muted);margin:0 0 8px;line-height:1.45">Escolha a categoria, digite o nome e clique abaixo: ele monta a descrição (até 170 caracteres), a ficha e, nas essências, as barrinhas de sabor (cítrico, tropical, adocicado e mentolado). Você revisa e edita tudo antes de cadastrar.</p>
       <div class="field"><label>Notas pra IA (opcional)</label><textarea id="nNotas" rows="2" placeholder="Ex.: sabor de melancia com toque de menta, bem refrescante"></textarea></div>
       <button class="btn-gold" id="nGerarBtn" style="width:100%">✨ Gerar descrição, ficha e perfil de sabor</button>
       <div id="nSommelierPreview" style="margin-top:10px"></div>
@@ -1038,10 +1159,7 @@ function scoreClasse(s){ return s>=0.5 ? "alta" : s>=0.25 ? "media" : "baixa"; }
 
 function renderSyncScreen(){
   app.innerHTML = `
-    <div class="topbar">
-      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
-      <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
-    </div>
+    ${topbarHTML("Planilha de compra")}
     <div style="padding:16px 0">
       <h2 style="font-size:22px;margin-bottom:6px">Sincronizar planilha de compra</h2>
       <p style="color:var(--muted);font-size:13px;margin:0 0 16px">
@@ -1055,7 +1173,7 @@ function renderSyncScreen(){
       <div id="syncBody"></div>
     </div>
   `;
-  $("#backBtn").onclick = () => renderMain();
+  bindTopbar();
   const drop = $("#dropzone");
   drop.onclick = () => $("#syncFile").click();
   drop.ondragover = e => { e.preventDefault(); drop.style.borderColor = "var(--gold)"; };
@@ -1194,16 +1312,13 @@ async function confirmarSync(candidatos, tbody, fileName){
     } catch(e){ falhou++; }
   }
   toast(`Sincronizado: ${ok} produto(s)${falhou ? `, ${falhou} com erro` : ""}.`);
-  renderMain();
+  go("home");
 }
 
 /* ---------------- atualizar "mais vendidos" do NEX ---------------- */
 function renderBestsellersScreen(){
   app.innerHTML = `
-    <div class="topbar">
-      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
-      <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
-    </div>
+    ${topbarHTML("Mais vendidos")}
     <div style="padding:16px 0">
       <h2 style="font-size:22px;margin-bottom:6px">Atualizar mais vendidos (NEX)</h2>
       <p style="color:var(--muted);font-size:13px;margin:0 0 16px">
@@ -1217,7 +1332,7 @@ function renderBestsellersScreen(){
       <div id="bestBody"></div>
     </div>
   `;
-  $("#backBtn").onclick = () => renderMain();
+  bindTopbar();
   const drop = $("#dropzone");
   drop.onclick = () => $("#bestFile").click();
   drop.ondragover = e => { e.preventDefault(); drop.style.borderColor = "var(--gold)"; };
@@ -1332,7 +1447,7 @@ async function confirmarBestsellers(candidatos, tbody){
     if(error) falhou++; else ok++;
   }
   toast(`Atualizado: ${ok} produto(s)${falhou ? `, ${falhou} com erro` : ""}.`);
-  renderMain();
+  go("home");
 }
 
 /* ---------------- processa qualquer foto pra sempre sair 1:1, mesma resolução, boa qualidade ---------------- */
@@ -1388,38 +1503,12 @@ function abrirScannerCamera(onResult){
   });
 }
 
-/* ---------------- edição em massa: foto + preço + custo + promocional, por categoria ---------------- */
-async function renderBulkCategoryPicker(){
-  app.innerHTML = `
-    <div class="topbar">
-      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
-      <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
-    </div>
-    <div style="padding:16px 0">
-      <h2 style="font-size:22px;margin-bottom:10px">Edição em massa — escolha a categoria</h2>
-      <div class="cat-grid" id="bulkCatGrid"><div class="loading">Carregando…</div></div>
-    </div>`;
-  $("#backBtn").onclick = () => renderMain();
-
-  const parents = state.categories.filter(c=>!c.parent_id);
-  const { data: counts } = await sb.from("products").select("category_id");
-  const childToParent = {}; state.categories.forEach(c => { if(c.parent_id) childToParent[c.id]=c.parent_id; });
-  const countByParent = {};
-  (counts||[]).forEach(p => { const pid = childToParent[p.category_id] || p.category_id; countByParent[pid] = (countByParent[pid]||0)+1; });
-
-  $("#bulkCatGrid").innerHTML = parents.map(p => `
-    <button class="cat-btn" data-pid="${p.id}">
-      <span class="ic">${CAT_ICONS[p.slug] || "📦"}</span>
-      <span class="nm">${esc(p.name)}</span>
-      <span class="ct">${countByParent[p.id]||0} produtos</span>
-    </button>`).join("");
-  $("#bulkCatGrid").querySelectorAll(".cat-btn").forEach(b => b.onclick = () => renderBulkEdit(b.dataset.pid));
-}
-
 let bulkSelecionados = new Set();
 let gestaoFiltro = { parentId: null, busca: "", falta: "" };
+let gestaoSeq = 0;   /* descarta resposta velha se o usuário já digitou de novo ou saiu da tela */
 
 async function renderGestaoRapida(){
+  const meu = ++gestaoSeq;
   const { parentId, busca, falta } = gestaoFiltro;
   bulkSelecionados = new Set();
   const parents = state.categories.filter(c=>!c.parent_id);
@@ -1435,7 +1524,6 @@ async function renderGestaoRapida(){
       <option value="cortada" ${falta==="cortada"?"selected":""}>✨ Descrição cortada no site (mais de 170)</option>
       <option value="ficha" ${falta==="ficha"?"selected":""}>✨ Ficha curta (até 2 itens)</option>
       <option value="perfil" ${falta==="perfil"?"selected":""}>✨ Essências sem perfil de sabor</option>
-      <option value="frutado" ${falta==="frutado"?"selected":""}>✨ Essências sem a barra Frutado</option>
       <option value="whisky" ${falta==="whisky"?"selected":""}>✨ Whisky sem detalhes</option>
     </select>
     <div id="bulkCount" class="t" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
@@ -1461,6 +1549,7 @@ async function renderGestaoRapida(){
     const { data } = await q;
     rows = data;
   }
+  if(meu !== gestaoSeq || !$("#bulkList")) return;
   rows = somFiltraFalta(rows||[], falta);
   state.fila = falta ? rows.map(r=>r.id) : null;     /* com filtro ligado, o editor oferece "Próximo da lista" */
   const n = (rows||[]).length;
@@ -1469,6 +1558,7 @@ async function renderGestaoRapida(){
   const { data: imgs } = await sb.from("product_images").select("product_id,url").in("product_id", ids.length?ids:["00000000-0000-0000-0000-000000000000"]);
   const imgByProduct = {}; (imgs||[]).forEach(i => imgByProduct[i.product_id] = i.url);
 
+  if(meu !== gestaoSeq || !$("#bulkList")) return;
   const list = $("#bulkList");
   if(!rows || rows.length===0){ list.innerHTML = `<div class="empty">Nenhum produto encontrado.</div>`; return; }
 
@@ -1588,12 +1678,98 @@ async function confirmarBulkPublicacao(publicar){
 const LOW_STOCK_LIMIT = 10;
 const LOW_STOCK_EXCLUDE_SUB = ["whisky","gin","vodka","vinho"];
 
+/* ---------- Horário de funcionamento: o SITE e o agente de IA leem daqui. Com a loja fechada, o cliente não consegue enviar pedido. ---------- */
+const HR_DIAS = [{d:1,n:"Segunda"},{d:2,n:"Terça"},{d:3,n:"Quarta"},{d:4,n:"Quinta"},{d:5,n:"Sexta"},{d:6,n:"Sábado"},{d:0,n:"Domingo"}];
+const HR_PADRAO = {1:null, 2:[840,1410], 3:[840,1410], 4:[840,1410], 5:[690,1500], 6:[720,1500], 0:[720,1440]};   /* o que valia antes de existir esta tela */
+const hrHHMM = m => { m=((m%1440)+1440)%1440; return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0"); };
+const hrMin = v => { const m=/^(\d{2}):(\d{2})$/.exec(v||""); return m && +m[1]<24 && +m[2]<60 ? (+m[1])*60+ +m[2] : null; };
+function hrAgoraSP(now){
+  const p=Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:"America/Sao_Paulo",weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(now||new Date()).map(x=>[x.type,x.value]));
+  let hr=+p.hour; if(hr===24) hr=0; return {d:{Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[p.weekday], min:hr*60+ +p.minute};
+}
+/* mesma conta do site: aberto agora? senão, quando abre */
+function hrStatus(linhas, now){
+  const {d,min}=hrAgoraSP(now), t=d*1440+min, W=10080, ints=[], DM=["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
+  linhas.forEach(x=>{ if(!x.aberto) return; [-W,0,W].forEach(o=>ints.push([x.d*1440+x.a+o, x.d*1440+x.b+o])); });
+  const cur=ints.find(([a,b])=>t>=a&&t<b); if(cur) return {aberto:true, fim:hrHHMM(cur[1])};
+  const prox=ints.filter(([a])=>a>t).sort((x,y)=>x[0]-y[0])[0]; if(!prox) return {aberto:false, nunca:true};
+  const dia=Math.floor((((prox[0]%W)+W)%W)/1440); return {aberto:false, quando: dia===d?"hoje":DM[dia], hora:hrHHMM(prox[0])};
+}
+async function renderHorarios(){
+  app.innerHTML = `
+    ${topbarHTML("Horário de funcionamento")}
+    <div style="padding:16px 0">
+      <h2 style="font-size:20px;margin-bottom:4px">🕐 Horário de funcionamento</h2>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 12px">
+        O site e a Brutt IA usam este horário. <b>Com a loja fechada, o cliente não consegue enviar pedido</b> (ele vê quando a loja abre). Se fechar depois da meia-noite, é só colocar o horário (ex.: 01:00): vale para o dia seguinte.
+      </p>
+      <div id="hrBody"><div class="loading">Carregando…</div></div>
+    </div>`;
+  bindTopbar();
+  const { data, error } = await sb.from("loja_horarios").select("*");
+  if(error){ $("#hrBody").innerHTML = `<div class="empty">Erro ao carregar: ${esc(error.message)}</div>`; return; }
+  const porDia = {}; (data||[]).forEach(r => porDia[r.dia] = r);
+  const linhas = HR_DIAS.map(({d,n}) => {
+    const r = porDia[d], pad = HR_PADRAO[d];
+    const aberto = r ? !!r.aberto : !!pad;
+    const a = r ? r.abre_min : (pad ? pad[0] : 840), b = r ? r.fecha_min : (pad ? pad[1] : 1440);
+    return {d, n, aberto, a, b};
+  });
+  const hoje = hrAgoraSP().d;
+  $("#hrBody").innerHTML = `
+    <div id="hrPrev" class="toggle-row" style="margin-bottom:12px"></div>
+    <div id="hrRows">${linhas.map(x => `
+      <div class="hr-row${x.d===hoje?" hr-hoje":""}" data-d="${x.d}">
+        <div class="hr-top"><div class="hr-dia">${x.n}${x.d===hoje?` <small>hoje</small>`:""}</div>
+          <label class="switch" title="Aberto neste dia"><input type="checkbox" id="hrOn${x.d}" ${x.aberto?"checked":""} aria-label="${x.n}: aberto"><span class="track"></span></label></div>
+        <div class="hr-tempo"><label for="hrA${x.d}">Abre</label><input type="time" id="hrA${x.d}" value="${hrHHMM(x.a)}" ${x.aberto?"":"disabled"}></div>
+        <div class="hr-tempo"><label for="hrB${x.d}">Fecha</label><input type="time" id="hrB${x.d}" value="${hrHHMM(x.b)}" ${x.aberto?"":"disabled"}></div>
+        <div class="hr-dica" id="hrH${x.d}"></div>
+      </div>`).join("")}</div>
+    <div class="save-row" style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn-gold" id="hrSalvar" style="flex:1;min-width:200px">Salvar horário</button>
+      <button class="btn-ghost" id="hrDesfazer">Desfazer o que mudei</button>
+    </div>
+    <p id="hrMsg" style="font-size:12px;color:var(--muted);margin:10px 0 0"></p>`;
+
+  const ler = () => linhas.map(x => {
+    const on = $("#hrOn"+x.d).checked, a = hrMin($("#hrA"+x.d).value), b = hrMin($("#hrB"+x.d).value);
+    const ok = !on || (a!==null && b!==null);
+    return {d:x.d, n:x.n, aberto:on, a: a ?? 840, b: ok && on ? (b>a ? b : b+1440) : 1440, valido: ok};
+  });
+  const atualiza = () => {
+    const L = ler();
+    L.forEach(x => {
+      $("#hrA"+x.d).disabled = !x.aberto; $("#hrB"+x.d).disabled = !x.aberto;
+      const dica = $("#hrH"+x.d);
+      if(!x.aberto) dica.textContent = "Fechado o dia todo";
+      else if(!x.valido) dica.innerHTML = `<span style="color:var(--red)">Preencha os dois horários</span>`;
+      else if(x.b - x.a === 1440) dica.textContent = "Aberto 24 horas";
+      else if(x.b > 1440) dica.textContent = `Fecha às ${hrHHMM(x.b)} do dia seguinte`;
+      else dica.textContent = "";
+    });
+    const s = hrStatus(L.filter(x => x.valido));
+    $("#hrPrev").innerHTML = `<span>Prévia (com o que está na tela): agora a loja está <b style="color:${s.aberto?"#7fd69a":"#e58b82"}">${s.aberto?"ABERTA":"FECHADA"}</b> ${s.aberto?`(até ${s.fim})`:(s.nunca?"(nenhum dia aberto)":`· abre ${s.quando} às ${s.hora}`)}</span>`;
+  };
+  $("#hrRows").addEventListener("input", atualiza); $("#hrRows").addEventListener("change", atualiza); atualiza();
+
+  $("#hrDesfazer").onclick = () => renderHorarios();
+  $("#hrSalvar").onclick = async () => {
+    const L = ler(), ruim = L.find(x => !x.valido);
+    if(ruim){ toast(`${ruim.n}: preencha abre e fecha`); $((hrMin($("#hrA"+ruim.d).value)===null?"#hrA":"#hrB")+ruim.d).focus(); return; }   /* vai pro campo que está vazio */
+    const btn = $("#hrSalvar"); btn.disabled = true; btn.textContent = "Salvando…";
+    const rows = L.map(x => ({ dia:x.d, aberto:x.aberto, abre_min:x.aberto ? x.a : 840, fecha_min:x.aberto ? x.b : 1440 }));
+    const { error: e2 } = await sb.from("loja_horarios").upsert(rows, { onConflict:"dia" });
+    btn.disabled = false; btn.textContent = "Salvar horário";
+    if(e2){ $("#hrMsg").style.color = "var(--red)"; $("#hrMsg").textContent = /permission|policy|row-level|42501/i.test(e2.message||"") ? "Sem permissão para alterar o horário. Entre com o seu login da equipe." : "Não consegui salvar: " + e2.message; return; }
+    $("#hrMsg").style.color = "var(--green)"; $("#hrMsg").textContent = "Salvo! O site e a Brutt IA já usam o novo horário (o site atualiza em até 5 minutos para quem está com a página aberta).";
+    toast("Horário salvo");
+  };
+}
+
 async function renderLowStock(){
   app.innerHTML = `
-    <div class="topbar">
-      <div class="brand"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></div>
-      <button class="btn-ghost btn-sm" id="backBtn">← Voltar</button>
-    </div>
+    ${topbarHTML("Estoque baixo")}
     <div style="padding:16px 0">
       <h2 style="font-size:20px;margin-bottom:4px">⚠️ Estoque baixo</h2>
       <p class="t" style="font-size:12px;color:var(--muted);margin:0 0 12px">
@@ -1601,7 +1777,7 @@ async function renderLowStock(){
       </p>
       <div class="plist" id="plist"><div class="loading">Carregando…</div></div>
     </div>`;
-  $("#backBtn").onclick = () => renderMain();
+  bindTopbar();
 
   const excluirIds = state.categories
     .filter(c => LOW_STOCK_EXCLUDE_SUB.includes((c.name||"").toLowerCase()))
@@ -1615,6 +1791,95 @@ async function renderLowStock(){
   if(error){ $("#plist").innerHTML = `<div class="empty">Erro ao carregar: ${esc(error.message)}</div>`; return; }
   renderProductRows(rows || [], $("#plist"), "Nenhum produto com estoque baixo agora — tudo certo por aqui.");
 }
+
+/* ---------------- Sincronização com o Nex (o Nex manda; o site só copia estoque e preço, a cada 15 min) ---------------- */
+let nexRodando = false;
+async function renderNex(){
+  app.innerHTML = `
+    ${topbarHTML("Sincronização Nex")}
+    <div style="padding:16px 0">
+      <h2 style="font-size:22px;margin-bottom:4px">🔄 Sincronização com o Nex</h2>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 12px">
+        O <b>Nex é a verdade</b>: a cada 15 minutos o site copia estoque e preço (inclusive promoção) de lá. Quando o estoque chega a zero, o produto vira <b>Esgotado</b> sozinho — não precisa exportar planilha.
+      </p>
+      <div class="save-row" style="margin:0 0 6px;flex-wrap:wrap">
+        <button class="btn-gold" id="nxReal" style="flex:1;min-width:190px">Sincronizar agora</button>
+        <button class="btn-ghost" id="nxTeste" style="flex:1;min-width:190px">Só simular (não grava)</button>
+      </div>
+      <p id="nxMsg" style="font-size:12px;color:var(--muted);margin:6px 0 0"></p>
+      <div id="nxBody"><div class="loading">Carregando…</div></div>
+    </div>`;
+  bindTopbar();
+  $("#nxReal").onclick = () => nexDisparar("real");
+  $("#nxTeste").onclick = () => nexDisparar("teste");
+  const { data, error } = await sb.from("nex_sync_log").select("*").order("id",{ascending:false}).limit(12);
+  if(rotaAtual() !== "nex") return;
+  if(error){ $("#nxBody").innerHTML = `<div class="empty">Erro ao carregar: ${esc(error.message)}</div>`; return; }
+  if(!data || !data.length){ $("#nxBody").innerHTML = `<div class="empty">Nenhuma sincronização feita ainda. Toque em “Sincronizar agora”.</div>`; return; }
+  const u = data[0], d = u.detalhe || {}, res = d.resumo || {};
+  const lista = (arr, vazio) => (arr && arr.length) ? `<ul class="nx-list">${arr.map(x => `<li>${esc(typeof x === "string" ? x : (x.nex ? x.nex + (x.motivo ? " — " + x.motivo : "") + (x.site ? " ⇄ " + x.site + " ("+brl(x.preco_site)+" × "+brl(x.preco_nex)+")" : "") : JSON.stringify(x)))}</li>`).join("")}</ul>` : `<p style="color:var(--muted);font-size:13px;margin:8px 0 0">${vazio}</p>`;
+  const kpi = (n, t) => `<div class="nx-kpi"><b>${n ?? "—"}</b><span>${t}</span></div>`;
+  $("#nxBody").innerHTML = `
+    <div class="stcard ${u.ok?"":"bad"}" style="cursor:default;margin-top:8px">
+      <div class="k">Última rodada · ${esc(u.origem)} · ${u.modo==="teste"?"simulação":"gravou"}</div>
+      <div class="v"><span class="dot ${u.ok?"ok":"bad"}"></span>${u.ok ? "Tudo certo" : "Não gravou"} — ${haQuanto(u.ran_at)} (${fmtQuando(u.ran_at)})</div>
+      ${u.erro ? `<div class="d" style="color:var(--red)">${esc(u.erro)}</div>` : ""}
+      ${(d.avisos||[]).length ? `<div class="d" style="color:var(--red)">${d.avisos.map(esc).join(" · ")}</div>` : ""}
+    </div>
+    <div class="nx-kpis">
+      ${kpi(u.nex_total, "produtos no Nex")}
+      ${kpi(u.casados, `ligados (${u.por_ean ?? 0} por EAN, ${u.por_nome ?? 0} por nome)`)}
+      ${kpi(u.modo==="teste" ? res.mudariam : u.estoque_alterado, u.modo==="teste" ? "mudariam" : "estoques alterados")}
+      ${kpi(u.modo==="teste" ? "—" : u.preco_alterado, "preços alterados")}
+      ${kpi(u.sem_par_nex, "do Nex sem par no site")}
+      ${kpi(u.sem_par_site, "do site sem par no Nex")}
+    </div>
+    <h3 style="font-size:15px;margin:16px 0 4px">Conferir (o que ficou de fora)</h3>
+    <p style="color:var(--muted);font-size:12px;margin:0">Esses itens <b>não são alterados</b> pela sincronização. Quase sempre é só o código de barras (EAN) faltando ou diferente no cadastro do produto.</p>
+    <details class="nx-box"><summary>No Nex, sem produto no site (${u.sem_par_nex ?? 0})</summary>${lista(d.sem_par_nex, "Nenhum.")}</details>
+    <details class="nx-box"><summary>No site, sem produto no Nex (${u.sem_par_site ?? 0})</summary>${lista(d.sem_par_site_ativos, "Nenhum.")}</details>
+    <details class="nx-box"><summary>EAN repetido / ambíguo (${(d.conflitos||[]).length})</summary>${lista(d.conflitos, "Nenhum.")}<p style="color:var(--muted);font-size:12px">Corrija o EAN no cadastro do produto para o sistema saber qual é qual.</p></details>
+    <details class="nx-box"><summary>Preço muito diferente — travado por segurança (${(d.suspeitos||[]).length})</summary>${lista(d.suspeitos, "Nenhum.")}</details>
+    <details class="nx-box"><summary>Ligados por nome aproximado — confira se estão certos (${(d.nome_aproximado||[]).length})</summary>${lista(d.nome_aproximado, "Nenhum.")}</details>
+    <h3 style="font-size:15px;margin:16px 0 6px">Últimas rodadas</h3>
+    <div style="overflow-x:auto"><table class="nx-hist"><thead><tr><th>Quando</th><th>Origem</th><th>Modo</th><th>Estoque</th><th>Preço</th><th>Situação</th></tr></thead><tbody>
+      ${data.map(r => `<tr><td>${fmtQuando(r.ran_at)}</td><td>${esc(r.origem)}</td><td>${r.modo==="teste"?"simulação":"real"}</td><td>${r.modo==="teste"?"—":(r.estoque_alterado ?? 0)}</td><td>${r.modo==="teste"?"—":(r.preco_alterado ?? 0)}</td><td>${r.ok?"✅":"❌ "+esc((r.erro||"").slice(0,60))}</td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+async function nexDisparar(modo){
+  if(nexRodando) return;
+  nexRodando = true;
+  const bR = $("#nxReal"), bT = $("#nxTeste"), msg = $("#nxMsg");
+  bR.disabled = bT.disabled = true; msg.style.color = "var(--muted)";
+  msg.textContent = modo === "real" ? "Sincronizando com o Nex… (leva uns segundos)" : "Simulando… nada será gravado.";
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 60000);
+    const r = await fetch(`${SUPA_URL}/functions/v1/sync-nex?modo=${modo}`, { method:"POST", signal: ctl.signal,
+      headers:{ apikey: SUPA_KEY, Authorization: "Bearer " + (session?.access_token || SUPA_KEY), "Content-Type":"application/json" }, body:"{}" });
+    clearTimeout(to);
+    const j = await r.json().catch(() => ({}));
+    if(r.status === 403){ throw new Error("Sem permissão. Entre com o login da equipe."); }
+    if(!r.ok && !j.erro){ throw new Error("O servidor respondeu " + r.status); }
+    if(j.erro || j.ok === false){ msg.style.color = "var(--red)"; msg.textContent = j.erro || "A sincronização não gravou nada."; }
+    else toast(modo === "real" ? "Sincronizado" : "Simulação pronta");
+  }catch(e){
+    msg.style.color = "var(--red)"; msg.textContent = e.name === "AbortError" ? "O Nex demorou demais para responder. Tente de novo em instantes." : "Não consegui sincronizar: " + e.message;
+  }finally{
+    nexRodando = false;
+    if(rotaAtual() === "nex"){ const keep = $("#nxMsg")?.textContent, col = $("#nxMsg")?.style.color; await renderNex(); if(keep && col === "var(--red)"){ $("#nxMsg").style.color = col; $("#nxMsg").textContent = keep; } }
+  }
+}
+
+/* tabela de rotas — toda tela nova entra aqui */
+Object.assign(ROUTES, {
+  "home": renderMain,
+  "nex": renderNex,
+  "horarios": renderHorarios,
+  "estoque-baixo": renderLowStock,
+  "planilha": renderSyncScreen,
+  "vendidos": renderBestsellersScreen,
+});
 
 boot();
 </script>
