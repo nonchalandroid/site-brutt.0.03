@@ -972,18 +972,6 @@ html.snap-on #snap-topo,html.snap-on #recent-sec,html.snap-on section.sec,html.s
   .pm-info .pm-buy{position:sticky;bottom:14px;margin-top:auto;align-self:center;justify-content:center;gap:14px;padding:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:none;z-index:3}
   #pm::after{content:"";display:block;position:sticky;bottom:0;height:0;border-top:1px solid var(--gold);box-shadow:0 -6px 16px rgba(0,0,0,.35)}
 }
-
-/* aviso "loja fechada" no checkout */
-.lojafechada{border-color:rgba(192,69,58,.65);background:rgba(192,69,58,.10)}
-.go.reserva{background:var(--gold);color:#2a1810}
-.rsv{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.72)}
-.rsv[hidden]{display:none}
-.rsv-box{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--gold);border-radius:18px;padding:22px 20px 18px;text-align:center;box-shadow:0 18px 60px rgba(0,0,0,.6)}
-.rsv-box h3{margin:6px 0 8px;font-size:22px;color:var(--brand-2)}
-.rsv-box p{margin:0 0 10px;font-size:14.5px;line-height:1.45}
-.rsv-box .rsv-ic{font-size:34px;line-height:1}
-.rsv-box .go{margin-top:6px}
-.rsv-no{width:100%;margin-top:8px;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:12px;padding:12px;font-weight:600;font-size:15px}
 </style>
 </head>
 <body>
@@ -2090,7 +2078,6 @@ function drawCheckout(){
   const t = total() + taxaAtual();
   const nomeInit = nomeVal!==null ? nomeVal : "";
   $("#dBody").innerHTML = `<button class="chip" data-back>‹ Voltar ao carrinho</button>
-    <p class="pixnote lojafechada" id="lojaFechadaNote" role="status"${statusLoja().aberto?" hidden":""}>🕐 <span>${textoFechado()}</span></p>
     <label class="field" for="nome">Seu nome</label><input class="t" id="nome" placeholder="Como devemos te chamar?" value="${esc(nomeInit)}">
     <div class="field">Como você quer receber?</div>
     <div class="entrega">
@@ -2113,14 +2100,14 @@ function drawCheckout(){
     <p class="pixnote" id="freteNote"${ship==="frete"?"":" hidden"}>${ic("moto")}<span>Na opção <b>Cotar frete</b>, quem solicita a entrega no app é <b>você, o cliente</b>. A <b>Tabacaria Brutt</b> é só o ponto de coleta (remetente).</span></p>
     <p class="humano">${ic("chat")}<span><b>Atendimento humanizado.</b> Depois que você enviar o pedido, uma pessoa da nossa equipe te atende no WhatsApp pra confirmar os itens e combinar o Pix.</span></p>
     <p class="err" id="err" hidden></p>`;
-  $("#dFoot").innerHTML = rodapeCheckout(t);
+  $("#dFoot").innerHTML = `<div class="tot"><span>Total</span><span>${R(t)}</span></div>${ship==="entrega"&&entrega.verificada?`<p class="tot-break">🛒 Produtos: ${R(total())} &nbsp;·&nbsp; 🚚 Entrega: ${R(entrega.taxa)}</p>`:""}<button class="go" data-send>${ic("chat")}Enviar Pedido</button><p class="fnote">Depois do envio, você recebe atendimento humanizado no WhatsApp.</p>`;
   marcarEntrega();
 }
 function erro(msg,foco){
   const e=$("#err"); if(e){ e.textContent=msg; e.hidden=false; }
   toast(msg); if(foco&&$(foco)){ $(foco).focus(); $(foco).classList.add("bad"); setTimeout(()=>$(foco)&&$(foco).classList.remove("bad"),1500); }
 }
-function montarMsg(nome,numeroPedido,reserva){
+function montarMsg(nome,numeroPedido){
   const linhas = Object.entries(cart).map(([id,q])=>`• ${q}x ${byId[id].n} — ${R(byId[id].price*q)}`).join("\n");
   const app = appEscolhido==="uber" ? "Uber Flash" : appEscolhido==="99" ? "99 Entregas" : "Uber Flash ou 99 Entregas";
   const taxa = taxaAtual();
@@ -2133,9 +2120,8 @@ function montarMsg(nome,numeroPedido,reserva){
     const link=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoMapa).replace(/%20/g,"+")}`; envio = `Entrega pela loja — ${e.rua}, ${e.numero}${e.complemento?" ("+e.complemento+")":""}, ${e.bairro}, ${e.cidade}/${e.uf}. CEP ${e.cep||""}. Distância ≈ ${String(entrega.distKm).replace(".",",")} km. Taxa de entrega: ${R(entrega.taxa)} (já incluída no total).${link?`\n🗺️ Localização: ${link}`:""}`; }
   else { envio = `Vou cotar o frete no ${app} — frete por minha conta. Eu sou o destinatário, a Tabacaria Brutt é o ponto de coleta.`; }
   return [
-    reserva ? `📌 RESERVA DE PEDIDO #${numeroPedido}` : `📦 NOVO PEDIDO #${numeroPedido}`,
+    `📦 NOVO PEDIDO #${numeroPedido}`,
     `👤 CLIENTE: *${nome}*`,
-    ...(reserva ? [`⏰ *Loja fechada quando o cliente pediu.* Ele aguarda contato da equipe assim que abrirmos${reserva.nenhum ? "" : ` (${reserva.quando} às ${reserva.hora})`}.`] : []),
     "----------",
     "🛒 ITENS DO PEDIDO",
     linhas,
@@ -2163,57 +2149,28 @@ function proximoPedido(){
   _pedidoRes = null;                                                                  /* o próximo pedido pega outro número */
   return n;
 }
-function mostrarFeito(numero,reserva){
-  $("#feitoT").textContent = reserva ? "📌 Reserva enviada!" : "✅ Pedido realizado!";
-  $("#feitoS").textContent = reserva ? `Pedido #${numero} — a equipe te chama quando a loja abrir` : `Pedido #${numero}`;
+function mostrarFeito(numero){
+  $("#feitoS").textContent = `Pedido #${numero}`;
   const b=$("#feito"); b.hidden=false; requestAnimationFrame(()=>b.classList.add("on"));
 }
 function fecharFeito(){ const b=$("#feito"); b.classList.remove("on"); setTimeout(()=>{b.hidden=true},250); }
-/* confere os campos do checkout; devolve o nome ou null (já mostrando o erro) */
-function validarPedido(){
-  if(total()<MIN){ erro(`Pedido mínimo de ${R(MIN)}`); return null; }
-  const nome = ($("#nome").value||"").trim();                          /* nome vem só do campo preenchido pelo cliente; nunca um valor fixo */
-  if(!nome){ erro("Digite seu nome pra enviar o pedido","#nome"); return null; }   /* primeiro campo da tela = primeira coisa conferida */
-  if(!ship){ erro("Escolha como você quer receber o pedido"); return null; }
-  if(ship==="loja" && slotsRetirada().abertoAgora && !horarioEscolhido){ erro("Escolha o horário de retirada"); return null; }
-  if(ship==="entrega" && !entrega.verificada){ erro("Falta o endereço. Toque em “Adicionar endereço” para dizer onde entregar."); abrirEntregaModal(); return null; }
-  return nome;
-}
-/* loja fechada: pedido normal NÃO sai. Pergunta se o cliente quer RESERVAR (a equipe chama quando abrir). */
-let _rsvFoco=null;
-function confirmarReserva(){
-  const s=statusLoja(); fecharReserva(true);
-  _rsvFoco=document.activeElement;
-  const d=document.createElement("div"); d.className="rsv"; d.id="rsv"; d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-labelledby","rsvT");
-  d.innerHTML=`<div class="rsv-box"><div class="rsv-ic" aria-hidden="true">🕐</div><h3 id="rsvT">Loja fechada</h3>
-    <p>${s.nenhum ? "Estamos fechados no momento." : `Estamos fechados agora. Abrimos <b>${s.quando} às ${s.hora}</b>.`}</p>
-    <p><b>Quer reservar seu pedido?</b> Ele vai pro nosso WhatsApp marcado como <b>reserva</b> e a equipe entra em contato assim que a loja abrir.</p>
-    <button type="button" class="go" data-rsv-sim>Sim, reservar pedido</button>
-    <button type="button" class="rsv-no" data-rsv-nao>Agora não</button></div>`;
-  document.body.appendChild(d);
-  const b=d.querySelector("[data-rsv-sim]"); if(b) b.focus();
-}
-function fecharReserva(semFoco){
-  const d=$("#rsv"); if(!d) return; d.remove();
-  if(!semFoco && _rsvFoco && _rsvFoco.isConnected){ try{ _rsvFoco.focus(); }catch(e){} }
-}
-document.addEventListener("keydown",e=>{ if(e.key==="Escape" && $("#rsv")) fecharReserva(); });
-document.addEventListener("click",e=>{ if(e.target && e.target.id==="rsv") fecharReserva(); });
-function sendOrder(reservaOk){
+function sendOrder(){
   snap();
-  const sl=statusLoja();
-  if(!sl.aberto && reservaOk!==true){ if(validarPedido()===null) return; atualizaLojaFechada(true); confirmarReserva(); return; }   /* sem pedido normal com a loja fechada */
-  const nome = validarPedido(); if(nome===null) return;
-  const reserva = !sl.aberto ? sl : null;                                /* só vira reserva se a loja continua fechada agora */
+  if(total()<MIN){ erro(`Pedido mínimo de ${R(MIN)}`); return; }
+  const nome = ($("#nome").value||"").trim();                          /* nome vem só do campo preenchido pelo cliente; nunca um valor fixo */
+  if(!nome){ erro("Digite seu nome pra enviar o pedido","#nome"); return; }   /* primeiro campo da tela = primeira coisa conferida */
+  if(!ship){ erro("Escolha como você quer receber o pedido"); return; }
+  if(ship==="loja" && slotsRetirada().abertoAgora && !horarioEscolhido){ erro("Escolha o horário de retirada"); return; }
+  if(ship==="entrega" && !entrega.verificada){ erro("Falta o endereço. Toque em “Adicionar endereço” para dizer onde entregar."); abrirEntregaModal(); return; }
   sSet("brutt_nome",nome);
   const numeroPedido = proximoPedido();                                 /* 1. número sequencial do pedido */
-  const msg = montarMsg(nome,numeroPedido,reserva);                     /* 2. mensagem completa */
+  const msg = montarMsg(nome,numeroPedido);                             /* 2. mensagem completa */
   const url=`https://wa.me/${WHATS}?text=${encodeURIComponent(msg)}`;   /* 5521996600243 + mensagem codificada */
   let w=null; try{ w=window.open(url,"_blank"); }catch(e){}             /* 3. abre o WhatsApp — sempre primeiro, pro navegador não bloquear o pop-up */
   if(w){ try{ w.opener=null; }catch(e){} } else { window.location.href=url; }
   closeAll();                                                           /* 5. fecha o carrinho/checkout */
   cart={}; minHit=false; updateCart();                                  /* 6. limpa o carrinho (o site já fica pronto pro próximo pedido) */
-  mostrarFeito(numeroPedido,reserva);                                   /* 4. confirmação do pedido realizado */
+  mostrarFeito(numeroPedido);                                           /* 4. confirmação do pedido realizado */
 }
 
 /* ---------- produto ---------- */
@@ -2320,7 +2277,7 @@ document.addEventListener("click",e=>{
       clearTimeout(t._tm); t._tm=setTimeout(()=>{ if(t.isConnected){ t.classList.remove("armed"); t.innerHTML=ic("trash")+"Limpar carrinho"; } },3000);
     } else { cart={}; minHit=false; updateCart(); drawCart(); toast("Carrinho limpo"); }
   }
-  else if(t.hasAttribute("data-checkout")){ carregarHorarios(); drawCart("checkout"); }
+  else if(t.hasAttribute("data-checkout")){ drawCart("checkout"); }
   else if(t.hasAttribute("data-back")){ drawCart(); }
   else if(t.dataset.app){ ship="frete"; appEscolhido=t.dataset.app; marcarEntrega(); /* o link abre o app normalmente */ }
   else if(t.dataset.ship){ ship=t.dataset.ship; if(ship==="loja") appEscolhido=""; else horarioEscolhido=null; marcarEntrega(); }
@@ -2332,8 +2289,6 @@ document.addEventListener("click",e=>{
   else if(t.hasAttribute("data-copy")){ copiar(t.dataset.copy==="nome"?NOME_LOJA:END_LOJA,t); }
   else if(t.hasAttribute("data-fecharfeito")){ fecharFeito(); }
   else if(t.hasAttribute("data-novo")){ cart={}; minHit=false; updateCart(); closeAll(); fecharFeito(); toast("Carrinho limpo"); }
-  else if(t.hasAttribute("data-rsv-sim")){ fecharReserva(true); sendOrder(true); }
-  else if(t.hasAttribute("data-rsv-nao")){ fecharReserva(); }
   else if(t.hasAttribute("data-send")){ sendOrder(); }
   else if(t.hasAttribute("data-close")){ closeAll(); }
 });
@@ -2418,6 +2373,7 @@ function buildMenu(){
   }).join("");
 }
 
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") ddClose(); });
 document.addEventListener("change",e=>{
   const s=e.target.closest("[data-sort]"); if(!s) return;
   const id=s.dataset.sort; sortBy[id]=s.value;
@@ -2457,23 +2413,21 @@ $("#ageYes").onclick = ()=>{ sSet("brutt_18",true); $("#age").classList.remove("
 /* minutos desde 00:00; fim acima de 1440 = fecha já no dia seguinte (ex.: 25*60 = 01:00) */
 const HORARIOS = [
   {d:1,n:"Segunda",a:null},
-  {d:2,n:"Terça",a:14*60,b:23*60+30},
-  {d:3,n:"Quarta",a:14*60,b:23*60+30},
-  {d:4,n:"Quinta",a:14*60,b:23*60+30},
-  {d:5,n:"Sexta",a:11*60+30,b:25*60},
-  {d:6,n:"Sábado",a:12*60,b:25*60},
-  {d:0,n:"Domingo",a:12*60,b:24*60}
+  {d:2,n:"Terça",a:14*60,b:24*60},
+  {d:3,n:"Quarta",a:14*60,b:24*60},
+  {d:4,n:"Quinta",a:14*60,b:24*60},
+  {d:5,n:"Sexta",a:14*60,b:25*60},
+  {d:6,n:"Sábado",a:14*60,b:25*60},
+  {d:0,n:"Domingo",a:14*60,b:25*60}
 ];
 const DIAS_MIN = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
 function hhmm(m){ m=((m%1440)+1440)%1440; return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0"); }
-let SKEW_MS = 0;                                          /* hora do servidor − hora do aparelho: relógio errado no celular não burla o "loja fechada" */
-function agoraLoja(){ return new Date(Date.now()+SKEW_MS); }
 function agoraSP(now){
   try{
-    const p=Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:"America/Sao_Paulo",weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(now||agoraLoja()).map(x=>[x.type,x.value]));
+    const p=Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:"America/Sao_Paulo",weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(now||new Date()).map(x=>[x.type,x.value]));
     let hr=+p.hour; if(hr===24) hr=0;
     return {d:{Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[p.weekday],min:hr*60+ +p.minute};
-  }catch(e){ const n=now||agoraLoja(); return {d:n.getDay(),min:n.getHours()*60+n.getMinutes()}; }
+  }catch(e){ const n=now||new Date(); return {d:n.getDay(),min:n.getHours()*60+n.getMinutes()}; }
 }
 function statusLoja(now){
   const {d,min}=agoraSP(now), t=d*1440+min, W=10080, ints=[];
@@ -2481,13 +2435,12 @@ function statusLoja(now){
   const cur=ints.find(([a,b])=>t>=a&&t<b);
   if(cur) return {aberto:true, fim:hhmm(cur[1]), falta:cur[1]-t};
   const prox=ints.filter(([a])=>a>t).sort((x,y)=>x[0]-y[0])[0];
-  if(!prox) return {aberto:false, quando:"em breve", hora:"--:--", nenhum:true};     /* o admin fechou todos os dias: sem previsão */
   const dia=Math.floor((((prox[0]%W)+W)%W)/1440), hoje=dia===d, amanha=dia===(d+1)%7;
   return {aberto:false, quando:hoje?"hoje":DIAS_MIN[dia], hora:hhmm(prox[0])};
 }
 function textoStatus(s){
   if(s.aberto) return {lbl:"Aberto", txt: s.falta<=60 ? `fecha às ${s.fim} (em ${s.falta} min)` : `até ${s.fim}`};
-  return {lbl:"Fechado", txt: s.nenhum ? "Sem previsão de abertura" : `Abre ${s.quando} às ${s.hora}`};
+  return {lbl:"Fechado", txt:`Abre ${s.quando} às ${s.hora}`};
 }
 function atualizarHorario(now){
   const st=$("#hSt"); if(!st) return;
@@ -2495,7 +2448,6 @@ function atualizarHorario(now){
   st.classList.toggle("on",s.aberto); st.classList.toggle("off",!s.aberto);
   $("#hLbl").textContent=tx.lbl; $("#hTxt").textContent=tx.txt;
   $("#hList").innerHTML=HORARIOS.map(x=>`<li class="${x.d===hoje?"hoje":""}"><span>${x.n}</span>${x.a==null?`<span class="fech">Fechado</span>`:`<span>${hhmm(x.a)} – ${hhmm(x.b)}</span>`}</li>`).join("");
-  atualizaLojaFechada();
 }
 function hddToggle(open){
   const dd=$("#hDd"), b=$("#hBtn"); const on=open===undefined?dd.hidden:open;
@@ -2506,37 +2458,8 @@ document.addEventListener("click",e=>{
   if(!e.target.closest("#hDd")) hddToggle(false);
 });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") hddToggle(false); });
-/* ---------- horário de funcionamento vindo do BANCO (o admin edita) + trava de pedido com a loja fechada ---------- */
-let _lojaAbertaAntes = null;
-async function carregarHorarios(){
-  try{
-    const S=window.__SUPA, r=await fetch(S.url+"/rest/v1/rpc/loja_info",{method:"POST",headers:{apikey:S.key,Authorization:"Bearer "+S.key,"Content-Type":"application/json"},body:"{}"});
-    if(!r.ok) throw 0; const j=await r.json();
-    if(Number.isFinite(+j.agora_ms)) SKEW_MS=+j.agora_ms-Date.now();
-    if(Array.isArray(j.horarios) && j.horarios.length===7){
-      const NOMES=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
-      const novo=[1,2,3,4,5,6,0].map(d=>{ const x=j.horarios.find(y=>+y.d===d); return !x ? null : (x.aberto && Number.isFinite(+x.a) && Number.isFinite(+x.b) ? {d,n:NOMES[d],a:+x.a,b:+x.b} : {d,n:NOMES[d],a:null}); });
-      if(novo.every(Boolean)) HORARIOS.splice(0,HORARIOS.length,...novo);
-    }
-  }catch(e){ /* sem rede/banco: segue com o horário que veio no código */ }
-  atualizarHorario(); atualizaLojaFechada(true);
-}
-function textoFechado(){ const s=statusLoja(); return s.aberto ? "" : (s.nenhum ? "Loja fechada no momento. Você pode reservar o pedido: nossa equipe entra em contato quando a loja abrir." : `Loja fechada. Abrimos ${s.quando} às ${s.hora}. Você pode reservar o pedido: nossa equipe entra em contato assim que a loja abrir.`); }
-function rodapeCheckout(t){
-  const s=statusLoja();
-  return `<div class="tot"><span>Total</span><span>${R(t)}</span></div>${ship==="entrega"&&entrega.verificada?`<p class="tot-break">🛒 Produtos: ${R(total())} &nbsp;·&nbsp; 🚚 Entrega: ${R(entrega.taxa)}</p>`:""}`
-    + (s.aberto ? `<button class="go" data-send>${ic("chat")}Enviar Pedido</button><p class="fnote">Depois do envio, você recebe atendimento humanizado no WhatsApp.</p>`
-                : `<button class="go reserva" data-send>${ic("chat")}Loja fechada · Reservar pedido</button><p class="fnote">${s.nenhum ? "Não enviamos pedido agora." : `Abrimos ${s.quando} às ${s.hora}.`} Ao reservar, nossa equipe te chama no WhatsApp quando a loja abrir.</p>`);
-}
-function atualizaLojaFechada(forcar){                      /* se a loja abriu/fechou com o checkout aberto, o botão e o aviso acompanham na hora */
-  const s=statusLoja(), mudou=_lojaAbertaAntes!==null && _lojaAbertaAntes!==s.aberto; _lojaAbertaAntes=s.aberto;
-  if(cartView!=="checkout" || !$("#dFoot") || !(mudou||forcar)) return;
-  const n=$("#lojaFechadaNote"); if(n){ n.hidden=s.aberto; const sp=n.querySelector("span"); if(sp) sp.textContent=textoFechado(); }
-  $("#dFoot").innerHTML = rodapeCheckout(total()+taxaAtual());
-}
 atualizarHorario(); setInterval(()=>atualizarHorario(),30000);
-carregarHorarios(); setInterval(carregarHorarios,300000);
-document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ atualizarHorario(); carregarHorarios(); } });
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) atualizarHorario(); });
 
 
 /* ---------- avisa visualmente quando há mais itens fora da tela (menu e filtros) ---------- */
