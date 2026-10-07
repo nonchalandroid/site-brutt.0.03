@@ -2413,12 +2413,12 @@ $("#ageYes").onclick = ()=>{ sSet("brutt_18",true); $("#age").classList.remove("
 /* minutos desde 00:00; fim acima de 1440 = fecha já no dia seguinte (ex.: 25*60 = 01:00) */
 const HORARIOS = [
   {d:1,n:"Segunda",a:null},
-  {d:2,n:"Terça",a:14*60,b:24*60},
-  {d:3,n:"Quarta",a:14*60,b:24*60},
-  {d:4,n:"Quinta",a:14*60,b:24*60},
-  {d:5,n:"Sexta",a:14*60,b:25*60},
-  {d:6,n:"Sábado",a:14*60,b:25*60},
-  {d:0,n:"Domingo",a:14*60,b:25*60}
+  {d:2,n:"Terça",a:14*60,b:23*60+30},
+  {d:3,n:"Quarta",a:14*60,b:23*60+30},
+  {d:4,n:"Quinta",a:14*60,b:23*60+30},
+  {d:5,n:"Sexta",a:11*60+30,b:25*60},
+  {d:6,n:"Sábado",a:12*60,b:25*60},
+  {d:0,n:"Domingo",a:12*60,b:24*60}
 ];
 const DIAS_MIN = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
 function hhmm(m){ m=((m%1440)+1440)%1440; return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0"); }
