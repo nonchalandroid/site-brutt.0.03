@@ -536,6 +536,7 @@ async function renderMain(){
       <button class="btn-ghost btn-sm" id="nexBtn">🔄 Sincronização Nex</button>
       <button class="btn-ghost btn-sm" id="lowStockBtn">⚠️ Estoque baixo</button>
       <button class="btn-ghost btn-sm" id="horarioBtn">🕐 Horário de funcionamento</button>
+      <button class="btn-ghost btn-sm" id="pedidosBtn">💳 Pedidos online</button>
     </div>
     <details class="manual"><summary>Ferramentas manuais (planilhas) — o estoque já sincroniza sozinho</summary>
       <div class="toolbar">
@@ -554,6 +555,7 @@ async function renderMain(){
   $("#bestBtn").onclick = () => go("vendidos");
   $("#lowStockBtn").onclick = () => go("estoque-baixo");
   $("#horarioBtn").onclick = () => go("horarios");
+  $("#pedidosBtn").onclick = () => go("pedidos");
   carregarStatusInicio();
 
   gestaoFiltro = { parentId: null, busca: "" };
@@ -2361,6 +2363,44 @@ async function renderFotos(){
   FT.itens.length || ftRodape();
 }
 
+/* ---------------- pedidos online (Mercado Pago) ---------------- */
+const PED_ST = { aguardando_pagamento:"⏳ Aguardando pagamento", pago:"✅ Pago", recusado:"⚠️ Recusado", expirado:"⌛ Pix expirado", cancelado:"↩️ Cancelado/estornado", concluido:"📦 Concluído" };
+const PED_MET = { pix:"Pix", debito:"Débito", credito:"Crédito à vista" };
+async function renderPedidos(){
+  app.innerHTML = `${topbarHTML("Pedidos online")}
+    <p class="sub">Só aparece aqui o que o Mercado Pago confirmou. Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp.</p>
+    <div id="pedLista"><div class="loading">Carregando…</div></div>`;
+  bindTopbar();
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em").order("created_at", { ascending:false }).limit(60);
+  const el = $("#pedLista");
+  if(error){ el.innerHTML = `<div class="err">Não foi possível carregar os pedidos (${esc(error.message)}).</div>`; return; }
+  if(!data.length){ el.innerHTML = `<p class="sub">Nenhum pedido online ainda.</p>`; return; }
+  const brl = v => "R$ " + Number(v).toFixed(2).replace(".", ",");
+  el.innerHTML = data.map(p => {
+    const e = p.entrega || {}, a = e.endereco || {};
+    const ent = e.tipo === "entrega" ? `🚚 ${esc(a.rua)}, ${esc(a.numero)}${a.complemento ? " ("+esc(a.complemento)+")" : ""} — ${esc(a.bairro||"")} · ${esc(String(e.km||"").replace(".", ","))} km` : "🛵 Cliente chama Uber Flash/99";
+    return `<div class="card" style="margin:10px 0;padding:14px">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>#${esc(p.numero)} · ${esc(p.cliente_nome)}</b><span>${PED_ST[p.status] || esc(p.status)}${p.reserva ? " · reserva" : ""}</span></div>
+      <div class="sub" style="margin:4px 0">${fmtQuando(p.created_at)} · ${PED_MET[p.metodo] || "—"} · <a href="https://wa.me/${esc(p.cliente_whats)}" target="_blank" rel="noopener">wa.me/${esc(p.cliente_whats)}</a></div>
+      <div>${(p.itens||[]).map(i => `${i.qtd}x ${esc(i.nome)}`).join(" · ")}</div>
+      <div class="sub" style="margin-top:4px">${ent}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:10px"><b>${brl(p.total)}</b>
+        ${p.status === "pago" ? `<button class="btn-gold btn-sm" data-concluir="${esc(p.id)}">Marcar como concluído</button>` : ""}</div>
+    </div>`;
+  }).join("");
+  el.querySelectorAll("[data-concluir]").forEach(b => b.onclick = async () => {
+    b.disabled = true; b.textContent = "Enviando…";
+    try{
+      const { data:{ session } } = await sb.auth.getSession();
+      const r = await fetch(`${SUPA_URL}/functions/v1/checkout?acao=concluir`, { method:"POST",
+        headers:{ apikey: SUPA_KEY, Authorization: "Bearer " + session.access_token, "Content-Type":"application/json" }, body: JSON.stringify({ pedido_id: b.dataset.concluir }) });
+      const j = await r.json().catch(() => ({}));
+      if(!r.ok) throw new Error(j.erro || r.status);
+      toast(`Pedido #${j.numero} concluído. Cliente avisado no WhatsApp.`); renderPedidos();
+    }catch(err){ toast("Não deu pra concluir: " + (err.message || err)); b.disabled = false; b.textContent = "Marcar como concluído"; }
+  });
+}
+
 /* tabela de rotas — toda tela nova entra aqui */
 Object.assign(ROUTES, {
   "home": renderMain,
@@ -2370,6 +2410,7 @@ Object.assign(ROUTES, {
   "planilha": renderSyncScreen,
   "vendidos": renderBestsellersScreen,
   "fotos": renderFotos,
+  "pedidos": renderPedidos,
 });
 
 boot();
