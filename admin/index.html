@@ -2368,22 +2368,25 @@ const PED_ST = { aguardando_pagamento:"⏳ Aguardando pagamento", pago:"✅ Pago
 const PED_MET = { pix:"Pix", debito:"Débito", credito:"Crédito à vista" };
 async function renderPedidos(){
   app.innerHTML = `${topbarHTML("Pedidos online")}
-    <p class="sub">Só aparece aqui o que o Mercado Pago confirmou. Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp.</p>
-    <div id="pedLista"><div class="loading">Carregando…</div></div>`;
+    <div style="padding:16px 0">
+      <h2 style="font-size:20px;margin-bottom:4px">💳 Pedidos online</h2>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Pedidos pagos pelo site (Mercado Pago). Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp.</p>
+      <div id="pedLista"><div class="loading">Carregando…</div></div>
+    </div>`;
   bindTopbar();
   const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em").order("created_at", { ascending:false }).limit(60);
   const el = $("#pedLista");
   if(error){ el.innerHTML = `<div class="err">Não foi possível carregar os pedidos (${esc(error.message)}).</div>`; return; }
-  if(!data.length){ el.innerHTML = `<p class="sub">Nenhum pedido online ainda.</p>`; return; }
+  if(!data.length){ el.innerHTML = `<div class="empty">Nenhum pedido online ainda.</div>`; return; }
   const brl = v => "R$ " + Number(v).toFixed(2).replace(".", ",");
   el.innerHTML = data.map(p => {
     const e = p.entrega || {}, a = e.endereco || {};
     const ent = e.tipo === "entrega" ? `🚚 ${esc(a.rua)}, ${esc(a.numero)}${a.complemento ? " ("+esc(a.complemento)+")" : ""} — ${esc(a.bairro||"")} · ${esc(String(e.km||"").replace(".", ","))} km` : "🛵 Cliente chama Uber Flash/99";
-    return `<div class="card" style="margin:10px 0;padding:14px">
-      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>#${esc(p.numero)} · ${esc(p.cliente_nome)}</b><span>${PED_ST[p.status] || esc(p.status)}${p.reserva ? " · reserva" : ""}</span></div>
-      <div class="sub" style="margin:4px 0">${fmtQuando(p.created_at)} · ${PED_MET[p.metodo] || "—"} · <a href="https://wa.me/${esc(p.cliente_whats)}" target="_blank" rel="noopener">wa.me/${esc(p.cliente_whats)}</a></div>
+    return `<div class="card" style="margin:10px 0;padding:14px;font-size:14px;line-height:1.45">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px 10px;flex-wrap:wrap"><b style="font-size:15px">#${esc(p.numero)} · ${esc(p.cliente_nome)}</b><span style="font-size:13px;white-space:nowrap">${PED_ST[p.status] || esc(p.status)}${p.reserva ? " · reserva" : ""}</span></div>
+      <div style="margin:4px 0;font-size:12px;color:var(--muted)">${fmtQuando(p.created_at)} · ${PED_MET[p.metodo] || "—"} · <a href="https://wa.me/${esc(p.cliente_whats)}" target="_blank" rel="noopener">wa.me/${esc(p.cliente_whats)}</a></div>
       <div>${(p.itens||[]).map(i => `${i.qtd}x ${esc(i.nome)}`).join(" · ")}</div>
-      <div class="sub" style="margin-top:4px">${ent}</div>
+      <div style="margin-top:4px;font-size:12px;color:var(--muted)">${ent}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:10px"><b>${brl(p.total)}</b>
         ${p.status === "pago" ? `<button class="btn-gold btn-sm" data-concluir="${esc(p.id)}">Marcar como concluído</button>` : ""}</div>
     </div>`;

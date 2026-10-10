@@ -198,7 +198,7 @@ function sucesso(numero){
   mostrarFeito(numero,reserva);
   var t=$("#feitoT"),s=$("#feitoS");
   if(t)t.textContent="✅ Pagamento confirmado!";
-  if(s)s.textContent="Pedido #"+numero+(reserva?" — separamos assim que a loja abrir":"")+" · confirmação enviada no seu WhatsApp";
+  if(s)s.textContent="Pedido #"+String(numero).replace(/-/g,"\u2011")+(reserva?" — separamos assim que a loja abrir":"")+" · confirmação enviada no seu WhatsApp";
 }
 /* Pedido montado pela Brutt IA: carrega no carrinho e abre o MESMO checkout (o servidor revalida tudo). */
 function deIA(co){
