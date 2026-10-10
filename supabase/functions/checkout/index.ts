@@ -184,6 +184,10 @@ export async function pagar(body: any, urlFuncao: string) {
   const r = await mp("/v1/payments", { method: "POST", headers: { "X-Idempotency-Key": `${ped.id}-${tentativa}` }, body: JSON.stringify(pay) });
   if (!r.ok || !r.j?.id) {
     console.error("mp pagar", r.status, JSON.stringify(r.j).slice(0, 400));
+    if (r.status === 401) {   // diagnóstico SEM expor o segredo: só o formato do que foi cadastrado
+      const t = env("MP_ACCESS_TOKEN");
+      console.error("MP_ACCESS_TOKEN formato:", JSON.stringify({ tamanho: t.length, parece_access_token: /^(APP_USR|TEST)-\d{6,}-\d{6}-[0-9a-f]{20,}-\d+$/.test(t), parece_public_key: /^(APP_USR|TEST)-[0-9a-f]{8}-[0-9a-f]{4}-/.test(t), tem_espaco_no_meio: /\s/.test(t), comeca_com_bearer: /^bearer/i.test(t) }));
+    }
     return { erro: "Não foi possível processar o pagamento agora. Tente de novo.", status: 502 };
   }
   const p = r.j;
