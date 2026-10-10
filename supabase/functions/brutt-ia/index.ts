@@ -96,7 +96,7 @@ async function sbSend(path: string, method: string, body: any, prefer?: string) 
 // ---------- estado do pedido (rascunho por conversa) ----------
 type Item = { id: string; qtd: number };
 type Entrega =
-  | { modo: "entrega"; rua: string; numero: string; complemento: string; bairro: string; cidade: string; uf: string; cep: string; km: number; taxa: number; estimado: boolean }
+  | { modo: "entrega"; rua: string; numero: string; complemento: string; bairro: string; cidade: string; uf: string; cep: string; km: number; taxa: number; estimado: boolean; lat?: number; lng?: number }
   | { modo: "fora"; km: number | null; local: string }
   | { modo: "frete"; app: "uber" | "99" | "ambos"; local: string };
 type Draft = { nome?: string; itens: Item[]; entrega: Entrega | null; pedido: { numero: string; msg: string; url: string; total: number } | null; reservaPerguntada?: boolean; ultimos?: { id: string; nome: string }[]; perdidos?: number };
@@ -337,7 +337,7 @@ const FERRAMENTAS = [{ functionDeclarations: [
     parameters: { type: "object", properties: { nome: { type: "string", description: "Nome do cliente" }, reserva: { type: "boolean", description: "true = o cliente aceitou RESERVAR o pedido com a loja fechada. Nunca use true sem ele ter dito que sim." } }, required: ["nome"] } },
 ] }];
 
-type Ctx = { draft: Draft; usadas: string[]; mudouPedido: boolean; whatsapp: string | null; numero: string | null; session: string; loja?: any; reserva?: boolean; perguntouAntes?: boolean; confirmouReserva?: boolean; falas?: string; finalErro?: string; humano?: boolean; sug?: Atalho[] | null; perdeu?: boolean };
+type Ctx = { draft: Draft; usadas: string[]; mudouPedido: boolean; whatsapp: string | null; numero: string | null; session: string; loja?: any; reserva?: boolean; perguntouAntes?: boolean; confirmouReserva?: boolean; falas?: string; finalErro?: string; humano?: boolean; sug?: Atalho[] | null; perdeu?: boolean; pagOnline?: boolean };
 
 async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
   const d = c.draft; a = a && typeof a === "object" ? a : {};
@@ -418,7 +418,7 @@ async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
       c.sug = [{ t: "Pedir por Uber/99", q: "Quero pedir pelo Uber ou 99" }, { t: "Usar outro endereço", q: "Vou informar outro endereço" }]; return { ok: false, fora_do_raio: true, km, raio_max_km: RAIO_MAX_KM, endereco: local, alternativa: { opcao: "Uber Flash ou 99 Entregas (frete por conta do cliente; ele é o destinatário e a loja é o ponto de coleta)", endereco_da_loja: LOJA_ENDERECO } };
     }
     const taxa = Math.round(taxaEntrega(km) * 100) / 100;                          // taxa em centavos, igual ao site
-    d.entrega = { modo: "entrega", rua: g.rua, numero: adr.numero, complemento: limpaTexto(a.complemento, 60), bairro: g.bairro, cidade: g.cidade, uf: g.uf, cep: g.cep, km, taxa, estimado: g.estimado }; c.mudouPedido = true;
+    d.entrega = { modo: "entrega", rua: g.rua, numero: adr.numero, complemento: limpaTexto(a.complemento, 60), bairro: g.bairro, cidade: g.cidade, uf: g.uf, cep: g.cep, km, taxa, estimado: g.estimado, lat: g.lat, lng: g.lng }; c.mudouPedido = true;
     const r = await resumoPedido(d);
     c.sug = r.linhas.length ? [{ t: "Fechar pedido", q: "Pode fechar o pedido" }, { t: "Adicionar mais itens", q: "Quero adicionar mais itens" }] : ATALHOS_VITRINE;
     return { ok: true, endereco: local, cep: g.cep || undefined, km, taxa_entrega: taxa, ...(g.estimado ? { aviso: "Não achei esse número no mapa: o valor foi estimado pela rua." } : {}), ...(r.linhas.length ? { subtotal: r.subtotal, total: r.total, minimo: r.minimo } : {}) };
@@ -461,6 +461,7 @@ async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
     d.pedido = { numero, msg, url, total: r.total }; d.reservaPerguntada = false; d.nome = nomeC;
     c.whatsapp = url; c.numero = numero; c.mudouPedido = true; c.reserva = !!reserva;
     c.sug = [{ t: "Fazer outro pedido", q: "Quero fazer outro pedido" }];
+    if (c.pagOnline) return { ok: true, numero, total: r.total, reserva: !!reserva, instrucao: (reserva ? `A loja está fechada (abre ${abre}): o pedido vira RESERVA e a gente separa quando abrir. ` : "") + "Diga que é só tocar no botão **Ir para o pagamento** abaixo: lá ele confere o pedido, informa o WhatsApp e paga com Pix, débito ou crédito à vista pelo Mercado Pago. O pedido só vale depois do pagamento confirmado, e a confirmação chega no WhatsApp dele. NÃO diga que o pedido foi enviado." };
     return { ok: true, numero, total: r.total, reserva: !!reserva, instrucao: reserva ? `Diga que é só tocar no botão verde para enviar a RESERVA no WhatsApp da loja (ela só vale depois de enviada); a equipe entra em contato quando a loja abrir (${abre}).` : "Diga que é só tocar no botão verde para enviar o pedido no WhatsApp da loja." };
   }
   return { erro: "ferramenta_desconhecida" };
@@ -563,6 +564,7 @@ async function rodaAgente(c: Ctx, historico: any[], mensagem: string, tempos: Te
   throw ultimo ?? new Error("Gemini indisponível");
 }
 function fallbackTexto(c: Ctx) {
+  if (c.whatsapp && c.pagOnline) return "Pedido montado! Toque em **Ir para o pagamento** abaixo para pagar com Pix, débito ou crédito à vista.";
   if (c.whatsapp) return c.reserva ? "Reserva pronta! Toque no botão verde abaixo para enviar no WhatsApp da loja; a equipe te chama quando abrirmos." : "Pedido pronto! Toque no botão verde abaixo para enviar no WhatsApp da loja.";
   if (c.draft.reservaPerguntada) return "A loja está fechada agora. Quer RESERVAR o pedido? A equipe entra em contato assim que abrirmos.";
   c.perdeu = true;                                                                 // 2 vezes seguidas = passa para uma pessoa
@@ -620,7 +622,7 @@ export async function handler(req: Request): Promise<Response> {
     mensagem = transcricao;
   }
 
-  const c: Ctx = { draft: novoDraft(), usadas: [], mudouPedido: false, whatsapp: null, numero: null, session };
+  const c: Ctx = { draft: novoDraft(), usadas: [], mudouPedido: false, whatsapp: null, numero: null, session, pagOnline: corpo?.pagamento_online === true };
   c.draft = await draftDaSessao(session);
   c.falas = [...hist.filter((m: any) => m.role === "user").map((m: any) => String(m.content)), mensagem].join(" ");
   c.confirmouReserva = confirmouReserva([...hist].reverse().find((m: any) => m.role === "assistant")?.content, mensagem);
@@ -657,7 +659,13 @@ export async function handler(req: Request): Promise<Response> {
     await limpezaOcasional();
   })();
   const er = (globalThis as any).EdgeRuntime; if (er?.waitUntil) er.waitUntil(persist); else await persist;
-  return json({ reply, items: itens, frete, whatsapp_url: c.whatsapp, pedido: c.numero, sugestoes, ...(humanoUrl ? { humano_url: humanoUrl } : {}), ...(transcricao ? { transcricao } : {}), ...(c.reserva ? { reserva: true } : {}), ...(erro ? { fallback: true } : {}) });
+  let checkout: any = null;
+  if (c.whatsapp && c.draft.entrega && !erro) {
+    const e = c.draft.entrega;
+    checkout = { nome: c.draft.nome ?? "", reserva: !!c.reserva, itens: c.draft.itens.map(i => ({ id: i.id, q: i.qtd })),
+      entrega: e.modo === "entrega" ? { tipo: "entrega", km: e.km, taxa: e.taxa, endereco: { rua: e.rua, numero: e.numero, complemento: e.complemento, bairro: e.bairro, cidade: e.cidade, uf: e.uf, cep: e.cep }, geo: Number.isFinite(e.lat) && Number.isFinite(e.lng) ? { lat: e.lat, lng: e.lng } : null } : { tipo: "cliente" } };
+  }
+  return json({ reply, items: itens, frete, whatsapp_url: c.whatsapp, pedido: c.numero, sugestoes, ...(checkout ? { checkout } : {}), ...(humanoUrl ? { humano_url: humanoUrl } : {}), ...(transcricao ? { transcricao } : {}), ...(c.reserva ? { reserva: true } : {}), ...(erro ? { fallback: true } : {}) });
 }
 
 if (typeof (globalThis as any).Deno !== "undefined" && (globalThis as any).Deno.serve) (globalThis as any).Deno.serve(handler);

@@ -200,7 +200,29 @@ function sucesso(numero){
   if(t)t.textContent="✅ Pagamento confirmado!";
   if(s)s.textContent="Pedido #"+numero+(reserva?" — separamos assim que a loja abrir":"")+" · confirmação enviada no seu WhatsApp";
 }
+/* Pedido montado pela Brutt IA: carrega no carrinho e abre o MESMO checkout (o servidor revalida tudo). */
+function deIA(co){
+  if(!co||!Array.isArray(co.itens))return;
+  cart={};
+  co.itens.forEach(function(i){var p=byId[i.id],q=Math.floor(Number(i.q));if(p&&p.st>0&&q>0)cart[i.id]=Math.min(q,p.st)});
+  minHit=false;updateCart();
+  if(co.nome)nomeVal=String(co.nome).slice(0,60);
+  var e=co.entrega||{};
+  if(e.tipo==="cliente")ship="frete";
+  else{
+    ship="entrega";
+    entrega=e.geo&&isFinite(e.geo.lat)&&isFinite(e.geo.lng)&&e.endereco
+      ?{verificada:true,distKm:e.km,taxa:e.taxa,geo:{lat:+e.geo.lat,lng:+e.geo.lng},endereco:e.endereco}
+      :{verificada:false,distKm:null,taxa:null,endereco:null};       /* sem coordenadas: o cliente confirma o endereço no modal */
+  }
+  pedido=null;
+  var d=document.getElementById("drawer");
+  if(!d.classList.contains("on"))document.getElementById("cartBtn").click();
+  if(typeof carregarHorarios==="function")carregarHorarios();
+  drawCart("checkout");
+  setTimeout(function(){var w=$("#whats");if(w&&!whatsOk())w.focus()},350);
+}
 function voltar(){clearTimeout(poll);clearInterval(_tempo);desmontar();drawCart("checkout")}
 
-return{ativo:ativo,whatsOk:whatsOk,whatsHTML:whatsHTML,clienteHTML:clienteHTML,pagamentoHTML:pagamentoHTML,iniciar:iniciar};
+return{deIA:deIA,ativo:ativo,whatsOk:whatsOk,whatsHTML:whatsHTML,clienteHTML:clienteHTML,pagamentoHTML:pagamentoHTML,iniciar:iniciar};
 })();
