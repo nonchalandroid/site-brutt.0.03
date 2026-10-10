@@ -54,3 +54,19 @@ Em `index.html`: `<script>window.__MP={publicKey:"APP_USR-..."};</script>` (Publ
 ## Testes
 `node --experimental-strip-types supabase/functions/checkout/checkout.test.mts`
 (Supabase, Mercado Pago e Evolution simulados em memória).
+
+## Brutt IA → mesmo checkout
+- O site manda `pagamento_online: true` para a função `brutt-ia` quando o Mercado Pago está ligado
+  naquele aparelho (produção, ou modo teste com `?mpteste=1`).
+- Ao fechar o pedido, a IA devolve `checkout` (ids + quantidades, nome, entrega com coordenadas).
+  O botão **Ir para o pagamento** carrega isso no carrinho e abre o checkout do site: daí em diante é o
+  mesmo fluxo (WhatsApp do cliente → Pix/débito/crédito → webhook → confirmação no WhatsApp).
+- Sem pagamento online, a IA continua com o botão "Enviar pedido no WhatsApp".
+- Publicação: a função publicada só importa `supabase/functions/brutt-ia/index.ts` de um commit fixo
+  deste repositório (público). Para atualizar, faça commit/push e publique um `index.ts` com o novo SHA.
+  Para voltar atrás, publique apontando para um commit anterior.
+
+## Modo teste
+Enquanto `MP_PRODUCAO` estiver vazio em `index.html`, o pagamento online só aparece para quem abrir
+`https://tabacariabrutt.com.br/?mpteste=1` (fica lembrado no aparelho; `?mpteste=0` desliga).
+Para produção: credenciais de produção nos Secrets e a Public Key de produção em `MP_PRODUCAO`.
