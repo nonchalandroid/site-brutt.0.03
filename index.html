@@ -15,7 +15,12 @@
 <link rel="preconnect" href="https://vedlxtljilsanykmddtj.supabase.co" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<script>window.__MP={publicKey:"APP_USR-dc1282f4-94e6-4024-aa4f-9f009406c1ee"};</script>
+<script>/* Mercado Pago. MODO TESTE: o pagamento online só liga em quem abrir o site com ?mpteste=1
+   (fica lembrado no aparelho; ?mpteste=0 desliga). Os outros clientes seguem no pedido pelo WhatsApp.
+   Para ligar pra todo mundo (produção): MP_PRODUCAO="APP_USR-…" da tela "Credenciais de produção". */
+(function(){var MP_TESTE="APP_USR-dc1282f4-94e6-4024-aa4f-9f009406c1ee",MP_PRODUCAO="",t=false;
+try{var m=location.search.match(/[?&]mpteste=([01])/);if(m)localStorage.setItem("brutt_mpteste",m[1]);t=localStorage.getItem("brutt_mpteste")==="1"}catch(e){}
+window.__MP={publicKey:MP_PRODUCAO||(t?MP_TESTE:""),teste:!MP_PRODUCAO&&t}})();</script>
 <script>window.__SUPA={url:"https://vedlxtljilsanykmddtj.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZGx4dGxqaWxzYW55a21kZHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NjYzNzUsImV4cCI6MjEwNjE0MjM3NX0.JlUPvGdomBHLlu5ei5dEb1qFR4FZ2nC45JTZUJ-IN6g"};window.__buscaCatalogo=function(){var U="https://vedlxtljilsanykmddtj.supabase.co/rest/v1/",K="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZGx4dGxqaWxzYW55a21kZHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NjYzNzUsImV4cCI6MjEwNjE0MjM3NX0.JlUPvGdomBHLlu5ei5dEb1qFR4FZ2nC45JTZUJ-IN6g",H={apikey:K,Authorization:"Bearer "+K};function get(q){return fetch(U+q,{headers:H}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()})}return Promise.all([get("products?select=*&is_active=eq.true"),get("categories?select=id,slug,name,parent_id"),get("product_images?select=product_id,url,is_primary")])};try{window.__catalogo=window.__buscaCatalogo();window.__catalogo.catch(function(){})}catch(e){window.__catalogo=Promise.reject(e);window.__catalogo.catch(function(){})}</script>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Geist+Mono:wght@600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Geist+Mono:wght@600;700&display=swap" rel="stylesheet"></noscript>
@@ -104,6 +109,7 @@ html.lenis.snap-on{scroll-snap-type:none}
 .pix-code input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0e0806;color:var(--ink);font:600 13px var(--mono,ui-monospace),monospace;text-overflow:ellipsis}
 .pix-copy.done{background:#2c8a58}
 #mpBrick{min-height:20px}
+.mp-teste{margin:14px 0 0;padding:8px 12px;border-radius:10px;border:1px dashed #8b5cff;background:rgba(139,92,255,.12);color:#d9ccff;font:700 13px var(--body)}
 
 /* ── Modal de endereço: botão fixo de localização ── */
 .ent-loc{display:flex;align-items:center;gap:10px;width:100%;min-height:54px;margin-top:10px;padding:8px 12px;text-align:left;border:1px solid rgba(227,172,61,.5);border-radius:12px;background:rgba(227,172,61,.08);color:var(--ink);cursor:pointer;font:inherit}
