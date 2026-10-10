@@ -14,7 +14,8 @@
 // O "pagamento confirmado" só é marcado depois de consultar o pagamento direto na API do
 // Mercado Pago (GET /v1/payments/{id}) — o status enviado pelo navegador é ignorado.
 
-const env = (k: string) => ((globalThis as any).Deno?.env?.get(k) as string | undefined) || "";
+// trim: um espaço ou quebra de linha colado junto no painel de Secrets não pode virar "chave vazia" silenciosa
+const env = (k: string) => String(((globalThis as any).Deno?.env?.get(k) as string | undefined) ?? "").trim().replace(/^["']|["']$/g, "");
 const SB = () => env("SUPABASE_URL"), SK = () => env("SUPABASE_SERVICE_ROLE_KEY");
 const hdr = (x: Record<string, string> = {}) => ({ apikey: SK(), Authorization: "Bearer " + SK(), "Content-Type": "application/json", ...x });
 async function sb(path: string, init: RequestInit = {}) {
