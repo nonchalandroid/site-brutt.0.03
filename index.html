@@ -162,6 +162,17 @@ button.ia-wa{width:100%;border:0;cursor:pointer;font-family:inherit}
 .ic.ic-wa{fill:currentColor;stroke:none}
 .pm-ask .ic-wa,.humano .ic-wa{color:#25D366}
 .go .ic-wa{color:#fff}
+
+/* Barra da Brutt IA × barra do pedido mínimo: as duas ficam empilhadas em posições FIXAS.
+   A do mínimo embaixo; a da IA logo acima, sempre no mesmo lugar (não pula quando o mínimo aparece). */
+:root{--mb-h:40px;--mb-gap:14px;--ia-h:46px;--ia-bottom:calc(var(--mb-gap) + var(--mb-h) + 10px + env(safe-area-inset-bottom,0px));--barras-w:min(560px,calc(100% - 24px))}
+.minbar{width:var(--barras-w);bottom:calc(var(--mb-gap) + env(safe-area-inset-bottom,0px))}
+.minbar .mgo,.minbar button{min-height:var(--mb-h);padding-top:7px;padding-bottom:8px}
+.ia-bar{width:var(--barras-w);height:var(--ia-h);bottom:var(--ia-bottom);border-radius:15px}
+.ia-orb,body:has(.minbar.on) .ia-orb{bottom:var(--ia-bottom)}
+body:has(.minbar.on) .ia-bar{bottom:var(--ia-bottom)}
+@media(max-width:640px){.ia-bar{height:var(--ia-h);border-radius:14px}}
+body.ia-on footer{padding-bottom:calc(var(--ia-h) + var(--mb-h) + 48px)}
 </style>
 </head>
 <body>
