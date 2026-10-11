@@ -5,7 +5,7 @@ import { createHmac } from "node:crypto";
 
 const ENV: Record<string, string> = {
   SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "srv", MP_ACCESS_TOKEN: "TEST-token", MP_PUBLIC_KEY: "TEST-pk",
-  MP_WEBHOOK_SECRET: "segredo", EVOLUTION_API_URL: "https://evo.test", EVOLUTION_API_KEY: "evo", EVOLUTION_INSTANCE: "brutt", WHATS_LOJA_AVISOS: "21999990000",
+  MP_WEBHOOK_SECRET: "segredo", MP_ACEITA_CARTAO: "1", EVOLUTION_API_URL: "https://evo.test", EVOLUTION_API_KEY: "evo", EVOLUTION_INSTANCE: "brutt", WHATS_LOJA_AVISOS: "21999990000",
 };
 (globalThis as any).Deno = { env: { get: (k: string) => ENV[k] } };
 const bg: Promise<unknown>[] = [];
@@ -188,6 +188,13 @@ await t("sem MP_ACCESS_TOKEN o checkout responde 503 (site cai no fluxo antigo)"
   const tok = ENV.MP_ACCESS_TOKEN; delete ENV.MP_ACCESS_TOKEN;
   assert.equal((await call("criar", { ...base, entrega: { tipo: "cliente" } })).status, 503);
   ENV.MP_ACCESS_TOKEN = tok;
+});
+await t("cartão bloqueado por padrão (só Pix)", async () => {
+  delete ENV.MP_ACEITA_CARTAO;
+  const c = await call("criar", { ...base, whats: "21933332222", entrega: { tipo: "cliente" } });
+  const r = await call("pagar", { pedido_id: c.j.pedido_id, metodo: "credito", formData: { token: "t", payment_method_id: "master", payer: { email: "a@b.co" } } });
+  assert.equal(r.status, 400); assert.match(r.j.erro, /só Pix/);
+  ENV.MP_ACEITA_CARTAO = "1";
 });
 await t("dataMP formata no fuso de Brasília", async () => {
   assert.equal(C.dataMP(new Date("2026-10-10T21:30:00Z")), "2026-10-10T18:30:00.000-03:00");

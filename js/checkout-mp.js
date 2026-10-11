@@ -25,12 +25,13 @@ function clienteHTML(){
    +'<span class="pin-ok" role="status" aria-live="polite"></span></div>'
    +'<p class="cli-note">Clique no pin para copiar o endereço da loja e cole no aplicativo de entrega (Uber Flash ou 99).</p></div>';
 }
-var OPT=[["pix","Pix","QR Code na hora"],["debito","Débito","Cartão de débito"],["credito","Crédito","À vista"]];
+/* Só Pix: sem cartão digitado no site (prevenção de fraude). Cartão só volta se a loja decidir. */
+var OPT=[["pix","Pix","QR Code na hora"]];
 var PAY_IC={pix:'<path d="M12 2.6 21.4 12 12 21.4 2.6 12Z"/><path d="M8.6 9.2 12 12.6l3.4-3.4M8.6 14.8 12 11.4l3.4 3.4"/>',cartao:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19M6 15h4"/>'};
 function pagamentoHTML(){
-  return(CFG.teste?'<p class="mp-teste">🧪 MODO TESTE: use só cartões e contas de teste do Mercado Pago.</p>':"")+'<div class="field">Como você quer pagar?</div><div class="pay-opts" role="radiogroup" aria-label="Forma de pagamento">'
+  return(CFG.teste?'<p class="mp-teste">🧪 MODO TESTE do pagamento online.</p>':"")+'<div class="field">Como você quer pagar?</div><div class="pay-opts'+(OPT.length===1?" um":"")+'" role="radiogroup" aria-label="Forma de pagamento">'
    +OPT.map(function(o){var on=o[0]===metodo;return'<button type="button" class="popt'+(on?" sel":"")+'" role="radio" aria-checked="'+on+'" data-pay="'+o[0]+'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+(o[0]==="pix"?PAY_IC.pix:PAY_IC.cartao)+'</svg><b>'+o[1]+'</b><small>'+o[2]+'</small></button>'}).join("")
-   +'</div><p class="pay-safe"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></svg><span>Pagamento seguro pelo <b>Mercado Pago</b>. Os dados do cartão não passam pela loja.</span></p>';
+   +'</div><p class="pay-safe"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></svg><span>Pix instantâneo, processado com segurança pelo <b>Mercado Pago</b>. Não aceitamos cartão digitado no site.</span></p>';
 }
 document.addEventListener("input",function(e){if(e.target&&e.target.id==="whats"){var v=mascara(e.target.value);if(v!==e.target.value)e.target.value=v;whatsVal=v;try{localStorage.setItem("brutt_whats",JSON.stringify(v))}catch(_){}}});
 document.addEventListener("click",function(e){

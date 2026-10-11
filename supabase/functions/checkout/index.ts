@@ -141,6 +141,8 @@ export async function pagar(body: any, urlFuncao: string) {
   if (!UUID.test(id)) return { erro: "Pedido inválido.", status: 400 };
   const metodo = METODO[String(body?.metodo)];
   if (!metodo) return { erro: "Forma de pagamento inválida.", status: 400 };
+  // Prevenção de fraude: a loja não aceita cartão digitado. Só Pix, a menos que MP_ACEITA_CARTAO=1.
+  if (metodo !== "pix" && env("MP_ACEITA_CARTAO") !== "1") return { erro: "No momento aceitamos só Pix.", status: 400 };
   const [ped] = await sbGet(`pedidos?id=eq.${id}&select=*`);
   if (!ped) return { erro: "Pedido não encontrado.", status: 404 };
   if (ped.status === "pago" || ped.status === "concluido") return { ok: true, status: ped.status, numero: ped.numero };
