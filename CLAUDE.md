@@ -109,6 +109,10 @@ Admin: roteador por hash (`ROUTES`, `go("nome")`, `rotaAtual()`); cada tela é `
 
 **Clientes** (`#/clientes`, tabela `clientes`, RLS só equipe): lista do Nex + quem compra no site. O gatilho `pedidos_cliente` cria/completa o cliente a cada pedido e soma pedidos pagos; `clientes_importar(lista, origem)` mescla a exportação do Nex (casa por uid → código → WhatsApp e só preenche campo vazio, nunca sobrescreve o que a equipe editou). WhatsApp é guardado como `55DDD9XXXXXXXX` (`whats_normaliza` no banco = `cliWhats` no admin). "Completo" = nome + WhatsApp + endereço (e-mail é opcional).
 
+**Alerta de pedido novo:** pedido `pago` com `visto_em` vazio pisca em vermelho (badge do menu, visão geral e cartão em Pedidos, animação `piscaNovo` só de opacidade) até alguém da equipe tocar nele ou concluir (RPC `pedido_marcar_visto`). O painel confere a cada 30 s (`ligaVigia`): pedido novo dá aviso na tela, bipe curto e "(N) 🔴 Pedido novo" no título da aba.
+
+**Produtos em lote:** caixa "Selecionar todos" (`#bulkTodos`) acima da lista marca todos os produtos filtrados; fica "parcial" quando só alguns estão marcados.
+
 Não há Storybook nem documentação de componentes além deste arquivo.
 
 ## 4. Assets
