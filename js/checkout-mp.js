@@ -189,7 +189,7 @@ function mostrarPix(px){
     +'<p class="pix-t">No app do banco: <b>Pix → Ler QR Code</b> ou <b>Pix copia e cola</b>. O código vale 30 min e é só deste pedido.</p>'
     +'<div class="mp-wait">'+spin()+'<b>Aguardando o pagamento…</b><span id="pixTempo"></span></div></div>';
   tempoPix(px.expira_em);
-  if(window.ACOMP&&pedido)ACOMP.guarda(pedido.pedido_id,pedido.numero);   /* atalho "Acompanhar" aparece se o cliente fechar a tela */
+  if(window.ACOMP&&pedido)ACOMP.guarda(pedido.pedido_id,pedido.numero,msgLojaPago(pedido.numero));   /* atalho "Acompanhar" + mensagem completa do pedido guardada JÁ AQUI: o celular pode recarregar a página enquanto o cliente paga no app do banco */
   acompanhar();
 }
 function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado!";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código Pix";b.classList.remove("done")}},2500)})}
