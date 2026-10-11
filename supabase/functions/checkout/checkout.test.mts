@@ -14,7 +14,7 @@ const realTimeout = globalThis.setTimeout;
 (globalThis as any).setTimeout = (fn: any, ms: number) => realTimeout(fn, ms >= 3000 && ms < 5000 ? 1 : ms); // pula as pausas de 3 s
 
 // ── banco em memória ──
-const db: Record<string, any[]> = { pedidos: [], wa_notificacoes: [], wa_contatos: [], mp_eventos: [], push_config: [], push_assinaturas: [] };
+const db: Record<string, any[]> = { staff: [{ user_id: "u-staff", active: true }], pedidos: [], wa_notificacoes: [], wa_contatos: [], mp_eventos: [], push_config: [], push_assinaturas: [] };
 const products = [
   { site_product_id: "ess-1", name: "Essência Ziggy Menta", price: 25, promo_price: null, stock: 5, is_active: true },
   { site_product_id: "car-1", name: "Carvão 1kg", price: 30, promo_price: 19.9, stock: 1, is_active: true },
@@ -28,6 +28,7 @@ function filtros(q: URLSearchParams) {
   q.forEach((v, k) => {
     if (k === "select" || k === "order" || k === "limit") return;
     if (v.startsWith("eq.")) fs.push(r => String(r[k]) === v.slice(3));
+    else if (v === "is.null") fs.push(r => r[k] == null);
     else if (v.startsWith("in.(")) { const l = v.slice(4, -1).split(",").map(s => s.replace(/^"|"$/g, "")); fs.push(r => l.includes(String(r[k]))); }
   });
   return (r: any) => fs.every(f => f(r));
@@ -58,6 +59,9 @@ const res = (o: any, status = 200) => new Response(o == null ? "" : JSON.stringi
     const id = u.pathname.split("/").pop()!;
     if (m === "PUT") { mpPays.get(id).status = body.status; return res(mpPays.get(id)); }
     return mpPays.has(id) ? res(mpPays.get(id)) : res({}, 404);
+  }
+  if (u.host === "sb.test" && u.pathname === "/auth/v1/user") {
+    return init.headers?.Authorization === "Bearer token-equipe" ? res({ id: "u-staff" }) : res({ msg: "invalid" }, 401);
   }
   if (u.host === "sb.test") {
     const path = u.pathname.replace("/rest/v1/", "");
@@ -283,5 +287,59 @@ await t("avisa a equipe no celular: Pix gerado e pago, 1 vez cada, criptografado
 await t("push_chave e push_teste exigem staff", async () => {
   assert.equal((await call("push_chave", {})).status, 403);
   assert.equal((await call("push_teste", { endpoint: "https://push.test/meu-celular" })).status, 403);
+});
+
+// ── tela "Acompanhe seu pedido" + etapas da equipe ──
+const equipe = { Authorization: "Bearer token-equipe" };
+await t("status traz a linha do tempo sem endereço, telefone nem dados de pagamento", async () => {
+  const c = await call("criar", { ...base, nome: "Ana Acomp Silva", whats: "21966665555", entrega: { tipo: "cliente" } });
+  await call("pagar", { pedido_id: c.j.pedido_id, metodo: "pix", formData: { payment_method_id: "pix", payer: { email: "a@a.com" } } });
+  await C.processarPagamento({ ...mpPays.get(String(mpSeq)), status: "approved", status_detail: "accredited" }); await flush();
+  const j = await getStatus(c.j.pedido_id);
+  assert.equal(j.acomp.status, "pago"); assert.equal(j.acomp.tipo, "cliente"); assert.equal(j.acomp.nome, "Ana");
+  assert.ok(j.acomp.criado && j.acomp.pago); assert.equal(j.acomp.saiu, null);
+  assert.deepEqual(j.acomp.itens, [{ qtd: 1, nome: "Essência Ziggy Menta" }]);
+  const txt = JSON.stringify(j.acomp);
+  assert.ok(!/21966665555|Silva|mp_payment|endereco/.test(txt), "nada sensível no acompanhamento");
+});
+await t("etapa 'saiu para entrega': só equipe, só entrega da loja, 1 vez, com mensagem e link de acompanhamento", async () => {
+  rotaM = 1500;
+  const c = await call("criar", { ...base, whats: "21955554444", entrega: { tipo: "entrega", endereco: { rua: "Rua A", numero: "10", bairro: "Campo Grande", cidade: "Rio de Janeiro", uf: "RJ" }, geo: { lat: -22.88, lng: -43.61 } } });
+  assert.equal(c.status, 200, JSON.stringify(c.j));
+  await call("pagar", { pedido_id: c.j.pedido_id, metodo: "pix", formData: { payment_method_id: "pix", payer: { email: "b@b.com" } } });
+  assert.equal((await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe)).status, 409);   // ainda não pago
+  await C.processarPagamento({ ...mpPays.get(String(mpSeq)), status: "approved", status_detail: "accredited" }); await flush();
+  assert.equal((await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" })).status, 403);            // sem login de equipe
+  whats.length = 0;
+  const r = await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe);
+  assert.equal(r.status, 200); assert.ok(r.j.saiu_em);
+  assert.match(decodeURIComponent(r.j.whats.link), /saiu para entrega[\s\S]*Rua A, 10[\s\S]*\?pedido=/);
+  assert.ok(r.j.whats.link.startsWith("https://wa.me/5521955554444?text="));
+  assert.equal(r.j.whats.auto, true);                                                // Evolution configurada no teste
+  assert.equal(whats.filter(w => /saiu para entrega/.test(w.text)).length, 1);
+  const r2 = await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe);
+  assert.equal(r2.j.saiu_em, r.j.saiu_em);                                          // idempotente
+  assert.equal(whats.filter(w => /saiu para entrega/.test(w.text)).length, 1);
+  assert.ok((await getStatus(c.j.pedido_id)).acomp.saiu);
+  const fim = await call("concluir", { pedido_id: c.j.pedido_id }, equipe);
+  assert.match(decodeURIComponent(fim.j.whats.link), /Pedido entregue/);
+});
+await t("cliente que chama Uber/99: 'saiu' recusado e concluir avisa 'Motoboy já retirou'", async () => {
+  const c = await call("criar", { ...base, whats: "21944443333", entrega: { tipo: "cliente" } });
+  await call("pagar", { pedido_id: c.j.pedido_id, metodo: "pix", formData: { payment_method_id: "pix", payer: { email: "c@c.com" } } });
+  await C.processarPagamento({ ...mpPays.get(String(mpSeq)), status: "approved", status_detail: "accredited" }); await flush();
+  assert.equal((await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe)).status, 409);
+  const fim = await call("concluir", { pedido_id: c.j.pedido_id }, equipe);
+  assert.equal(fim.status, 200); assert.match(decodeURIComponent(fim.j.whats.link), /Motoboy já retirou seu pedido/);
+  assert.equal((await getStatus(c.j.pedido_id)).acomp.status, "concluido");
+});
+await t("sem o robô do WhatsApp: a equipe recebe o link com a mensagem pronta", async () => {
+  const url = ENV.EVOLUTION_API_URL; delete ENV.EVOLUTION_API_URL;
+  const c = await call("criar", { ...base, whats: "21933330000", entrega: { tipo: "cliente" } });
+  await call("pagar", { pedido_id: c.j.pedido_id, metodo: "pix", formData: { payment_method_id: "pix", payer: { email: "d@d.com" } } });
+  await C.processarPagamento({ ...mpPays.get(String(mpSeq)), status: "approved", status_detail: "accredited" }); await flush();
+  const fim = await call("concluir", { pedido_id: c.j.pedido_id }, equipe);
+  assert.equal(fim.j.whats.auto, false); assert.ok(fim.j.whats.link.startsWith("https://wa.me/5521933330000?text="));
+  ENV.EVOLUTION_API_URL = url;
 });
 console.log(`\n${ok} testes passaram`);

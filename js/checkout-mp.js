@@ -189,6 +189,7 @@ function mostrarPix(px){
     +'<p class="pix-t">No app do banco: <b>Pix → Ler QR Code</b> ou <b>Pix copia e cola</b>. O código vale 30 min e é só deste pedido.</p>'
     +'<div class="mp-wait">'+spin()+'<b>Aguardando o pagamento…</b><span id="pixTempo"></span></div></div>';
   tempoPix(px.expira_em);
+  if(window.ACOMP&&pedido)ACOMP.guarda(pedido.pedido_id,pedido.numero);   /* atalho "Acompanhar" aparece se o cliente fechar a tela */
   acompanhar();
 }
 function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado!";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código Pix";b.classList.remove("done")}},2500)})}
@@ -232,10 +233,12 @@ function msgLojaPago(numero){
 }
 function sucesso(numero){
   clearTimeout(poll);clearInterval(_tempo);desmontar();
-  var reserva=_ctx&&_ctx.reserva,txtLoja=pedido?msgLojaPago(numero):"";
+  var reserva=_ctx&&_ctx.reserva,txtLoja=pedido?msgLojaPago(numero):"",idPed=pedido&&pedido.pedido_id;
   try{sSet("brutt_nome",_ctx&&_ctx.nome||"")}catch(e){}
   pedido=null;_ctx=null;
   cart={};minHit=false;closeAll();updateCart();cartView="";
+  /* tela "Acompanhe seu pedido" (js/acompanhar.js); sem ela, o aviso simples de antes */
+  if(window.ACOMP&&idPed){ACOMP.abrir(idPed,{numero:numero,txtLoja:txtLoja});return}
   mostrarFeito(numero,reserva);
   var t=$("#feitoT"),s=$("#feitoS");
   if(t)t.textContent="✅ Pagamento confirmado!";

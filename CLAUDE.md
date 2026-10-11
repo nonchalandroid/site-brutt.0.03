@@ -15,7 +15,8 @@ Leia antes de alterar qualquer arquivo.
 ├── index.html            # LOJA inteira: <head>, CSS (3 blocos <style>), HTML base e o JS principal inline
 ├── js/
 │   ├── fluidez.js        # Lenis (scroll suave), navegação ←/→ e gesto no modal de produto
-│   └── checkout-mp.js    # window.MPX: pagamento Mercado Pago (Payment Brick, Pix), campo WhatsApp, pin da loja
+│   ├── checkout-mp.js    # window.MPX: pagamento Mercado Pago (Payment Brick, Pix), campo WhatsApp, pin da loja
+│   └── acompanhar.js     # window.ACOMP: tela "Acompanhe seu pedido" (pós-pagamento, estilo iFood) + atalho no topo
 ├── vendor/lenis.min.js   # Lenis 1.3.26 servido localmente (sem CDN)
 ├── admin/index.html      # PAINEL interno (login Supabase), roteador por hash + abas
 ├── 404.html              # só redireciona /qualquer-rota → /?r=... (o index reescreve a URL)
@@ -105,6 +106,7 @@ Principais "componentes" da loja (todos em `index.html`):
 | `ensureDlv()` / `abrirEntregaModal()` / `entregaBoxHTML()` | modal de endereço `#dlv` e caixa "Entrega disponível" |
 | `MPX.*` (`js/checkout-mp.js`) | forma de pagamento, Payment Brick, tela do Pix |
 | Brutt IA (último `<script>` inline) | `#ia` barra/painel, `cartao()` do pedido |
+| `ACOMP.*` (`js/acompanhar.js`) | tela `#acomp` "Acompanhe seu pedido" e atalho `#acompPill` |
 
 Interação por **delegação de eventos**: um único `document.addEventListener("click", …)` lê atributos `data-*` (`data-add`, `data-open`, `data-ship`, `data-send`, `data-copy`…). Para um botão novo, use um `data-*` novo e trate na delegação (ou num listener próprio no seu módulo).
 
@@ -115,6 +117,8 @@ Admin: roteador por hash (`ROUTES`, `go("nome")`, `rotaAtual()`); cada tela é `
 **Alerta de pedido novo:** pedido `pago` com `visto_em` vazio pisca em vermelho (badge do menu, visão geral e cartão em Pedidos, animação `piscaNovo` só de opacidade) até alguém da equipe tocar nele ou concluir (RPC `pedido_marcar_visto`). O painel confere a cada 30 s (`ligaVigia`): pedido novo dá aviso na tela, bipe curto e "(N) 🔴 Pedido novo" no título da aba.
 
 **Notificações no aparelho (Web Push):** `admin/manifest.webmanifest` (painel instalável) + `admin/sw.js` (mostra o aviso e abre `#/pedidos`). Cartão "Notificações neste aparelho" (`desenhaNotif`) em Pedidos e Visão geral: pede permissão, inscreve com a chave pública do servidor (`checkout?acao=push_chave`) e salva via RPC `push_registrar` (sair = `push_remover`). A função `checkout` (`push.ts`, sem bibliotecas: VAPID ES256 + aes128gcm) avisa "🟡 Pix gerado" e "🔴 Pedido PAGO", 1 vez por pedido (reserva em `wa_notificacoes`, tipo `push_*`). O par VAPID é gerado no servidor na 1ª vez e fica em `push_config` (RLS sem política: só a função lê). iPhone/iPad: só com o painel instalado na Tela de Início (iOS 16.4+). No painel, Pix gerado e não visto pisca em laranja (`.pixnovo`); quando o pedido é pago, `visto_em` volta a vazio e ele pisca em vermelho.
+
+**Acompanhe seu pedido (loja + admin):** depois do Pix pago, `MPX` abre `ACOMP.abrir(id)` (tela `#acomp`: gaveta no celular, janela no PC). Etapas: Recebemos seu pedido → Pagamento confirmado → (entrega da loja) Saiu para entrega → Pedido entregue · (cliente chama Uber/99) Motoboy já retirou seu pedido, com o endereço de coleta para copiar. Dados de `checkout?acao=status` → `acomp` (sem endereço, telefone ou dados de pagamento). Pedidos ficam em `localStorage.brutt_pedidos`; atalho `#acompPill` no topo enquanto houver pedido em andamento (some 3 h depois de concluído); link `/?pedido=<uuid>` (capturado no `<head>` em `window.__PEDIDO_URL`, espera a confirmação +18). No admin, pedido pago tem o botão da próxima etapa (`data-etapa`): "🛵 Saiu para entrega" (`checkout?acao=etapa`, grava `saiu_em`) → "Pedido entregue" ou "Motoboy retirou" (`acao=concluir`). Cada etapa manda WhatsApp ao cliente pela Evolution; sem ela, o admin mostra "Avisar o cliente no WhatsApp" com a mensagem pronta (`whats.link`).
 
 **Estornado:** pedido `cancelado` com `mp_status = 'refunded'` (o MP devolveu o valor inteiro) aparece como "Estornado · devolvido" (`pedSt()`), com filtro próprio, e sai das estatísticas do cliente. Pedido "Aguardando pagamento" sem Pix ou com Pix vencido pode ser cancelado pela equipe (botão "Cancelar pedido" → RPC `pedido_cancelar_aberto`, que recusa se houver Pix válido em aberto).
 
