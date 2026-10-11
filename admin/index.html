@@ -421,6 +421,13 @@ details.nx-box summary{cursor:pointer;font-weight:600}
 .gr-filtros{display:grid;gap:8px;margin:10px 0}
 .gr-filtros select{margin:0}
 @media (min-width:700px){.gr-filtros{grid-template-columns:1fr 1fr}}
+
+/* tabelas: sem linha sobrando na última fileira, divisórias suaves e destaque ao passar o mouse */
+.nx-hist,.sync-table,.dash-table{border-collapse:separate;border-spacing:0}
+.nx-hist td,.sync-table td,.dash-table td{border-bottom:1px solid rgba(240,204,116,.07)}
+.nx-hist th,.dash-table th{border-bottom:1px solid var(--line)}
+.nx-hist tr:last-child td,.sync-table tr:last-child td,.dash-table tr:last-child td{border-bottom:0}
+@media(hover:hover){.nx-hist tbody tr:hover td,.sync-table tr:hover td,.dash-table tbody tr:hover td{background:rgba(255,255,255,.025)}}
 </style>
 </head>
 <body>
