@@ -25,7 +25,7 @@ Leia antes de alterar qualquer arquivo.
 ├── fumaca.mp4            # vídeo de fundo, carregado sob demanda
 ├── assets/               # BUILD ANTIGO (React) que NÃO é usado por nenhuma página — não editar
 └── supabase/
-    ├── migrations/       # SQL das tabelas novas (pedidos, mp_eventos, wa_notificacoes, wa_contatos)
+    ├── migrations/       # SQL das tabelas novas (pedidos, mp_eventos, wa_notificacoes, wa_contatos, clientes)
     ├── functions/checkout/  # pedido + Mercado Pago + webhook + WhatsApp (Evolution API) + testes
     ├── functions/brutt-ia/  # vendedor virtual (Gemini) + testes
     ├── CHECKOUT.md       # como ativar/operar o pagamento online
@@ -106,6 +106,8 @@ Principais "componentes" da loja (todos em `index.html`):
 Interação por **delegação de eventos**: um único `document.addEventListener("click", …)` lê atributos `data-*` (`data-add`, `data-open`, `data-ship`, `data-send`, `data-copy`…). Para um botão novo, use um `data-*` novo e trate na delegação (ou num listener próprio no seu módulo).
 
 Admin: roteador por hash (`ROUTES`, `go("nome")`, `rotaAtual()`); cada tela é `renderX()` e começa com `topbarHTML(titulo)` + `bindTopbar()`, que desenham a **sidebar** (fixa a partir de 1024px; abaixo disso vira gaveta com o botão ☰) e a barra superior. A navegação vem de `NAV = [[grupo, [[rota, rótulo, ícone, badge?], …]], …]` (`ABAS` é derivado dele). **Tela nova = função `renderX` + entrada em `ROUTES` + item em `NAV`.** Padrão visual de tela: `<div class="pg"><h2 class="pg-t">…</h2><p class="pg-d">…</p>` + conteúdo. Entrada sem hash vai para `#/visao` (Visão geral); `#/` continua sendo Produtos.
+
+**Clientes** (`#/clientes`, tabela `clientes`, RLS só equipe): lista do Nex + quem compra no site. O gatilho `pedidos_cliente` cria/completa o cliente a cada pedido e soma pedidos pagos; `clientes_importar(lista, origem)` mescla a exportação do Nex (casa por uid → código → WhatsApp e só preenche campo vazio, nunca sobrescreve o que a equipe editou). WhatsApp é guardado como `55DDD9XXXXXXXX` (`whats_normaliza` no banco = `cliWhats` no admin). "Completo" = nome + WhatsApp + endereço (e-mail é opcional).
 
 Não há Storybook nem documentação de componentes além deste arquivo.
 
