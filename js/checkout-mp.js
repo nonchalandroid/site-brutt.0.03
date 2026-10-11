@@ -25,21 +25,25 @@ function clienteHTML(){
    +'<span class="pin-ok" role="status" aria-live="polite"></span></div>'
    +'<p class="cli-note">Clique no pin para copiar o endereço da loja e cole no aplicativo de entrega (Uber Flash ou 99).</p></div>';
 }
-var OPT=[["pix","Pix","QR Code na hora"],["debito","Débito","Cartão de débito"],["credito","Crédito","À vista"]];
+/* Só Pix: sem cartão digitado no site (prevenção de fraude). Cartão só volta se a loja decidir. */
+var OPT=[["pix","Pix","QR Code na hora"]];
 var PAY_IC={pix:'<path d="M12 2.6 21.4 12 12 21.4 2.6 12Z"/><path d="M8.6 9.2 12 12.6l3.4-3.4M8.6 14.8 12 11.4l3.4 3.4"/>',cartao:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19M6 15h4"/>'};
 function pagamentoHTML(){
-  return(CFG.teste?'<p class="mp-teste">🧪 MODO TESTE: use só cartões e contas de teste do Mercado Pago.</p>':"")+'<div class="field">Como você quer pagar?</div><div class="pay-opts" role="radiogroup" aria-label="Forma de pagamento">'
+  var teste=CFG.teste?'<p class="mp-teste">🧪 MODO TESTE do pagamento online.</p>':"";
+  if(OPT.length===1)return teste+'<div class="pix-aviso"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+PAY_IC.pix+'</svg><span><b>Pagamento por Pix</b><small>Ao tocar no botão, o QR Code e o código copia e cola aparecem na hora. Não aceitamos cartão no site.</small></span></div>';
+  return(CFG.teste?'<p class="mp-teste">🧪 MODO TESTE do pagamento online.</p>':"")+'<div class="field">Como você quer pagar?</div><div class="pay-opts'+(OPT.length===1?" um":"")+'" role="radiogroup" aria-label="Forma de pagamento">'
    +OPT.map(function(o){var on=o[0]===metodo;return'<button type="button" class="popt'+(on?" sel":"")+'" role="radio" aria-checked="'+on+'" data-pay="'+o[0]+'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+(o[0]==="pix"?PAY_IC.pix:PAY_IC.cartao)+'</svg><b>'+o[1]+'</b><small>'+o[2]+'</small></button>'}).join("")
-   +'</div><p class="pay-safe"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></svg><span>Pagamento seguro pelo <b>Mercado Pago</b>. Os dados do cartão não passam pela loja.</span></p>';
+   +'</div><p class="pay-safe"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></svg><span>Pix instantâneo, processado com segurança pelo <b>Mercado Pago</b>. Não aceitamos cartão digitado no site.</span></p>';
 }
 document.addEventListener("input",function(e){if(e.target&&e.target.id==="whats"){var v=mascara(e.target.value);if(v!==e.target.value)e.target.value=v;whatsVal=v;try{localStorage.setItem("brutt_whats",JSON.stringify(v))}catch(_){}}});
 document.addEventListener("click",function(e){
-  var b=e.target.closest&&e.target.closest("[data-pay],[data-pin-copy],[data-mp-voltar],[data-mp-copiar],[data-mp-tentar]");if(!b)return;
+  var b=e.target.closest&&e.target.closest("[data-pay],[data-pin-copy],[data-mp-voltar],[data-mp-copiar],[data-mp-tentar],[data-mp-whats]");if(!b)return;
   if(b.dataset.pay){metodo=b.dataset.pay;document.querySelectorAll(".popt").forEach(function(x){var on=x.dataset.pay===metodo;x.classList.toggle("sel",on);x.setAttribute("aria-checked",String(on))})}
   else if(b.hasAttribute("data-pin-copy"))copiarPin(b);
   else if(b.hasAttribute("data-mp-voltar"))voltar();
   else if(b.hasAttribute("data-mp-copiar"))copiarPix(b);
   else if(b.hasAttribute("data-mp-tentar"))montarBrick();
+  else if(b.hasAttribute("data-mp-whats"))viaWhats();
 });
 function copiarTexto(t){
   if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(t).catch(function(){return fb(t)});
@@ -90,7 +94,15 @@ function iniciar(o){
   }).catch(function(){falha("Sem conexão. Confira sua internet e tente de novo.")});
 }
 function spin(){return'<svg class="mp-spin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg>'}
-function falha(msg){$("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button><p class="mp-err" role="alert">'+esc(msg)+'</p>'}
+/* Rede de proteção: se o pagamento online falhar, o cliente não perde a venda — manda o mesmo pedido pelo WhatsApp. */
+var BTN_WHATS='<button type="button" class="go mp-whats" data-mp-whats>Enviar pedido pelo WhatsApp</button>';
+function falha(msg){$("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button><p class="mp-err" role="alert">'+esc(msg)+'</p>'+BTN_WHATS}
+function viaWhats(){
+  clearTimeout(poll);clearInterval(_tempo);desmontar();
+  CFG.publicKey="";pedido=null;            /* desliga o pagamento online nesta visita */
+  drawCart("checkout");
+  if(typeof sendOrder==="function")sendOrder(true);
+}
 function resumoHTML(){
   var p=pedido,dif=Math.abs(p.total-(total()+taxaAtual()))>=.01;
   return'<div class="mp-res"><div><span>Pedido</span><b>#'+esc(p.numero)+'</b></div>'
@@ -102,7 +114,7 @@ function resumoHTML(){
 function mostrarEtapa(){
   var nome={pix:"Pix",debito:"Cartão de débito",credito:"Cartão de crédito · à vista"}[metodo];
   $("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button>'+resumoHTML()
-    +'<div class="mp-h"><b>'+nome+'</b></div><p class="mp-err" id="mpErr" role="alert" hidden></p>'
+    +(metodo==="pix"?"":'<div class="mp-h"><b>'+nome+'</b></div>')+'<p class="mp-err" id="mpErr" role="alert" hidden></p>'
     +'<div id="mpArea"><div id="mpBrick"></div><div class="mp-load" id="mpLoad" role="status">'+spin()+'<span>Carregando o pagamento seguro…</span></div></div>';
   montarBrick();
 }
@@ -114,9 +126,17 @@ function carregaSDK(){
   return _sdk;
 }
 function desmontar(){if(brick){try{brick.unmount()}catch(e){}brick=null}}
+/* Pix: sem formulário — pede o QR direto ao servidor (o e-mail que o Mercado Pago exige é preenchido lá). */
+function gerarPix(){
+  var a=$("#mpArea");if(!a)return;
+  var e=$("#mpErr");if(e)e.hidden=true;
+  a.innerHTML='<div class="mp-load" role="status">'+spin()+'<span>Gerando o QR Code Pix…</span></div>';
+  pagar({payment_method_id:"pix",payer:emailVal?{email:emailVal}:{}}).catch(function(){var x=$("#mpArea");if(x&&!x.querySelector(".pix"))x.innerHTML=""});
+}
 function montarBrick(){
   desmontar();
   var area=$("#mpArea");if(!area)return;
+  if(metodo==="pix")return gerarPix();
   area.innerHTML='<div id="mpBrick"></div><div class="mp-load" id="mpLoad" role="status">'+spin()+'<span>Carregando o pagamento seguro…</span></div>';
   carregaSDK().then(function(){
     if(!$("#mpBrick"))return;
@@ -135,7 +155,7 @@ function montarBrick(){
 }
 function erroPag(msg,botao){
   var e=$("#mpErr");if(!e)return;
-  e.innerHTML=esc(msg)+(botao?' <button type="button" class="chip" data-mp-tentar>Tentar de novo</button>':"");e.hidden=false;
+  e.innerHTML=esc(msg)+(botao?' <button type="button" class="chip" data-mp-tentar>Tentar de novo</button>':"")+'<span class="mp-ou">ou</span>'+BTN_WHATS;e.hidden=false;
   try{e.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(_){}
 }
 var RECUSA={cc_rejected_insufficient_amount:"Saldo ou limite insuficiente.",cc_rejected_bad_filled_security_code:"Código de segurança inválido.",cc_rejected_bad_filled_date:"Data de validade inválida.",cc_rejected_bad_filled_card_number:"Número do cartão inválido.",cc_rejected_bad_filled_other:"Confira os dados do cartão.",cc_rejected_call_for_authorize:"O banco pediu autorização: libere o pagamento com o emissor do cartão.",cc_rejected_card_disabled:"Cartão desativado. Fale com o emissor.",cc_rejected_duplicated_payment:"Pagamento duplicado: esse valor já foi enviado.",cc_rejected_high_risk:"Pagamento recusado por segurança. Tente outro cartão ou Pix.",cc_rejected_max_attempts:"Limite de tentativas atingido. Use outro cartão ou Pix."};
@@ -157,15 +177,17 @@ function aguardando(html){desmontar();var a=$("#mpArea");if(a)a.innerHTML=html;a
 function mostrarPix(px){
   desmontar();
   var a=$("#mpArea");if(!a)return;
+  var res=document.querySelector("#dBody .mp-res");
+  if(res&&pedido)res.outerHTML='<div class="pix-topo"><span>Pedido <b>#'+esc(pedido.numero)+'</b></span><span>Total <b>'+R(pedido.total)+'</b></span></div>';
   a.innerHTML='<div class="pix">'
     +(px.qr_code_base64?'<img class="pix-qr" alt="QR Code Pix do pedido" width="220" height="220" src="data:image/png;base64,'+esc(px.qr_code_base64)+'">':"")
-    +'<p class="pix-t">Abra o app do seu banco, escolha <b>Pix</b> e escaneie o QR Code ou use o <b>Pix copia e cola</b>:</p>'
-    +'<div class="pix-code"><input id="pixCode" readonly value="'+esc(px.qr_code||"")+'" aria-label="Código Pix copia e cola"><button type="button" class="go pix-copy" data-mp-copiar>Copiar código</button></div>'
+    +'<div class="pix-code"><input id="pixCode" readonly value="'+esc(px.qr_code||"")+'" aria-label="Código Pix copia e cola"><button type="button" class="go pix-copy" data-mp-copiar>Copiar código Pix</button></div>'
+    +'<p class="pix-t">No app do banco: <b>Pix → Ler QR Code</b> ou <b>Pix copia e cola</b>. O código vale 30 min e é só deste pedido.</p>'
     +'<div class="mp-wait">'+spin()+'<b>Aguardando o pagamento…</b><span id="pixTempo"></span></div></div>';
   tempoPix(px.expira_em);
   acompanhar();
 }
-function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado!";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código";b.classList.remove("done")}},2500)})}
+function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado!";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código Pix";b.classList.remove("done")}},2500)})}
 var _tempo=null;
 function tempoPix(fim){
   clearInterval(_tempo);var f=fim?new Date(fim).getTime():0;if(!f)return;

@@ -141,6 +141,8 @@ export async function pagar(body: any, urlFuncao: string) {
   if (!UUID.test(id)) return { erro: "Pedido inválido.", status: 400 };
   const metodo = METODO[String(body?.metodo)];
   if (!metodo) return { erro: "Forma de pagamento inválida.", status: 400 };
+  // Prevenção de fraude: a loja não aceita cartão digitado. Só Pix, a menos que MP_ACEITA_CARTAO=1.
+  if (metodo !== "pix" && env("MP_ACEITA_CARTAO") !== "1") return { erro: "No momento aceitamos só Pix.", status: 400 };
   const [ped] = await sbGet(`pedidos?id=eq.${id}&select=*`);
   if (!ped) return { erro: "Pedido não encontrado.", status: 404 };
   if (ped.status === "pago" || ped.status === "concluido") return { ok: true, status: ped.status, numero: ped.numero };
@@ -164,7 +166,9 @@ export async function pagar(body: any, urlFuncao: string) {
   if (ident?.type && ident?.number) pay.payer.identification = { type: texto(ident.type, 10), number: String(ident.number).replace(/\D/g, "").slice(0, 14) };
   if (metodo === "pix") {
     if (pm !== "pix") return { erro: "Forma de pagamento inválida.", status: 400 };
-    if (!/^\S+@\S+\.\S+$/.test(email)) return { erro: "Digite um e-mail válido para o Pix.", status: 400 };
+    // O Mercado Pago exige e-mail do pagador no Pix. O site gera o QR direto (sem pedir e-mail ao cliente):
+    // sem e-mail informado, usa um endereço interno do pedido.
+    if (!/^\S+@\S+\.\S+$/.test(email)) pay.payer.email = `pix+${ped.numero.toLowerCase()}@tabacariabrutt.com.br`;
     pay.payment_method_id = "pix";
     pay.date_of_expiration = dataMP(new Date(Date.now() + PIX_MINUTOS * 60e3));
   } else {

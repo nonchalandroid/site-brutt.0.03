@@ -5,7 +5,7 @@ import { createHmac } from "node:crypto";
 
 const ENV: Record<string, string> = {
   SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "srv", MP_ACCESS_TOKEN: "TEST-token", MP_PUBLIC_KEY: "TEST-pk",
-  MP_WEBHOOK_SECRET: "segredo", EVOLUTION_API_URL: "https://evo.test", EVOLUTION_API_KEY: "evo", EVOLUTION_INSTANCE: "brutt", WHATS_LOJA_AVISOS: "21999990000",
+  MP_WEBHOOK_SECRET: "segredo", MP_ACEITA_CARTAO: "1", EVOLUTION_API_URL: "https://evo.test", EVOLUTION_API_KEY: "evo", EVOLUTION_INSTANCE: "brutt", WHATS_LOJA_AVISOS: "21999990000",
 };
 (globalThis as any).Deno = { env: { get: (k: string) => ENV[k] } };
 const bg: Promise<unknown>[] = [];
@@ -133,6 +133,13 @@ await t("webhook válido confirma pelo GET no MP e manda WhatsApp uma vez; dupli
   await C.handler(new Request(`${F}?acao=webhook`, { method: "POST", headers: assina(id, "req-2"), body: JSON.stringify({ type: "payment", data: { id } }) })); await flush();
   assert.equal(whats.length, antes);
 });
+await t("Pix sem e-mail: o servidor usa o e-mail interno do pedido e gera o QR", async () => {
+  const c = await call("criar", { ...base, whats: "21944443333", entrega: { tipo: "cliente" } });
+  proximoMp = { status: "pending", status_detail: "pending_waiting_transfer" };
+  const p = await call("pagar", { pedido_id: c.j.pedido_id, metodo: "pix", formData: { payment_method_id: "pix" } });
+  assert.equal(p.status, 200); assert.match(p.j.pix.qr_code, /^000201PIX/);
+  assert.equal(mpPays.get(String(mpSeq))._req.payer.email, `pix+${c.j.numero.toLowerCase()}@tabacariabrutt.com.br`);
+});
 await t("saudação não se repete para o mesmo contato", async () => {
   const c = await call("criar", { ...base, entrega: { tipo: "cliente" } });
   proximoMp = { status: "approved", status_detail: "accredited" };
@@ -181,6 +188,13 @@ await t("sem MP_ACCESS_TOKEN o checkout responde 503 (site cai no fluxo antigo)"
   const tok = ENV.MP_ACCESS_TOKEN; delete ENV.MP_ACCESS_TOKEN;
   assert.equal((await call("criar", { ...base, entrega: { tipo: "cliente" } })).status, 503);
   ENV.MP_ACCESS_TOKEN = tok;
+});
+await t("cartão bloqueado por padrão (só Pix)", async () => {
+  delete ENV.MP_ACEITA_CARTAO;
+  const c = await call("criar", { ...base, whats: "21933332222", entrega: { tipo: "cliente" } });
+  const r = await call("pagar", { pedido_id: c.j.pedido_id, metodo: "credito", formData: { token: "t", payment_method_id: "master", payer: { email: "a@b.co" } } });
+  assert.equal(r.status, 400); assert.match(r.j.erro, /só Pix/);
+  ENV.MP_ACEITA_CARTAO = "1";
 });
 await t("dataMP formata no fuso de Brasília", async () => {
   assert.equal(C.dataMP(new Date("2026-10-10T21:30:00Z")), "2026-10-10T18:30:00.000-03:00");

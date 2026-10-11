@@ -33,7 +33,7 @@ j=await chama("Prefiro eu mesmo solicitar a entrega pelo Uber ou 99",true);
 const r1=ferramentasResp.at(-1).response.output; assert.equal(r1.ok,true,"escolher_uber_99 sem endereço: "+JSON.stringify(r1)); assert.equal(r1.frete_da_loja,0);
 roteiro=[[{functionCall:{name:"finalizar_pedido",args:{nome:"Ana"}}}],[{text:"Toque em Ir para o pagamento."}]];
 j=await chama("pode fechar, meu nome é Ana",true);
-const r2=ferramentasResp.at(-1).response.output; assert.equal(r2.ok,true,JSON.stringify(r2)); assert.match(r2.instrucao,/Ir para o pagamento/);
+const r2=ferramentasResp.at(-1).response.output; assert.equal(r2.ok,true,JSON.stringify(r2)); assert.match(r2.instrucao,/Pagar com Pix/);
 assert.deepEqual(j.checkout,{nome:"Ana",reserva:false,itens:[{id:"p1",q:1}],entrega:{tipo:"cliente"}});
 assert.match(decodeURIComponent(j.whatsapp_url),/frete da loja R\$ 0,00/);
 // sem pagamento online: prompt antigo de Pix e botão verde
