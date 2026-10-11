@@ -594,6 +594,9 @@ details.nx-box[open]{padding-bottom:12px}
 .st-concluido{color:var(--ok);background:var(--ok-soft);border-color:rgba(121,196,142,.35)}
 .st-recusado{color:var(--danger);background:var(--danger-soft);border-color:rgba(225,90,74,.35)}
 .st-expirado,.st-cancelado{color:var(--muted)}
+.st-estornado{color:var(--info);background:var(--info-soft);border-color:rgba(169,179,189,.35)}
+.ped-card.apagado{opacity:.72}
+.ped-nota{margin-top:8px;font-size:12px;color:var(--muted)}
 .st-reserva{color:var(--info);background:var(--info-soft);border-color:rgba(169,179,189,.35)}
 
 /* ---------- visão geral ---------- */
@@ -2794,9 +2797,13 @@ async function renderFotos(){
 }
 
 /* ---------------- pedidos online (Mercado Pago) ---------------- */
-const PED_ST = { aguardando_pagamento:"⏳ Aguardando pagamento", pago:"✅ Pago", recusado:"⚠️ Recusado", expirado:"⌛ Pix expirado", cancelado:"↩️ Cancelado/estornado", concluido:"📦 Concluído" };
+const PED_ST = { aguardando_pagamento:"⏳ Aguardando pagamento", pago:"✅ Pago", recusado:"⚠️ Recusado", expirado:"⌛ Pix expirado", cancelado:"✖️ Cancelado", estornado:"↩️ Estornado", concluido:"📦 Concluído" };
 const PED_MET = { pix:"Pix", debito:"Débito", credito:"Crédito à vista" };
-const PED_ROT = { aguardando_pagamento:"Aguardando pagamento", pago:"Pago · a concluir", recusado:"Recusado", expirado:"Pix expirado", cancelado:"Cancelado/estornado", concluido:"Concluído" };
+const PED_ROT = { aguardando_pagamento:"Aguardando pagamento", pago:"Pago · a concluir", recusado:"Recusado", expirado:"Pix expirado", cancelado:"Cancelado", estornado:"Estornado · devolvido", concluido:"Concluído" };
+/* "Estornado" = cancelado porque o Mercado Pago devolveu o valor inteiro (mp_status refunded). */
+const pedSt = p => p.status === "cancelado" && p.mp_status === "refunded" ? "estornado" : p.status;
+/* pedido pendente só pode ser cancelado pela equipe se não houver Pix válido em aberto (sem Pix ou Pix vencido) */
+const pedCancelavel = p => p.status === "aguardando_pagamento" && (!p.mp_payment_id || (p.pix_expira_em && new Date(p.pix_expira_em) < new Date()));
 let pedFiltro = "todos";
 async function renderPedidos(){
   app.innerHTML = `${topbarHTML("Pedidos online")}
@@ -2807,7 +2814,7 @@ async function renderPedidos(){
       <div id="pedLista"><div class="loading">Carregando…</div></div>
     </div>`;
   bindTopbar();
-  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,visto_em").order("created_at", { ascending:false }).limit(60);
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em").order("created_at", { ascending:false }).limit(60);
   const el = $("#pedLista");
   if(!el) return;
   if(error){ el.innerHTML = `<div class="err">Não foi possível carregar os pedidos (${esc(error.message)}).</div>`; return; }
@@ -2819,21 +2826,26 @@ async function renderPedidos(){
     ["novos", "Novos", p => p.status === "pago" && !p.visto_em],
     ["aguardando_pagamento", "Aguardando pagamento", p => p.status === "aguardando_pagamento"],
     ["concluido", "Concluídos", p => p.status === "concluido"],
-    ["outros", "Recusados / expirados", p => ["recusado","expirado","cancelado"].includes(p.status)],
+    ["estornado", "Estornados", p => pedSt(p) === "estornado"],
+    ["outros", "Cancelados / expirados", p => ["recusado","expirado","cancelado"].includes(pedSt(p))],
   ];
   if(!FILTROS.some(f => f[0] === pedFiltro)) pedFiltro = "todos";
   const cartao = p => {
     const e = p.entrega || {}, a = e.endereco || {};
     const ent = e.tipo === "entrega" ? `Entrega: ${esc(a.rua)}, ${esc(a.numero)}${a.complemento ? " ("+esc(a.complemento)+")" : ""} — ${esc(a.bairro||"")} · ${esc(String(e.km||"").replace(".", ","))} km` : "Cliente chama Uber Flash/99";
-    const novo = p.status === "pago" && !p.visto_em;
-    return `<article class="ped-card${novo ? " novo" : p.status === "pago" ? " acao" : ""}" data-ped="${esc(p.id)}">
+    const novo = p.status === "pago" && !p.visto_em, st = pedSt(p);
+    const nota = st === "estornado" ? `O Mercado Pago devolveu ${brl(p.total)} ao cliente${p.pago_em ? ` (pago em ${fmtQuando(p.pago_em)})` : ""}. Não conta como venda.`
+      : st === "cancelado" && /cancelado pela equipe/.test(p.mp_status_detail || "") ? esc(p.mp_status_detail.replace(/^c/, "C")) + "."
+      : p.status === "aguardando_pagamento" && !pedCancelavel(p) ? "Pix em aberto: se o cliente não pagar, ele vence em 30 min e o pedido pode ser cancelado." : "";
+    return `<article class="ped-card${novo ? " novo" : p.status === "pago" ? " acao" : ["estornado","cancelado","expirado","recusado"].includes(st) ? " apagado" : ""}" data-ped="${esc(p.id)}">
       <div class="ped-h"><b>${novo ? `<span class="ped-novo">Novo</span>` : ""}<code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</b>
-        <span><span class="st st-${esc(p.status)}">${PED_ROT[p.status] || esc(p.status)}</span>${p.reserva ? ' <span class="st st-reserva">reserva</span>' : ""}</span></div>
+        <span><span class="st st-${esc(st)}">${PED_ROT[st] || esc(st)}</span>${p.reserva ? ' <span class="st st-reserva">reserva</span>' : ""}</span></div>
       <div class="ped-meta"><span>${fmtQuando(p.created_at)}</span><span>${PED_MET[p.metodo] || "—"}</span><a href="https://wa.me/${esc(p.cliente_whats)}" target="_blank" rel="noopener">WhatsApp ${esc(p.cliente_whats)}</a></div>
       <div class="ped-itens">${(p.itens||[]).map(i => `<span><b>${esc(i.qtd)}×</b>${esc(i.nome)}</span>`).join("")}</div>
       <div class="ped-ent">${ent}</div>
       <div class="ped-f"><b>${brl(p.total)}</b>
-        ${p.status === "pago" ? `<button class="btn-gold btn-sm" data-concluir="${esc(p.id)}">Marcar como concluído</button>` : ""}</div>
+        ${p.status === "pago" ? `<button class="btn-gold btn-sm" data-concluir="${esc(p.id)}">Marcar como concluído</button>` : ""}${pedCancelavel(p) ? `<button class="btn-ghost btn-sm" data-cancelar="${esc(p.id)}">Cancelar pedido</button>` : ""}</div>
+      ${nota ? `<p class="ped-nota">${nota}</p>` : ""}
       ${novo ? `<p class="ped-novo-dica">Toque no pedido para parar o alerta.</p>` : ""}
     </article>`;
   };
@@ -2849,6 +2861,16 @@ async function renderPedidos(){
       const ped = data.find(x => x.id === c.dataset.ped);
       if(await marcarVisto(ped.id)){ ped.visto_em = new Date().toISOString(); desenha(); } else delete c.dataset.marcando;
     }));
+    el.querySelectorAll("[data-cancelar]").forEach(b => b.onclick = async () => {
+      const ped = data.find(x => x.id === b.dataset.cancelar); if(!ped || b.disabled) return;
+      const motivo = prompt(`Cancelar o pedido #${ped.numero} (${ped.cliente_nome})?\nEle não foi pago. Escreva o motivo (ex.: teste, cliente desistiu) e confirme:`, "teste");
+      if(motivo === null) return;
+      b.disabled = true; b.textContent = "Cancelando…";
+      const { error } = await sb.rpc("pedido_cancelar_aberto", { p_id: ped.id, p_motivo: motivo.trim().slice(0, 120) });
+      if(error){ toast("Não deu pra cancelar: " + error.message); b.disabled = false; b.textContent = "Cancelar pedido"; return; }
+      Object.assign(ped, { status:"cancelado", mp_status_detail:"cancelado pela equipe" + (motivo.trim() ? ": " + motivo.trim() : "") });
+      navCont.t = 0; toast(`Pedido #${ped.numero} cancelado.`); desenha();
+    });
     el.querySelectorAll("[data-concluir]").forEach(b => b.onclick = async () => {
       if(b.disabled) return;
       b.disabled = true; b.textContent = "Enviando…";
@@ -2901,7 +2923,7 @@ async function renderVisao(){
     cont(sb.from("products").select("id", { count:"exact", head:true }).eq("is_active", true).lte("stock", 0)),
     sb.from("nex_sync_log").select("ran_at,ok,erro,modo,estoque_alterado,preco_alterado").order("id", { ascending:false }).limit(1),
     sb.from("loja_horarios").select("*"),
-    sb.from("pedidos").select("id,numero,status,cliente_nome,total,created_at").order("created_at", { ascending:false }).limit(5),
+    sb.from("pedidos").select("id,numero,status,mp_status,cliente_nome,total,created_at").order("created_at", { ascending:false }).limit(5),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago").is("visto_em", null)),
   ]);
   if(rotaAtual() !== "visao" || !$("#ovKpis")) return;
@@ -2946,7 +2968,7 @@ async function renderVisao(){
   $("#ovPed").innerHTML = ult.error ? `<div class="empty" style="padding:20px">Não foi possível carregar os pedidos.</div>` :
     !(ult.data||[]).length ? `<div class="empty" style="padding:20px">Nenhum pedido online ainda.</div>` :
     ult.data.map(p => `<div class="ov-ped-r"><span class="n"><code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</span>
-      <span class="t">${brlV(p.total)}<span class="st st-${esc(p.status)}">${PED_ROT[p.status] || esc(p.status)}</span></span>
+      <span class="t">${brlV(p.total)}<span class="st st-${esc(pedSt(p))}">${PED_ROT[pedSt(p)] || esc(p.status)}</span></span>
       <span class="q">${fmtQuando(p.created_at)}</span></div>`).join("");
   app.querySelectorAll("#ovKpis [data-ir], #ovTodo [data-ir]").forEach(b => b.onclick = () => irPara(b.dataset.ir));
 }

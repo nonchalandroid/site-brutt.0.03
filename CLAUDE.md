@@ -111,6 +111,8 @@ Admin: roteador por hash (`ROUTES`, `go("nome")`, `rotaAtual()`); cada tela é `
 
 **Alerta de pedido novo:** pedido `pago` com `visto_em` vazio pisca em vermelho (badge do menu, visão geral e cartão em Pedidos, animação `piscaNovo` só de opacidade) até alguém da equipe tocar nele ou concluir (RPC `pedido_marcar_visto`). O painel confere a cada 30 s (`ligaVigia`): pedido novo dá aviso na tela, bipe curto e "(N) 🔴 Pedido novo" no título da aba.
 
+**Estornado:** pedido `cancelado` com `mp_status = 'refunded'` (o MP devolveu o valor inteiro) aparece como "Estornado · devolvido" (`pedSt()`), com filtro próprio, e sai das estatísticas do cliente. Pedido "Aguardando pagamento" sem Pix ou com Pix vencido pode ser cancelado pela equipe (botão "Cancelar pedido" → RPC `pedido_cancelar_aberto`, que recusa se houver Pix válido em aberto).
+
 **Produtos em lote:** caixa "Selecionar todos" (`#bulkTodos`) acima da lista marca todos os produtos filtrados; fica "parcial" quando só alguns estão marcados.
 
 Não há Storybook nem documentação de componentes além deste arquivo.
