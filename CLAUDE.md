@@ -64,7 +64,7 @@ Regras:
 - **Taxa de entrega** (`ENTREGA_LOJA` no `index.html`, igual em `supabase/functions/checkout` e `brutt-ia`): R$ 5,00 até 2 km de rota; + R$ 1,50 por km fracionado; só até 2,5 km; teto R$ 8,00. Mudou num lugar, mude nos três.
 - **Brutt IA:** paleta própria roxa/azul em `.ia{--ia-a…--ia-d}` (identidade do assistente). Não misturar com o dourado.
 - **Escala de fonte** (px inteiros, sem .5): 11 · 12 · 13 · 14 · 15 · 16 · 18 · 20 · 22 · 24 · 26 · 28 · 30 · 32 · 34. Títulos display usam `var(--head)` em CAIXA ALTA.
-- **Famílias:** só via `var(--head)`, `var(--body)`, `var(--mono)`. Títulos = **Anton** e texto = **Inter** (Google Fonts, no `<head>`); números/códigos = **DejaVu Sans Mono**, servida de `vendor/fonts/` (`@font-face` no fim do `#fluidez`, só caracteres do português, licença em `vendor/fonts/DEJAVU-LICENSE.txt`). O admin tem fontes próprias (Geist).
+- **Famílias:** só via `var(--head)`, `var(--body)`, `var(--mono)`. Títulos = **Anton** e texto = **Inter** (Google Fonts, no `<head>`); números/códigos = **DejaVu Sans Mono**, servida de `vendor/fonts/` (`@font-face` no fim do `#fluidez`, só caracteres do português, licença em `vendor/fonts/DEJAVU-LICENSE.txt`). O admin usa as mesmas Inter e DejaVu Sans Mono; só o menu lateral dele fica em Geist.
 - **Raios:** 10–14px em botões/cards, 999px em chips/pílulas, 18px no topo de sheets/modais.
 
 ### Admin (`admin/index.html`, `:root` próprio)
@@ -81,7 +81,7 @@ Paleta do painel = **variação** da loja (café/espresso + dourado-âmbar), nã
 --ok:#79c48e; --warn:#e5843f; --danger:#e15a4a; --info:#a9b3bd;   /* + *-soft para fundos */
 --gold / --gold-2 / --red / --green = apelidos antigos (templates do JS), apontam para os tokens acima
 ```
-Fontes: **Geist** (texto e títulos) + **Geist Mono** (códigos, EAN, valores), via Google Fonts. Ícones: mapa `ICON` + `ic(nome)` (traço 24×24, desenho do Lucide/ISC). Os tokens do admin **não** são os da loja: não copie valores de um para o outro.
+Fontes: **Inter** (texto e títulos, Google Fonts) + **DejaVu Sans Mono** (códigos, EAN, valores; servida de `/vendor/fonts/`, a mesma da loja). Só o **menu lateral** (`.side`) fica em **Geist** / **Geist Mono**: as variáveis `--font`/`--mono` são redefinidas no `.side`. Ícones: mapa `ICON` + `ic(nome)` (traço 24×24, desenho do Lucide/ISC). Os tokens do admin **não** são os da loja: não copie valores de um para o outro.
 
 Não há sistema de transformação de tokens (Style Dictionary etc.). Ao importar do Figma, **mapeie as variáveis do Figma para as custom properties acima** em vez de criar novas cores.
 
