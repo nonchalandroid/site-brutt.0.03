@@ -371,6 +371,12 @@ html.rolando .arrows button::after,html.rolando .ia-bar::before,html.rolando .ia
    Sem isso o trilho abria 16 px andado e o 1º card ficava cortado pela seção (content-visibility recorta o que passa dela). */
 .rail{scroll-padding-inline:16px}
 @media(max-width:640px){.fire .rail{scroll-padding-inline:10px}}
+/* A seção (content-visibility:auto = contenção de pintura) recorta tudo que passa da borda dela, inclusive a sobra
+   do trilho (margem negativa de 16 px / 10 px no .fire do celular): os cards apareciam cortados por uma linha reta
+   antes da borda da tela ou do quadro dourado. A seção ganha a MESMA sobra (margem negativa + espaçamento igual):
+   nada muda de lugar, só a área desenhada passa a cobrir o trilho inteiro. Mudou a sobra do .rail, mude aqui também. */
+section.sec{margin-inline:-16px;padding-inline:16px}
+@media(max-width:640px){.fire section.sec{margin-inline:-10px;padding-inline:10px}}
 </style>
 </head>
 <body>
