@@ -30,6 +30,7 @@ Leia antes de alterar qualquer arquivo.
     ├── functions/checkout/  # pedido + Mercado Pago + webhook + WhatsApp (Evolution API) + testes
     ├── functions/brutt-ia/  # vendedor virtual (Gemini) + testes
     ├── functions/gerar-ficha-sommelier/  # Sommelier IA (ficha, perfil, categoria) + testes
+    ├── functions/equipe/  # criar login da equipe e trocar senha (tela Equipe do admin) + testes
     ├── CHECKOUT.md       # como ativar/operar o pagamento online
     └── EVOLUTION.md      # instalar a Evolution API (WhatsApp automático) no VPS
 ```
@@ -112,6 +113,8 @@ Interação por **delegação de eventos**: um único `document.addEventListener
 
 Admin: roteador por hash (`ROUTES`, `go("nome")`, `rotaAtual()`); cada tela é `renderX()` e começa com `topbarHTML(titulo)` + `bindTopbar()`, que desenham a **sidebar** (fixa a partir de 1024px; abaixo disso vira gaveta com o botão ☰) e a barra superior. A navegação vem de `NAV = [[grupo, [[rota, rótulo, ícone, badge?], …]], …]` (`ABAS` é derivado dele). **Tela nova = função `renderX` + entrada em `ROUTES` + item em `NAV`.** Padrão visual de tela: `<div class="pg"><h2 class="pg-t">…</h2><p class="pg-d">…</p>` + conteúdo. Entrada sem hash vai para `#/visao` (Visão geral); `#/` continua sendo Produtos.
 
+**Equipe e papéis** (`#/equipe`, tabela `staff.role`): **Dono** (`owner`) faz tudo e cria/altera administradores; **Administrador** (`admin`) faz tudo e gerencia só atendentes; **Atendente** (`atendente`) só vê **Pedidos** (`ROTAS_ATENDENTE`, menu filtrado por `podeRota`). Quem barra de verdade é o banco: `is_gestor()` (dono/admin) nas políticas de produtos, categorias, fotos (tabela e storage), horários, clientes, `sommelier_log`, `registrar_movimento_estoque` e `clientes_importar`; pedidos continuam com `is_staff()`. Lista/nome/papel/ativo = RPCs `equipe_listar` e `equipe_alterar` (hierarquia em `equipe_pode`; ninguém muda o próprio papel nem se desativa; o dono não é alterável). Criar login e trocar senha = função `supabase/functions/equipe` (usa a chave de serviço; confere a permissão chamando `equipe_pode` com o token de quem pediu). Ninguém é apagado: sair da loja = desativar (`active=false`, perde o acesso na hora).
+
 **Clientes** (`#/clientes`, tabela `clientes`, RLS só equipe): lista do Nex + quem compra no site. O gatilho `pedidos_cliente` cria/completa o cliente a cada pedido e soma pedidos pagos; `clientes_importar(lista, origem)` mescla a exportação do Nex (casa por uid → código → WhatsApp e só preenche campo vazio, nunca sobrescreve o que a equipe editou). WhatsApp é guardado como `55DDD9XXXXXXXX` (`whats_normaliza` no banco = `cliWhats` no admin). "Completo" = nome + WhatsApp + endereço (e-mail é opcional).
 
 **Alerta de pedido novo:** pedido `pago` com `visto_em` vazio pisca em vermelho (badge do menu, visão geral e cartão em Pedidos, animação `piscaNovo` só de opacidade) até alguém da equipe tocar nele ou concluir (RPC `pedido_marcar_visto`). O painel confere a cada 30 s (`ligaVigia`): pedido novo dá aviso na tela, bipe curto e "(N) 🔴 Pedido novo" no título da aba.
@@ -176,6 +179,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
    - `node --experimental-strip-types supabase/functions/checkout/checkout.test.mts`
    - `node --experimental-strip-types supabase/functions/brutt-ia/brutt-ia.test.mts`
    - `node --experimental-strip-types supabase/functions/gerar-ficha-sommelier/sommelier.test.mts`
+   - `node --experimental-strip-types supabase/functions/equipe/equipe.test.mts`
 7. Segurança: nada de token/segredo no front. Só a **Public Key** do Mercado Pago (`window.__MP`) e a chave **anon** do Supabase podem ficar no HTML.
 
 **Pix online ligado para todos** (desde 11/10/2026): `MP_PRODUCAO` em `index.html` tem a Public Key de produção. Para voltar ao pedido pelo WhatsApp, deixe `MP_PRODUCAO=""` (ver `supabase/CHECKOUT.md`).

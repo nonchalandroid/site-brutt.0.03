@@ -814,6 +814,41 @@ html,body{overflow-x:clip}
 .cli-falta{font-size:12px;color:var(--warn);margin:-4px 0 12px}
 .cli-wa{display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#fff;border-radius:var(--r);padding:8px 14px;font-weight:600;font-size:14px;text-decoration:none;white-space:nowrap}
 .drawer .field textarea{min-height:76px;resize:vertical}
+/* Equipe */
+.eq-papeis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:4px 0 18px}
+.eq-pp{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;font-size:13px;line-height:1.45;color:var(--muted)}
+.eq-pp b{display:block;font-size:14px;margin-bottom:2px}
+.eq-pp.eq-owner b,.eq-tag.eq-owner{color:var(--accent)}
+.eq-pp.eq-admin b,.eq-tag.eq-admin{color:var(--info)}
+.eq-pp.eq-atendente b,.eq-tag.eq-atendente{color:var(--ok)}
+.eq-tag.eq-owner{border-color:rgba(234,181,74,.4);background:var(--accent-soft)}
+.eq-tag.eq-admin{border-color:rgba(127,191,255,.35);background:rgba(127,191,255,.08)}
+.eq-tag.eq-atendente{border-color:rgba(79,224,140,.35);background:rgba(79,224,140,.08)}
+.eq-lista{display:grid;gap:8px}
+.eq-card{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;color:var(--ink);cursor:pointer;min-width:0;transition:border-color .15s}
+.eq-card:hover{border-color:var(--line-2)}
+.eq-card:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(234,181,74,.16)}
+.eq-card.off{opacity:.6}
+.eq-card .avatar{flex:none}
+.eq-tx{display:flex;flex-direction:column;min-width:0;flex:1;font-size:13px;line-height:1.4}
+.eq-tx b{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eq-tx small{color:var(--muted-2);font-size:12px}
+.eq-mail{font-family:var(--mono);font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.eq-eu{font-style:normal;font-size:11px;font-weight:600;color:var(--accent);margin-left:4px}
+.eq-tag{flex:none}
+.eq-info{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0}
+.eq-nota{font-size:12px;color:var(--muted);margin:8px 0 0;line-height:1.45}
+.eq-op{display:grid;gap:8px}
+.eq-r{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;cursor:pointer}
+.eq-r:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.eq-r.trava{opacity:.55;cursor:not-allowed}
+.eq-r input{margin-top:3px;accent-color:var(--accent);flex:none}
+.eq-r span{display:flex;flex-direction:column;font-size:13px;line-height:1.4;color:var(--muted)}
+.eq-r b{color:var(--ink);font-size:14px}
+.eq-senha{display:flex;gap:8px}
+.eq-senha input{flex:1;min-width:0;font-family:var(--mono)}
+.btn-danger.full,.btn-gold.full{width:100%}
+@media(max-width:720px){.eq-papeis{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -843,7 +878,12 @@ function brl(v){ return (v==null) ? "—" : "R$ " + Number(v).toFixed(2).replace
    Toda tela é registrada em ROUTES. Quem navega chama go("nome"). O botão voltar do celular/navegador funciona
    (hashchange) e o logo/“Início” sempre leva à tela inicial — não existe tela sem caminho de volta. */
 const ROUTES = {};
-function rotaAtual(){ const h = location.hash.replace(/^#\/?/, ""); return ROUTES[h] ? h : "home"; }
+/* papéis (tabela staff.role): dono e administrador veem tudo; atendente só os pedidos (o banco também barra o resto) */
+const PAPEL = { owner:"Dono", admin:"Administrador", atendente:"Atendente" };
+const ehGestor = () => !state.staff?.role || ["owner","admin"].includes(state.staff.role);   // sem papel = cadastro antigo (o banco decide de verdade)
+const ROTAS_ATENDENTE = ["pedidos"];
+const podeRota = r => ehGestor() || ROTAS_ATENDENTE.includes(r);
+function rotaAtual(){ const h = location.hash.replace(/^#\/?/, ""), r = ROUTES[h] ? h : "home"; return podeRota(r) ? r : "pedidos"; }
 function dispatch(){
   if(!state.staff) return;
   try{ closeDrawer(); }catch(_){}
@@ -879,6 +919,8 @@ const ICON = {
   users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   dl:'<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>',
   up:'<path d="M12 3v12"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/>',
+  shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><circle cx="12" cy="10" r="2.5"/><path d="M8 16.5a4.5 4.5 0 0 1 8 0"/>',
+  key:'<path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/>',
   store:'<path d="M3 9 4.5 4h15L21 9"/><path d="M3 9v11h18V9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M9 20v-6h6v6"/>',
 };
 const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]||""}</svg>`;
@@ -886,14 +928,15 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 /* navegação lateral agrupada. Só destinos que existem em ROUTES. Tela nova = ROUTES + item aqui. */
 const NAV = [
   ["Operação", [["visao","Visão geral","dash"],["home","Produtos","pkg"],["pedidos","Pedidos online","bag","pedidos"],["clientes","Clientes","users"],["estoque-baixo","Estoque baixo","alert","estoque"]]],
-  ["Gestão",   [["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"]]],
+  ["Gestão",   [["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"],["equipe","Equipe","shield"]]],
   ["Planilhas",[["planilha","Planilha de compra","sheet"],["vendidos","Mais vendidos","trend"]]],
 ];
 const ABAS = NAV.flatMap(([, itens]) => itens.map(([r, t]) => [r, t]));
 const grupoDe = r => (NAV.find(([, itens]) => itens.some(i => i[0] === r)) || [""])[0];
 function abasHTML(){
   const atual = rotaAtual();
-  return `<nav class="side-nav" aria-label="Seções do painel">${NAV.map(([g, itens]) => `<div class="side-g"><span>${g}</span>${itens.map(([r, t, i, badge]) =>
+  const nav = NAV.map(([g, itens]) => [g, itens.filter(i => podeRota(i[0]))]).filter(([, itens]) => itens.length);
+  return `<nav class="side-nav" aria-label="Seções do painel">${nav.map(([g, itens]) => `<div class="side-g"><span>${g}</span>${itens.map(([r, t, i, badge]) =>
     `<button type="button" class="nav-i${atual===r?" on":""}" data-tab="${r}"${atual===r?' aria-current="page"':""}>${ic(i)}<span class="lbl">${t}</span>${badge?`<span class="nav-b" data-badge="${badge}" hidden></span>`:""}</button>`).join("")}</div>`).join("")}</nav>`;
 }
 function topbarHTML(titulo){
@@ -904,7 +947,7 @@ function topbarHTML(titulo){
       <button type="button" class="side-brand" data-inicio aria-label="Ir para a visão geral"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><span><b>Brutt</b><small>Painel da loja</small></span></button>
       <button type="button" class="side-x" id="sideX" aria-label="Fechar menu">${ic("x")}</button>
       ${abasHTML()}
-      <div class="side-foot"><span class="avatar" aria-hidden="true">${esc(ini)}</span><span class="who-n"><b>${esc(quem)}</b><small>Equipe</small></span>
+      <div class="side-foot"><span class="avatar" aria-hidden="true">${esc(ini)}</span><span class="who-n"><b>${esc(quem)}</b><small>${esc(PAPEL[state.staff?.role] || "Equipe")}</small></span>
         <button type="button" class="btn-ghost btn-sm" id="outBtn" title="Sair do painel">${ic("out")}<span>Sair</span></button></div>
     </aside>
     <div class="side-scrim" id="sideScrim"></div>
@@ -3596,6 +3639,143 @@ async function smDesfazLote(){
   toast(`${n} produto(s) voltaram como eram.`); smDesenha();
 }
 
+/* ===================== Equipe: quem entra no painel e o que pode fazer ===================== */
+/* Lista/papel/ativo = RPCs equipe_listar e equipe_alterar (o banco confere a hierarquia).
+   Criar login e trocar senha = função "equipe" (precisa da chave de serviço, que só o servidor tem). */
+const EQ_PODE = {
+  owner: "Tudo, inclusive adicionar administradores.",
+  admin: "Tudo no painel. Adiciona e gerencia atendentes.",
+  atendente: "Só pedidos: vê, avisa o cliente e avança as etapas. Não mexe em produtos, preços, estoque, fotos, horários nem clientes.",
+};
+let eqLista = null;
+async function equipeChamar(acao, corpo){
+  const { data:{ session } } = await sb.auth.getSession();
+  const r = await fetch(`${SUPA_URL}/functions/v1/equipe?acao=${acao}`, { method:"POST",
+    headers:{ apikey: SUPA_KEY, Authorization: "Bearer " + session.access_token, "Content-Type":"application/json" }, body: JSON.stringify(corpo || {}) });
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok) throw new Error(j.erro || ("erro " + r.status));
+  return j;
+}
+const eqSenhaOk = s => s.length >= 8 && /[A-Za-z]/.test(s) && /\d/.test(s);
+function eqGeraSenha(){
+  const pal = ["Brasa","Fumaca","Narga","Rosh","Menta","Carvao","Sessao","Essencia"], n = new Uint32Array(2); crypto.getRandomValues(n);
+  return pal[n[0] % pal.length] + String(1000 + n[1] % 9000);
+}
+const eqQuando = d => {
+  if(!d) return "nunca entrou";
+  const m = Math.round((Date.now() - new Date(d)) / 60000);
+  if(m < 2) return "entrou agora"; if(m < 60) return `entrou há ${m} min`;
+  const h = Math.round(m / 60); if(h < 24) return `entrou há ${h} h`;
+  return "último acesso " + new Date(d).toLocaleDateString("pt-BR");
+};
+async function renderEquipe(){
+  app.innerHTML = `${topbarHTML("Equipe")}
+    <div class="pg">
+      <div class="pg-h"><div><h2 class="pg-t">Equipe</h2><p class="pg-d">Quem entra no painel e o que cada um pode fazer. Ninguém é apagado: quem sai da loja é <b>desativado</b> e perde o acesso na hora.</p></div>
+        <button class="btn-gold btn-sm" id="eqNovo">${ic("plus")} Adicionar pessoa</button></div>
+      <div class="eq-papeis">${["owner","admin","atendente"].map(p => `<div class="eq-pp eq-${p}"><b>${PAPEL[p]}</b><span>${EQ_PODE[p]}</span></div>`).join("")}</div>
+      <div id="eqLista"><div class="loading">Carregando…</div></div>
+    </div>`;
+  bindTopbar();
+  $("#eqNovo").onclick = () => eqAbrirNovo();
+  await eqCarregar();
+}
+async function eqCarregar(){
+  const { data, error } = await sb.rpc("equipe_listar");
+  const box = $("#eqLista"); if(!box) return;
+  if(error){ box.innerHTML = `<div class="empty">Não deu para carregar a equipe: ${esc(error.message)}</div>`; return; }
+  eqLista = data || [];
+  box.innerHTML = `<div class="eq-lista">${eqLista.map(m => `
+    <button type="button" class="eq-card${m.ativo ? "" : " off"}" data-eq="${esc(m.user_id)}">
+      <span class="avatar" aria-hidden="true">${esc((m.nome || "?").split(/\s+/).map(w => (w.match(/[\p{L}\d]/u) || [""])[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "?")}</span>
+      <span class="eq-tx"><b>${esc(m.nome)}${m.eu ? ' <em class="eq-eu">você</em>' : ""}</b><span class="eq-mail">${esc(m.email || "sem e-mail")}</span>
+        <small>${m.ativo ? esc(eqQuando(m.ultimo_acesso)) : "Desativado · sem acesso ao painel"}</small></span>
+      <span class="cli-tag eq-tag eq-${esc(m.papel)}">${esc(PAPEL[m.papel] || m.papel)}</span>
+    </button>`).join("")}</div>`;
+  box.querySelectorAll("[data-eq]").forEach(b => b.onclick = () => eqAbrir(eqLista.find(m => m.user_id === b.dataset.eq)));
+}
+function eqPapelHTML(atual, souDono){
+  return `<div class="eq-op" role="radiogroup" aria-label="Papel">${["atendente","admin"].map(p => {
+    const trava = p === "admin" && !souDono;
+    return `<label class="eq-r${trava ? " trava" : ""}"><input type="radio" name="eqPapel" value="${p}"${atual === p ? " checked" : ""}${trava ? " disabled" : ""}>
+      <span><b>${PAPEL[p]}</b><small>${trava ? "Só o dono pode dar esse papel." : EQ_PODE[p]}</small></span></label>`; }).join("")}</div>`;
+}
+const eqSenhaHTML = (id, rot) => `<div class="field"><label for="${id}">${rot}</label><div class="eq-senha">
+  <input id="${id}" type="text" autocomplete="new-password" autocapitalize="off" spellcheck="false" maxlength="72" placeholder="mín. 8, letras e números">
+  <button type="button" class="btn-ghost btn-sm" data-gera="${id}">Gerar</button></div></div>`;
+function eqBindGera(){ document.querySelectorAll("[data-gera]").forEach(b => b.onclick = () => { const i = $("#" + b.dataset.gera); i.value = eqGeraSenha(); i.focus(); i.select(); }); }
+function eqAbrirNovo(){
+  const souDono = state.staff?.role === "owner";
+  openDrawer(`
+    <div class="drawer-h"><h2>Adicionar pessoa</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="section">
+      <div class="field"><label for="eqNome">Nome (aparece no painel)</label><input id="eqNome" maxlength="60" autocomplete="off" placeholder="ex.: João – balcão"></div>
+      <div class="field"><label for="eqEmail">E-mail (é o login dela)</label><input id="eqEmail" type="email" inputmode="email" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="120"></div>
+    </div>
+    <div class="section"><h3>Papel</h3>${eqPapelHTML("atendente", souDono)}</div>
+    <div class="section"><h3>Senha inicial</h3>${eqSenhaHTML("eqSenha", "Senha")}
+      <p class="eq-nota">Passe a senha para a pessoa por mensagem. Se ela esquecer, você define outra aqui na Equipe.</p></div>
+    <div class="save-row"><button class="btn-gold" id="eqCriar" style="flex:1">Adicionar à equipe</button></div>`);
+  eqBindGera(); setTimeout(() => $("#eqNome")?.focus(), 250);
+  $("#eqCriar").onclick = async () => {
+    const b = $("#eqCriar"); if(b.disabled) return;
+    const nome = $("#eqNome").value.trim(), email = $("#eqEmail").value.trim().toLowerCase(), senha = $("#eqSenha").value.trim();
+    const papel = (document.querySelector('[name="eqPapel"]:checked') || {}).value;
+    if(nome.length < 2){ toast("Escreva o nome da pessoa."); $("#eqNome").focus(); return; }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ toast("E-mail inválido."); $("#eqEmail").focus(); return; }
+    if(!eqSenhaOk(senha)){ toast("Senha: pelo menos 8 caracteres, com letras e números. Toque em “Gerar”."); $("#eqSenha").focus(); return; }
+    b.disabled = true; b.classList.add("is-busy");
+    try{
+      const r = await equipeChamar("criar", { nome, email, papel, senha });
+      closeDrawer();
+      toast(r.ja_tinha_login ? `${nome} já tinha login: entra com a senha que já usa.` : `${nome} adicionado. Login: ${email}`);
+      await eqCarregar();
+    }catch(e){ toast(e.message); }
+    finally{ b.disabled = false; b.classList.remove("is-busy"); }
+  };
+}
+function eqAbrir(m){
+  if(!m) return;
+  const souDono = state.staff?.role === "owner", edita = m.posso_editar, eu = m.eu;
+  openDrawer(`
+    <div class="drawer-h"><h2>${esc(m.nome)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="section"><p class="eq-info"><span class="eq-mail">${esc(m.email || "")}</span><span class="cli-tag eq-tag eq-${esc(m.papel)}">${esc(PAPEL[m.papel] || m.papel)}</span>${m.ativo ? "" : '<span class="cli-tag inc">Desativado</span>'}</p>
+      <p class="eq-nota">${esc(m.ativo ? eqQuando(m.ultimo_acesso) : "Sem acesso ao painel.")}</p></div>
+    ${edita || eu ? `<div class="section"><h3>Nome</h3><div class="eq-senha"><input id="eqNomeEd" maxlength="60" value="${esc(m.nome)}" autocomplete="off" aria-label="Nome"><button type="button" class="btn-ghost btn-sm" id="eqNomeOk">Salvar</button></div></div>` : ""}
+    ${edita && m.ativo ? `<div class="section"><h3>Papel</h3>${eqPapelHTML(m.papel, souDono)}</div>` : ""}
+    ${edita || eu ? `<div class="section"><h3>${eu ? "Trocar minha senha" : "Definir nova senha"}</h3>${eqSenhaHTML("eqSenhaEd", "Nova senha")}
+      <div class="save-row" style="margin-top:0"><button class="btn-ghost" id="eqSenhaOk" style="flex:1">${ic("key")} ${eu ? "Trocar minha senha" : "Definir senha"}</button></div>
+      ${eu ? "" : '<p class="eq-nota">A senha antiga para de funcionar. Passe a nova para a pessoa.</p>'}</div>` : ""}
+    ${edita ? `<div class="section"><h3>Acesso</h3>${m.ativo
+      ? `<p class="eq-nota">Desativar tira o acesso ao painel na hora. Os pedidos e o histórico ficam.</p><button class="btn-danger full" id="eqAtivo">Desativar ${esc(m.nome.split(" ")[0])}</button>`
+      : `<button class="btn-gold full" id="eqAtivo">Reativar ${esc(m.nome.split(" ")[0])}</button>`}</div>` : ""}
+    ${!edita && !eu ? `<div class="section"><p class="eq-nota">${m.papel === "owner" ? "O dono não pode ser alterado por aqui." : "Só o dono altera administradores."}</p></div>` : ""}`);
+  eqBindGera();
+  const alterar = async (args, msg) => {
+    const { error } = await sb.rpc("equipe_alterar", { p_user: m.user_id, p_nome: null, p_papel: null, p_ativo: null, ...args });
+    if(error){ toast(error.message); return false; }
+    toast(msg); await eqCarregar();
+    if(eu && args.p_nome){ state.staff.name = args.p_nome; renderEquipe(); }
+    return true;
+  };
+  $("#eqNomeOk") && ($("#eqNomeOk").onclick = async () => { const n = $("#eqNomeEd").value.trim(); if(n.length < 2){ toast("Nome muito curto."); return; } if(await alterar({ p_nome: n }, "Nome salvo.")) closeDrawer(); });
+  document.querySelectorAll('[name="eqPapel"]').forEach(r => r.onchange = async () => {
+    if(!(await alterar({ p_papel: r.value }, `${m.nome} agora é ${PAPEL[r.value]}.`))) return; closeDrawer();
+  });
+  $("#eqAtivo") && ($("#eqAtivo").onclick = async () => {
+    if(m.ativo && !confirm(`Desativar ${m.nome}? Ela deixa de entrar no painel na hora.`)) return;
+    if(await alterar({ p_ativo: !m.ativo }, m.ativo ? `${m.nome} foi desativado.` : `${m.nome} foi reativado.`)) closeDrawer();
+  });
+  $("#eqSenhaOk") && ($("#eqSenhaOk").onclick = async () => {
+    const b = $("#eqSenhaOk"), senha = $("#eqSenhaEd").value.trim(); if(b.disabled) return;
+    if(!eqSenhaOk(senha)){ toast("Senha: pelo menos 8 caracteres, com letras e números."); $("#eqSenhaEd").focus(); return; }
+    b.disabled = true; b.classList.add("is-busy");
+    try{ await equipeChamar("senha", { user_id: m.user_id, senha }); closeDrawer(); toast(eu ? "Senha trocada." : `Nova senha de ${m.nome} definida.`); }
+    catch(e){ toast(e.message); }
+    finally{ b.disabled = false; b.classList.remove("is-busy"); }
+  });
+}
+
 /* tabela de rotas — toda tela nova entra aqui */
 Object.assign(ROUTES, {
   "visao": renderVisao,
@@ -3609,6 +3789,7 @@ Object.assign(ROUTES, {
   "pedidos": renderPedidos,
   "clientes": renderClientes,
   "sommelier": renderSommelier,
+  "equipe": renderEquipe,
 });
 
 boot();
