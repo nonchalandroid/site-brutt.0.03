@@ -18,6 +18,7 @@ Leia antes de alterar qualquer arquivo.
 │   ├── checkout-mp.js    # window.MPX: pagamento Mercado Pago (Payment Brick, Pix), campo WhatsApp, pin da loja
 │   └── acompanhar.js     # window.ACOMP: tela "Acompanhe seu pedido" (pós-pagamento, estilo iFood) + atalho no topo
 ├── vendor/lenis.min.js   # Lenis 1.3.26 servido localmente (sem CDN)
+├── vendor/fonts/         # DejaVu Sans Mono (woff2, recorte Latin) para var(--mono)
 ├── admin/index.html      # PAINEL interno (login Supabase), roteador por hash + abas
 ├── 404.html              # só redireciona /qualquer-rota → /?r=... (o index reescreve a URL)
 ├── favicon/              # ícones oficiais (ver §4)
@@ -49,7 +50,7 @@ Leia antes de alterar qualquer arquivo.
   --ok-txt:#6fd3a0; /* texto verde sobre fundo escuro */
   --ok-line:#3fbf7f;/* borda/indicador verde (status "Aberto", barra do mínimo) */
   --ok-bg:#1c3a2b;  /* fundo verde suave */
-  --head:"Anton",…; --body:"Barlow",…; --mono:"Geist Mono",…;
+  --head:"Anton",…; --body:"Inter",…; --mono:"DejaVu Sans Mono",…;
   --maxw:1200px;    /* cresce em telas grandes: 1380 / 1560 / 1760px */
   --ease-app:cubic-bezier(.16,1,.3,1);   /* curva padrão de TODAS as animações */
   --vvh / --vvt / --hh                   /* altura visível, topo da viewport e altura do header (setados via JS) */
@@ -63,7 +64,7 @@ Regras:
 - **Taxa de entrega** (`ENTREGA_LOJA` no `index.html`, igual em `supabase/functions/checkout` e `brutt-ia`): R$ 5,00 até 2 km de rota; + R$ 1,50 por km fracionado; só até 2,5 km; teto R$ 8,00. Mudou num lugar, mude nos três.
 - **Brutt IA:** paleta própria roxa/azul em `.ia{--ia-a…--ia-d}` (identidade do assistente). Não misturar com o dourado.
 - **Escala de fonte** (px inteiros, sem .5): 11 · 12 · 13 · 14 · 15 · 16 · 18 · 20 · 22 · 24 · 26 · 28 · 30 · 32 · 34. Títulos display usam `var(--head)` em CAIXA ALTA.
-- **Famílias:** só via `var(--head)`, `var(--body)`, `var(--mono)`. Fontes carregadas do Google Fonts no `<head>`.
+- **Famílias:** só via `var(--head)`, `var(--body)`, `var(--mono)`. Títulos = **Anton** e texto = **Inter** (Google Fonts, no `<head>`); números/códigos = **DejaVu Sans Mono**, servida de `vendor/fonts/` (`@font-face` no fim do `#fluidez`, só caracteres do português, licença em `vendor/fonts/DEJAVU-LICENSE.txt`). O admin tem fontes próprias (Geist).
 - **Raios:** 10–14px em botões/cards, 999px em chips/pílulas, 18px no topo de sheets/modais.
 
 ### Admin (`admin/index.html`, `:root` próprio)
