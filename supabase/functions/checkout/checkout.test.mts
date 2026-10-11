@@ -14,14 +14,14 @@ const realTimeout = globalThis.setTimeout;
 (globalThis as any).setTimeout = (fn: any, ms: number) => realTimeout(fn, ms >= 3000 && ms < 5000 ? 1 : ms); // pula as pausas de 3 s
 
 // ── banco em memória ──
-const db: Record<string, any[]> = { pedidos: [], wa_notificacoes: [], wa_contatos: [], mp_eventos: [] };
+const db: Record<string, any[]> = { pedidos: [], wa_notificacoes: [], wa_contatos: [], mp_eventos: [], push_config: [], push_assinaturas: [] };
 const products = [
   { site_product_id: "ess-1", name: "Essência Ziggy Menta", price: 25, promo_price: null, stock: 5, is_active: true },
   { site_product_id: "car-1", name: "Carvão 1kg", price: 30, promo_price: 19.9, stock: 1, is_active: true },
 ];
 const UNIQ: Record<string, (a: any, b: any) => boolean> = {
   wa_notificacoes: (a, b) => a.pedido_id === b.pedido_id && a.tipo === b.tipo,
-  wa_contatos: (a, b) => a.numero === b.numero, mp_eventos: (a, b) => a.chave === b.chave,
+  wa_contatos: (a, b) => a.numero === b.numero, mp_eventos: (a, b) => a.chave === b.chave, push_config: () => true,
 };
 function filtros(q: URLSearchParams) {
   const fs: ((r: any) => boolean)[] = [];
@@ -37,10 +37,12 @@ const mpPays = new Map<string, any>();
 let proximoMp: any = { status: "pending", status_detail: "pending_waiting_transfer" };
 const whats: { numero: string; text: string }[] = [];
 const idemKeys: string[] = [];
+const pushes: { path: string; headers: any; corpo: Uint8Array }[] = [];
 const res = (o: any, status = 200) => new Response(o == null ? "" : JSON.stringify(o), { status });
 
 (globalThis as any).fetch = async (input: string, init: any = {}) => {
-  const u = new URL(input), m = (init.method || "GET").toUpperCase(), body = init.body ? JSON.parse(init.body) : null;
+  const u = new URL(input), m = (init.method || "GET").toUpperCase(), body = typeof init.body === "string" ? JSON.parse(init.body) : null;
+  if (u.host === "push.test") { pushes.push({ path: u.pathname, headers: init.headers, corpo: init.body }); return new Response("", { status: u.pathname === "/morto" ? 410 : 201 }); }
   if (u.host === "router.project-osrm.org") return res({ code: "Ok", routes: [{ distance: rotaM }] });
   if (u.host === "evo.test") { assert.equal(init.headers.apikey, "evo"); whats.push(body); return res({ key: { id: "x" } }, 201); }
   if (u.host === "api.mercadopago.com") {
@@ -220,5 +222,66 @@ await t("cartão bloqueado por padrão (só Pix)", async () => {
 });
 await t("dataMP formata no fuso de Brasília", async () => {
   assert.equal(C.dataMP(new Date("2026-10-10T21:30:00Z")), "2026-10-10T18:30:00.000-03:00");
+});
+
+// ── notificações da equipe (Web Push): o aparelho simulado descriptografa e confere a assinatura VAPID ──
+const P = await import("./push.ts");
+async function hk(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, n: number) {
+  const k = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, k, n * 8));
+}
+const te = new TextEncoder();
+async function aparelho(caminho: string) {
+  const par = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
+  const pub = new Uint8Array(await crypto.subtle.exportKey("raw", par.publicKey)), auth = crypto.getRandomValues(new Uint8Array(16));
+  db.push_assinaturas.push({ id: crypto.randomUUID(), endpoint: "https://push.test" + caminho, p256dh: P.b64u(pub), auth: P.b64u(auth), ativo: true, falhas: 0 });
+  return { par, pub, auth };
+}
+async function abre(ua: any, corpo: Uint8Array) {   // RFC 8291 do lado do navegador
+  const salt = corpo.slice(0, 16), idlen = corpo[20], asPub = corpo.slice(21, 21 + idlen), ct = corpo.slice(21 + idlen);
+  const k = await crypto.subtle.importKey("raw", asPub, { name: "ECDH", namedCurve: "P-256" }, false, []);
+  const ecdh = new Uint8Array(await crypto.subtle.deriveBits({ name: "ECDH", public: k }, ua.par.privateKey, 256));
+  const info = new Uint8Array([...te.encode("WebPush: info\0"), ...ua.pub, ...asPub]);
+  const ikm = await hk(ua.auth, ecdh, info, 32);
+  const cek = await hk(salt, ikm, te.encode("Content-Encoding: aes128gcm\0"), 16), nonce = await hk(salt, ikm, te.encode("Content-Encoding: nonce\0"), 12);
+  const pt = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: nonce }, await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["decrypt"]), ct));
+  assert.equal(pt[pt.length - 1], 2);
+  return JSON.parse(new TextDecoder().decode(pt.slice(0, -1)));
+}
+async function vapidOk(h: string) {
+  const [, jwt, k] = h.match(/^vapid t=([^,]+), k=(.+)$/)!;
+  const [a, b, c] = jwt.split(".");
+  const chave = await crypto.subtle.importKey("raw", P.deB64u(k), { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
+  assert.ok(await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, chave, P.deB64u(c), te.encode(`${a}.${b}`)), "assinatura VAPID");
+  const claims = JSON.parse(new TextDecoder().decode(P.deB64u(b)));
+  assert.equal(claims.aud, "https://push.test"); assert.match(claims.sub, /^mailto:/); assert.ok(claims.exp > Date.now() / 1000);
+  return k;
+}
+await t("avisa a equipe no celular: Pix gerado e pago, 1 vez cada, criptografado e assinado", async () => {
+  const ua = await aparelho("/meu-celular"); await aparelho("/morto");
+  const c = await call("criar", { ...base, nome: "Maria Push", whats: "21977771111", entrega: { tipo: "cliente" } });
+  proximoMp = { status: "pending", status_detail: "pending_waiting_transfer" };
+  await call("pagar", { pedido_id: c.j.pedido_id, metodo: "pix", formData: { payment_method_id: "pix", payer: { email: "m@p.com" } } });
+  await flush();
+  const p1 = pushes.filter(x => x.path === "/meu-celular");
+  assert.equal(p1.length, 1);
+  const d1 = await abre(ua, p1[0].corpo);
+  assert.match(d1.title, /Pix gerado #BR-/); assert.match(d1.body, /Maria Push · R\$ 25,00/); assert.equal(d1.url, "/admin/#/pedidos");
+  assert.equal(p1[0].headers["Content-Encoding"], "aes128gcm"); assert.equal(p1[0].headers.Urgency, "high");
+  const pubServidor = await vapidOk(p1[0].headers.Authorization);
+  assert.equal(pubServidor, db.push_config[0].vapid_public);                       // chave gerada e guardada no servidor
+  assert.equal(db.push_assinaturas.find(s => s.endpoint.endsWith("/morto")).ativo, false);   // 410 = aparelho saiu
+  const pago = { ...mpPays.get(String(mpSeq)), status: "approved", status_detail: "accredited" };
+  await C.processarPagamento(pago); await C.processarPagamento(pago); await flush();
+  const p2 = pushes.filter(x => x.path === "/meu-celular");
+  assert.equal(p2.length, 2, "pago avisa 1 vez só");
+  const d2 = await abre(ua, p2[1].corpo);
+  assert.match(d2.title, /Pedido PAGO #BR-/); assert.equal(d2.fixo, true);
+  const ped = db.pedidos.find(p => p.id === c.j.pedido_id);
+  assert.equal(ped.visto_em, null);                                                // pago volta a piscar no admin
+});
+await t("push_chave e push_teste exigem staff", async () => {
+  assert.equal((await call("push_chave", {})).status, 403);
+  assert.equal((await call("push_teste", { endpoint: "https://push.test/meu-celular" })).status, 403);
 });
 console.log(`\n${ok} testes passaram`);

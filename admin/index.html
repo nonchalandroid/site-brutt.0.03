@@ -9,6 +9,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#100a07">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../favicon/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Brutt Painel">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -757,6 +763,22 @@ html,body{overflow-x:clip}
 .gr-stock.ok b{color:var(--ok)}
 .gr-meta .mg{color:var(--ok)}.gr-meta .mg.neg{color:var(--danger)}
 
+/* ---------- notificações neste aparelho + Pix gerado ---------- */
+.ntf{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;margin:0 0 14px}
+.ntf-ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none;background:var(--accent-soft);color:var(--accent)}
+.ntf-ic .i{width:20px;height:20px}
+.ntf-tx{flex:1 1 220px;min-width:0;display:flex;flex-direction:column}
+.ntf-tx b{font-size:14px;color:var(--ink)}.ntf-tx small{font-size:12px;color:var(--muted);line-height:1.4}
+.ntf-bt{display:flex;gap:8px;flex-wrap:wrap}
+.ntf-ok{border-color:rgba(79,224,140,.35)}.ntf-ok .ntf-ic{background:var(--ok-soft);color:var(--ok)}
+.ntf-off{border-color:rgba(234,181,74,.45)}
+.ntf-bad{border-color:rgba(255,90,74,.4)}.ntf-bad .ntf-ic{background:var(--danger-soft);color:var(--danger)}
+@keyframes piscaPix{0%,100%{opacity:.9}50%{opacity:.25}}
+.ped-card.pixnovo{position:relative;border-color:var(--warn);cursor:pointer}
+.ped-card.pixnovo::after{content:"";position:absolute;inset:-1px;border-radius:inherit;border:2px solid var(--warn);pointer-events:none;animation:piscaPix 1.6s ease-in-out infinite}
+.ped-pix{display:inline-flex;align-items:center;font:700 11px var(--font);letter-spacing:.06em;text-transform:uppercase;color:#2a1704;background:var(--warn);border-radius:999px;padding:3px 9px;margin-right:6px;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.ped-card.pixnovo::after{animation:none}}
+
 /* ---------- clientes ---------- */
 .cli-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
 .cli-bar .cli-q{flex:1 1 240px;min-width:0}
@@ -844,6 +866,7 @@ const ICON = {
   chev:'<path d="m9 18 6-6-6-6"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',
   spark:'<path d="M9.94 14.06 4 20"/><path d="m14 4 1.2 3.3L18.5 8.5l-3.3 1.2L14 13l-1.2-3.3L9.5 8.5l3.3-1.2Z"/><path d="M19 15v4M17 17h4"/><path d="M5 3v4M3 5h4"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
   users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   dl:'<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>',
   up:'<path d="M12 3v12"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/>',
@@ -896,7 +919,7 @@ function bindTopbar(){
   document.querySelectorAll("[data-inicio]").forEach(b => b.onclick = () => go("visao"));
   document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { if(b.dataset.tab === "fotos") window.__fotosAlvos = null; go(b.dataset.tab); });
   const ativa = document.querySelector(".nav-i.on"); if(ativa) ativa.scrollIntoView({ block:"nearest" });
-  const out = $("#outBtn"); if(out) out.onclick = async () => { await sb.auth.signOut(); state.staff = null; navCont = { t:0, v:null, p:null }; novosAntes = null; document.title = tituloBase; location.hash = ""; renderLogin(); };
+  const out = $("#outBtn"); if(out) out.onclick = async () => { await sb.auth.signOut(); state.staff = null; navCont = { t:0, v:null, p:null }; novosAntes = null; pixAntes = null; document.title = tituloBase; location.hash = ""; renderLogin(); };
   if($("#sideAbre")) $("#sideAbre").onclick = () => menuLateral(true);
   if($("#sideX")) $("#sideX").onclick = () => menuLateral(false);
   if($("#sideScrim")) $("#sideScrim").onclick = () => menuLateral(false);
@@ -915,7 +938,8 @@ function contadoresNav(){
     sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago"),
     filtroEstoqueBaixo(sb.from("products").select("id", { count:"exact", head:true })),
     sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago").is("visto_em", null),
-  ]).then(([a, b, c]) => { const v = { pedidos: a.error ? 0 : (a.count || 0), estoque: b.error ? 0 : (b.count || 0), novos: c.error ? 0 : (c.count || 0) }; navCont = { t:Date.now(), v, p:null }; vigiaNovos(v.novos); return v; })
+    sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "aguardando_pagamento").is("visto_em", null).gt("pix_expira_em", new Date().toISOString()),
+  ]).then(([a, b, c, d]) => { const v = { pedidos: a.error ? 0 : (a.count || 0), estoque: b.error ? 0 : (b.count || 0), novos: c.error ? 0 : (c.count || 0), pix: d.error ? 0 : (d.count || 0) }; navCont = { t:Date.now(), v, p:null }; vigiaNovos(v.novos, v.pix); return v; })
     .catch(() => { navCont.p = null; return null; });
   return navCont.p;
 }
@@ -925,20 +949,21 @@ function contadoresNav(){
    até alguém da equipe clicar nele ou concluir. A cada 30 s o painel confere se chegou pedido novo:
    toca um aviso curto, mostra o número no título da aba e atualiza a tela de pedidos/visão geral. */
 let novosAntes = null, vigiaTimer = null, tituloBase = document.title;
-function vigiaNovos(n){
-  document.title = n ? `(${n}) 🔴 Pedido novo · ${tituloBase}` : tituloBase;
-  if(novosAntes !== null && n > novosAntes){
-    toast(n - novosAntes > 1 ? `🔴 ${n - novosAntes} pedidos novos pagos!` : "🔴 Pedido novo pago no site!");
-    bipe();
-    const r = rotaAtual(); if(r === "pedidos") renderPedidos(); else if(r === "visao") renderVisao();
-  }
-  novosAntes = n;
+let pixAntes = null;
+function vigiaNovos(n, pix){
+  pix = pix || 0;
+  document.title = n ? `(${n}) 🔴 Pedido novo · ${tituloBase}` : pix ? `(${pix}) 🟡 Pix gerado · ${tituloBase}` : tituloBase;
+  const novoPago = novosAntes !== null && n > novosAntes, novoPix = pixAntes !== null && pix > pixAntes;
+  if(novoPago){ toast(n - novosAntes > 1 ? `🔴 ${n - novosAntes} pedidos novos pagos!` : "🔴 Pedido novo pago no site!"); bipe(); }
+  else if(novoPix){ toast("🟡 Um cliente gerou o Pix. Aguardando o pagamento."); bipe(true); }
+  if(novoPago || novoPix){ const r = rotaAtual(); if(r === "pedidos") renderPedidos(); else if(r === "visao") renderVisao(); }
+  novosAntes = n; pixAntes = pix;
 }
-function bipe(){
+function bipe(leve){
   try{
     const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
     const ctx = bipe.ctx || (bipe.ctx = new C()), t = ctx.currentTime;
-    [0, .22].forEach(d => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = 880;
+    (leve ? [0] : [0, .22]).forEach(d => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = 880;
       g.gain.setValueAtTime(.0001, t + d); g.gain.exponentialRampToValueAtTime(.25, t + d + .02); g.gain.exponentialRampToValueAtTime(.0001, t + d + .18);
       o.connect(g).connect(ctx.destination); o.start(t + d); o.stop(t + d + .2); });
   }catch(_){}
@@ -957,6 +982,89 @@ async function marcarVisto(id){
   if(error){ toast("Não deu para marcar como visto: " + error.message); return false; }
   navCont.t = 0; contadoresNav().then(v => { if(!v) return; const el = document.querySelector('[data-badge="pedidos"]'); if(el){ el.hidden = !v.pedidos; el.textContent = v.pedidos; el.className = "nav-b " + (v.novos ? "novo" : "acao"); } });
   return true;
+}
+/* ---------------- notificações neste aparelho (Web Push) ----------------
+   O aparelho se inscreve no serviço de push do navegador com a chave pública do servidor (checkout?acao=push_chave)
+   e a inscrição vai para push_assinaturas (RPC push_registrar). A função checkout avisa "Pix gerado" e "Pedido PAGO"
+   mesmo com o painel fechado; o sw.js mostra a notificação e abre o painel no toque.
+   iPhone/iPad: só funciona com o painel instalado na Tela de Início (iOS 16.4+). */
+const NTF_SUPORTA = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const NTF_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const NTF_INSTALADO = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const ntfBytes = s => { const t = s.replace(/-/g, "+").replace(/_/g, "/"), b = atob(t + "=".repeat((4 - t.length % 4) % 4)); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+function ntfAparelho(){
+  const u = navigator.userAgent, so = /iPhone/.test(u) ? "iPhone" : /iPad/.test(u) || NTF_IOS ? "iPad" : /Android/.test(u) ? "Android" : /Windows/.test(u) ? "Windows" : /Mac/.test(u) ? "Mac" : "Computador";
+  const nav = /Edg\//.test(u) ? "Edge" : /SamsungBrowser/.test(u) ? "Samsung" : /CriOS|Chrome\//.test(u) ? "Chrome" : /Firefox|FxiOS/.test(u) ? "Firefox" : /Safari/.test(u) ? "Safari" : "navegador";
+  return `${so} · ${nav}${NTF_INSTALADO ? " (app)" : ""}`;
+}
+async function ntfReg(){ return NTF_SUPORTA ? (await navigator.serviceWorker.getRegistration("./")) || null : null; }
+async function ntfEstado(){
+  if(!NTF_SUPORTA) return NTF_IOS && !NTF_INSTALADO ? "ios" : "sem";
+  if(Notification.permission === "denied") return "bloqueado";
+  const reg = await ntfReg(), sub = reg && await reg.pushManager.getSubscription();
+  return sub && Notification.permission === "granted" ? "ativo" : "inativo";
+}
+async function ntfChamar(acao, corpo){
+  const { data:{ session } } = await sb.auth.getSession();
+  const r = await fetch(`${SUPA_URL}/functions/v1/checkout?acao=${acao}`, { method:"POST",
+    headers:{ apikey: SUPA_KEY, Authorization: "Bearer " + session.access_token, "Content-Type":"application/json" }, body: JSON.stringify(corpo || {}) });
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok) throw new Error(j.erro || ("erro " + r.status));
+  return j;
+}
+async function ntfSalvar(sub){
+  const js = sub.toJSON();
+  const { error } = await sb.rpc("push_registrar", { p_endpoint: js.endpoint, p_p256dh: js.keys.p256dh, p_auth: js.keys.auth, p_aparelho: ntfAparelho() });
+  if(error) throw new Error(error.message);
+}
+async function ntfAtivar(){
+  const perm = await Notification.requestPermission();
+  if(perm !== "granted") throw new Error(perm === "denied" ? "Você bloqueou as notificações. Libere nas configurações do navegador." : "Permissão não concedida.");
+  const reg = await navigator.serviceWorker.register("sw.js", { scope: "./" });
+  await navigator.serviceWorker.ready;
+  const { publicKey } = await ntfChamar("push_chave");
+  if(!publicKey) throw new Error("O servidor não mandou a chave de notificação. Tente de novo em instantes.");
+  let sub = await reg.pushManager.getSubscription();
+  if(sub){   /* inscrição antiga com outra chave do servidor: refaz */
+    const k = sub.options && sub.options.applicationServerKey;
+    const igual = k && btoa(String.fromCharCode(...new Uint8Array(k))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") === publicKey;
+    if(!igual){ await sub.unsubscribe().catch(() => {}); sub = null; }
+  }
+  if(!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: ntfBytes(publicKey) });
+  await ntfSalvar(sub);
+  return sub;
+}
+async function ntfDesativar(){
+  const reg = await ntfReg(), sub = reg && await reg.pushManager.getSubscription();
+  if(sub){ await sb.rpc("push_remover", { p_endpoint: sub.endpoint }); await sub.unsubscribe().catch(() => {}); }
+}
+async function ntfTestar(){
+  const reg = await ntfReg(), sub = reg && await reg.pushManager.getSubscription();
+  if(!sub) throw new Error("Este aparelho não está inscrito.");
+  await ntfChamar("push_teste", { endpoint: sub.endpoint });
+}
+let ntfRenovado = false;
+async function desenhaNotif(){
+  const box = $("#ntfBox"); if(!box) return;
+  const st = await ntfEstado(); if(!$("#ntfBox")) return;
+  if(st === "ativo" && !ntfRenovado){   /* 1x por sessão: confirma a inscrição no banco (o navegador pode ter trocado) */
+    ntfRenovado = true; ntfReg().then(r => r && r.pushManager.getSubscription()).then(s => s && ntfSalvar(s)).catch(() => {});
+  }
+  const txt = {
+    ativo:     ["ok",  "Notificações ligadas neste aparelho", "Você recebe “Pix gerado” e “Pedido PAGO” mesmo com o painel fechado."],
+    inativo:   ["off", "Receba aviso de pedido neste aparelho", "Pix gerado e pedido pago chegam como notificação, igual app, mesmo com o painel fechado."],
+    bloqueado: ["bad", "Notificações bloqueadas neste navegador", "Libere em: cadeado/ⓘ ao lado do endereço → Notificações → Permitir. Depois toque em “Ativar”."],
+    ios:       ["off", "No iPhone: instale o painel para receber avisos", "Toque em Compartilhar (□↑) → “Adicionar à Tela de Início”. Abra o “Brutt Painel” pelo ícone e ative aqui."],
+    sem:       ["bad", "Este navegador não recebe notificações", "Use o Chrome (Android/PC), Edge, Firefox ou o Safari com o painel instalado na Tela de Início."],
+  }[st];
+  box.innerHTML = `<div class="ntf ntf-${txt[0]}"><span class="ntf-ic">${ic("bell")}</span><span class="ntf-tx"><b>${txt[1]}</b><small>${txt[2]}</small></span>
+    <span class="ntf-bt">${st === "ativo" ? `<button class="btn-ghost btn-sm" id="ntfTeste">Testar</button><button class="btn-ghost btn-sm" id="ntfDes">Desligar</button>`
+      : st === "inativo" || st === "bloqueado" ? `<button class="btn-gold btn-sm" id="ntfAtv">Ativar notificações</button>` : ""}</span></div>`;
+  const acao = (id, fn, ok) => { const b = $("#" + id); if(b) b.onclick = async () => { b.disabled = true;
+    try{ await fn(); if(ok) toast(ok); }catch(e){ toast(e.message || String(e)); } b.disabled = false; desenhaNotif(); }; };
+  acao("ntfAtv", async () => { await ntfAtivar(); await ntfTestar().catch(() => {}); }, "Pronto! Mandei uma notificação de teste.");
+  acao("ntfTeste", ntfTestar, "Notificação de teste enviada. Deve chegar em segundos.");
+  acao("ntfDes", ntfDesativar, "Notificações desligadas neste aparelho.");
 }
 /* mesmo critério da tela "Estoque baixo" (ativos com menos de LOW_STOCK_LIMIT, sem destilados/vinho/Red Bull) */
 function filtroEstoqueBaixo(q){
@@ -2927,11 +3035,12 @@ async function renderPedidos(){
   app.innerHTML = `${topbarHTML("Pedidos online")}
     <div class="pg">
       <h2 class="pg-t">Pedidos online</h2>
-      <p class="pg-d" style="margin-bottom:16px">Pedidos pagos pelo site (Mercado Pago). Pedido <b style="color:var(--danger)">novo pisca em vermelho</b> até alguém tocar nele. Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp. Mostra os 60 mais recentes.</p>
+      <p class="pg-d" style="margin-bottom:16px">Pedidos pagos pelo site (Mercado Pago). Pedido <b style="color:var(--danger)">pago pisca em vermelho</b> e <b style="color:var(--warn)">Pix gerado (ainda não pago) em laranja</b>, até alguém tocar nele. Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp. Mostra os 60 mais recentes.</p>
+      <div id="ntfBox"></div>
       <div class="ped-filtros" id="pedFiltros" role="group" aria-label="Filtrar pedidos" hidden></div>
       <div id="pedLista"><div class="loading">Carregando…</div></div>
     </div>`;
-  bindTopbar();
+  bindTopbar(); desenhaNotif();
   const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em").order("created_at", { ascending:false }).limit(60);
   const el = $("#pedLista");
   if(!el) return;
@@ -2952,11 +3061,12 @@ async function renderPedidos(){
     const e = p.entrega || {}, a = e.endereco || {};
     const ent = e.tipo === "entrega" ? `Entrega: ${esc(a.rua)}, ${esc(a.numero)}${a.complemento ? " ("+esc(a.complemento)+")" : ""} — ${esc(a.bairro||"")} · ${esc(String(e.km||"").replace(".", ","))} km` : "Cliente chama Uber Flash/99";
     const novo = p.status === "pago" && !p.visto_em, st = pedSt(p);
+    const pixNovo = p.status === "aguardando_pagamento" && !p.visto_em && p.pix_expira_em && new Date(p.pix_expira_em) > new Date();
     const nota = st === "estornado" ? `O Mercado Pago devolveu ${brl(p.total)} ao cliente${p.pago_em ? ` (pago em ${fmtQuando(p.pago_em)})` : ""}. Não conta como venda.`
       : st === "cancelado" && /cancelado pela equipe/.test(p.mp_status_detail || "") ? esc(p.mp_status_detail.replace(/^c/, "C")) + "."
       : p.status === "aguardando_pagamento" && !pedCancelavel(p) ? "Pix em aberto: se o cliente não pagar, ele vence em 30 min e o pedido pode ser cancelado." : "";
-    return `<article class="ped-card${novo ? " novo" : p.status === "pago" ? " acao" : ["estornado","cancelado","expirado","recusado"].includes(st) ? " apagado" : ""}" data-ped="${esc(p.id)}">
-      <div class="ped-h"><b>${novo ? `<span class="ped-novo">Novo</span>` : ""}<code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</b>
+    return `<article class="ped-card${novo ? " novo" : pixNovo ? " pixnovo" : p.status === "pago" ? " acao" : ["estornado","cancelado","expirado","recusado"].includes(st) ? " apagado" : ""}" data-ped="${esc(p.id)}">
+      <div class="ped-h"><b>${novo ? `<span class="ped-novo">Novo</span>` : pixNovo ? `<span class="ped-pix">Pix gerado</span>` : ""}<code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</b>
         <span><span class="st st-${esc(st)}">${PED_ROT[st] || esc(st)}</span>${p.reserva ? ' <span class="st st-reserva">reserva</span>' : ""}</span></div>
       <div class="ped-meta"><span>${fmtQuando(p.created_at)}</span><span>${PED_MET[p.metodo] || "—"}</span><a href="https://wa.me/${esc(p.cliente_whats)}" target="_blank" rel="noopener">WhatsApp ${esc(p.cliente_whats)}</a></div>
       <div class="ped-itens">${(p.itens||[]).map(i => `<span><b>${esc(i.qtd)}×</b>${esc(i.nome)}</span>`).join("")}</div>
@@ -2973,8 +3083,8 @@ async function renderPedidos(){
     fx.innerHTML = FILTROS.map(([k, t, fn]) => `<button type="button" class="chip${k === pedFiltro ? " active" : ""}" data-pf="${k}" aria-pressed="${k === pedFiltro}">${t}<span class="n">${data.filter(fn).length}</span></button>`).join("");
     fx.querySelectorAll("[data-pf]").forEach(b => b.onclick = () => { pedFiltro = b.dataset.pf; desenha(); });
     el.innerHTML = lista.length ? lista.map(cartao).join("") : `<div class="empty">Nenhum pedido neste filtro.</div>`;
-    el.querySelectorAll(".ped-card.novo").forEach(c => c.addEventListener("click", async e => {
-      if(e.target.closest("a,[data-concluir]") || c.dataset.marcando) return;
+    el.querySelectorAll(".ped-card.novo,.ped-card.pixnovo").forEach(c => c.addEventListener("click", async e => {
+      if(e.target.closest("a,[data-concluir],[data-cancelar]") || c.dataset.marcando) return;
       c.dataset.marcando = "1";
       const ped = data.find(x => x.id === c.dataset.ped);
       if(await marcarVisto(ped.id)){ ped.visto_em = new Date().toISOString(); desenha(); } else delete c.dataset.marcando;
@@ -3015,6 +3125,7 @@ async function renderVisao(){
     <div class="pg">
       <div class="pg-h"><div><h2 class="pg-t">Visão geral</h2><p class="pg-d">O que precisa de atenção agora. Números do banco da loja no momento em que a tela abriu.</p></div>
         <button class="btn-ghost btn-sm" id="ovAtualiza">${ic("sync")} Atualizar</button></div>
+      <div id="ntfBox"></div>
       <div class="ov-grid" id="ovKpis">${["Pedidos a concluir","Estoque baixo","Ativos sem estoque","Sincronização Nex","Loja agora"].map(kpiSk).join("")}</div>
       <div class="ov-cols">
         <section class="ov-box"><h3>O que resolver agora</h3><div class="ov-todo" id="ovTodo"><div class="loading">Verificando…</div></div></section>
@@ -3027,7 +3138,7 @@ async function renderVisao(){
         <button class="btn-ghost" data-ir="nex">${ic("sync")} Sincronização Nex</button>
       </div></section>
     </div>`;
-  bindTopbar();
+  bindTopbar(); desenhaNotif();
   const irPara = r => { if(r === "fotos") window.__fotosAlvos = null; go(r); };
   app.querySelectorAll("[data-ir]").forEach(b => b.onclick = () => irPara(b.dataset.ir));
   $("#ovNovo").onclick = () => openNewProduct();

@@ -1,0 +1,17 @@
+{
+  "name": "Brutt · Painel da loja",
+  "short_name": "Brutt Painel",
+  "description": "Painel interno da Tabacaria Brutt: pedidos, produtos e avisos de Pix.",
+  "id": "/admin/",
+  "start_url": "/admin/#/pedidos",
+  "scope": "/admin/",
+  "display": "standalone",
+  "background_color": "#100a07",
+  "theme_color": "#150e0a",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/favicon/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/favicon/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/favicon/maskable-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

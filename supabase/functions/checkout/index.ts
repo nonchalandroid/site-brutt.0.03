@@ -7,12 +7,19 @@
 //   GET  status    → situação do pedido (o site consulta enquanto espera o Pix)
 //   POST webhook   → notificações oficiais do Mercado Pago (assinatura x-signature conferida)
 //   POST concluir  → equipe marca o pedido como concluído (exige login de staff)
+//   POST push_chave → chave pública VAPID para o painel inscrever o aparelho (staff)
+//   POST push_teste → manda uma notificação de teste para o aparelho que pediu (staff)
+//
+// Avisos no celular/PC da equipe (Web Push, push.ts): "🟡 Pix gerado" e "🔴 Pedido PAGO", 1 vez por pedido.
+// O par de chaves VAPID é gerado aqui na 1ª vez e guardado em push_config (só o servidor lê).
 //
 // Segredos (variáveis de ambiente da função — nunca no site):
 //   MP_ACCESS_TOKEN, MP_PUBLIC_KEY, MP_WEBHOOK_SECRET
 //   EVOLUTION_API_URL, EVOLUTION_API_KEY, EVOLUTION_INSTANCE, WHATS_LOJA_AVISOS (opcional)
 // O "pagamento confirmado" só é marcado depois de consultar o pagamento direto na API do
 // Mercado Pago (GET /v1/payments/{id}) — o status enviado pelo navegador é ignorado.
+
+import { enviarPush, gerarChavesVapid } from "./push.ts";
 
 // trim: um espaço ou quebra de linha colado junto no painel de Secrets não pode virar "chave vazia" silenciosa
 const env = (k: string) => String(((globalThis as any).Deno?.env?.get(k) as string | undefined) ?? "").trim().replace(/^["']|["']$/g, "");
@@ -212,6 +219,7 @@ export async function pagar(body: any, urlFuncao: string) {
   if (metodo === "pix" && td) Object.assign(extra, { pix_qr: td.qr_code || null, pix_qr_base64: td.qr_code_base64 || null, pix_expira_em: p.date_of_expiration || null });
   await sbPatch(`pedidos?id=eq.${id}`, extra);
   const atual = await processarPagamento(p);
+  if (metodo === "pix" && extra.pix_qr && (atual?.status ?? "aguardando_pagamento") === "aguardando_pagamento") emSegundoPlano(avisarEquipe({ ...ped, ...extra }, "pix"));
   return {
     ok: true, numero: ped.numero, status: atual?.status ?? ped.status, mp_status: p.status, mp_status_detail: p.status_detail,
     pix: metodo === "pix" ? { qr_code: extra.pix_qr, qr_code_base64: extra.pix_qr_base64, expira_em: extra.pix_expira_em } : null,
@@ -247,7 +255,7 @@ export async function processarPagamento(p: any) {
     if (alvo === "pago" && !valorOk) console.error("valor divergente", ped.numero, p.transaction_amount, ped.total);
     else if (alvo === "pago" || mesmo) {
       const patch: any = { status: alvo, mp_payment_id: String(p.id), mp_status: p.status, mp_status_detail: p.status_detail };
-      if (alvo === "pago") patch.pago_em = p.date_approved || new Date().toISOString();
+      if (alvo === "pago") { patch.pago_em = p.date_approved || new Date().toISOString(); patch.visto_em = null; patch.visto_por = null; }   // pago volta a piscar no admin
       const rows = await sbPatch(`pedidos?id=eq.${id}&status=in.(${DE[alvo].join(",")})`, patch);
       if (rows?.[0]) atual = rows[0];
     }
@@ -312,6 +320,7 @@ export async function notificar(ped: any) {
   if (!ped) return;
   const m = mensagens(ped), cliente = ped.cliente_whats;
   try {
+    if (ped.status === "pago") emSegundoPlano(avisarEquipe(ped, "pago"));
     if (ped.status === "pago" || ped.status === "concluido") {
       // Crítica: confirmação vai na hora. As demais seguem em segundo plano, com ~3 s entre mensagens.
       const enviou = await enviarUmaVez(ped.id, "pagamento_confirmado", cliente, m.pagamento_confirmado);
@@ -395,6 +404,66 @@ export async function concluir(req: Request, body: any) {
   return { ok: true, numero: rows[0].numero, status: "concluido" };
 }
 
+// ─────────────────── avisos no celular/PC da equipe (Web Push) ───────────────────
+const CONTATO_PUSH = "mailto:contato@tabacariabrutt.com.br";
+let vapidCache: { publica: string; privadaJwk: JsonWebKey } | null = null;
+/** Par VAPID do servidor: lê de push_config; na 1ª vez gera aqui mesmo (a chave privada nunca sai do servidor). */
+export async function chavesPush() {
+  if (vapidCache) return vapidCache;
+  let [c] = await sbGet("push_config?id=eq.1&select=vapid_public,vapid_private_jwk");
+  if (!c) {
+    const n = await gerarChavesVapid();
+    try { await sbInsert("push_config", { id: 1, vapid_public: n.publica, vapid_private_jwk: n.privadaJwk }, "return=minimal"); }
+    catch (e: any) { if (e?.status !== 409) throw e; }   // outra chamada criou ao mesmo tempo: usa a dela
+    [c] = await sbGet("push_config?id=eq.1&select=vapid_public,vapid_private_jwk");
+  }
+  vapidCache = { publica: c.vapid_public, privadaJwk: c.vapid_private_jwk };
+  return vapidCache;
+}
+export function avisoEquipe(ped: any, tipo: "pago" | "pix" | "teste") {
+  const nome = String(ped?.cliente_nome || "").trim().slice(0, 40), ent = ped?.entrega?.tipo === "entrega" ? "entrega pela loja" : "cliente chama o motoboy";
+  if (tipo === "teste") return { title: "✅ Notificações ligadas", body: "Este aparelho vai receber os avisos de Pix gerado e de pedido pago.", tag: "teste", url: "/admin/#/pedidos", tipo };
+  if (tipo === "pago") return { title: `🔴 Pedido PAGO #${ped.numero}`, body: `${nome} · ${brl(ped.total)} · ${ent}. Toque para abrir.`, tag: "ped-" + ped.numero, url: "/admin/#/pedidos", tipo, fixo: true };
+  return { title: `🟡 Pix gerado #${ped.numero}`, body: `${nome} · ${brl(ped.total)} · aguardando o pagamento.`, tag: "ped-" + ped.numero, url: "/admin/#/pedidos", tipo };
+}
+async function mandarPara(subs: any[], dados: unknown) {
+  const vapid = await chavesPush(); let ok = 0;
+  await Promise.all(subs.map(async (s) => {
+    try {
+      const st = await enviarPush(s, dados, vapid, CONTATO_PUSH);
+      if (st >= 200 && st < 300) { ok++; await sbPatch(`push_assinaturas?id=eq.${s.id}`, { ultimo_ok: new Date().toISOString(), falhas: 0 }); }
+      else if (st === 404 || st === 410) await sbPatch(`push_assinaturas?id=eq.${s.id}`, { ativo: false });   // o aparelho saiu/expirou
+      else { console.error("push", st, s.endpoint.slice(0, 40)); await sbPatch(`push_assinaturas?id=eq.${s.id}`, { falhas: (s.falhas || 0) + 1, ativo: (s.falhas || 0) + 1 < 10 }); }
+    } catch (e) { console.error("push", String((e as any)?.message ?? e)); }
+  }));
+  return ok;
+}
+/** Avisa todos os aparelhos da equipe. 1 vez por (pedido, tipo): reserva em wa_notificacoes. Nunca derruba o pedido. */
+export async function avisarEquipe(ped: any, tipo: "pago" | "pix") {
+  try {
+    if (!ped?.id) return 0;
+    try { await sbInsert("wa_notificacoes", { pedido_id: ped.id, tipo: "push_" + tipo, destino: "equipe" }, "return=minimal"); }
+    catch (e: any) { if (e?.status === 409) return 0; throw e; }
+    const subs = await sbGet("push_assinaturas?ativo=eq.true&select=id,endpoint,p256dh,auth,falhas");
+    const ok = subs?.length ? await mandarPara(subs, avisoEquipe(ped, tipo)) : 0;
+    await sbPatch(`wa_notificacoes?pedido_id=eq.${ped.id}&tipo=eq.push_${tipo}`, { ok: ok > 0, erro: subs?.length ? null : "nenhum aparelho inscrito" }).catch(() => {});
+    return ok;
+  } catch (e) { console.error("avisarEquipe", e); return 0; }
+}
+export async function pushChave(req: Request) {
+  if (!(await ehStaff(req))) return { erro: "sem permissão", status: 403 };
+  return { ok: true, publicKey: (await chavesPush()).publica };
+}
+export async function pushTeste(req: Request, body: any) {
+  if (!(await ehStaff(req))) return { erro: "sem permissão", status: 403 };
+  const endpoint = String(body?.endpoint ?? "");
+  if (!/^https:\/\//.test(endpoint)) return { erro: "Aparelho inválido.", status: 400 };
+  const subs = await sbGet(`push_assinaturas?ativo=eq.true&endpoint=eq.${encodeURIComponent(endpoint)}&select=id,endpoint,p256dh,auth,falhas`);
+  if (!subs?.length) return { erro: "Este aparelho não está inscrito. Toque em “Ativar notificações”.", status: 404 };
+  const ok = await mandarPara(subs, avisoEquipe(null, "teste"));
+  return ok ? { ok: true } : { erro: "O serviço de notificações do aparelho recusou. Desative e ative de novo.", status: 502 };
+}
+
 // ───────────────────────────── roteador ─────────────────────────────
 export async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -412,6 +481,8 @@ export async function handler(req: Request): Promise<Response> {
       return resp(await pagar(body, base));
     }
     if (acao === "concluir") return resp(await concluir(req, body));
+    if (acao === "push_chave") return resp(await pushChave(req));
+    if (acao === "push_teste") return resp(await pushTeste(req, body));
     return json({ erro: "ação desconhecida" }, 404);
   } catch (e) {
     console.error("checkout", acao, e);
