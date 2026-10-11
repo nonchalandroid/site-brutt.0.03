@@ -18,7 +18,7 @@ function mascara(v){var d=dig(v).slice(0,11);if(d.length<3)return d;if(d.length<
 
 /* ───────── partes do formulário de checkout ───────── */
 function whatsHTML(){if(!ativo())return"";return'<label class="field" for="email">Seu e-mail</label><input class="t" id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="voce@email.com" maxlength="120" value="'+esc(emailVal)+'"><p class="whats-h">O Mercado Pago usa para o comprovante do Pix.</p>'
-  +'<label class="field" for="whats">Seu WhatsApp</label><input class="t" id="whats" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" maxlength="16" value="'+esc(mascara(whatsVal))+'"><p class="whats-h">A confirmação do pagamento chega por aqui.</p>'}
+  +'<label class="field" for="whats">Seu WhatsApp</label><input class="t" id="whats" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" maxlength="16" value="'+esc(mascara(whatsVal))+'"><p class="whats-h">A loja usa para falar com você sobre o pedido.</p>'}
 var PIN='<svg class="pin-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.1-7-12a7 7 0 0 1 14 0c0 5.9-7 12-7 12Z"/><circle cx="12" cy="10" r="2.6"/></svg>';
 function clienteHTML(){
   return'<div class="cli-box">'
@@ -214,16 +214,33 @@ function acompanhar(){
   })();
 }
 function aviso(t,s){var a=$("#mpArea");if(a)a.innerHTML='<div class="mp-wait off"><b>'+esc(t)+'</b><span>'+esc(s)+'</span><button type="button" class="go" data-mp-tentar>Gerar novo pagamento</button></div>'}
+/* Mensagem do pedido PAGO para o WhatsApp da loja (o cliente toca em enviar). Valores vindos do servidor. */
+function msgLojaPago(numero){
+  var p=pedido||{},c=_ctx||{},L=[];
+  L.push("✅ *PEDIDO PAGO NO SITE #"+numero+"*"+(c.reserva?" (reserva: loja fechada)":""));
+  L.push("👤 "+(c.nome||"Cliente")+(whatsVal?" · WhatsApp "+mascara(whatsVal):""));
+  L.push("");L.push("🛒 *Itens:*");
+  var itens=(p.itens&&p.itens.length)?p.itens:Object.keys(cart).filter(function(id){return byId[id]}).map(function(id){return{qtd:cart[id],nome:byId[id].n,subtotal:byId[id].price*cart[id]}});
+  itens.forEach(function(i){L.push("• "+i.qtd+"x "+i.nome+" — "+R(Number(i.subtotal)||0))});
+  L.push("");
+  if(ship==="entrega"&&entrega&&entrega.endereco){var e=entrega.endereco;L.push("🚚 Entrega pela loja: "+e.rua+", "+e.numero+(e.complemento?" ("+e.complemento+")":"")+" — "+[e.bairro,e.cidade].filter(Boolean).join(", ")+(p.km!=null?" · ≈ "+String(p.km).replace(".",",")+" km":""));L.push("Taxa de entrega: "+R(Number(p.taxa_entrega)||0))}
+  else L.push("🛵 Vou solicitar a entrega por conta própria (Uber Flash ou 99). Frete da loja R$ 0,00.");
+  L.push("💰 *Total pago no Pix: "+R(Number(p.total)||0)+"*");
+  L.push("Pagamento confirmado pelo Mercado Pago no site.");
+  return L.join("\n");
+}
 function sucesso(numero){
   clearTimeout(poll);clearInterval(_tempo);desmontar();
-  var reserva=_ctx&&_ctx.reserva;
+  var reserva=_ctx&&_ctx.reserva,txtLoja=pedido?msgLojaPago(numero):"";
   try{sSet("brutt_nome",_ctx&&_ctx.nome||"")}catch(e){}
   pedido=null;_ctx=null;
   cart={};minHit=false;closeAll();updateCart();cartView="";
   mostrarFeito(numero,reserva);
   var t=$("#feitoT"),s=$("#feitoS");
   if(t)t.textContent="✅ Pagamento confirmado!";
-  if(s)s.textContent="Pedido #"+String(numero).replace(/-/g,"\u2011")+(reserva?" — separamos assim que a loja abrir":"")+" · confirmação enviada no seu WhatsApp";
+  if(s)s.textContent="Pedido #"+String(numero).replace(/-/g,"\u2011")+(reserva?" — separamos assim que a loja abrir":"")+(txtLoja?" · toque no botão verde para avisar a loja":"");
+  var w=$("#feitoWa");
+  if(w&&txtLoja){w.href="https://wa.me/"+WHATS+"?text="+encodeURIComponent(txtLoja);w.innerHTML=ic("chat")+"<span>Avisar a loja no WhatsApp</span>";w.hidden=false}
 }
 /* Pedido montado pela Brutt IA: carrega no carrinho e abre o MESMO checkout (o servidor revalida tudo). */
 function deIA(co){

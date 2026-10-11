@@ -37,13 +37,15 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ── Regras da loja (as mesmas do site: ENTREGA_LOJA e MIN em index.html) ──
 export const LOJA = { nome: "Tabacaria Brutt", endereco: "Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ" };
-export const ENTREGA_LOJA = { lat: -22.881489, lng: -43.61375, raioMaxKm: 8, taxaBase: 8, baseAteKm: 3, porKmExtra: 1.5, taxaMaxima: 20 };
+// R$ 5,00 até 2 km de rota; acima, + R$ 1,50 por km (fração de km conta como km inteiro); só até 2,5 km (Conjunto Campinho e arredores); teto R$ 8,00.
+export const ENTREGA_LOJA = { lat: -22.881489, lng: -43.61375, raioMaxKm: 2.5, taxaBase: 5, baseAteKm: 2, porKmExtra: 1.5, taxaMaxima: 8 };
 export const PEDIDO_MINIMO = 20;
 export const PIX_MINUTOS = 30;
 const INTERVALO_MSG_MS = 3000;
 
 export function taxaEntrega(km: number) {
-  const t = km <= ENTREGA_LOJA.baseAteKm ? ENTREGA_LOJA.taxaBase : Math.min(ENTREGA_LOJA.taxaBase + (km - ENTREGA_LOJA.baseAteKm) * ENTREGA_LOJA.porKmExtra, ENTREGA_LOJA.taxaMaxima);
+  const E = ENTREGA_LOJA, extra = Math.ceil(Math.round((km - E.baseAteKm) * 100) / 100);
+  const t = km <= E.baseAteKm ? E.taxaBase : Math.min(E.taxaBase + extra * E.porKmExtra, E.taxaMaxima);
   return cent(t);
 }
 export function haversineKm(la1: number, lo1: number, la2: number, lo2: number) {
@@ -185,7 +187,9 @@ export async function pagar(body: any, urlFuncao: string) {
     await mp(`/v1/payments/${ped.mp_payment_id}`, { method: "PUT", body: JSON.stringify({ status: "cancelled" }) }).catch(() => {});
   }
   const tentativa = ped.tentativas + 1;
-  await sbPatch(`pedidos?id=eq.${id}`, { tentativas: tentativa, metodo, status: "aguardando_pagamento", mp_payment_id: null, pix_qr: null, pix_qr_base64: null, pix_expira_em: null });
+  const patch: any = { tentativas: tentativa, metodo, status: "aguardando_pagamento", mp_payment_id: null, pix_qr: null, pix_qr_base64: null, pix_expira_em: null };
+  if (/^\S+@\S+\.\S+$/.test(email)) patch.cliente_email = email.toLowerCase();   // vai para o cadastro de clientes (gatilho no banco)
+  await sbPatch(`pedidos?id=eq.${id}`, patch);
   let r = await mp("/v1/payments", { method: "POST", headers: { "X-Idempotency-Key": `${ped.id}-${tentativa}` }, body: JSON.stringify(pay) });
   // Pix recusado por causa do e-mail digitado (inválido no MP, ou o mesmo da conta da loja): tenta UMA vez com o
   // e-mail interno do pedido — o cliente nunca fica sem QR Code por causa do e-mail.

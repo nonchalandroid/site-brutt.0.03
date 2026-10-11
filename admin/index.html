@@ -651,6 +651,33 @@ details.nx-box[open]{padding-bottom:12px}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .gr,.ft-card,.ft-sk,.ft-chip.busy,.gr-ph.subindo::after{animation:none}
 }
+
+/* ---------- clientes ---------- */
+.cli-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+.cli-bar .cli-q{flex:1 1 240px;min-width:0}
+.cli-bar .btn-ghost,.cli-bar .btn-gold{flex:none;display:inline-flex;align-items:center;gap:6px}
+.cli-res{font-size:12px;color:var(--muted);margin:0 0 8px}
+.cli-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px}
+.cli-card{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;font-size:13px;line-height:1.45;color:var(--ink);cursor:pointer;min-width:0;transition:border-color .15s}
+.cli-card:hover{border-color:var(--line-2)}
+.cli-card:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(234,181,74,.16)}
+.cli-card .h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.cli-card .h b{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.cli-card .h code{font:500 12px var(--mono);color:var(--muted-2);white-space:nowrap;flex:none}
+.cli-card .l{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cli-card .l.w{font-family:var(--mono);color:var(--ink);white-space:nowrap}
+.cli-card .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.cli-tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.cli-tag.inc{color:var(--warn);border-color:rgba(229,132,63,.35);background:var(--warn-soft)}
+.cli-tag.ok{color:var(--ok);border-color:rgba(121,196,142,.35);background:var(--ok-soft)}
+.cli-tag.ac{color:var(--accent);border-color:rgba(234,181,74,.4);background:var(--accent-soft)}
+.cli-mais{display:block;margin:12px auto 0}
+.cli-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;font-size:12px;color:var(--muted)}
+.cli-stats b{display:block;font-size:16px;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cli-chk{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+.cli-falta{font-size:12px;color:var(--warn);margin:-4px 0 12px}
+.cli-wa{display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#fff;border-radius:var(--r);padding:8px 14px;font-weight:600;font-size:14px;text-decoration:none;white-space:nowrap}
+.drawer .field textarea{min-height:76px;resize:vertical}
 </style>
 </head>
 <body>
@@ -711,13 +738,16 @@ const ICON = {
   ext:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
   chev:'<path d="m9 18 6-6-6-6"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  dl:'<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>',
+  up:'<path d="M12 3v12"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/>',
   store:'<path d="M3 9 4.5 4h15L21 9"/><path d="M3 9v11h18V9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M9 20v-6h6v6"/>',
 };
 const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]||""}</svg>`;
 
 /* navegação lateral agrupada. Só destinos que existem em ROUTES. Tela nova = ROUTES + item aqui. */
 const NAV = [
-  ["Operação", [["visao","Visão geral","dash"],["home","Produtos","pkg"],["pedidos","Pedidos online","bag","pedidos"],["estoque-baixo","Estoque baixo","alert","estoque"]]],
+  ["Operação", [["visao","Visão geral","dash"],["home","Produtos","pkg"],["pedidos","Pedidos online","bag","pedidos"],["clientes","Clientes","users"],["estoque-baixo","Estoque baixo","alert","estoque"]]],
   ["Gestão",   [["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"]]],
   ["Planilhas",[["planilha","Planilha de compra","sheet"],["vendidos","Mais vendidos","trend"]]],
 ];
@@ -2837,6 +2867,188 @@ async function renderVisao(){
   app.querySelectorAll("#ovKpis [data-ir], #ovTodo [data-ir]").forEach(b => b.onclick = () => irPara(b.dataset.ir));
 }
 
+/* ---------------- clientes: cadastro único (lista do Nex + quem compra pelo site), editável pela equipe ----------------
+   Tabela public.clientes (RLS: só equipe). Pedido novo no site cria/completa o cliente sozinho (gatilho no banco). */
+let cliState = { lista:null, filtro:"todos", q:"", mostra:120 };
+const CLI_CAMPOS = "id,nex_uid,nex_codigo,nome,whatsapp,telefone_original,email,cep,rua,numero,complemento,bairro,cidade,uf,endereco_txt,aceita_promocoes,origem,obs,pedidos_qtd,total_gasto,primeiro_pedido_em,ultimo_pedido_em,ultima_visita_nex,completo,created_at,updated_at";
+const CLI_ORIGEM = { nex:"Nex", planilha:"Planilha", site:"Site", admin:"Painel" };
+/* mesma regra do banco (whats_normaliza): celular BR → 55 + DDD + 9 dígitos; senão null */
+function cliWhats(t){
+  let d = String(t||"").replace(/\D/g, "");
+  if((d.length === 12 || d.length === 13) && d.startsWith("55")) d = d.slice(2);
+  if(d.length === 9 && d[0] === "9") d = "21" + d;
+  if(d.length === 8 && /[6-9]/.test(d[0])) d = "219" + d;
+  if(d.length === 10 && /[6-9]/.test(d[2])) d = d.slice(0, 2) + "9" + d.slice(2);
+  return (d.length === 11 && d[2] === "9" && d[0] !== "0") ? "55" + d : null;
+}
+const cliFone = w => w ? `(${w.slice(2,4)}) ${w.slice(4,9)}-${w.slice(9)}` : "";
+const cliEnd = c => c.rua ? [c.rua + (c.numero ? ", " + c.numero : ""), c.complemento, c.bairro].filter(Boolean).join(" · ") : (c.endereco_txt || "");
+const cliSemAcento = s => (s||"").toString().normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const CLI_FILTROS = [
+  ["todos", "Todos", () => true],
+  ["completos", "Completos", c => c.completo],
+  ["incompletos", "Incompletos", c => !c.completo],
+  ["site", "Compraram no site", c => c.pedidos_qtd > 0],
+  ["promo", "Aceitam promoções", c => c.aceita_promocoes],
+];
+
+async function renderClientes(){
+  app.innerHTML = `${topbarHTML("Clientes")}
+    <div class="pg">
+      <h2 class="pg-t">Clientes</h2>
+      <p class="pg-d" style="margin-bottom:16px">Cadastro da loja: clientes do Nex e quem compra pelo site (entra sozinho no 1º pedido). Toque num cliente para editar. <b>Completo</b> = nome, WhatsApp e endereço.</p>
+      <div class="cli-bar">
+        <input class="cli-q" id="cliQ" type="search" placeholder="Buscar nome, WhatsApp, e-mail, bairro ou código" autocomplete="off" value="${esc(cliState.q)}">
+        <button class="btn-gold btn-sm" id="cliNovo">${ic("plus")} Novo cliente</button>
+        <button class="btn-ghost btn-sm" id="cliImp" title="Importar a lista de clientes exportada do Nex (.json)">${ic("up")} Importar</button>
+        <button class="btn-ghost btn-sm" id="cliExp" title="Baixar os clientes do filtro atual em planilha (.csv)">${ic("dl")} Exportar</button>
+        <input type="file" id="cliArq" accept=".json,application/json" hidden>
+      </div>
+      <div class="ped-filtros" id="cliFiltros" role="group" aria-label="Filtrar clientes"></div>
+      <div class="cli-res" id="cliRes"></div>
+      <div id="cliLista"><div class="loading">Carregando…</div></div>
+    </div>`;
+  bindTopbar();
+  $("#cliNovo").onclick = () => abrirCliente(null);
+  $("#cliImp").onclick = () => $("#cliArq").click();
+  $("#cliArq").onchange = e => { const f = e.target.files[0]; e.target.value = ""; if(f) importarClientes(f); };
+  $("#cliExp").onclick = exportarClientes;
+  let t; $("#cliQ").oninput = e => { clearTimeout(t); t = setTimeout(() => { cliState.q = e.target.value; cliState.mostra = 120; desenhaClientes(); }, 150); };
+  await carregarClientes();
+  desenhaClientes();
+}
+async function carregarClientes(){
+  const todos = [];
+  for(let de = 0; de < 10000; de += 1000){
+    const { data, error } = await sb.from("clientes").select(CLI_CAMPOS).order("nome").range(de, de + 999);
+    if(error){ cliState.lista = null; cliState.erro = error.message; return; }
+    todos.push(...data);
+    if(data.length < 1000) break;
+  }
+  cliState.lista = todos; cliState.erro = null;
+}
+function cliFiltrados(){
+  const f = CLI_FILTROS.find(x => x[0] === cliState.filtro) || CLI_FILTROS[0];
+  const q = cliSemAcento(cliState.q.trim()), qd = q.replace(/\D/g, "");
+  return (cliState.lista || []).filter(f[2]).filter(c => !q ||
+    cliSemAcento([c.nome, c.email, c.bairro, c.rua, c.endereco_txt, c.nex_codigo, c.cidade].join(" ")).includes(q) ||
+    (qd.length >= 4 && ((c.whatsapp || "").includes(qd) || (c.telefone_original || "").replace(/\D/g, "").includes(qd))));
+}
+function desenhaClientes(){
+  const el = $("#cliLista"); if(!el) return;
+  if(!cliState.lista){ el.innerHTML = `<div class="err">Não foi possível carregar os clientes (${esc(cliState.erro || "erro")}).</div>`; return; }
+  const fx = $("#cliFiltros");
+  fx.innerHTML = CLI_FILTROS.map(([k, t, fn]) => `<button type="button" class="chip${k === cliState.filtro ? " active" : ""}" data-cf="${k}" aria-pressed="${k === cliState.filtro}">${t}<span class="n">${cliState.lista.filter(fn).length}</span></button>`).join("");
+  fx.querySelectorAll("[data-cf]").forEach(b => b.onclick = () => { cliState.filtro = b.dataset.cf; cliState.mostra = 120; desenhaClientes(); });
+  const lista = cliFiltrados(), vis = lista.slice(0, cliState.mostra);
+  $("#cliRes").textContent = cliState.q.trim() ? `${lista.length} encontrado${lista.length === 1 ? "" : "s"}` : `${lista.length} cliente${lista.length === 1 ? "" : "s"}`;
+  if(!lista.length){ el.innerHTML = `<div class="empty">${cliState.lista.length ? "Nenhum cliente neste filtro." : "Nenhum cliente cadastrado ainda."}</div>`; return; }
+  el.innerHTML = `<div class="cli-lista">${vis.map(c => `<button type="button" class="cli-card" data-cli="${esc(c.id)}">
+      <span class="h"><b>${esc(c.nome)}</b>${c.nex_codigo ? `<code>${esc(c.nex_codigo)}</code>` : ""}</span>
+      <span class="l w" style="display:block">${c.whatsapp ? esc(cliFone(c.whatsapp)) : `<span style="color:var(--muted-2);font-family:var(--font)">${c.telefone_original ? "Telefone inválido: " + esc(c.telefone_original) : "Sem WhatsApp"}</span>`}</span>
+      <span class="l" style="display:block">${esc(cliEnd(c)) || "Sem endereço"}</span>
+      <span class="tags">${c.completo ? `<span class="cli-tag ok">Completo</span>` : `<span class="cli-tag inc">Incompleto</span>`}${c.pedidos_qtd ? `<span class="cli-tag ac">${c.pedidos_qtd} pedido${c.pedidos_qtd > 1 ? "s" : ""} no site</span>` : ""}${c.email ? `<span class="cli-tag">e-mail</span>` : ""}<span class="cli-tag">${CLI_ORIGEM[c.origem] || esc(c.origem)}</span></span>
+    </button>`).join("")}</div>${lista.length > vis.length ? `<button class="btn-ghost cli-mais" id="cliMais">Mostrar mais (${lista.length - vis.length})</button>` : ""}`;
+  el.querySelectorAll("[data-cli]").forEach(b => b.onclick = () => abrirCliente(cliState.lista.find(c => c.id === b.dataset.cli)));
+  const m = $("#cliMais"); if(m) m.onclick = () => { cliState.mostra += 240; desenhaClientes(); };
+}
+function abrirCliente(c){
+  const novo = !c; c = c || { nome:"", origem:"admin", aceita_promocoes:false, pedidos_qtd:0, total_gasto:0 };
+  const f = (id, rot, v, extra = "") => `<div class="field"><label for="${id}">${rot}</label><input id="${id}" value="${esc(v ?? "")}" ${extra}></div>`;
+  const falta = novo ? [] : [!c.whatsapp && "WhatsApp", !(c.rua || c.endereco_txt) && "endereço"].filter(Boolean);
+  openDrawer(`
+    <div class="drawer-h"><h2>${novo ? "Novo cliente" : esc(c.nome)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    ${!novo ? `<div class="section"><h3>Resumo</h3>
+      <div class="cli-stats"><span><b>${c.pedidos_qtd || 0}</b>pedidos pagos no site</span><span><b>${brl(c.total_gasto || 0)}</b>gasto no site</span><span><b>${c.ultimo_pedido_em ? new Date(c.ultimo_pedido_em).toLocaleDateString("pt-BR") : "—"}</b>último pedido</span></div>
+      <p class="t" style="font-size:12px;margin-top:10px">Origem: ${CLI_ORIGEM[c.origem] || esc(c.origem)}${c.nex_codigo ? ` · código Nex <code>${esc(c.nex_codigo)}</code>` : ""}${c.ultima_visita_nex ? ` · última visita na loja ${new Date(c.ultima_visita_nex).toLocaleDateString("pt-BR")}` : ""}</p>
+      ${c.whatsapp ? `<div style="margin-top:12px"><a class="cli-wa" href="https://wa.me/${esc(c.whatsapp)}" target="_blank" rel="noopener">Abrir no WhatsApp</a></div>` : ""}
+    </div>` : ""}
+    <div class="section"><h3>Contato</h3>
+      ${falta.length ? `<p class="cli-falta">Falta ${falta.join(" e ")} para o cadastro ficar completo.</p>` : ""}
+      ${f("cNome", "Nome *", c.nome, 'autocomplete="off" maxlength="120"')}
+      <div class="grid2">
+        ${f("cWhats", "WhatsApp (com DDD)", c.whatsapp ? cliFone(c.whatsapp) : (c.telefone_original || ""), 'inputmode="tel" autocomplete="off" placeholder="(21) 99999-9999"')}
+        ${f("cEmail", "E-mail", c.email, 'type="email" autocomplete="off" maxlength="120"')}
+      </div>
+      <label class="cli-chk"><input type="checkbox" id="cPromo"${c.aceita_promocoes ? " checked" : ""}> Aceita receber promoções</label>
+    </div>
+    <div class="section"><h3>Endereço</h3>
+      <div class="grid2">${f("cCep", "CEP", c.cep, 'inputmode="numeric" maxlength="9" autocomplete="off"')}${f("cBairro", "Bairro", c.bairro, 'autocomplete="off"')}</div>
+      ${f("cRua", "Rua", c.rua, 'autocomplete="off"')}
+      <div class="grid2">${f("cNum", "Número", c.numero, 'autocomplete="off"')}${f("cComp", "Complemento", c.complemento, 'autocomplete="off"')}</div>
+      <div class="grid2">${f("cCidade", "Cidade", c.cidade, 'autocomplete="off"')}${f("cUf", "UF", c.uf, 'maxlength="2" autocomplete="off"')}</div>
+      ${c.endereco_txt || !c.rua ? `<div class="field"><label for="cEndTxt">Endereço em uma linha (como veio do site ou da planilha)</label><textarea id="cEndTxt">${esc(c.endereco_txt || "")}</textarea></div>` : ""}
+    </div>
+    <div class="section"><h3>Observações</h3><div class="field" style="margin:0"><textarea id="cObs" placeholder="Preferências, ponto de referência…">${esc(c.obs || "")}</textarea></div></div>
+    <div class="save-row"><button class="btn-gold" id="cSalvar" style="flex:1">${novo ? "Cadastrar cliente" : "Salvar alterações"}</button>${novo ? "" : `<button class="btn-danger" id="cApagar">Excluir</button>`}</div>`);
+  const v = id => { const el = $("#" + id); return el ? el.value.trim() : undefined; };
+  $("#cSalvar").onclick = async () => {
+    const b = $("#cSalvar"); if(b.disabled) return;
+    const nome = v("cNome"), wtxt = v("cWhats"), email = v("cEmail"), cep = (v("cCep") || "").replace(/\D/g, "");
+    if(!nome){ toast("Digite o nome do cliente."); $("#cNome").focus(); return; }
+    const w = wtxt ? cliWhats(wtxt) : null;
+    if(wtxt && !w){ toast("WhatsApp inválido: use DDD + celular, ex.: (21) 99999-9999."); $("#cWhats").focus(); return; }
+    if(email && !/^\S+@\S+\.\S+$/.test(email)){ toast("E-mail inválido."); $("#cEmail").focus(); return; }
+    if(cep && cep.length !== 8){ toast("CEP precisa ter 8 números."); $("#cCep").focus(); return; }
+    const reg = { nome, whatsapp: w, email: email ? email.toLowerCase() : null, cep: cep || null,
+      rua: v("cRua") || null, numero: v("cNum") || null, complemento: v("cComp") || null, bairro: v("cBairro") || null,
+      cidade: v("cCidade") || null, uf: (v("cUf") || "").toUpperCase() || null, aceita_promocoes: $("#cPromo").checked, obs: v("cObs") || null };
+    if($("#cEndTxt")) reg.endereco_txt = v("cEndTxt") || null;
+    if(w) reg.telefone_original = null;
+    b.disabled = true; b.textContent = "Salvando…";
+    const r = novo ? await sb.from("clientes").insert({ ...reg, origem:"admin" }).select(CLI_CAMPOS).single()
+                   : await sb.from("clientes").update(reg).eq("id", c.id).select(CLI_CAMPOS).single();
+    if(r.error){
+      b.disabled = false; b.textContent = novo ? "Cadastrar cliente" : "Salvar alterações";
+      const dup = r.error.code === "23505" && /whatsapp/.test(r.error.message || "");
+      toast(dup ? "Já existe outro cliente com esse WhatsApp. Busque por ele na lista." : "Não deu para salvar: " + r.error.message); return;
+    }
+    if(novo) cliState.lista.push(r.data); else Object.assign(cliState.lista.find(x => x.id === c.id) || {}, r.data);
+    cliState.lista.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    closeDrawer(); toast(novo ? "Cliente cadastrado." : "Cliente atualizado."); desenhaClientes();
+  };
+  const ap = $("#cApagar");
+  if(ap) ap.onclick = async () => {
+    if(!confirm(`Excluir ${c.nome} do cadastro? Os pedidos dele continuam salvos.`)) return;
+    ap.disabled = true;
+    const { error } = await sb.from("clientes").delete().eq("id", c.id);
+    if(error){ ap.disabled = false; toast("Não deu para excluir: " + error.message); return; }
+    cliState.lista = cliState.lista.filter(x => x.id !== c.id);
+    closeDrawer(); toast("Cliente excluído."); desenhaClientes();
+  };
+  if(novo) setTimeout(() => $("#cNome")?.focus(), 300);
+}
+async function importarClientes(arq){
+  let lista;
+  try{ lista = JSON.parse(await arq.text()); }catch(_){ toast("Arquivo inválido: precisa ser a lista em JSON exportada do Nex."); return; }
+  if(lista && !Array.isArray(lista)) lista = lista.clientes || lista.data || lista.items;
+  if(!Array.isArray(lista) || !lista.length){ toast("Nenhum cliente encontrado no arquivo."); return; }
+  if(!confirm(`Importar ${lista.length} cliente(s)? Quem já existe (mesmo código Nex ou WhatsApp) só tem os campos vazios preenchidos; nada do que foi editado aqui é apagado.`)) return;
+  const b = $("#cliImp"); b.disabled = true;
+  let novos = 0, mesclados = 0, ignorados = 0;
+  try{
+    for(let i = 0; i < lista.length; i += 300){
+      b.textContent = `Importando ${Math.min(i + 300, lista.length)}/${lista.length}…`;
+      const { data, error } = await sb.rpc("clientes_importar", { lista: lista.slice(i, i + 300), origem_padrao: "nex" });
+      if(error) throw error;
+      novos += data.novos; mesclados += data.mesclados; ignorados += data.ignorados;
+    }
+    toast(`Importado: ${novos} novo(s), ${mesclados} atualizado(s)${ignorados ? `, ${ignorados} sem nome ignorado(s)` : ""}.`);
+  }catch(err){ toast("Erro ao importar: " + (err.message || err)); }
+  b.disabled = false; b.innerHTML = `${ic("up")} Importar`;
+  await carregarClientes(); desenhaClientes();
+}
+function exportarClientes(){
+  const lista = cliFiltrados(); if(!lista.length){ toast("Nada para exportar neste filtro."); return; }
+  const col = [["nome","Nome"],["whatsapp","WhatsApp"],["email","E-mail"],["cep","CEP"],["rua","Rua"],["numero","Número"],["complemento","Complemento"],["bairro","Bairro"],["cidade","Cidade"],["uf","UF"],["endereco_txt","Endereço (texto)"],["nex_codigo","Código Nex"],["aceita_promocoes","Aceita promoções"],["completo","Completo"],["pedidos_qtd","Pedidos no site"],["total_gasto","Total gasto no site"],["ultimo_pedido_em","Último pedido"],["origem","Origem"],["obs","Observações"]];
+  const cel = v => { v = v == null ? "" : typeof v === "boolean" ? (v ? "sim" : "não") : String(v); if(/^[=+\-@]/.test(v)) v = "'" + v; return /[";\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; };
+  const csv = "﻿" + [col.map(c => c[1]).join(";"), ...lista.map(c => col.map(([k]) => cel(k === "total_gasto" ? String(c[k] ?? 0).replace(".", ",") : c[k])).join(";"))].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8" }));
+  a.download = `clientes-brutt-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 /* tabela de rotas — toda tela nova entra aqui */
 Object.assign(ROUTES, {
   "visao": renderVisao,
@@ -2848,6 +3060,7 @@ Object.assign(ROUTES, {
   "vendidos": renderBestsellersScreen,
   "fotos": renderFotos,
   "pedidos": renderPedidos,
+  "clientes": renderClientes,
 });
 
 boot();
