@@ -723,6 +723,40 @@ html,body{overflow-x:clip}
 .sm-tag.t-rodando{color:var(--accent);border-color:rgba(234,181,74,.4)}
 @media (prefers-reduced-motion:reduce){.sm-barra i{transition:none}}
 
+/* =====================================================================
+   CORES (alto contraste com a paleta da loja): menos "letra branca".
+   Texto principal no creme da loja, secundário em caramelo, títulos e valores em dourado,
+   e cores vivas com significado: verde = bom/positivo, vermelho = alerta, laranja = aviso, azul = informação.
+   ===================================================================== */
+:root{
+  --ink:#f0dcb8; --muted:#c09f76; --muted-2:#937656;
+  --ok:#4fe08c; --ok-soft:rgba(79,224,140,.14);
+  --warn:#ff9640; --warn-soft:rgba(255,150,64,.14);
+  --danger:#ff5a4a; --danger-soft:rgba(255,90,74,.15);
+  --info:#7fbfff; --info-soft:rgba(127,191,255,.13);
+}
+/* títulos e marca em dourado */
+.pg-t,.pg h2.pg-t,.top-t b,.ov-box h3,.drawer-h h2,.cat-head h2,.gr-top b,.side-brand b,.login-card h1,.ft-intro h2,.ov-box-h h3{color:var(--accent)}
+.section h3,.sm-log-h h3{color:var(--accent-2)}
+.top-t small,.side-g>span{color:var(--muted-2)}
+/* menu: caramelo; ativo em dourado */
+.nav-i{color:var(--muted)}
+.nav-i:hover{color:var(--ink)}
+.nav-i.on,.nav-i.on .lbl{color:var(--accent)}
+/* valores em R$ e códigos */
+.ped-f>b,.ov-ped-r .t,.cli-stats b,.gr-prices input,.bulk-count,.stock-now .n{color:var(--accent)}
+.ped-h code,.ov-ped-r .n code,.cli-card .h code,.gr-meta code{color:var(--accent-2)}
+.cli-card .l.w{color:var(--ink)}
+/* números da visão geral com significado */
+.ov-kpi .v{color:var(--ink)}
+.ov-kpi.bom{border-color:rgba(79,224,140,.35)}.ov-kpi.bom .v{color:var(--ok)}
+.ov-kpi.acao .v{color:var(--accent)}
+.ov-kpi.alerta{border-color:rgba(255,150,64,.35)}.ov-kpi.alerta .v{color:var(--warn)}
+.ov-kpi.ruim .v,.ov-kpi.novo .v{color:var(--danger)}
+/* estoque e margem */
+.gr-stock.ok b{color:var(--ok)}
+.gr-meta .mg{color:var(--ok)}.gr-meta .mg.neg{color:var(--danger)}
+
 /* ---------- clientes ---------- */
 .cli-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
 .cli-bar .cli-q{flex:1 1 240px;min-width:0}
@@ -1063,7 +1097,7 @@ async function carregarStatusInicio(){
     const linhas = HR_DIAS.map(({d}) => { const r = porDia[d], pad = HR_PADRAO[d];
       return { d, aberto: r ? !!r.aberto : !!pad, a: r ? r.abre_min : (pad?pad[0]:840), b: r ? r.fecha_min : (pad?pad[1]:1440) }; });
     const st = hrStatus(linhas);
-    $("#stLoja").innerHTML = `<div class="k">Loja agora</div><div class="v"><span class="dot ${st.aberto?"ok":"bad"}"></span>${st.aberto?"ABERTA":"FECHADA"}</div>
+    $("#stLoja").innerHTML = `<div class="k">Loja agora</div><div class="v" style="color:${st.aberto?"var(--ok)":"var(--danger)"}"><span class="dot ${st.aberto?"ok":"bad"}"></span>${st.aberto?"ABERTA":"FECHADA"}</div>
       <div class="d">${st.aberto ? "até "+st.fim : (st.nunca ? "nenhum dia aberto" : "abre "+st.quando+" às "+st.hora)} · toque para editar</div>`;
     $("#stLoja").classList.toggle("bad", false);
   }catch(_){ $("#stLoja").innerHTML = `<div class="k">Loja agora</div><div class="v">—</div>`; }
@@ -3031,9 +3065,9 @@ async function renderVisao(){
     kpi("estoque-baixo", "alert", "Estoque baixo", num(nBaixo), nBaixo == null ? "não disponível" : `ativos com menos de ${LOW_STOCK_LIMIT} unidades`, nBaixo ? "alerta" : "") +
     kpi("estoque-baixo", "pkg", "Ativos sem estoque", num(nZero), nZero == null ? "não disponível" : "aparecem como esgotados no site", nZero ? "alerta" : "") +
     kpi("nex", "sync", "Sincronização Nex", !u ? "Sem registro" : !u.ok ? "Última rodada falhou" : nexVelho ? "Parou de sincronizar?" : "Em dia",
-        !u ? (nex.error ? "não disponível" : "nenhuma rodada ainda") : `${haQuanto(u.ran_at)} · ${u.modo === "teste" ? "simulação" : (u.estoque_alterado ?? 0) + " estoque(s), " + (u.preco_alterado ?? 0) + " preço(s)"}`, nexRuim ? "ruim" : "", true) +
+        !u ? (nex.error ? "não disponível" : "nenhuma rodada ainda") : `${haQuanto(u.ran_at)} · ${u.modo === "teste" ? "simulação" : (u.estoque_alterado ?? 0) + " estoque(s), " + (u.preco_alterado ?? 0) + " preço(s)"}`, nexRuim ? "ruim" : u ? "bom" : "", true) +
     kpi("horarios", "store", "Loja agora", !loja ? "—" : loja.aberto ? "Aberta" : "Fechada",
-        !loja ? "não disponível" : loja.aberto ? "até " + loja.fim : (loja.nunca ? "nenhum dia aberto" : "abre " + loja.quando + " às " + loja.hora), "", true);
+        !loja ? "não disponível" : loja.aberto ? "até " + loja.fim : (loja.nunca ? "nenhum dia aberto" : "abre " + loja.quando + " às " + loja.hora), !loja ? "" : loja.aberto ? "bom" : "alerta", true);
 
   /* o que resolver agora: só itens que existem de verdade */
   const it = (rota, icone, cls, titulo, sub) => `<button class="ov-item ${cls}" data-ir="${rota}"><span class="ic">${ic(icone)}</span><span class="tx"><b>${titulo}</b><small>${sub}</small></span><span class="go">${ic("chev")}</span></button>`;

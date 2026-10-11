@@ -66,6 +66,8 @@ Regras:
 
 ### Admin (`admin/index.html`, `:root` próprio)
 
+**Camada de cores (bloco "CORES" no fim do CSS do admin, sobrescreve os tokens abaixo):** texto `--ink:#f0dcb8` (creme da loja, não branco), secundário caramelo `--muted:#c09f76`, títulos/menu ativo/valores em R$ em dourado (`--accent`), e cores vivas com significado: `--ok:#4fe08c` (bom/positivo), `--danger:#ff5a4a` (alerta), `--warn:#ff9640` (aviso), `--info:#7fbfff`. KPI com classe `bom`/`alerta`/`ruim`/`novo` pinta o número.
+
 Paleta do painel = **variação** da loja (café/espresso + dourado-âmbar), não cópia dos mesmos valores. O dourado (`--accent`) é só para ação principal, item ativo e número que pede ação; alerta usa **cobre** (`--warn`) para não confundir com o dourado.
 
 ```css
@@ -139,6 +141,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - No HTML estático: `<span data-ic="pin"></span>` é preenchido no carregamento.
 - Nomes curtos em inglês: `cart, chat, pin, copy, check, alert, trash, moto, card, drop, search…`.
 - **WhatsApp = sempre o símbolo oficial** (simple-icons / kit de marca da Meta), **preenchido**, em `#25D366` ou branco sobre fundo verde (`.wa-logo`, `.ic-wa`; o `ic("chat")` já usa esse símbolo). Nunca redesenhar nem tingir de dourado; se não couber o oficial, não coloque.
+- **Pix = símbolo oficial** (simple-icons, CC0) **preenchido em `#32BCAD`** (cor do Banco Central), em `PAY_IC.pix` de `js/checkout-mp.js`. Mesma regra: não redesenhar nem tingir.
 - **Google Maps = símbolo oficial multicolorido** (`svg.gmaps` no botão `#goMapa` do topo, paths do pacote `@iconify-json/logos`). Mesma regra do WhatsApp: não redesenhar nem tingir.
 - Ícones da Brutt IA: `<symbol>` no sprite `.ia-sprite` (`#iaI`, `#iaEye`) usados com `<use href>`.
 
