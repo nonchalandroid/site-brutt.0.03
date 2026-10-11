@@ -200,4 +200,15 @@ if(pm){
   mo.observe(sec,{childList:true,subtree:true});
   setTimeout(function(){mo.disconnect();some()},6000);
 })();
+
+/* ───────── Rolando? ─────────
+   Marca html.rolando durante qualquer rolagem (página ou trilho horizontal) para o CSS pausar as animações
+   decorativas que repintam a tela; tira 160 ms depois que a rolagem para. */
+(function(){
+  var raiz=document.documentElement,t=null;
+  document.addEventListener("scroll",function(){
+    if(!t)raiz.classList.add("rolando");
+    clearTimeout(t);t=setTimeout(function(){t=null;raiz.classList.remove("rolando")},160);
+  },{capture:true,passive:true});
+})();
 })();

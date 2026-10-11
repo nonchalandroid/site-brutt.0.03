@@ -32,7 +32,7 @@ function filtros(q: URLSearchParams) {
   });
   return (r: any) => fs.every(f => f(r));
 }
-let seq = 41, mpSeq = 9000;
+let seq = 41, mpSeq = 9000, rotaM = 1800;
 const mpPays = new Map<string, any>();
 let proximoMp: any = { status: "pending", status_detail: "pending_waiting_transfer" };
 const whats: { numero: string; text: string }[] = [];
@@ -41,7 +41,7 @@ const res = (o: any, status = 200) => new Response(o == null ? "" : JSON.stringi
 
 (globalThis as any).fetch = async (input: string, init: any = {}) => {
   const u = new URL(input), m = (init.method || "GET").toUpperCase(), body = init.body ? JSON.parse(init.body) : null;
-  if (u.host === "router.project-osrm.org") return res({ code: "Ok", routes: [{ distance: 4600 }] });
+  if (u.host === "router.project-osrm.org") return res({ code: "Ok", routes: [{ distance: rotaM }] });
   if (u.host === "evo.test") { assert.equal(init.headers.apikey, "evo"); whats.push(body); return res({ key: { id: "x" } }, 201); }
   if (u.host === "api.mercadopago.com") {
     assert.equal(init.headers.Authorization, "Bearer TEST-token");
@@ -99,9 +99,18 @@ await t("valida estoque, whatsapp e produto inexistente", async () => {
   assert.equal((await call("criar", { ...base, whats: "123", entrega: { tipo: "cliente" } })).status, 400);
   assert.equal((await call("criar", { ...base, itens: [{ id: "nao-existe", q: 1 }], entrega: { tipo: "cliente" } })).status, 409);
 });
-await t("entrega pela loja: taxa recalculada no servidor (4,6 km → R$ 10,40)", async () => {
-  const r = await call("criar", { ...base, entrega: { tipo: "entrega", geo: { lat: -22.9, lng: -43.6 }, endereco: { rua: "Rua A", numero: "10", cidade: "Rio de Janeiro", uf: "rj", bairro: "Campo Grande" } } });
-  assert.equal(r.j.taxa_entrega, 10.4); assert.equal(r.j.total, 35.4); assert.equal(r.j.km, 4.6);
+await t("entrega pela loja: tabela recalculada no servidor (até 2 km R$ 5; 2–2,5 km + R$ 1,50/km fracionado; acima, fora)", async () => {
+  const ent = { tipo: "entrega", geo: { lat: -22.9, lng: -43.6 }, endereco: { rua: "Rua A", numero: "10", cidade: "Rio de Janeiro", uf: "rj", bairro: "Campo Grande" } };
+  rotaM = 1800; let r = await call("criar", { ...base, entrega: ent });
+  assert.equal(r.j.taxa_entrega, 5); assert.equal(r.j.total, 30); assert.equal(r.j.km, 1.8);
+  rotaM = 2000; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.j.taxa_entrega, 5, "2,0 km ainda é a base");
+  rotaM = 2100; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.j.taxa_entrega, 6.5, "2,1 km = base + 1 km fracionado");
+  rotaM = 2500; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.j.taxa_entrega, 6.5); assert.equal(r.j.km, 2.5);
+  rotaM = 2600; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.status, 400); assert.match(r.j.erro, /indisponível/);
+  rotaM = 4600; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.status, 400);
+  rotaM = 1800;
+  const C2 = await import("./index.ts");
+  assert.equal(C2.taxaEntrega(2.01), 6.5); assert.equal(C2.taxaEntrega(3.9), 8, "teto R$ 8,00"); assert.equal(C2.taxaEntrega(0.4), 5);
 });
 
 let pixPedido = "";

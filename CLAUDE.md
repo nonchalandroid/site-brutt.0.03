@@ -55,6 +55,8 @@ Leia antes de alterar qualquer arquivo.
 Regras:
 - **Paleta:** escuro + dourado. Verde só para ações de confirmação/sucesso, sempre via `--ok*`. **Nunca** cole hex de verde solto.
 - **WhatsApp:** usar a cor oficial `#25D366` (ou branco sobre fundo verde). É exceção de marca, não token.
+- **Opções de entrega:** nenhuma vem marcada (`ship=""`). Ativa, "Entrega pela loja" fica dourada; "Prefiro eu mesmo solicitar a entrega" fica azul-claro (`--frete:#9fc3e6`, definido só em `.entrega`), para o cliente distinguir na hora.
+- **Taxa de entrega** (`ENTREGA_LOJA` no `index.html`, igual em `supabase/functions/checkout` e `brutt-ia`): R$ 5,00 até 2 km de rota; + R$ 1,50 por km fracionado; só até 2,5 km; teto R$ 8,00. Mudou num lugar, mude nos três.
 - **Brutt IA:** paleta própria roxa/azul em `.ia{--ia-a…--ia-d}` (identidade do assistente). Não misturar com o dourado.
 - **Escala de fonte** (px inteiros, sem .5): 11 · 12 · 13 · 14 · 15 · 16 · 18 · 20 · 22 · 24 · 26 · 28 · 30 · 32 · 34. Títulos display usam `var(--head)` em CAIXA ALTA.
 - **Famílias:** só via `var(--head)`, `var(--body)`, `var(--mono)`. Fontes carregadas do Google Fonts no `<head>`.
