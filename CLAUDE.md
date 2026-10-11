@@ -16,9 +16,11 @@ Leia antes de alterar qualquer arquivo.
 ├── js/
 │   ├── fluidez.js        # Lenis (scroll suave), navegação ←/→ e gesto no modal de produto
 │   ├── checkout-mp.js    # window.MPX: pagamento Mercado Pago (Payment Brick, Pix), campo WhatsApp, pin da loja
-│   └── acompanhar.js     # window.ACOMP: tela "Acompanhe seu pedido" (pós-pagamento, estilo iFood) + atalho no topo
+│   ├── acompanhar.js     # window.ACOMP: tela "Acompanhe seu pedido" (pós-pagamento, estilo iFood) + atalho no topo
+│   └── sons.js           # window.SOM: sons das ações da loja + botão de som no topo (#somBtn)
 ├── vendor/lenis.min.js   # Lenis 1.3.26 servido localmente (sem CDN)
 ├── vendor/fonts/         # DejaVu Sans Mono (woff2, recorte Latin) para var(--mono)
+├── sons/                 # sons de interface (mp3) + LEIA-ME.md com a tabela ação → arquivo
 ├── admin/index.html      # PAINEL interno (login Supabase), roteador por hash + abas
 ├── 404.html              # só redireciona /qualquer-rota → /?r=... (o index reescreve a URL)
 ├── favicon/              # ícones oficiais (ver §4)
@@ -141,6 +143,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - **Fotos de produto:** vêm do Supabase (`product_images.url`); fallback local em `imagens/` via `fotoUrl()`. Sempre `loading="lazy" decoding="async"`.
 - **Logo:** constante `LOGO` (WebP base64 inline) aplicada em `img[data-logo]`.
 - **Vídeo** `fumaca.mp4`: só carrega após a 1ª interação (economia de dados).
+- **Sons** (`sons/*.mp3`, `js/sons.js`, só na loja): `SOM.toca("ação")` (tabela ação → arquivo em `sons/LEIA-ME.md`). Nada toca nem é baixado antes do 1º toque do cliente; depois baixa os 24 sons (~50 KB). Um som por ação: o que for pedido na mesma tarefa vira um só, o de maior prioridade (pagar fecha a gaveta e abre o acompanhamento, mas só toca "pago"). Volume baixo, `audioSession` "ambient" (respeita o modo silencioso do iPhone e não pausa a música do cliente). Botão `#somBtn` na barra do topo liga/desliga (salvo em `localStorage.brutt_som`); até 480 px a barra fica compacta para o status "Aberto · até 00:00" não ser cortado. Cliques simples (setas, filtros, opções, copiar) tocam por delegação no `sons.js`; o resto é chamado no ponto do código onde a ação dá certo ou errado.
 - **Intro** `#intro` (início do `<body>`): selo da marca + brasa animada (ritmo lento: brasa/pulso 3,8 s, anel 3,4 s, fagulhas 3,5 s); some quando o catálogo aparece (`js/fluidez.js`), mínimo ~2,2 s só na 1ª visita da sessão, saída de 0,9 s, e se remove sozinha em 9 s se algo falhar.
 - **Favicons** (`favicon/`): `favicon.ico` (16–256), `favicon-16x16.png`/`32x32`/`48x48` (só o "B" dourado, legível em tamanho pequeno), `apple-touch-icon.png` 180 (opaco), `android-chrome-192/512`, `maskable-512` + `site.webmanifest`.
 - **CDN permitida:** Google Fonts, `sdk.mercadopago.com/js/v2` (obrigatório ser do Mercado Pago, carregado sob demanda), Supabase. Bibliotecas JS novas → servir em `vendor/` (fixar versão).
