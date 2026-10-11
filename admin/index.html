@@ -686,6 +686,43 @@ html,body{overflow-x:clip}
 @media (max-width:560px){.hr-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 @media (max-width:360px){.hr-row{padding:12px 10px;gap:10px}.hr-tempo input[type=time]{padding:10px 6px}}
 
+.ft-otim{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:10px 0 0}.ft-otim small{font-size:12px;color:var(--muted);flex:1 1 220px}
+/* ---------- sommelier em massa ---------- */
+.sm-sec select{margin:0 0 10px}
+.sm-chk{display:flex;align-items:flex-start;gap:10px;font-size:14px;cursor:pointer;padding:6px 0}
+.sm-chk input{margin-top:3px;flex:none}
+.sm-chk span,.sm-modo span{display:flex;flex-direction:column;min-width:0}
+.sm-chk small,.sm-modo small{font-size:12px;color:var(--muted)}
+.sm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:2px 16px}
+.sm-modo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:8px;margin-top:10px}
+.sm-modo label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;cursor:pointer;background:var(--field)}
+.sm-modo label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.sm-modo input{margin-top:3px;flex:none}
+.sm-vel{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:10px}
+.sm-vel select{width:auto;min-width:80px}
+.sm-qtd{font-size:13px;color:var(--muted);margin:2px 0 0}.sm-qtd b{color:var(--ink)}
+.sm-acoes{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px}
+.sm-acoes .btn-gold{flex:1 1 220px;min-height:46px}
+.sm-prog{margin-bottom:14px}
+.sm-barra{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.sm-barra i{display:block;height:100%;background:var(--accent);transform-origin:left;transform:scaleX(0);transition:transform .4s var(--ease)}
+.sm-prog p{font-size:13px;color:var(--muted);margin:8px 0 0;line-height:1.5}.sm-prog p b{color:var(--ink)}
+.sm-rev{color:var(--warn)}.sm-err{color:var(--danger)}
+.sm-log-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 8px;flex-wrap:wrap}
+.sm-log-h h3{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sm-log{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:8px}
+.sm-it{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:10px 12px;font-size:13px;min-width:0}
+.sm-it-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.sm-it-h b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.sm-it p{margin:4px 0 0;color:var(--ink)}.sm-it small{display:block;margin-top:4px;color:var(--muted);font-size:12px}
+.sm-it-a{display:flex;gap:6px;margin-top:8px}
+.sm-tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;flex:none}
+.sm-tag.t-ok{color:var(--ok);border-color:rgba(121,196,142,.35);background:var(--ok-soft)}
+.sm-tag.t-revisar{color:var(--warn);border-color:rgba(229,132,63,.35);background:var(--warn-soft)}
+.sm-tag.t-erro{color:var(--danger);border-color:rgba(225,90,74,.35);background:var(--danger-soft)}
+.sm-tag.t-rodando{color:var(--accent);border-color:rgba(234,181,74,.4)}
+@media (prefers-reduced-motion:reduce){.sm-barra i{transition:none}}
+
 /* ---------- clientes ---------- */
 .cli-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
 .cli-bar .cli-q{flex:1 1 240px;min-width:0}
@@ -772,6 +809,7 @@ const ICON = {
   ext:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
   chev:'<path d="m9 18 6-6-6-6"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',
+  spark:'<path d="M9.94 14.06 4 20"/><path d="m14 4 1.2 3.3L18.5 8.5l-3.3 1.2L14 13l-1.2-3.3L9.5 8.5l3.3-1.2Z"/><path d="M19 15v4M17 17h4"/><path d="M5 3v4M3 5h4"/>',
   users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   dl:'<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>',
   up:'<path d="M12 3v12"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/>',
@@ -782,7 +820,7 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 /* navegação lateral agrupada. Só destinos que existem em ROUTES. Tela nova = ROUTES + item aqui. */
 const NAV = [
   ["Operação", [["visao","Visão geral","dash"],["home","Produtos","pkg"],["pedidos","Pedidos online","bag","pedidos"],["clientes","Clientes","users"],["estoque-baixo","Estoque baixo","alert","estoque"]]],
-  ["Gestão",   [["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"]]],
+  ["Gestão",   [["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"]]],
   ["Planilhas",[["planilha","Planilha de compra","sheet"],["vendidos","Mais vendidos","trend"]]],
 ];
 const ABAS = NAV.flatMap(([, itens]) => itens.map(([r, t]) => [r, t]));
@@ -2746,6 +2784,40 @@ async function ftCarregaCatalogo(){
   }
 }
 
+/* recomprime as fotos já enviadas que passam de 100 KB (fotos antigas em JPEG): WebP 86%, mesmo tamanho em pixels
+   (no máximo 1000 px). Só troca se o arquivo novo ficar pelo menos 20% menor — senão deixa a original. */
+async function ftOtimizar(){
+  const b = $("#ftOtim"), txt = $("#ftOtimTxt"); if(b.disabled) return;
+  b.disabled = true; b.textContent = "Procurando fotos pesadas…";
+  const fim = m => { b.disabled = false; b.textContent = "Otimizar fotos pesadas"; if(txt) txt.textContent = m; toast(m); };
+  const { data: arqs, error } = await sb.storage.from(BUCKET).list("", { limit: 2000 });
+  if(error) return fim("Não consegui listar as fotos: " + error.message);
+  const pesadas = (arqs || []).filter(a => (a.metadata?.size || 0) > 100 * 1024 && /\.(jpe?g|png|webp)$/i.test(a.name));
+  if(!pesadas.length) return fim("Nenhuma foto acima de 100 KB. Está tudo leve.");
+  if(!confirm(`${pesadas.length} foto(s) acima de 100 KB. Recomprimir em WebP (sem mudar o tamanho da imagem)?`)) return fim("Nada foi alterado.");
+  let trocadas = 0, antes = 0, depois = 0, i = 0;
+  for(const a of pesadas){
+    b.textContent = `Otimizando ${++i}/${pesadas.length}…`;
+    try{
+      const pid = a.name.replace(/\.[^.]+$/, ""), { data: pub } = sb.storage.from(BUCKET).getPublicUrl(a.name);
+      const bm = await createImageBitmap(await (await fetch(pub.publicUrl + "?t=" + Date.now(), { cache: "no-store" })).blob());
+      const k = Math.min(1, 1000 / Math.max(bm.width, bm.height)), c = document.createElement("canvas");
+      c.width = Math.round(bm.width * k); c.height = Math.round(bm.height * k);
+      const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(bm, 0, 0, c.width, c.height);
+      const novo = await new Promise(r => c.toBlob(r, "image/webp", 0.86));
+      if(!novo || novo.type !== "image/webp" || novo.size > a.metadata.size * 0.8) continue;
+      const path = pid + ".webp";
+      const up = await sb.storage.from(BUCKET).upload(path, novo, { upsert: true, contentType: "image/webp", cacheControl: "31536000" });
+      if(up.error) continue;
+      const url = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl + "?v=" + Date.now();
+      const r = await sb.from("product_images").update({ url }).eq("product_id", pid);
+      if(r.error) continue;
+      if(a.name !== path) sb.storage.from(BUCKET).remove([a.name]).catch(() => {});
+      trocadas++; antes += a.metadata.size; depois += novo.size;
+    }catch(_){ /* foto que não abre: deixa como está */ }
+  }
+  fim(trocadas ? `${trocadas} foto(s) otimizada(s): de ${Math.round(antes / 1024)} KB para ${Math.round(depois / 1024)} KB.` : "Nenhuma ficou menor o bastante; mantive as originais.");
+}
 async function renderFotos(){
   FT.itens.forEach(i => i.url && URL.revokeObjectURL(i.url)); FT.itens = [];
   const alvos = window.__fotosAlvos; window.__fotosAlvos = null; FT.alvos = alvos && alvos.length ? alvos : null;
@@ -2758,6 +2830,7 @@ async function renderFotos(){
         <label><input type="checkbox" id="ftIA" ${FT.ia?"checked":""}> Ler a embalagem com IA quando o nome do arquivo não ajudar</label>
         <label><input type="checkbox" id="ftSub" ${FT.substituir?"checked":""}> Marcar para enviar também os produtos que <b>já têm foto</b> (substitui)</label>
       </div>
+      <div class="ft-otim"><button type="button" class="btn-ghost btn-sm" id="ftOtim">Otimizar fotos pesadas</button><small id="ftOtimTxt">Recomprime em WebP as fotos acima de 100 KB, sem mudar o tamanho da imagem. Só troca quando fica bem menor.</small></div>
       <label class="ft-drop" id="ftDrop"><input type="file" id="ftFile" accept="image/*" multiple hidden>
         <span class="ft-ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg></span><b>Toque ou arraste as fotos aqui</b><small>JPG, PNG, WebP ou HEIC · quantas quiser · dica: nomeie o arquivo com o nome do produto ou o código de barras</small></label>
     </section>
@@ -2772,6 +2845,7 @@ async function renderFotos(){
   ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
   drop.addEventListener("drop", e => ftAdiciona(e.dataTransfer.files));
   $("#ftIA").onchange = e => FT.ia = e.target.checked;
+  $("#ftOtim").onclick = ftOtimizar;
   $("#ftSub").onchange = e => { FT.substituir = e.target.checked; };
   if($("#ftTodos")) $("#ftTodos").onclick = () => { FT.alvos = null; renderFotos(); };
 
@@ -3165,6 +3239,188 @@ function exportarClientes(){
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+/* ---------------- Sommelier em massa ----------------
+   Roda o Sommelier (função gerar-ficha-sommelier) em fila, vários produtos ao mesmo tempo, e grava sozinho só o que
+   a regra escolhida permite. Cada mudança fica em sommelier_log (antes/depois) para desfazer um produto ou o lote todo.
+   A fila roda no navegador: a aba precisa ficar aberta até terminar (pode navegar por outras telas do painel). */
+const SM_GENERICAS = ["headshop-outros", "doces-outros", "bebidas-bebidas"];
+const SM_LOTES = [
+  ["desc", "Descrição faltando, rasa ou cortada", p => { const d = (p.description||"").trim().length; return d <= 80 || d > SOM_DESC_MAX; }],
+  ["ficha", "Ficha técnica curta (até 2 itens)", p => (p.specs||[]).length <= 2],
+  ["perfil", "Essências sem perfil de sabor", p => somCatInfo(p.category_id).essencia && !p.flavor_profile],
+  ["whisky", "Whisky sem detalhes", p => somCatInfo(p.category_id).whisky && !p.whisky_details],
+  ["generica", "Categoria genérica (Outros)", p => SM_GENERICAS.includes((state.categories.find(c => c.id === p.category_id)||{}).slug)],
+  ["incompletos", "Qualquer coisa faltando", null],
+  ["todos", "Todos os produtos", () => true],
+];
+let smRun = null;   /* lote em andamento (sobrevive à troca de tela) */
+const smCatSlug = id => (state.categories.find(c => c.id === id) || {}).slug || "";
+const smCatNome = slug => { const c = state.categories.find(x => x.slug === slug), pa = c && state.categories.find(x => x.id === c.parent_id); return c ? (pa ? pa.name + " › " : "") + c.name : slug; };
+function smFiltro(k){
+  if(k === "incompletos"){ const fs = SM_LOTES.filter(l => ["desc","ficha","perfil","whisky","generica"].includes(l[0])).map(l => l[2]); return p => fs.some(f => f(p)); }
+  return (SM_LOTES.find(l => l[0] === k) || SM_LOTES[0])[2];
+}
+/* decide o que gravar a partir da sugestão `d`; devolve { upd, antes } (vazio = nada a mudar) */
+function smDecide(p, d, o){
+  const upd = {}, info = somCatInfo(p.category_id), dl = (p.description||"").trim().length, nSpecs = (p.specs||[]).length, tudo = o.modo === "reescrever";
+  if(o.desc && (d.description||"").length >= 40 && (tudo || dl <= 80 || dl > SOM_DESC_MAX) && d.description.trim() !== (p.description||"").trim()) upd.description = d.description.trim();
+  if(o.ficha && (d.specs||[]).length >= 2 && (tudo ? true : nSpecs <= 2 && d.specs.length > nSpecs)) upd.specs = d.specs;
+  if(o.perfil && info.essencia && d.flavor_profile && (tudo || !p.flavor_profile)) upd.flavor_profile = d.flavor_profile;
+  if(o.whisky && info.whisky && d.whisky_details && (tudo || !p.whisky_details)) upd.whisky_details = d.whisky_details;
+  if(o.cat && d.categoria_sugerida && d.confianca === "alta" && d.categoria_sugerida !== smCatSlug(p.category_id)){
+    const c = state.categories.find(x => x.slug === d.categoria_sugerida); if(c && c.parent_id) upd.category_id = c.id;
+  }
+  const antes = {}; Object.keys(upd).forEach(k => antes[k] = p[k] ?? null);
+  return { upd, antes };
+}
+function smResumoMud(upd){
+  const t = [];
+  if("description" in upd) t.push("descrição"); if("specs" in upd) t.push(`ficha (${upd.specs.length})`);
+  if("flavor_profile" in upd) t.push("perfil de sabor"); if("whisky_details" in upd) t.push("detalhes do whisky");
+  if("category_id" in upd) t.push("categoria → " + smCatNome(smCatSlug(upd.category_id)));
+  return t.join(", ");
+}
+async function renderSommelier(){
+  app.innerHTML = `${topbarHTML("Sommelier em massa")}
+    <div class="pg">
+      <h2 class="pg-t">Sommelier em massa</h2>
+      <p class="pg-d">A IA escreve descrição, ficha técnica, perfil de sabor e sugere a categoria de vários produtos de uma vez e <b>grava sozinha</b> seguindo a regra abaixo. Tudo fica no histórico e pode ser desfeito.</p>
+      <div id="smCorpo"><div class="loading">Carregando produtos…</div></div>
+    </div>`;
+  bindTopbar();
+  const { data: prods, error } = await sb.from("products").select("id,name,brand,ean,category_id,description,specs,flavor_profile,whisky_details,stock,is_active").order("name").limit(5000);
+  const corpo = $("#smCorpo"); if(!corpo) return;
+  if(error){ corpo.innerHTML = `<div class="err">Não foi possível carregar os produtos (${esc(error.message)}).</div>`; return; }
+  const o = smRun ? smRun.o : JSON.parse(localStorage.getItem("brutt_sm_opts") || "null") || { lote:"desc", estoque:true, desc:true, ficha:true, perfil:true, whisky:true, cat:true, modo:"completar", pesquisar:true, baixa:false, juntos:3 };
+  const chk = (id, rot, dica) => `<label class="sm-chk"><input type="checkbox" id="${id}"${o[id.slice(2).toLowerCase()] ? " checked" : ""}><span><b>${rot}</b>${dica ? `<small>${dica}</small>` : ""}</span></label>`;
+  corpo.innerHTML = `
+    <section class="section sm-sec"><h3>1. Quais produtos</h3>
+      <select id="smLote" aria-label="Quais produtos">${SM_LOTES.map(([k, t]) => `<option value="${k}"${o.lote === k ? " selected" : ""}>${t}</option>`).join("")}</select>
+      <label class="sm-chk"><input type="checkbox" id="smEstoque"${o.estoque ? " checked" : ""}><span><b>Só produtos com estoque</b></span></label>
+      <p class="sm-qtd" id="smQtd"></p>
+    </section>
+    <section class="section sm-sec"><h3>2. O que ele pode mudar</h3>
+      <div class="sm-grid">${chk("smDesc", "Descrição", `até ${SOM_DESC_MAX} caracteres`)}${chk("smFicha", "Ficha técnica")}${chk("smPerfil", "Perfil de sabor", "essências")}${chk("smWhisky", "Detalhes do whisky")}${chk("smCat", "Categoria", "só quando tiver certeza (confiança alta)")}</div>
+      <div class="sm-modo" role="radiogroup" aria-label="Regra">
+        <label><input type="radio" name="smModo" value="completar"${o.modo !== "reescrever" ? " checked" : ""}><span><b>Só completar o que falta</b><small>Recomendado. Não mexe no que já está bom.</small></span></label>
+        <label><input type="radio" name="smModo" value="reescrever"${o.modo === "reescrever" ? " checked" : ""}><span><b>Reescrever tudo</b><small>Troca o que existe pela versão nova.</small></span></label>
+      </div>
+    </section>
+    <section class="section sm-sec"><h3>3. Velocidade e cuidado</h3>
+      <div class="sm-grid">${chk("smPesquisar", "Pesquisar na internet", "mais preciso; ~20 s por produto")}${chk("smBaixa", "Gravar mesmo com confiança baixa", "desligado = fica “para revisar”")}</div>
+      <label class="sm-vel">Produtos ao mesmo tempo <select id="smJuntos">${[1,2,3,4].map(n => `<option${(o.juntos||3) === n ? " selected" : ""}>${n}</option>`).join("")}</select></label>
+    </section>
+    <div class="sm-acoes"><button class="btn-gold" id="smIr"></button><button class="btn-ghost" id="smPausa" hidden>Pausar</button><button class="btn-ghost" id="smParar" hidden>Parar</button></div>
+    <div class="sm-prog" id="smProg" hidden><div class="sm-barra"><i id="smBarra"></i></div><p id="smStatus"></p></div>
+    <div class="sm-log-h" id="smLogH" hidden><h3>Resultado</h3><button class="btn-ghost btn-sm" id="smDesfazLote">Desfazer este lote inteiro</button></div>
+    <div id="smLog" class="sm-log"></div>`;
+  const ler = () => ({ lote: $("#smLote").value, estoque: $("#smEstoque").checked, desc: $("#smDesc").checked, ficha: $("#smFicha").checked, perfil: $("#smPerfil").checked,
+    whisky: $("#smWhisky").checked, cat: $("#smCat").checked, modo: (document.querySelector('[name="smModo"]:checked')||{}).value || "completar",
+    pesquisar: $("#smPesquisar").checked, baixa: $("#smBaixa").checked, juntos: +$("#smJuntos").value || 3 });
+  const fila = () => { const x = ler(), f = smFiltro(x.lote); return prods.filter(p => f(p) && (!x.estoque || (Number(p.stock)||0) > 0)); };
+  const contar = () => {
+    const x = ler(), n = fila().length, seg = x.pesquisar ? 22 : 7, min = Math.max(1, Math.round(n * seg / x.juntos / 60));
+    $("#smQtd").innerHTML = n ? `<b>${n}</b> produto${n > 1 ? "s" : ""} · cerca de ${min} min` : "Nenhum produto nesse filtro.";
+    if(!smRun || smRun.fim){ $("#smIr").textContent = n ? `Começar (${n})` : "Nada para fazer"; $("#smIr").disabled = !n || !(x.desc || x.ficha || x.perfil || x.whisky || x.cat); }
+    try{ localStorage.setItem("brutt_sm_opts", JSON.stringify(x)); }catch(_){}
+  };
+  corpo.querySelectorAll("input,select").forEach(el => el.addEventListener("change", contar));
+  contar();
+  $("#smIr").onclick = () => { if(smRun && !smRun.fim) return; smComeca(fila(), ler()); };
+  $("#smPausa").onclick = () => { if(!smRun) return; smRun.pausa = !smRun.pausa; smDesenha(); };
+  $("#smParar").onclick = () => { if(smRun && confirm("Parar o lote? O que já foi gravado continua salvo (e pode ser desfeito).")){ smRun.parar = true; smRun.pausa = false; smDesenha(); } };
+  $("#smDesfazLote").onclick = smDesfazLote;
+  smDesenha();
+}
+function smComeca(lista, o){
+  if(!lista.length) return;
+  const cats = o.cat ? state.categories.filter(c => c.parent_id).map(c => ({ slug: c.slug, nome: smCatNome(c.slug).replace(" › ", " > ") })) : null;
+  smRun = { o, cats, fila: lista.map(p => ({ p, st: "fila" })), lote: "sm-" + Date.now().toString(36), ini: Date.now(), pausa: false, parar: false, fim: false, feitos: 0, tempos: [] };
+  window.addEventListener("beforeunload", smAvisoSaida);
+  for(let i = 0; i < Math.min(o.juntos || 3, smRun.fila.length); i++) smTrabalhador(smRun);
+  smDesenha();
+}
+function smAvisoSaida(e){ if(smRun && !smRun.fim){ e.preventDefault(); e.returnValue = ""; } }
+async function smTrabalhador(run){
+  for(;;){
+    if(run.parar) break;
+    while(run.pausa && !run.parar) await new Promise(r => setTimeout(r, 500));
+    const it = run.fila.find(x => x.st === "fila"); if(!it || run.parar) break;
+    it.st = "rodando"; smDesenha();
+    const t0 = Date.now(), p = it.p, info = somCatInfo(p.category_id);
+    for(let tent = 0; tent < 3; tent++){
+      try{
+        const d = await somChamar({ name: p.name, brand: p.brand||"", ean: p.ean||"", categoria: info.categoria, subcategoria: info.subcategoria, pesquisar: run.o.pesquisar,
+          existente: { description: p.description||"", specs: p.specs||[], flavor_profile: p.flavor_profile||null, whisky_details: p.whisky_details||null },
+          ...(run.cats ? { categorias: run.cats, categoria_slug_atual: smCatSlug(p.category_id) } : {}) });
+        it.conf = d.confianca; it.avisos = d.avisos || [];
+        if(d.confianca === "baixa" && !run.o.baixa){ it.st = "revisar"; it.msg = "Confiança baixa: abra a ficha e revise."; break; }
+        const { upd, antes } = smDecide(p, d, run.o);
+        if(!Object.keys(upd).length){ it.st = "nada"; it.msg = "Já estava completo."; break; }
+        const lg = await sb.from("sommelier_log").insert({ product_id: p.id, antes, depois: upd, confianca: d.confianca, avisos: it.avisos, lote: run.lote }).select("id").single();
+        if(lg.error) throw new Error("histórico: " + lg.error.message);
+        const { error } = await sb.from("products").update(upd).eq("id", p.id);
+        if(error) throw new Error(error.message);
+        Object.assign(p, upd); it.st = "ok"; it.logId = lg.data.id; it.msg = smResumoMud(upd); break;
+      }catch(e){
+        const m = e.message || String(e);
+        if(/limite|429/i.test(m) && tent < 2){ it.msg = "Limite do Gemini: esperando 1 min…"; smDesenha(); await new Promise(r => setTimeout(r, 60000)); continue; }
+        it.st = "erro"; it.msg = m; break;
+      }
+    }
+    run.feitos++; run.tempos.push(Date.now() - t0); smDesenha();
+  }
+  if(!run.fim && !run.fila.some(x => x.st === "rodando")){
+    run.fim = true; window.removeEventListener("beforeunload", smAvisoSaida);
+    const ok = run.fila.filter(x => x.st === "ok").length;
+    toast(run.parar ? `Lote parado. ${ok} produto(s) atualizado(s).` : `Sommelier terminou: ${ok} produto(s) atualizado(s).`); bipe(); smDesenha();
+  }
+}
+function smDesenha(){
+  const r = smRun, prog = $("#smProg"); if(!prog) return;
+  const pausa = $("#smPausa"), parar = $("#smParar"), ir = $("#smIr");
+  if(!r){ return; }
+  const tot = r.fila.length, c = s => r.fila.filter(x => x.st === s).length, ativo = !r.fim;
+  prog.hidden = false; $("#smLogH").hidden = !r.fila.some(x => x.logId);
+  pausa.hidden = parar.hidden = !ativo; pausa.textContent = r.pausa ? "Continuar" : "Pausar";
+  if(ativo){ ir.textContent = r.parar ? "Parando…" : r.pausa ? "Pausado" : "Trabalhando…"; ir.disabled = true; }
+  else { ir.disabled = false; ir.textContent = "Começar outro lote"; }
+  $("#smBarra").style.transform = `scaleX(${tot ? r.feitos / tot : 0})`;
+  const med = r.tempos.length ? r.tempos.reduce((a, b) => a + b, 0) / r.tempos.length : 0, falta = tot - r.feitos;
+  const resta = ativo && med ? ` · faltam ~${Math.max(1, Math.round(falta * med / (r.o.juntos || 3) / 60000))} min` : "";
+  $("#smStatus").innerHTML = `<b>${r.feitos} de ${tot}</b> · ✓ ${c("ok")} gravados · ${c("nada")} já completos · <span class="sm-rev">${c("revisar")} para revisar</span> · <span class="sm-err">${c("erro")} com erro</span>${resta}${r.pausa && ativo ? " · <b>pausado</b>" : ""}${ativo ? `<br><small>Deixe esta aba aberta até terminar.</small>` : ""}`;
+  const rot = { fila:"na fila", rodando:"analisando…", ok:"gravado", nada:"sem mudança", revisar:"revisar", erro:"erro", desfeito:"desfeito" };
+  const vis = r.fila.filter(x => x.st !== "fila").slice().reverse().slice(0, 300);
+  $("#smLog").innerHTML = vis.map(x => `<div class="sm-it st-${x.st}">
+      <div class="sm-it-h"><b>${esc(x.p.name)}</b><span class="sm-tag t-${x.st}">${rot[x.st]}</span></div>
+      ${x.msg ? `<p>${esc(x.msg)}</p>` : ""}${x.conf ? `<small>confiança ${esc(x.conf)}${(x.avisos||[]).length ? " · ⚠ " + esc(x.avisos[0]) : ""}</small>` : ""}
+      <div class="sm-it-a"><button class="btn-ghost btn-sm" data-sm-abrir="${esc(x.p.id)}">Abrir ficha</button>${x.st === "ok" ? `<button class="btn-ghost btn-sm" data-sm-desfaz="${x.logId}">Desfazer</button>` : ""}</div>
+    </div>`).join("");
+  $("#smLog").querySelectorAll("[data-sm-abrir]").forEach(b => b.onclick = () => openProduct(b.dataset.smAbrir));
+  $("#smLog").querySelectorAll("[data-sm-desfaz]").forEach(b => b.onclick = () => smDesfaz(+b.dataset.smDesfaz, b));
+}
+async function smDesfaz(logId, b){
+  const it = smRun && smRun.fila.find(x => x.logId === logId);
+  if(b) b.disabled = true;
+  const { data: lg, error } = await sb.from("sommelier_log").select("id,product_id,antes,desfeito_em").eq("id", logId).single();
+  if(error || !lg){ toast("Não achei o histórico desse produto."); if(b) b.disabled = false; return false; }
+  if(lg.desfeito_em){ toast("Esse já foi desfeito."); return false; }
+  const up = await sb.from("products").update(lg.antes).eq("id", lg.product_id);
+  if(up.error){ toast("Não deu para desfazer: " + up.error.message); if(b) b.disabled = false; return false; }
+  await sb.from("sommelier_log").update({ desfeito_em: new Date().toISOString() }).eq("id", logId);
+  if(it){ Object.assign(it.p, lg.antes); it.st = "desfeito"; it.msg = "Voltou como era antes."; }
+  if(b){ toast("Desfeito."); smDesenha(); }
+  return true;
+}
+async function smDesfazLote(){
+  if(!smRun) return;
+  const alvos = smRun.fila.filter(x => x.st === "ok" && x.logId);
+  if(!alvos.length){ toast("Nada para desfazer neste lote."); return; }
+  if(!confirm(`Desfazer as mudanças de ${alvos.length} produto(s) deste lote? Eles voltam exatamente como eram antes.`)) return;
+  let n = 0; for(const x of alvos){ if(await smDesfaz(x.logId)) n++; }
+  toast(`${n} produto(s) voltaram como eram.`); smDesenha();
+}
+
 /* tabela de rotas — toda tela nova entra aqui */
 Object.assign(ROUTES, {
   "visao": renderVisao,
@@ -3177,6 +3433,7 @@ Object.assign(ROUTES, {
   "fotos": renderFotos,
   "pedidos": renderPedidos,
   "clientes": renderClientes,
+  "sommelier": renderSommelier,
 });
 
 boot();

@@ -28,6 +28,7 @@ Leia antes de alterar qualquer arquivo.
     ├── migrations/       # SQL das tabelas novas (pedidos, mp_eventos, wa_notificacoes, wa_contatos, clientes)
     ├── functions/checkout/  # pedido + Mercado Pago + webhook + WhatsApp (Evolution API) + testes
     ├── functions/brutt-ia/  # vendedor virtual (Gemini) + testes
+    ├── functions/gerar-ficha-sommelier/  # Sommelier IA (ficha, perfil, categoria) + testes
     ├── CHECKOUT.md       # como ativar/operar o pagamento online
     └── EVOLUTION.md      # instalar a Evolution API (WhatsApp automático) no VPS
 ```
@@ -115,6 +116,12 @@ Admin: roteador por hash (`ROUTES`, `go("nome")`, `rotaAtual()`); cada tela é `
 
 **Produtos em lote:** caixa "Selecionar todos" (`#bulkTodos`) acima da lista marca todos os produtos filtrados; fica "parcial" quando só alguns estão marcados.
 
+**Sommelier em massa** (`#/sommelier`): fila no navegador (1–4 ao mesmo tempo) chamando a função `gerar-ficha-sommelier` (código em `supabase/functions/gerar-ficha-sommelier/`, publicada pelo padrão de import fixado num commit). Regra "só completar" (padrão: descrição ≤80 ou >170 caracteres, ficha ≤2 itens, perfil/whisky vazios) ou "reescrever tudo"; categoria só muda com confiança alta e para um slug que existe. Confiança baixa não grava (fica "para revisar"). Cada gravação vai antes para `sommelier_log` (antes/depois, lote) e pode ser desfeita por produto ou por lote.
+
+**Fotos:** envio já comprime (WebP 88%, até 1000 px). "Otimizar fotos pesadas" (Fotos em lote) recomprime as acima de 100 KB em WebP 86% e só troca se ficar ≥20% menor.
+
+**Celular:** em telas de toque, campos usam 16px (igual à loja) para o iPhone não dar zoom ao tocar.
+
 Não há Storybook nem documentação de componentes além deste arquivo.
 
 ## 4. Assets
@@ -158,4 +165,5 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 6. Rode os testes:
    - `node --experimental-strip-types supabase/functions/checkout/checkout.test.mts`
    - `node --experimental-strip-types supabase/functions/brutt-ia/brutt-ia.test.mts`
+   - `node --experimental-strip-types supabase/functions/gerar-ficha-sommelier/sommelier.test.mts`
 7. Segurança: nada de token/segredo no front. Só a **Public Key** do Mercado Pago (`window.__MP`) e a chave **anon** do Supabase podem ficar no HTML.
