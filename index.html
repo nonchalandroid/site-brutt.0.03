@@ -390,6 +390,14 @@ html.rolando .arrows button::after,html.rolando .ia-bar::before,html.rolando .ia
    nada muda de lugar, só a área desenhada passa a cobrir o trilho inteiro. Mudou a sobra do .rail, mude aqui também. */
 section.sec{margin-inline:-16px;padding-inline:16px}
 @media(max-width:640px){.fire section.sec{margin-inline:-10px;padding-inline:10px}}
+/* barra de busca mais fina que os ícones redondos do topo (42 px); texto continua 16 px (iPhone não dá zoom) */
+.search input{height:36px;padding-top:0;padding-bottom:0;line-height:36px}
+/* Ícones SVG nunca rolam: a regra global *{scrollbar-gutter:stable} reservava a faixa da barra de rolagem DENTRO
+   deles no PC (barra clássica, ~15 px) e apagava ícones pequenos, como a setinha do "Horários". */
+svg{scrollbar-gutter:auto}
+/* relógio no botão "Horários" */
+.hbtn .hrel{width:15px;height:15px;flex:none}
+@media(max-width:480px){.hbtn .hrel{display:none}}   /* celular: sem relógio, para o status "Aberto · até 00:00" não ser cortado */
 </style>
 </head>
 <body>
@@ -412,13 +420,13 @@ section.sec{margin-inline:-16px;padding-inline:16px}
     <div class="hbar-in">
       <span class="hst off" id="hSt" role="status" aria-live="polite"><i class="hdot" aria-hidden="true"></i><b id="hLbl">Verificando…</b><span class="hsep">·</span><span id="hTxt"></span></span>
       <button type="button" class="hsom" id="somBtn" hidden></button>
-      <button type="button" class="hbtn" id="hBtn" aria-expanded="false" aria-controls="hDd">Horários<svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button type="button" class="hbtn" id="hBtn" aria-expanded="false" aria-controls="hDd"><svg class="ic hrel" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="htx">Horários</span><svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     </div>
     <div class="hdd" id="hDd" hidden><ul id="hList"></ul><p class="hnote">Horário de Brasília.</p></div>
   </div>
   <div class="bar">
     <a class="logo" href="#top" aria-label="Tabacaria Brutt"><span class="logo-wrap"><img data-logo width="360" height="332" alt="Tabacaria Brutt"></span></a>
-    <label class="search"><span aria-hidden="true" data-ic="search"></span><input id="q" type="search" placeholder="Buscar produto, sabor ou marca" aria-label="Buscar produtos" autocomplete="off"></label>
+    <label class="search"><span aria-hidden="true" data-ic="search"></span><input id="q" type="search" placeholder="Buscar" aria-label="Buscar produto, sabor ou marca" autocomplete="off"></label>
     <a class="ico" href="https://wa.me/5521996600243?text=Ol%C3%A1%2C%20Brutt!%20Vim%20pelo%20site." target="_blank" rel="noopener" aria-label="WhatsApp da Brutt"><svg class="wa-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></a>
     <button type="button" class="ico" id="goMapa" aria-label="Ver como chegar"><svg class="gmaps" viewBox="0 0 256 367" aria-hidden="true"><path fill="#34a853" d="M70.585 271.865a371 371 0 0 1 28.911 42.642c7.374 13.982 10.448 23.463 15.837 40.31c3.305 9.308 6.292 12.086 12.714 12.086c6.998 0 10.173-4.726 12.626-12.035c5.094-15.91 9.091-28.052 15.397-39.525c12.374-22.15 27.75-41.833 42.858-60.75c4.09-5.354 30.534-36.545 42.439-61.156c0 0 14.632-27.035 14.632-64.792c0-35.318-14.43-59.813-14.430-59.813l-41.545 11.126l-25.23 66.451l-6.242 9.163l-1.248 1.66l-1.66 2.078l-2.914 3.319l-4.164 4.163l-22.467 18.304l-56.17 32.432z"/><path fill="#fbbc04" d="M12.612 188.892c13.709 31.313 40.145 58.839 58.031 82.995l95.001-112.534s-13.384 17.504-37.662 17.504c-27.043 0-48.890-21.595-48.890-48.825c0-18.673 11.234-31.501 11.234-31.501l-64.489 17.280z"/><path fill="#4285f4" d="M166.705 5.787c31.552 10.173 58.558 31.530 74.893 63.023l-75.925 90.478s11.234-13.060 11.234-31.617c0-27.864-23.463-48.680-48.810-48.680c-23.969 0-37.735 17.475-37.735 17.475v-57z"/><path fill="#1a73e8" d="M30.015 45.765C48.860 23.218 82.020 0 127.736 0c22.180 0 38.890 5.823 38.890 5.823L90.290 96.516H36.205z"/><path fill="#ea4335" d="M12.612 188.892S0 164.194 0 128.414c0-33.817 13.146-63.377 30.015-82.649l60.318 50.759z"/></svg></button>
     <button class="ico" id="cartBtn" aria-label="Abrir carrinho"><svg class="cart-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 3.5h2.1c.5 0 .9.3 1 .8l2.2 10.4c.1.6.6 1 1.2 1h8.9c.6 0 1.1-.4 1.2-.9l1.6-7.1c.1-.4-.2-.9-.7-.9H6.2"/><circle cx="9.5" cy="20" r="1.3"/><circle cx="17.5" cy="20" r="1.3"/></svg><span class="badge" id="cartN" hidden></span></button>
