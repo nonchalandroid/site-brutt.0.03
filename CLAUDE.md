@@ -14,7 +14,7 @@ Leia antes de alterar qualquer arquivo.
 /
 ├── index.html            # LOJA inteira: <head>, CSS (3 blocos <style>), HTML base e o JS principal inline
 ├── js/
-│   ├── fluidez.js        # Lenis (scroll suave), rastro do mouse/dedo, navegação ←/→ e gesto no modal de produto
+│   ├── fluidez.js        # Lenis (scroll suave), navegação ←/→ e gesto no modal de produto
 │   └── checkout-mp.js    # window.MPX: pagamento Mercado Pago (Payment Brick, Pix), campo WhatsApp, pin da loja
 ├── vendor/lenis.min.js   # Lenis 1.3.26 servido localmente (sem CDN)
 ├── admin/index.html      # PAINEL interno (login Supabase), roteador por hash + abas
@@ -87,8 +87,8 @@ Componentes são **funções JS que devolvem template strings HTML**, renderizad
 function card(p,ctx){ … return `<article class="card">
   <button class="thumb" data-open="${p.id}">${media(p)}${tag}</button>
   <div class="info"><h3 data-open="${p.id}">${esc(p.n)}</h3>
-  <div class="price" data-trail="accent">${R(p.price)}</div>
-  <button class="add" data-trail="accent" data-add="${p.id}">Adicionar</button></div></article>` }
+  <div class="price">${R(p.price)}</div>
+  <button class="add" data-add="${p.id}">Adicionar</button></div></article>` }
 ```
 
 Principais "componentes" da loja (todos em `index.html`):
@@ -131,7 +131,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - **CSS global, sem metodologia formal** (nem BEM nem módulos). Classes curtas em português/abreviadas (`.eopt`, `.dlv-res`, `.pm-buy`, `.popt`).
 - **Três blocos `<style>` no `index.html`, em ordem de cascata:**
   1. o original (minificado, uma linha),
-  2. `#fluidez` (Lenis, rastro, micro-interações, checkout/pagamento),
+  2. `#fluidez` (Lenis, micro-interações, checkout/pagamento),
   3. `#ajustes` (correções de alinhamento e responsividade).
   Regras posteriores sobrescrevem anteriores: **CSS novo vai no fim do bloco adequado**, não edite a linha minificada salvo para corrigir um valor.
 - **Animações:** só `transform` e `opacity`, curva `var(--ease-app)`; sempre com alternativa em `@media(prefers-reduced-motion:reduce)`. Elevação/brilho no hover = pseudo-elemento cuja **opacidade** anima (não anime `box-shadow`).
