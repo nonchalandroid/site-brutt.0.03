@@ -676,6 +676,16 @@ details.nx-box[open]{padding-bottom:12px}
 .bulk-todos input:checked::after{content:"";width:5px;height:10px;border:solid var(--accent-ink);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
 .bulk-todos input:indeterminate::after{content:"";width:10px;height:2.5px;background:var(--accent-ink);border-radius:2px}
 
+/* ---------- celular: igual à loja — campos com 16px para o iPhone/Android não dar zoom ao tocar, e nada de rolar de lado ---------- */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{overflow-x:clip}
+@media (hover:none) and (pointer:coarse){
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px!important}
+}
+.hr-tempo input[type=time]{min-width:0}
+@media (max-width:560px){.hr-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+@media (max-width:360px){.hr-row{padding:12px 10px;gap:10px}.hr-tempo input[type=time]{padding:10px 6px}}
+
 /* ---------- clientes ---------- */
 .cli-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
 .cli-bar .cli-q{flex:1 1 240px;min-width:0}
