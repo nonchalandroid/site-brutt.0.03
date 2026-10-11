@@ -187,7 +187,9 @@ export async function pagar(body: any, urlFuncao: string) {
     await mp(`/v1/payments/${ped.mp_payment_id}`, { method: "PUT", body: JSON.stringify({ status: "cancelled" }) }).catch(() => {});
   }
   const tentativa = ped.tentativas + 1;
-  await sbPatch(`pedidos?id=eq.${id}`, { tentativas: tentativa, metodo, status: "aguardando_pagamento", mp_payment_id: null, pix_qr: null, pix_qr_base64: null, pix_expira_em: null });
+  const patch: any = { tentativas: tentativa, metodo, status: "aguardando_pagamento", mp_payment_id: null, pix_qr: null, pix_qr_base64: null, pix_expira_em: null };
+  if (/^\S+@\S+\.\S+$/.test(email)) patch.cliente_email = email.toLowerCase();   // vai para o cadastro de clientes (gatilho no banco)
+  await sbPatch(`pedidos?id=eq.${id}`, patch);
   let r = await mp("/v1/payments", { method: "POST", headers: { "X-Idempotency-Key": `${ped.id}-${tentativa}` }, body: JSON.stringify(pay) });
   // Pix recusado por causa do e-mail digitado (inválido no MP, ou o mesmo da conta da loja): tenta UMA vez com o
   // e-mail interno do pedido — o cliente nunca fica sem QR Code por causa do e-mail.
