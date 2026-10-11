@@ -133,7 +133,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - **Fotos de produto:** vêm do Supabase (`product_images.url`); fallback local em `imagens/` via `fotoUrl()`. Sempre `loading="lazy" decoding="async"`.
 - **Logo:** constante `LOGO` (WebP base64 inline) aplicada em `img[data-logo]`.
 - **Vídeo** `fumaca.mp4`: só carrega após a 1ª interação (economia de dados).
-- **Intro** `#intro` (início do `<body>`): selo da marca + brasa animada; some quando o catálogo aparece (`js/fluidez.js`), mínimo ~1,4 s só na 1ª visita da sessão, e se remove sozinha em 9 s se algo falhar.
+- **Intro** `#intro` (início do `<body>`): selo da marca + brasa animada (ritmo lento: brasa/pulso 3,8 s, anel 3,4 s, fagulhas 3,5 s); some quando o catálogo aparece (`js/fluidez.js`), mínimo ~2,2 s só na 1ª visita da sessão, saída de 0,9 s, e se remove sozinha em 9 s se algo falhar.
 - **Favicons** (`favicon/`): `favicon.ico` (16–256), `favicon-16x16.png`/`32x32`/`48x48` (só o "B" dourado, legível em tamanho pequeno), `apple-touch-icon.png` 180 (opaco), `android-chrome-192/512`, `maskable-512` + `site.webmanifest`.
 - **CDN permitida:** Google Fonts, `sdk.mercadopago.com/js/v2` (obrigatório ser do Mercado Pago, carregado sob demanda), Supabase. Bibliotecas JS novas → servir em `vendor/` (fixar versão).
 
@@ -157,6 +157,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
   Regras posteriores sobrescrevem anteriores: **CSS novo vai no fim do bloco adequado**, não edite a linha minificada salvo para corrigir um valor.
 - **Animações:** só `transform` e `opacity`, curva `var(--ease-app)`; sempre com alternativa em `@media(prefers-reduced-motion:reduce)`. Elevação/brilho no hover = pseudo-elemento cuja **opacidade** anima (não anime `box-shadow`).
 - **Responsivo (mobile-first na prática):** quebras usadas `≤380px`, `≤420px`, `≤480px`, `≤640px` (gaveta vira bottom sheet), `≥641px`, `≥1700/2200/3000px` (alarga `--maxw`); toque vs. mouse com `(hover:hover) and (pointer:fine)`.
+- **Trilhos (`.rail`):** têm margem negativa e espaçamento interno iguais (16 px; 10 px no `.fire` até 640 px) e `scroll-padding-inline` com o MESMO valor. Mudou um, mude o outro: senão o encaixe da rolagem abre o trilho andado e o 1º card fica cortado.
 - Modais/gavetas travam a página com `html.is-locked` (JS `syncLock`); o Lenis pausa junto. Contêineres com rolagem própria precisam estar no `prevent` do Lenis (`js/fluidez.js`).
 - Teclado virtual: alturas via `--vvh`/`--vvt` (loja) e `--ia-vh`/`--ia-kb` (Brutt IA), medidas com `visualViewport`.
 
