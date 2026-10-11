@@ -34,12 +34,13 @@ function pagamentoHTML(){
 }
 document.addEventListener("input",function(e){if(e.target&&e.target.id==="whats"){var v=mascara(e.target.value);if(v!==e.target.value)e.target.value=v;whatsVal=v;try{localStorage.setItem("brutt_whats",JSON.stringify(v))}catch(_){}}});
 document.addEventListener("click",function(e){
-  var b=e.target.closest&&e.target.closest("[data-pay],[data-pin-copy],[data-mp-voltar],[data-mp-copiar],[data-mp-tentar]");if(!b)return;
+  var b=e.target.closest&&e.target.closest("[data-pay],[data-pin-copy],[data-mp-voltar],[data-mp-copiar],[data-mp-tentar],[data-mp-whats]");if(!b)return;
   if(b.dataset.pay){metodo=b.dataset.pay;document.querySelectorAll(".popt").forEach(function(x){var on=x.dataset.pay===metodo;x.classList.toggle("sel",on);x.setAttribute("aria-checked",String(on))})}
   else if(b.hasAttribute("data-pin-copy"))copiarPin(b);
   else if(b.hasAttribute("data-mp-voltar"))voltar();
   else if(b.hasAttribute("data-mp-copiar"))copiarPix(b);
   else if(b.hasAttribute("data-mp-tentar"))montarBrick();
+  else if(b.hasAttribute("data-mp-whats"))viaWhats();
 });
 function copiarTexto(t){
   if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(t).catch(function(){return fb(t)});
@@ -90,7 +91,15 @@ function iniciar(o){
   }).catch(function(){falha("Sem conexão. Confira sua internet e tente de novo.")});
 }
 function spin(){return'<svg class="mp-spin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg>'}
-function falha(msg){$("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button><p class="mp-err" role="alert">'+esc(msg)+'</p>'}
+/* Rede de proteção: se o pagamento online falhar, o cliente não perde a venda — manda o mesmo pedido pelo WhatsApp. */
+var BTN_WHATS='<button type="button" class="go mp-whats" data-mp-whats>Enviar pedido pelo WhatsApp</button>';
+function falha(msg){$("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button><p class="mp-err" role="alert">'+esc(msg)+'</p>'+BTN_WHATS}
+function viaWhats(){
+  clearTimeout(poll);clearInterval(_tempo);desmontar();
+  CFG.publicKey="";pedido=null;            /* desliga o pagamento online nesta visita */
+  drawCart("checkout");
+  if(typeof sendOrder==="function")sendOrder(true);
+}
 function resumoHTML(){
   var p=pedido,dif=Math.abs(p.total-(total()+taxaAtual()))>=.01;
   return'<div class="mp-res"><div><span>Pedido</span><b>#'+esc(p.numero)+'</b></div>'
@@ -135,7 +144,7 @@ function montarBrick(){
 }
 function erroPag(msg,botao){
   var e=$("#mpErr");if(!e)return;
-  e.innerHTML=esc(msg)+(botao?' <button type="button" class="chip" data-mp-tentar>Tentar de novo</button>':"");e.hidden=false;
+  e.innerHTML=esc(msg)+(botao?' <button type="button" class="chip" data-mp-tentar>Tentar de novo</button>':"")+'<span class="mp-ou">ou</span>'+BTN_WHATS;e.hidden=false;
   try{e.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(_){}
 }
 var RECUSA={cc_rejected_insufficient_amount:"Saldo ou limite insuficiente.",cc_rejected_bad_filled_security_code:"Código de segurança inválido.",cc_rejected_bad_filled_date:"Data de validade inválida.",cc_rejected_bad_filled_card_number:"Número do cartão inválido.",cc_rejected_bad_filled_other:"Confira os dados do cartão.",cc_rejected_call_for_authorize:"O banco pediu autorização: libere o pagamento com o emissor do cartão.",cc_rejected_card_disabled:"Cartão desativado. Fale com o emissor.",cc_rejected_duplicated_payment:"Pagamento duplicado: esse valor já foi enviado.",cc_rejected_high_risk:"Pagamento recusado por segurança. Tente outro cartão ou Pix.",cc_rejected_max_attempts:"Limite de tentativas atingido. Use outro cartão ou Pix."};
