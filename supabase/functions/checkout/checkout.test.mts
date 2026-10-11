@@ -133,6 +133,13 @@ await t("webhook válido confirma pelo GET no MP e manda WhatsApp uma vez; dupli
   await C.handler(new Request(`${F}?acao=webhook`, { method: "POST", headers: assina(id, "req-2"), body: JSON.stringify({ type: "payment", data: { id } }) })); await flush();
   assert.equal(whats.length, antes);
 });
+await t("Pix sem e-mail: o servidor usa o e-mail interno do pedido e gera o QR", async () => {
+  const c = await call("criar", { ...base, whats: "21944443333", entrega: { tipo: "cliente" } });
+  proximoMp = { status: "pending", status_detail: "pending_waiting_transfer" };
+  const p = await call("pagar", { pedido_id: c.j.pedido_id, metodo: "pix", formData: { payment_method_id: "pix" } });
+  assert.equal(p.status, 200); assert.match(p.j.pix.qr_code, /^000201PIX/);
+  assert.equal(mpPays.get(String(mpSeq))._req.payer.email, `pix+${c.j.numero.toLowerCase()}@tabacariabrutt.com.br`);
+});
 await t("saudação não se repete para o mesmo contato", async () => {
   const c = await call("criar", { ...base, entrega: { tipo: "cliente" } });
   proximoMp = { status: "approved", status_detail: "accredited" };

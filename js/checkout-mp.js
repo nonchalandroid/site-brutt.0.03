@@ -123,9 +123,17 @@ function carregaSDK(){
   return _sdk;
 }
 function desmontar(){if(brick){try{brick.unmount()}catch(e){}brick=null}}
+/* Pix: sem formulário — pede o QR direto ao servidor (o e-mail que o Mercado Pago exige é preenchido lá). */
+function gerarPix(){
+  var a=$("#mpArea");if(!a)return;
+  var e=$("#mpErr");if(e)e.hidden=true;
+  a.innerHTML='<div class="mp-load" role="status">'+spin()+'<span>Gerando o QR Code Pix…</span></div>';
+  pagar({payment_method_id:"pix",payer:emailVal?{email:emailVal}:{}}).catch(function(){var x=$("#mpArea");if(x&&!x.querySelector(".pix"))x.innerHTML=""});
+}
 function montarBrick(){
   desmontar();
   var area=$("#mpArea");if(!area)return;
+  if(metodo==="pix")return gerarPix();
   area.innerHTML='<div id="mpBrick"></div><div class="mp-load" id="mpLoad" role="status">'+spin()+'<span>Carregando o pagamento seguro…</span></div>';
   carregaSDK().then(function(){
     if(!$("#mpBrick"))return;

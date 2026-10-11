@@ -164,7 +164,9 @@ export async function pagar(body: any, urlFuncao: string) {
   if (ident?.type && ident?.number) pay.payer.identification = { type: texto(ident.type, 10), number: String(ident.number).replace(/\D/g, "").slice(0, 14) };
   if (metodo === "pix") {
     if (pm !== "pix") return { erro: "Forma de pagamento inválida.", status: 400 };
-    if (!/^\S+@\S+\.\S+$/.test(email)) return { erro: "Digite um e-mail válido para o Pix.", status: 400 };
+    // O Mercado Pago exige e-mail do pagador no Pix. O site gera o QR direto (sem pedir e-mail ao cliente):
+    // sem e-mail informado, usa um endereço interno do pedido.
+    if (!/^\S+@\S+\.\S+$/.test(email)) pay.payer.email = `pix+${ped.numero.toLowerCase()}@tabacariabrutt.com.br`;
     pay.payment_method_id = "pix";
     pay.date_of_expiration = dataMP(new Date(Date.now() + PIX_MINUTOS * 60e3));
   } else {
