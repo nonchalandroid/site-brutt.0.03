@@ -100,7 +100,7 @@ function iniciar(o){
 function spin(){return'<svg class="mp-spin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg>'}
 /* Rede de proteção: se o pagamento online falhar, o cliente não perde a venda — manda o mesmo pedido pelo WhatsApp. */
 var BTN_WHATS='<button type="button" class="go mp-whats" data-mp-whats>Enviar pedido pelo WhatsApp</button>';
-function falha(msg){$("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button><p class="mp-err" role="alert">'+esc(msg)+'</p>'+BTN_WHATS}
+function falha(msg){if(window.SOM)SOM.toca("falha");$("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button><p class="mp-err" role="alert">'+esc(msg)+'</p>'+BTN_WHATS}
 function viaWhats(){
   clearTimeout(poll);clearInterval(_tempo);desmontar();
   CFG.publicKey="";pedido=null;            /* desliga o pagamento online nesta visita */
@@ -158,7 +158,7 @@ function montarBrick(){
   }).catch(function(){erroPag("Não foi possível carregar o Mercado Pago. Confira sua internet.",true)});
 }
 function erroPag(msg,botao){
-  var e=$("#mpErr");if(!e)return;
+  var e=$("#mpErr");if(!e)return;if(window.SOM)SOM.toca("falha");
   e.innerHTML=esc(msg)+(botao?' <button type="button" class="chip" data-mp-tentar>Tentar de novo</button>':"")+'<span class="mp-ou">ou</span>'+BTN_WHATS;e.hidden=false;
   try{e.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(_){}
 }
@@ -178,7 +178,7 @@ function pagar(fd){
   });
 }
 function aguardando(html){desmontar();var a=$("#mpArea");if(a)a.innerHTML=html;acompanhar()}
-function mostrarPix(px){
+function mostrarPix(px){if(window.SOM)SOM.toca("pix");
   desmontar();
   var a=$("#mpArea");if(!a)return;
   var res=document.querySelector("#dBody .mp-res");
@@ -215,7 +215,7 @@ function acompanhar(){
     },document.hidden?8e3:4e3);
   })();
 }
-function aviso(t,s){var a=$("#mpArea");if(a)a.innerHTML='<div class="mp-wait off"><b>'+esc(t)+'</b><span>'+esc(s)+'</span><button type="button" class="go" data-mp-tentar>Gerar novo pagamento</button></div>'}
+function aviso(t,s){if(window.SOM)SOM.toca("falha");var a=$("#mpArea");if(a)a.innerHTML='<div class="mp-wait off"><b>'+esc(t)+'</b><span>'+esc(s)+'</span><button type="button" class="go" data-mp-tentar>Gerar novo pagamento</button></div>'}
 /* Mensagem do pedido PAGO para o WhatsApp da loja (o cliente toca em enviar). Valores vindos do servidor. */
 function msgLojaPago(numero){
   var p=pedido||{},c=_ctx||{},L=[];
@@ -231,7 +231,7 @@ function msgLojaPago(numero){
   L.push("Pagamento confirmado pelo Mercado Pago no site.");
   return L.join("\n");
 }
-function sucesso(numero){
+function sucesso(numero){if(window.SOM)SOM.toca("pago");
   clearTimeout(poll);clearInterval(_tempo);desmontar();
   var reserva=_ctx&&_ctx.reserva,txtLoja=pedido?msgLojaPago(numero):"",idPed=pedido&&pedido.pedido_id;
   try{sSet("brutt_nome",_ctx&&_ctx.nome||"")}catch(e){}

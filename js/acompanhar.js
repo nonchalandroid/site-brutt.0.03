@@ -147,14 +147,14 @@ function poll(id){
 }
 function avisaMudanca(antes,a){
   if(!antes||antes.status===a.status&&!!antes.saiu===!!a.saiu)return;
-  var t=topo(a);_toast(t[1]);
+  var t=topo(a);_toast(t[1]);if(window.SOM)SOM.toca(a.status==="pago"&&antes.status!=="pago"?"pago":"etapa");
   try{if(navigator.vibrate&&!reduz)navigator.vibrate(120)}catch(_){}
 }
 function abrir(id,op){
   if(!UUID.test(String(id)))return;
   op=op||{};
   guarda(id,op.numero||(ultimo[id]&&ultimo[id].numero)||"",op.txtLoja||"");
-  var m=el();abertoId=id;
+  var m=el();if(!m.classList.contains("on")&&window.SOM)SOM.toca("abre");abertoId=id;
   m.innerHTML=ultimo[id]?html(ultimo[id],id):'<div class="ac-h"><span class="ac-num">Pedido'+(op.numero?' <b>#'+_esc(op.numero)+'</b>':"")+'</span><button type="button" class="ac-x" data-acomp-fechar aria-label="Fechar">×</button></div><div class="ac-load" role="status"><span class="ac-spin"></span>Carregando seu pedido…</div>';
   var v=document.getElementById("veil");if(v)v.classList.add("on");
   m.classList.add("on");m.setAttribute("aria-hidden","false");m.scrollTop=0;
@@ -173,7 +173,7 @@ function fechar(forcar){
     return;
   }
   var m=document.getElementById("acomp");abertoId=null;clearTimeout(tPoll);
-  if(!m)return;m.classList.remove("on");m.setAttribute("aria-hidden","true");
+  if(!m)return;if(m.classList.contains("on")&&window.SOM)SOM.toca("fecha");m.classList.remove("on");m.setAttribute("aria-hidden","true");
   if(!document.querySelector("#drawer.on,#pm.on")){var v=document.getElementById("veil");if(v)v.classList.remove("on")}
   pill();
 }

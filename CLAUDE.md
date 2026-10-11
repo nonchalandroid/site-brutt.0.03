@@ -16,8 +16,11 @@ Leia antes de alterar qualquer arquivo.
 ├── js/
 │   ├── fluidez.js        # Lenis (scroll suave), navegação ←/→ e gesto no modal de produto
 │   ├── checkout-mp.js    # window.MPX: pagamento Mercado Pago (Payment Brick, Pix), campo WhatsApp, pin da loja
-│   └── acompanhar.js     # window.ACOMP: tela "Acompanhe seu pedido" (pós-pagamento, estilo iFood) + atalho no topo
+│   ├── acompanhar.js     # window.ACOMP: tela "Acompanhe seu pedido" (pós-pagamento, estilo iFood) + atalho no topo
+│   └── sons.js           # window.SOM: sons das ações da loja + botão de som no topo (#somBtn)
 ├── vendor/lenis.min.js   # Lenis 1.3.26 servido localmente (sem CDN)
+├── vendor/fonts/         # DejaVu Sans Mono (woff2, recorte Latin) para var(--mono)
+├── sons/                 # sons de interface (mp3) + LEIA-ME.md com a tabela ação → arquivo
 ├── admin/index.html      # PAINEL interno (login Supabase), roteador por hash + abas
 ├── 404.html              # só redireciona /qualquer-rota → /?r=... (o index reescreve a URL)
 ├── favicon/              # ícones oficiais (ver §4)
@@ -30,6 +33,7 @@ Leia antes de alterar qualquer arquivo.
     ├── functions/checkout/  # pedido + Mercado Pago + webhook + WhatsApp (Evolution API) + testes
     ├── functions/brutt-ia/  # vendedor virtual (Gemini) + testes
     ├── functions/gerar-ficha-sommelier/  # Sommelier IA (ficha, perfil, categoria) + testes
+    ├── functions/equipe/  # criar login da equipe e trocar senha (tela Equipe do admin) + testes
     ├── CHECKOUT.md       # como ativar/operar o pagamento online
     └── EVOLUTION.md      # instalar a Evolution API (WhatsApp automático) no VPS
 ```
@@ -48,7 +52,7 @@ Leia antes de alterar qualquer arquivo.
   --ok-txt:#6fd3a0; /* texto verde sobre fundo escuro */
   --ok-line:#3fbf7f;/* borda/indicador verde (status "Aberto", barra do mínimo) */
   --ok-bg:#1c3a2b;  /* fundo verde suave */
-  --head:"Anton",…; --body:"Barlow",…; --mono:"Geist Mono",…;
+  --head:"Anton",…; --body:"Inter",…; --mono:"DejaVu Sans Mono",…;
   --maxw:1200px;    /* cresce em telas grandes: 1380 / 1560 / 1760px */
   --ease-app:cubic-bezier(.16,1,.3,1);   /* curva padrão de TODAS as animações */
   --vvh / --vvt / --hh                   /* altura visível, topo da viewport e altura do header (setados via JS) */
@@ -62,7 +66,7 @@ Regras:
 - **Taxa de entrega** (`ENTREGA_LOJA` no `index.html`, igual em `supabase/functions/checkout` e `brutt-ia`): R$ 5,00 até 2 km de rota; + R$ 1,50 por km fracionado; só até 2,5 km; teto R$ 8,00. Mudou num lugar, mude nos três.
 - **Brutt IA:** paleta própria roxa/azul em `.ia{--ia-a…--ia-d}` (identidade do assistente). Não misturar com o dourado.
 - **Escala de fonte** (px inteiros, sem .5): 11 · 12 · 13 · 14 · 15 · 16 · 18 · 20 · 22 · 24 · 26 · 28 · 30 · 32 · 34. Títulos display usam `var(--head)` em CAIXA ALTA.
-- **Famílias:** só via `var(--head)`, `var(--body)`, `var(--mono)`. Fontes carregadas do Google Fonts no `<head>`.
+- **Famílias:** só via `var(--head)`, `var(--body)`, `var(--mono)`. Títulos = **Anton** e texto = **Inter** (Google Fonts, no `<head>`); números/códigos = **DejaVu Sans Mono**, servida de `vendor/fonts/` (`@font-face` no fim do `#fluidez`, só caracteres do português, licença em `vendor/fonts/DEJAVU-LICENSE.txt`). O admin usa as mesmas Inter e DejaVu Sans Mono; só o menu lateral dele fica em Geist.
 - **Raios:** 10–14px em botões/cards, 999px em chips/pílulas, 18px no topo de sheets/modais.
 
 ### Admin (`admin/index.html`, `:root` próprio)
@@ -79,7 +83,7 @@ Paleta do painel = **variação** da loja (café/espresso + dourado-âmbar), nã
 --ok:#79c48e; --warn:#e5843f; --danger:#e15a4a; --info:#a9b3bd;   /* + *-soft para fundos */
 --gold / --gold-2 / --red / --green = apelidos antigos (templates do JS), apontam para os tokens acima
 ```
-Fontes: **Geist** (texto e títulos) + **Geist Mono** (códigos, EAN, valores), via Google Fonts. Ícones: mapa `ICON` + `ic(nome)` (traço 24×24, desenho do Lucide/ISC). Os tokens do admin **não** são os da loja: não copie valores de um para o outro.
+Fontes: **Inter** (texto e títulos, Google Fonts) + **DejaVu Sans Mono** (códigos, EAN, valores; servida de `/vendor/fonts/`, a mesma da loja). Só o **menu lateral** (`.side`) fica em **Geist** / **Geist Mono**: as variáveis `--font`/`--mono` são redefinidas no `.side`. Ícones: mapa `ICON` + `ic(nome)` (traço 24×24, desenho do Lucide/ISC). Os tokens do admin **não** são os da loja: não copie valores de um para o outro.
 
 Não há sistema de transformação de tokens (Style Dictionary etc.). Ao importar do Figma, **mapeie as variáveis do Figma para as custom properties acima** em vez de criar novas cores.
 
@@ -112,6 +116,8 @@ Interação por **delegação de eventos**: um único `document.addEventListener
 
 Admin: roteador por hash (`ROUTES`, `go("nome")`, `rotaAtual()`); cada tela é `renderX()` e começa com `topbarHTML(titulo)` + `bindTopbar()`, que desenham a **sidebar** (fixa a partir de 1024px; abaixo disso vira gaveta com o botão ☰) e a barra superior. A navegação vem de `NAV = [[grupo, [[rota, rótulo, ícone, badge?], …]], …]` (`ABAS` é derivado dele). **Tela nova = função `renderX` + entrada em `ROUTES` + item em `NAV`.** Padrão visual de tela: `<div class="pg"><h2 class="pg-t">…</h2><p class="pg-d">…</p>` + conteúdo. Entrada sem hash vai para `#/visao` (Visão geral); `#/` continua sendo Produtos.
 
+**Equipe e papéis** (`#/equipe`, tabela `staff.role`): **Dono** (`owner`) faz tudo e cria/altera administradores; **Administrador** (`admin`) faz tudo e gerencia só atendentes; **Atendente** (`atendente`) só vê **Pedidos** (`ROTAS_ATENDENTE`, menu filtrado por `podeRota`). Quem barra de verdade é o banco: `is_gestor()` (dono/admin) nas políticas de produtos, categorias, fotos (tabela e storage), horários, clientes, `sommelier_log`, `registrar_movimento_estoque` e `clientes_importar`; pedidos continuam com `is_staff()`. Lista/nome/papel/ativo = RPCs `equipe_listar` e `equipe_alterar` (hierarquia em `equipe_pode`; ninguém muda o próprio papel nem se desativa; o dono não é alterável). Criar login e trocar senha = função `supabase/functions/equipe` (usa a chave de serviço; confere a permissão chamando `equipe_pode` com o token de quem pediu). Ninguém é apagado: sair da loja = desativar (`active=false`, perde o acesso na hora).
+
 **Clientes** (`#/clientes`, tabela `clientes`, RLS só equipe): lista do Nex + quem compra no site. O gatilho `pedidos_cliente` cria/completa o cliente a cada pedido e soma pedidos pagos; `clientes_importar(lista, origem)` mescla a exportação do Nex (casa por uid → código → WhatsApp e só preenche campo vazio, nunca sobrescreve o que a equipe editou). WhatsApp é guardado como `55DDD9XXXXXXXX` (`whats_normaliza` no banco = `cliWhats` no admin). "Completo" = nome + WhatsApp + endereço (e-mail é opcional).
 
 **Alerta de pedido novo:** pedido `pago` com `visto_em` vazio pisca em vermelho (badge do menu, visão geral e cartão em Pedidos, animação `piscaNovo` só de opacidade) até alguém da equipe tocar nele ou concluir (RPC `pedido_marcar_visto`). O painel confere a cada 30 s (`ligaVigia`): pedido novo dá aviso na tela, bipe curto e "(N) 🔴 Pedido novo" no título da aba.
@@ -137,6 +143,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - **Fotos de produto:** vêm do Supabase (`product_images.url`); fallback local em `imagens/` via `fotoUrl()`. Sempre `loading="lazy" decoding="async"`.
 - **Logo:** constante `LOGO` (WebP base64 inline) aplicada em `img[data-logo]`.
 - **Vídeo** `fumaca.mp4`: só carrega após a 1ª interação (economia de dados).
+- **Sons** (`sons/*.mp3`, `js/sons.js`, só na loja): `SOM.toca("ação")` (tabela ação → arquivo em `sons/LEIA-ME.md`). Nada toca nem é baixado antes do 1º toque do cliente; depois baixa os 24 sons (~50 KB). Um som por ação: o que for pedido na mesma tarefa vira um só, o de maior prioridade (pagar fecha a gaveta e abre o acompanhamento, mas só toca "pago"). Volume baixo, `audioSession` "ambient" (respeita o modo silencioso do iPhone e não pausa a música do cliente). Botão `#somBtn` na barra do topo liga/desliga (salvo em `localStorage.brutt_som`); até 480 px a barra fica compacta para o status "Aberto · até 00:00" não ser cortado. Cliques simples (setas, filtros, opções, copiar) tocam por delegação no `sons.js`; o resto é chamado no ponto do código onde a ação dá certo ou errado.
 - **Intro** `#intro` (início do `<body>`): selo da marca + brasa animada (ritmo lento: brasa/pulso 3,8 s, anel 3,4 s, fagulhas 3,5 s); some quando o catálogo aparece (`js/fluidez.js`), mínimo ~2,2 s só na 1ª visita da sessão, saída de 0,9 s, e se remove sozinha em 9 s se algo falhar.
 - **Favicons** (`favicon/`): `favicon.ico` (16–256), `favicon-16x16.png`/`32x32`/`48x48` (só o "B" dourado, legível em tamanho pequeno), `apple-touch-icon.png` 180 (opaco), `android-chrome-192/512`, `maskable-512` + `site.webmanifest`.
 - **CDN permitida:** Google Fonts, `sdk.mercadopago.com/js/v2` (obrigatório ser do Mercado Pago, carregado sob demanda), Supabase. Bibliotecas JS novas → servir em `vendor/` (fixar versão).
@@ -161,7 +168,9 @@ Não há Storybook nem documentação de componentes além deste arquivo.
   Regras posteriores sobrescrevem anteriores: **CSS novo vai no fim do bloco adequado**, não edite a linha minificada salvo para corrigir um valor.
 - **Animações:** só `transform` e `opacity`, curva `var(--ease-app)`; sempre com alternativa em `@media(prefers-reduced-motion:reduce)`. Elevação/brilho no hover = pseudo-elemento cuja **opacidade** anima (não anime `box-shadow`).
 - **Responsivo (mobile-first na prática):** quebras usadas `≤380px`, `≤420px`, `≤480px`, `≤640px` (gaveta vira bottom sheet), `≥641px`, `≥1700/2200/3000px` (alarga `--maxw`); toque vs. mouse com `(hover:hover) and (pointer:fine)`.
-- **Trilhos (`.rail`):** têm margem negativa e espaçamento interno iguais (16 px; 10 px no `.fire` até 640 px) e `scroll-padding-inline` com o MESMO valor. Mudou um, mude o outro: senão o encaixe da rolagem abre o trilho andado e o 1º card fica cortado.
+- **Trilhos (`.rail`):** têm margem negativa e espaçamento interno iguais (16 px; 10 px no `.fire` até 640 px) e `scroll-padding-inline` com o MESMO valor. Mudou um, mude o outro: senão o encaixe da rolagem abre o trilho andado e o 1º card fica cortado. A seção (`section.sec`, que usa `content-visibility:auto` e por isso recorta o que passa da borda dela) tem a MESMA sobra (`margin-inline` negativa + `padding-inline` igual): sem isso os cards aparecem cortados por uma linha reta antes da borda da tela ou do quadro dourado.
+- **Ícones SVG:** a linha minificada tem `*{scrollbar-gutter:stable}`, que no PC (barra de rolagem clássica) reservava a faixa da barra DENTRO de ícones pequenos e os apagava (a setinha do "Horários" sumia). O `#ajustes` desfaz isso com `svg{scrollbar-gutter:auto}`; não remova.
+- **Topo:** busca com 36 px de altura (menor que os ícones redondos de 42 px; texto 16 px) e texto "Buscar". Botão "Horários" com relógio no PC (some até 480 px, junto com a setinha, para o status não ser cortado).
 - Modais/gavetas travam a página com `html.is-locked` (JS `syncLock`); o Lenis pausa junto. Contêineres com rolagem própria precisam estar no `prevent` do Lenis (`js/fluidez.js`).
 - Teclado virtual: alturas via `--vvh`/`--vvt` (loja) e `--ia-vh`/`--ia-kb` (Brutt IA), medidas com `visualViewport`.
 
@@ -176,6 +185,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
    - `node --experimental-strip-types supabase/functions/checkout/checkout.test.mts`
    - `node --experimental-strip-types supabase/functions/brutt-ia/brutt-ia.test.mts`
    - `node --experimental-strip-types supabase/functions/gerar-ficha-sommelier/sommelier.test.mts`
+   - `node --experimental-strip-types supabase/functions/equipe/equipe.test.mts`
 7. Segurança: nada de token/segredo no front. Só a **Public Key** do Mercado Pago (`window.__MP`) e a chave **anon** do Supabase podem ficar no HTML.
 
 **Pix online ligado para todos** (desde 11/10/2026): `MP_PRODUCAO` em `index.html` tem a Public Key de produção. Para voltar ao pedido pelo WhatsApp, deixe `MP_PRODUCAO=""` (ver `supabase/CHECKOUT.md`).

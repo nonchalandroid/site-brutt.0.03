@@ -48,6 +48,7 @@ function vai(dir,jaArrastou){
   var l=listaDe(byId[id]),i=l.findIndex(function(x){return x.id===id});
   if(i<0||l.length<2)return;
   var prox=l[i+dir];if(!prox){volta();return}     /* sem voltar ao início: não confunde o fim da categoria */
+  if(window.SOM)SOM.toca("seta");                  /* troca de produto: seta, teclado ←/→ ou arrastar */
   var g=pm.querySelector(".pm-grid");
   var troca=function(){
     pm.classList.remove("nav-l","nav-r","sai-l","sai-r");void pm.offsetWidth;
