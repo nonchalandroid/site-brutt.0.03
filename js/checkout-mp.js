@@ -29,6 +29,8 @@ function clienteHTML(){
 var OPT=[["pix","Pix","QR Code na hora"]];
 var PAY_IC={pix:'<path d="M12 2.6 21.4 12 12 21.4 2.6 12Z"/><path d="M8.6 9.2 12 12.6l3.4-3.4M8.6 14.8 12 11.4l3.4 3.4"/>',cartao:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19M6 15h4"/>'};
 function pagamentoHTML(){
+  var teste=CFG.teste?'<p class="mp-teste">🧪 MODO TESTE do pagamento online.</p>':"";
+  if(OPT.length===1)return teste+'<div class="pix-aviso"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+PAY_IC.pix+'</svg><span><b>Pagamento por Pix</b><small>Ao tocar no botão, o QR Code e o código copia e cola aparecem na hora. Não aceitamos cartão no site.</small></span></div>';
   return(CFG.teste?'<p class="mp-teste">🧪 MODO TESTE do pagamento online.</p>':"")+'<div class="field">Como você quer pagar?</div><div class="pay-opts'+(OPT.length===1?" um":"")+'" role="radiogroup" aria-label="Forma de pagamento">'
    +OPT.map(function(o){var on=o[0]===metodo;return'<button type="button" class="popt'+(on?" sel":"")+'" role="radio" aria-checked="'+on+'" data-pay="'+o[0]+'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+(o[0]==="pix"?PAY_IC.pix:PAY_IC.cartao)+'</svg><b>'+o[1]+'</b><small>'+o[2]+'</small></button>'}).join("")
    +'</div><p class="pay-safe"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></svg><span>Pix instantâneo, processado com segurança pelo <b>Mercado Pago</b>. Não aceitamos cartão digitado no site.</span></p>';
@@ -112,7 +114,7 @@ function resumoHTML(){
 function mostrarEtapa(){
   var nome={pix:"Pix",debito:"Cartão de débito",credito:"Cartão de crédito · à vista"}[metodo];
   $("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button>'+resumoHTML()
-    +'<div class="mp-h"><b>'+nome+'</b></div><p class="mp-err" id="mpErr" role="alert" hidden></p>'
+    +(metodo==="pix"?"":'<div class="mp-h"><b>'+nome+'</b></div>')+'<p class="mp-err" id="mpErr" role="alert" hidden></p>'
     +'<div id="mpArea"><div id="mpBrick"></div><div class="mp-load" id="mpLoad" role="status">'+spin()+'<span>Carregando o pagamento seguro…</span></div></div>';
   montarBrick();
 }
@@ -175,15 +177,17 @@ function aguardando(html){desmontar();var a=$("#mpArea");if(a)a.innerHTML=html;a
 function mostrarPix(px){
   desmontar();
   var a=$("#mpArea");if(!a)return;
+  var res=document.querySelector("#dBody .mp-res");
+  if(res&&pedido)res.outerHTML='<div class="pix-topo"><span>Pedido <b>#'+esc(pedido.numero)+'</b></span><span>Total <b>'+R(pedido.total)+'</b></span></div>';
   a.innerHTML='<div class="pix">'
     +(px.qr_code_base64?'<img class="pix-qr" alt="QR Code Pix do pedido" width="220" height="220" src="data:image/png;base64,'+esc(px.qr_code_base64)+'">':"")
-    +'<p class="pix-t">Abra o app do seu banco, escolha <b>Pix</b> e escaneie o QR Code ou use o <b>Pix copia e cola</b>:</p>'
-    +'<div class="pix-code"><input id="pixCode" readonly value="'+esc(px.qr_code||"")+'" aria-label="Código Pix copia e cola"><button type="button" class="go pix-copy" data-mp-copiar>Copiar código</button></div>'
+    +'<div class="pix-code"><input id="pixCode" readonly value="'+esc(px.qr_code||"")+'" aria-label="Código Pix copia e cola"><button type="button" class="go pix-copy" data-mp-copiar>Copiar código Pix</button></div>'
+    +'<p class="pix-t">No app do banco: <b>Pix → Ler QR Code</b> ou <b>Pix copia e cola</b>. O código vale 30 min e é só deste pedido.</p>'
     +'<div class="mp-wait">'+spin()+'<b>Aguardando o pagamento…</b><span id="pixTempo"></span></div></div>';
   tempoPix(px.expira_em);
   acompanhar();
 }
-function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado!";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código";b.classList.remove("done")}},2500)})}
+function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado!";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código Pix";b.classList.remove("done")}},2500)})}
 var _tempo=null;
 function tempoPix(fim){
   clearInterval(_tempo);var f=fim?new Date(fim).getTime():0;if(!f)return;
