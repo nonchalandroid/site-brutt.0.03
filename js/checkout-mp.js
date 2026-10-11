@@ -12,11 +12,13 @@ try{whatsVal=JSON.parse(localStorage.getItem("brutt_whats")||'""')||"";emailVal=
 
 function ativo(){return!!(CFG.publicKey&&S.url&&S.key)}
 function dig(s){return String(s||"").replace(/\D/g,"")}
+function emailOk(){return/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(emailVal||"").trim())}
 function whatsOk(){var d=dig(whatsVal);if(d.length===12||d.length===13)d=d.replace(/^55/,"");return d.length===10||d.length===11}
 function mascara(v){var d=dig(v).slice(0,11);if(d.length<3)return d;if(d.length<7)return"("+d.slice(0,2)+") "+d.slice(2);if(d.length<11)return"("+d.slice(0,2)+") "+d.slice(2,6)+"-"+d.slice(6);return"("+d.slice(0,2)+") "+d.slice(2,7)+"-"+d.slice(7)}
 
 /* ───────── partes do formulário de checkout ───────── */
-function whatsHTML(){if(!ativo())return"";return'<label class="field" for="whats">Seu WhatsApp</label><input class="t" id="whats" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" maxlength="16" value="'+esc(mascara(whatsVal))+'"><p class="whats-h">A confirmação do pagamento chega por aqui.</p>'}
+function whatsHTML(){if(!ativo())return"";return'<label class="field" for="email">Seu e-mail</label><input class="t" id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="voce@email.com" maxlength="120" value="'+esc(emailVal)+'"><p class="whats-h">O Mercado Pago usa para o comprovante do Pix.</p>'
+  +'<label class="field" for="whats">Seu WhatsApp</label><input class="t" id="whats" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" maxlength="16" value="'+esc(mascara(whatsVal))+'"><p class="whats-h">A confirmação do pagamento chega por aqui.</p>'}
 var PIN='<svg class="pin-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.1-7-12a7 7 0 0 1 14 0c0 5.9-7 12-7 12Z"/><circle cx="12" cy="10" r="2.6"/></svg>';
 function clienteHTML(){
   return'<div class="cli-box">'
@@ -35,6 +37,7 @@ function pagamentoHTML(){
    +OPT.map(function(o){var on=o[0]===metodo;return'<button type="button" class="popt'+(on?" sel":"")+'" role="radio" aria-checked="'+on+'" data-pay="'+o[0]+'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+(o[0]==="pix"?PAY_IC.pix:PAY_IC.cartao)+'</svg><b>'+o[1]+'</b><small>'+o[2]+'</small></button>'}).join("")
    +'</div><p class="pay-safe"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></svg><span>Pix instantâneo, processado com segurança pelo <b>Mercado Pago</b>. Não aceitamos cartão digitado no site.</span></p>';
 }
+document.addEventListener("input",function(e){if(e.target&&e.target.id==="email"){emailVal=e.target.value.trim();try{localStorage.setItem("brutt_email",JSON.stringify(emailVal))}catch(_){}}});
 document.addEventListener("input",function(e){if(e.target&&e.target.id==="whats"){var v=mascara(e.target.value);if(v!==e.target.value)e.target.value=v;whatsVal=v;try{localStorage.setItem("brutt_whats",JSON.stringify(v))}catch(_){}}});
 document.addEventListener("click",function(e){
   var b=e.target.closest&&e.target.closest("[data-pay],[data-pin-copy],[data-mp-voltar],[data-mp-copiar],[data-mp-tentar],[data-mp-whats]");if(!b)return;
@@ -131,7 +134,7 @@ function gerarPix(){
   var a=$("#mpArea");if(!a)return;
   var e=$("#mpErr");if(e)e.hidden=true;
   a.innerHTML='<div class="mp-load" role="status">'+spin()+'<span>Gerando o QR Code Pix…</span></div>';
-  pagar({payment_method_id:"pix",payer:emailVal?{email:emailVal}:{}}).catch(function(){var x=$("#mpArea");if(x&&!x.querySelector(".pix"))x.innerHTML=""});
+  pagar({payment_method_id:"pix",payer:emailOk()?{email:String(emailVal).trim().toLowerCase()}:{}}).catch(function(){var x=$("#mpArea");if(x&&!x.querySelector(".pix"))x.innerHTML=""});
 }
 function montarBrick(){
   desmontar();
@@ -242,9 +245,9 @@ function deIA(co){
   if(!d.classList.contains("on"))document.getElementById("cartBtn").click();
   if(typeof carregarHorarios==="function")carregarHorarios();
   drawCart("checkout");
-  setTimeout(function(){var w=$("#whats");if(w&&!whatsOk())w.focus()},350);
+  setTimeout(function(){var m=$("#email"),w=$("#whats");if(m&&!emailOk())m.focus();else if(w&&!whatsOk())w.focus()},350);
 }
 function voltar(){clearTimeout(poll);clearInterval(_tempo);desmontar();drawCart("checkout")}
 
-return{deIA:deIA,ativo:ativo,whatsOk:whatsOk,whatsHTML:whatsHTML,clienteHTML:clienteHTML,pagamentoHTML:pagamentoHTML,iniciar:iniciar};
+return{deIA:deIA,ativo:ativo,emailOk:emailOk,whatsOk:whatsOk,whatsHTML:whatsHTML,clienteHTML:clienteHTML,pagamentoHTML:pagamentoHTML,iniciar:iniciar};
 })();
