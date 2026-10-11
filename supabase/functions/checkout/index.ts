@@ -7,12 +7,20 @@
 //   GET  status    → situação do pedido (o site consulta enquanto espera o Pix)
 //   POST webhook   → notificações oficiais do Mercado Pago (assinatura x-signature conferida)
 //   POST concluir  → equipe marca o pedido como concluído (exige login de staff)
+//   POST etapa     → equipe avança a etapa "saiu para entrega" (só entrega feita pela loja; staff)
+//   POST push_chave → chave pública VAPID para o painel inscrever o aparelho (staff)
+//   POST push_teste → manda uma notificação de teste para o aparelho que pediu (staff)
+//
+// Avisos no celular/PC da equipe (Web Push, push.ts): "🟡 Pix gerado" e "🔴 Pedido PAGO", 1 vez por pedido.
+// O par de chaves VAPID é gerado aqui na 1ª vez e guardado em push_config (só o servidor lê).
 //
 // Segredos (variáveis de ambiente da função — nunca no site):
 //   MP_ACCESS_TOKEN, MP_PUBLIC_KEY, MP_WEBHOOK_SECRET
 //   EVOLUTION_API_URL, EVOLUTION_API_KEY, EVOLUTION_INSTANCE, WHATS_LOJA_AVISOS (opcional)
 // O "pagamento confirmado" só é marcado depois de consultar o pagamento direto na API do
 // Mercado Pago (GET /v1/payments/{id}) — o status enviado pelo navegador é ignorado.
+
+import { enviarPush, gerarChavesVapid } from "./push.ts";
 
 // trim: um espaço ou quebra de linha colado junto no painel de Secrets não pode virar "chave vazia" silenciosa
 const env = (k: string) => String(((globalThis as any).Deno?.env?.get(k) as string | undefined) ?? "").trim().replace(/^["']|["']$/g, "");
@@ -36,7 +44,10 @@ const cent = (v: number) => Math.round(v * 100) / 100;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ── Regras da loja (as mesmas do site: ENTREGA_LOJA e MIN em index.html) ──
-export const LOJA = { nome: "Tabacaria Brutt", endereco: "Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ" };
+export const LOJA = { nome: "Tabacaria Brutt", endereco: "Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ", site: "https://tabacariabrutt.com.br" };
+/** Link da tela "Acompanhe seu pedido" (o id do pedido é um UUID: só quem tem o link vê) */
+export const linkAcomp = (ped: any) => `${LOJA.site}/?pedido=${ped.id}`;
+const evolutionOk = () => !!(env("EVOLUTION_API_URL") && env("EVOLUTION_API_KEY") && env("EVOLUTION_INSTANCE"));
 // R$ 5,00 até 2 km de rota; acima, + R$ 1,50 por km (fração de km conta como km inteiro); só até 2,5 km (Conjunto Campinho e arredores); teto R$ 8,00.
 export const ENTREGA_LOJA = { lat: -22.881489, lng: -43.61375, raioMaxKm: 2.5, taxaBase: 5, baseAteKm: 2, porKmExtra: 1.5, taxaMaxima: 8 };
 export const PEDIDO_MINIMO = 20;
@@ -212,6 +223,7 @@ export async function pagar(body: any, urlFuncao: string) {
   if (metodo === "pix" && td) Object.assign(extra, { pix_qr: td.qr_code || null, pix_qr_base64: td.qr_code_base64 || null, pix_expira_em: p.date_of_expiration || null });
   await sbPatch(`pedidos?id=eq.${id}`, extra);
   const atual = await processarPagamento(p);
+  if (metodo === "pix" && extra.pix_qr && (atual?.status ?? "aguardando_pagamento") === "aguardando_pagamento") emSegundoPlano(avisarEquipe({ ...ped, ...extra }, "pix"));
   return {
     ok: true, numero: ped.numero, status: atual?.status ?? ped.status, mp_status: p.status, mp_status_detail: p.status_detail,
     pix: metodo === "pix" ? { qr_code: extra.pix_qr, qr_code_base64: extra.pix_qr_base64, expira_em: extra.pix_expira_em } : null,
@@ -247,7 +259,7 @@ export async function processarPagamento(p: any) {
     if (alvo === "pago" && !valorOk) console.error("valor divergente", ped.numero, p.transaction_amount, ped.total);
     else if (alvo === "pago" || mesmo) {
       const patch: any = { status: alvo, mp_payment_id: String(p.id), mp_status: p.status, mp_status_detail: p.status_detail };
-      if (alvo === "pago") patch.pago_em = p.date_approved || new Date().toISOString();
+      if (alvo === "pago") { patch.pago_em = p.date_approved || new Date().toISOString(); patch.visto_em = null; patch.visto_por = null; }   // pago volta a piscar no admin
       const rows = await sbPatch(`pedidos?id=eq.${id}&status=in.(${DE[alvo].join(",")})`, patch);
       if (rows?.[0]) atual = rows[0];
     }
@@ -296,10 +308,13 @@ const METODO_TXT: Record<string, string> = { pix: "Pix", debito: "Cartão de dé
 export function mensagens(ped: any) {
   const n = primeiroNome(ped.cliente_nome);
   return {
-    pagamento_confirmado: [`✅ *Pagamento confirmado!*`, ``, `Oi${n ? ", " + n : ""}! Recebemos o pagamento do pedido *#${ped.numero}* (${METODO_TXT[ped.metodo] || "online"}).`, ``, linhasItens(ped), ``, `💰 Total pago: *${brl(ped.total)}*`, linhaEntrega(ped), ``, ped.reserva ? `🕐 A loja estava fechada quando você pediu: a gente separa tudo assim que abrir.` : `Já estamos separando seu pedido. Avisamos por aqui quando estiver pronto.`].join("\n"),
+    pagamento_confirmado: [`✅ *Pagamento confirmado!*`, ``, `Oi${n ? ", " + n : ""}! Recebemos o pagamento do pedido *#${ped.numero}* (${METODO_TXT[ped.metodo] || "online"}).`, ``, linhasItens(ped), ``, `💰 Total pago: *${brl(ped.total)}*`, linhaEntrega(ped), ``, ped.reserva ? `🕐 A loja estava fechada quando você pediu: a gente separa tudo assim que abrir.` : `Já estamos separando seu pedido. Avisamos por aqui quando estiver pronto.`, ``, `📍 Acompanhe aqui: ${linkAcomp(ped)}`].join("\n"),
     pagamento_recusado: [`⚠️ *Pagamento não aprovado*`, ``, `Oi${n ? ", " + n : ""}. O pagamento do pedido *#${ped.numero}* não foi aprovado pelo emissor do cartão. Nenhum valor foi cobrado.`, `Você pode tentar de novo no site com outro cartão ou pagar com Pix.`].join("\n"),
     pix_expirado: [`⌛ *Pix expirado*`, ``, `Oi${n ? ", " + n : ""}. O código Pix do pedido *#${ped.numero}* (${brl(ped.total)}) expirou antes do pagamento. Nada foi cobrado.`, `Se ainda quiser os produtos, é só finalizar o pedido de novo no site.`].join("\n"),
-    pedido_concluido: [`📦 *Pedido concluído!*`, ``, `${n ? n + ", s" : "S"}eu pedido *#${ped.numero}* foi concluído. Obrigado pela preferência! 🔥`].join("\n"),
+    saiu_entrega: [`🛵 *Seu pedido saiu para entrega!*`, ``, `${n ? n + ", o" : "O"} pedido *#${ped.numero}* já está a caminho${ped.entrega?.endereco?.rua ? ` de ${ped.entrega.endereco.rua}, ${ped.entrega.endereco.numero}` : ""}. Fique de olho no portão 😉`, ``, `📍 Acompanhe: ${linkAcomp(ped)}`].join("\n"),
+    pedido_concluido: ped.entrega?.tipo === "entrega"
+      ? [`✅ *Pedido entregue!*`, ``, `${n ? n + ", s" : "S"}eu pedido *#${ped.numero}* foi entregue. Obrigado pela preferência! 🔥`].join("\n")
+      : [`🛵 *Motoboy já retirou seu pedido!*`, ``, `${n ? n + ", o" : "O"} entregador do app já está com o pedido *#${ped.numero}* e segue para o seu endereço. Obrigado pela preferência! 🔥`].join("\n"),
     saudacao: [`👋 Seja bem-vindo(a) à *${LOJA.nome}*!`, `Este é o nosso WhatsApp oficial: salve o número pra receber as novidades e falar com a equipe.`, `📍 ${LOJA.endereco}`].join("\n"),
     loja_novo_pedido: [`🔔 *NOVO PEDIDO PAGO #${ped.numero}*${ped.reserva ? " (reserva: loja fechada)" : ""}`, `👤 ${ped.cliente_nome} · wa.me/${ped.cliente_whats}`, `💳 ${METODO_TXT[ped.metodo] || "-"} · MP ${ped.mp_payment_id || "-"}`, ``, linhasItens(ped), ``, `🛒 Produtos: ${brl(ped.subtotal)} · 🚚 Entrega: ${brl(ped.taxa_entrega)}`, `💰 *Total pago: ${brl(ped.total)}*`, linhaEntrega(ped)].join("\n"),
   };
@@ -312,6 +327,7 @@ export async function notificar(ped: any) {
   if (!ped) return;
   const m = mensagens(ped), cliente = ped.cliente_whats;
   try {
+    if (ped.status === "pago") emSegundoPlano(avisarEquipe(ped, "pago"));
     if (ped.status === "pago" || ped.status === "concluido") {
       // Crítica: confirmação vai na hora. As demais seguem em segundo plano, com ~3 s entre mensagens.
       const enviou = await enviarUmaVez(ped.id, "pagamento_confirmado", cliente, m.pagamento_confirmado);
@@ -367,7 +383,7 @@ export async function webhook(req: Request, url: URL) {
 export async function status(url: URL) {
   const id = url.searchParams.get("pedido") || "";
   if (!UUID.test(id)) return { erro: "Pedido inválido.", status: 400 };
-  let [ped] = await sbGet(`pedidos?id=eq.${id}&select=id,numero,status,total,metodo,mp_payment_id,mp_status,mp_status_detail,pix_qr,pix_qr_base64,pix_expira_em,updated_at`);
+  let [ped] = await sbGet(`pedidos?id=eq.${id}&select=id,numero,status,total,taxa_entrega,metodo,mp_payment_id,mp_status,mp_status_detail,pix_qr,pix_qr_base64,pix_expira_em,updated_at,created_at,pago_em,saiu_em,concluido_em,reserva,entrega,itens,cliente_nome`);
   if (!ped) return { erro: "Pedido não encontrado.", status: 404 };
   // Rede de segurança caso o webhook atrase: reconsulta o Mercado Pago no máximo a cada 10 s.
   if (ped.status === "aguardando_pagamento" && ped.mp_payment_id && Date.now() - new Date(ped.updated_at).getTime() > 10e3) {
@@ -375,7 +391,17 @@ export async function status(url: URL) {
     if (r.ok) { const a = await processarPagamento(r.j); if (a) ped = a; }
     if (ped.status === "aguardando_pagamento") await sbPatch(`pedidos?id=eq.${id}&status=eq.aguardando_pagamento`, { updated_at: new Date().toISOString() }).catch(() => {});
   }
-  return { ok: true, numero: ped.numero, status: ped.status, total: ped.total, metodo: ped.metodo, mp_status: ped.mp_status, mp_status_detail: ped.mp_status_detail, pix: ped.pix_qr ? { qr_code: ped.pix_qr, qr_code_base64: ped.pix_qr_base64, expira_em: ped.pix_expira_em } : null };
+  return { ok: true, numero: ped.numero, status: ped.status, total: ped.total, metodo: ped.metodo, mp_status: ped.mp_status, mp_status_detail: ped.mp_status_detail, pix: ped.pix_qr ? { qr_code: ped.pix_qr, qr_code_base64: ped.pix_qr_base64, expira_em: ped.pix_expira_em } : null,
+    acomp: acompDe(ped) };
+}
+/** Dados da tela "Acompanhe seu pedido": só o necessário (sem endereço, telefone ou dados de pagamento). */
+export function acompDe(ped: any) {
+  const e = ped.entrega || {};
+  return { numero: ped.numero, status: ped.status, estornado: ped.status === "cancelado" && ped.mp_status === "refunded",
+    tipo: e.tipo === "entrega" ? "entrega" : "cliente", bairro: e.endereco?.bairro || null, reserva: !!ped.reserva,
+    nome: primeiroNome(ped.cliente_nome), total: ped.total, taxa_entrega: ped.taxa_entrega,
+    itens: (ped.itens || []).map((i: any) => ({ qtd: i.qtd, nome: i.nome })),
+    criado: ped.created_at ?? null, pago: ped.pago_em ?? null, saiu: ped.saiu_em ?? null, concluido: ped.concluido_em ?? null, expira: ped.pix_expira_em ?? null };
 }
 async function ehStaff(req: Request) {
   const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
@@ -391,8 +417,89 @@ export async function concluir(req: Request, body: any) {
   if (!UUID.test(id)) return { erro: "Pedido inválido.", status: 400 };
   const rows = await sbPatch(`pedidos?id=eq.${id}&status=eq.pago`, { status: "concluido", concluido_em: new Date().toISOString() });
   if (!rows?.[0]) return { erro: "Só pedidos pagos podem ser concluídos.", status: 409 };
-  await enviarUmaVez(rows[0].id, "pedido_concluido", rows[0].cliente_whats, mensagens(rows[0]).pedido_concluido);
-  return { ok: true, numero: rows[0].numero, status: "concluido" };
+  const msg = mensagens(rows[0]).pedido_concluido;
+  const enviou = await enviarUmaVez(rows[0].id, "pedido_concluido", rows[0].cliente_whats, msg);
+  return { ok: true, numero: rows[0].numero, status: "concluido", whats: whatsDe(rows[0], msg, enviou) };
+}
+/** O que a equipe faz com o WhatsApp do cliente: se o robô (Evolution) mandou, nada; senão um link com a mensagem pronta. */
+function whatsDe(ped: any, msg: string, enviou: boolean) {
+  return { auto: enviou && evolutionOk(), link: `https://wa.me/${ped.cliente_whats}?text=${encodeURIComponent(msg)}` };
+}
+/** Etapa "saiu para entrega" (só quando a loja entrega). Idempotente: a 2ª vez não muda nada. */
+export async function etapa(req: Request, body: any) {
+  if (!(await ehStaff(req))) return { erro: "sem permissão", status: 403 };
+  const id = String(body?.pedido_id ?? ""), qual = String(body?.etapa ?? "");
+  if (!UUID.test(id)) return { erro: "Pedido inválido.", status: 400 };
+  if (qual !== "saiu") return { erro: "Etapa inválida.", status: 400 };
+  const [ped] = await sbGet(`pedidos?id=eq.${id}&select=*`);
+  if (!ped) return { erro: "Pedido não encontrado.", status: 404 };
+  if (ped.entrega?.tipo !== "entrega") return { erro: "Este pedido é retirado pelo motoboy do cliente: use “Motoboy retirou”.", status: 409 };
+  if (ped.status !== "pago") return { erro: "Só pedido pago pode sair para entrega.", status: 409 };
+  let atual = ped;
+  if (!ped.saiu_em) { const rows = await sbPatch(`pedidos?id=eq.${id}&status=eq.pago&saiu_em=is.null`, { saiu_em: new Date().toISOString() }); if (rows?.[0]) atual = rows[0]; }
+  const msg = mensagens(atual).saiu_entrega;
+  const enviou = await enviarUmaVez(atual.id, "saiu_entrega", atual.cliente_whats, msg);
+  return { ok: true, numero: atual.numero, saiu_em: atual.saiu_em, whats: whatsDe(atual, msg, enviou) };
+}
+
+// ─────────────────── avisos no celular/PC da equipe (Web Push) ───────────────────
+const CONTATO_PUSH = "mailto:contato@tabacariabrutt.com.br";
+let vapidCache: { publica: string; privadaJwk: JsonWebKey } | null = null;
+/** Par VAPID do servidor: lê de push_config; na 1ª vez gera aqui mesmo (a chave privada nunca sai do servidor). */
+export async function chavesPush() {
+  if (vapidCache) return vapidCache;
+  let [c] = await sbGet("push_config?id=eq.1&select=vapid_public,vapid_private_jwk");
+  if (!c) {
+    const n = await gerarChavesVapid();
+    try { await sbInsert("push_config", { id: 1, vapid_public: n.publica, vapid_private_jwk: n.privadaJwk }, "return=minimal"); }
+    catch (e: any) { if (e?.status !== 409) throw e; }   // outra chamada criou ao mesmo tempo: usa a dela
+    [c] = await sbGet("push_config?id=eq.1&select=vapid_public,vapid_private_jwk");
+  }
+  vapidCache = { publica: c.vapid_public, privadaJwk: c.vapid_private_jwk };
+  return vapidCache;
+}
+export function avisoEquipe(ped: any, tipo: "pago" | "pix" | "teste") {
+  const nome = String(ped?.cliente_nome || "").trim().slice(0, 40), ent = ped?.entrega?.tipo === "entrega" ? "entrega pela loja" : "cliente chama o motoboy";
+  if (tipo === "teste") return { title: "✅ Notificações ligadas", body: "Este aparelho vai receber os avisos de Pix gerado e de pedido pago.", tag: "teste", url: "/admin/#/pedidos", tipo };
+  if (tipo === "pago") return { title: `🔴 Pedido PAGO #${ped.numero}`, body: `${nome} · ${brl(ped.total)} · ${ent}. Toque para abrir.`, tag: "ped-" + ped.numero, url: "/admin/#/pedidos", tipo, fixo: true };
+  return { title: `🟡 Pix gerado #${ped.numero}`, body: `${nome} · ${brl(ped.total)} · aguardando o pagamento.`, tag: "ped-" + ped.numero, url: "/admin/#/pedidos", tipo };
+}
+async function mandarPara(subs: any[], dados: unknown) {
+  const vapid = await chavesPush(); let ok = 0;
+  await Promise.all(subs.map(async (s) => {
+    try {
+      const st = await enviarPush(s, dados, vapid, CONTATO_PUSH);
+      if (st >= 200 && st < 300) { ok++; await sbPatch(`push_assinaturas?id=eq.${s.id}`, { ultimo_ok: new Date().toISOString(), falhas: 0 }); }
+      else if (st === 404 || st === 410) await sbPatch(`push_assinaturas?id=eq.${s.id}`, { ativo: false });   // o aparelho saiu/expirou
+      else { console.error("push", st, s.endpoint.slice(0, 40)); await sbPatch(`push_assinaturas?id=eq.${s.id}`, { falhas: (s.falhas || 0) + 1, ativo: (s.falhas || 0) + 1 < 10 }); }
+    } catch (e) { console.error("push", String((e as any)?.message ?? e)); }
+  }));
+  return ok;
+}
+/** Avisa todos os aparelhos da equipe. 1 vez por (pedido, tipo): reserva em wa_notificacoes. Nunca derruba o pedido. */
+export async function avisarEquipe(ped: any, tipo: "pago" | "pix") {
+  try {
+    if (!ped?.id) return 0;
+    try { await sbInsert("wa_notificacoes", { pedido_id: ped.id, tipo: "push_" + tipo, destino: "equipe" }, "return=minimal"); }
+    catch (e: any) { if (e?.status === 409) return 0; throw e; }
+    const subs = await sbGet("push_assinaturas?ativo=eq.true&select=id,endpoint,p256dh,auth,falhas");
+    const ok = subs?.length ? await mandarPara(subs, avisoEquipe(ped, tipo)) : 0;
+    await sbPatch(`wa_notificacoes?pedido_id=eq.${ped.id}&tipo=eq.push_${tipo}`, { ok: ok > 0, erro: subs?.length ? null : "nenhum aparelho inscrito" }).catch(() => {});
+    return ok;
+  } catch (e) { console.error("avisarEquipe", e); return 0; }
+}
+export async function pushChave(req: Request) {
+  if (!(await ehStaff(req))) return { erro: "sem permissão", status: 403 };
+  return { ok: true, publicKey: (await chavesPush()).publica };
+}
+export async function pushTeste(req: Request, body: any) {
+  if (!(await ehStaff(req))) return { erro: "sem permissão", status: 403 };
+  const endpoint = String(body?.endpoint ?? "");
+  if (!/^https:\/\//.test(endpoint)) return { erro: "Aparelho inválido.", status: 400 };
+  const subs = await sbGet(`push_assinaturas?ativo=eq.true&endpoint=eq.${encodeURIComponent(endpoint)}&select=id,endpoint,p256dh,auth,falhas`);
+  if (!subs?.length) return { erro: "Este aparelho não está inscrito. Toque em “Ativar notificações”.", status: 404 };
+  const ok = await mandarPara(subs, avisoEquipe(null, "teste"));
+  return ok ? { ok: true } : { erro: "O serviço de notificações do aparelho recusou. Desative e ative de novo.", status: 502 };
 }
 
 // ───────────────────────────── roteador ─────────────────────────────
@@ -412,6 +519,9 @@ export async function handler(req: Request): Promise<Response> {
       return resp(await pagar(body, base));
     }
     if (acao === "concluir") return resp(await concluir(req, body));
+    if (acao === "etapa") return resp(await etapa(req, body));
+    if (acao === "push_chave") return resp(await pushChave(req));
+    if (acao === "push_teste") return resp(await pushTeste(req, body));
     return json({ erro: "ação desconhecida" }, 404);
   } catch (e) {
     console.error("checkout", acao, e);

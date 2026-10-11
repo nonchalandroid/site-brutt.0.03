@@ -9,6 +9,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#100a07">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../favicon/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Brutt Painel">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -594,6 +600,9 @@ details.nx-box[open]{padding-bottom:12px}
 .st-concluido{color:var(--ok);background:var(--ok-soft);border-color:rgba(121,196,142,.35)}
 .st-recusado{color:var(--danger);background:var(--danger-soft);border-color:rgba(225,90,74,.35)}
 .st-expirado,.st-cancelado{color:var(--muted)}
+.st-estornado{color:var(--info);background:var(--info-soft);border-color:rgba(169,179,189,.35)}
+.ped-card.apagado{opacity:.72}
+.ped-nota{margin-top:8px;font-size:12px;color:var(--muted)}
 .st-reserva{color:var(--info);background:var(--info-soft);border-color:rgba(169,179,189,.35)}
 
 /* ---------- visão geral ---------- */
@@ -672,6 +681,112 @@ details.nx-box[open]{padding-bottom:12px}
 .bulk-todos input:checked,.bulk-todos input:indeterminate{background:var(--accent);border-color:var(--accent)}
 .bulk-todos input:checked::after{content:"";width:5px;height:10px;border:solid var(--accent-ink);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
 .bulk-todos input:indeterminate::after{content:"";width:10px;height:2.5px;background:var(--accent-ink);border-radius:2px}
+
+/* ---------- celular: igual à loja — campos com 16px para o iPhone/Android não dar zoom ao tocar, e nada de rolar de lado ---------- */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{overflow-x:clip}
+@media (hover:none) and (pointer:coarse){
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px!important}
+}
+.hr-tempo input[type=time]{min-width:0}
+@media (max-width:560px){.hr-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+@media (max-width:360px){.hr-row{padding:12px 10px;gap:10px}.hr-tempo input[type=time]{padding:10px 6px}}
+
+.ft-otim{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:10px 0 0}.ft-otim small{font-size:12px;color:var(--muted);flex:1 1 220px}
+/* ---------- sommelier em massa ---------- */
+.sm-sec select{margin:0 0 10px}
+.sm-chk{display:flex;align-items:flex-start;gap:10px;font-size:14px;cursor:pointer;padding:6px 0}
+.sm-chk input{margin-top:3px;flex:none}
+.sm-chk span,.sm-modo span{display:flex;flex-direction:column;min-width:0}
+.sm-chk small,.sm-modo small{font-size:12px;color:var(--muted)}
+.sm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:2px 16px}
+.sm-modo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:8px;margin-top:10px}
+.sm-modo label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;cursor:pointer;background:var(--field)}
+.sm-modo label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.sm-modo input{margin-top:3px;flex:none}
+.sm-vel{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:10px}
+.sm-vel select{width:auto;min-width:80px}
+.sm-qtd{font-size:13px;color:var(--muted);margin:2px 0 0}.sm-qtd b{color:var(--ink)}
+.sm-acoes{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px}
+.sm-acoes .btn-gold{flex:1 1 220px;min-height:46px}
+.sm-prog{margin-bottom:14px}
+.sm-barra{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.sm-barra i{display:block;height:100%;background:var(--accent);transform-origin:left;transform:scaleX(0);transition:transform .4s var(--ease)}
+.sm-prog p{font-size:13px;color:var(--muted);margin:8px 0 0;line-height:1.5}.sm-prog p b{color:var(--ink)}
+.sm-rev{color:var(--warn)}.sm-err{color:var(--danger)}
+.sm-log-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 8px;flex-wrap:wrap}
+.sm-log-h h3{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sm-log{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:8px}
+.sm-it{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:10px 12px;font-size:13px;min-width:0}
+.sm-it-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.sm-it-h b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.sm-it p{margin:4px 0 0;color:var(--ink)}.sm-it small{display:block;margin-top:4px;color:var(--muted);font-size:12px}
+.sm-it-a{display:flex;gap:6px;margin-top:8px}
+.sm-tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;flex:none}
+.sm-tag.t-ok{color:var(--ok);border-color:rgba(121,196,142,.35);background:var(--ok-soft)}
+.sm-tag.t-revisar{color:var(--warn);border-color:rgba(229,132,63,.35);background:var(--warn-soft)}
+.sm-tag.t-erro{color:var(--danger);border-color:rgba(225,90,74,.35);background:var(--danger-soft)}
+.sm-tag.t-rodando{color:var(--accent);border-color:rgba(234,181,74,.4)}
+@media (prefers-reduced-motion:reduce){.sm-barra i{transition:none}}
+
+/* =====================================================================
+   CORES (alto contraste com a paleta da loja): menos "letra branca".
+   Texto principal no creme da loja, secundário em caramelo, títulos e valores em dourado,
+   e cores vivas com significado: verde = bom/positivo, vermelho = alerta, laranja = aviso, azul = informação.
+   ===================================================================== */
+:root{
+  --ink:#f0dcb8; --muted:#c09f76; --muted-2:#937656;
+  --ok:#4fe08c; --ok-soft:rgba(79,224,140,.14);
+  --warn:#ff9640; --warn-soft:rgba(255,150,64,.14);
+  --danger:#ff5a4a; --danger-soft:rgba(255,90,74,.15);
+  --info:#7fbfff; --info-soft:rgba(127,191,255,.13);
+}
+/* títulos e marca em dourado */
+.pg-t,.pg h2.pg-t,.top-t b,.ov-box h3,.drawer-h h2,.cat-head h2,.gr-top b,.side-brand b,.login-card h1,.ft-intro h2,.ov-box-h h3{color:var(--accent)}
+.section h3,.sm-log-h h3{color:var(--accent-2)}
+.top-t small,.side-g>span{color:var(--muted-2)}
+/* menu: caramelo; ativo em dourado */
+.nav-i{color:var(--muted)}
+.nav-i:hover{color:var(--ink)}
+.nav-i.on,.nav-i.on .lbl{color:var(--accent)}
+/* valores em R$ e códigos */
+.ped-f>b,.ov-ped-r .t,.cli-stats b,.gr-prices input,.bulk-count,.stock-now .n{color:var(--accent)}
+.ped-h code,.ov-ped-r .n code,.cli-card .h code,.gr-meta code{color:var(--accent-2)}
+.cli-card .l.w{color:var(--ink)}
+/* números da visão geral com significado */
+.ov-kpi .v{color:var(--ink)}
+.ov-kpi.bom{border-color:rgba(79,224,140,.35)}.ov-kpi.bom .v{color:var(--ok)}
+.ov-kpi.acao .v{color:var(--accent)}
+.ov-kpi.alerta{border-color:rgba(255,150,64,.35)}.ov-kpi.alerta .v{color:var(--warn)}
+.ov-kpi.ruim .v,.ov-kpi.novo .v{color:var(--danger)}
+/* estoque e margem */
+.gr-stock.ok b{color:var(--ok)}
+.gr-meta .mg{color:var(--ok)}.gr-meta .mg.neg{color:var(--danger)}
+
+/* ---------- notificações neste aparelho + Pix gerado ---------- */
+.ntf{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;margin:0 0 14px}
+.ntf-ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none;background:var(--accent-soft);color:var(--accent)}
+.ntf-ic .i{width:20px;height:20px}
+.ntf-tx{flex:1 1 220px;min-width:0;display:flex;flex-direction:column}
+.ntf-tx b{font-size:14px;color:var(--ink)}.ntf-tx small{font-size:12px;color:var(--muted);line-height:1.4}
+.ntf-bt{display:flex;gap:8px;flex-wrap:wrap}
+.ntf-ok{border-color:rgba(79,224,140,.35)}.ntf-ok .ntf-ic{background:var(--ok-soft);color:var(--ok)}
+.ntf-off{border-color:rgba(234,181,74,.45)}
+.ntf-bad{border-color:rgba(255,90,74,.4)}.ntf-bad .ntf-ic{background:var(--danger-soft);color:var(--danger)}
+@keyframes piscaPix{0%,100%{opacity:.9}50%{opacity:.25}}
+.ped-card.pixnovo{position:relative;border-color:var(--warn);cursor:pointer}
+.ped-card.pixnovo::after{content:"";position:absolute;inset:-1px;border-radius:inherit;border:2px solid var(--warn);pointer-events:none;animation:piscaPix 1.6s ease-in-out infinite}
+.ped-pix{display:inline-flex;align-items:center;font:700 11px var(--font);letter-spacing:.06em;text-transform:uppercase;color:#2a1704;background:var(--warn);border-radius:999px;padding:3px 9px;margin-right:6px;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.ped-card.pixnovo::after{animation:none}}
+
+/* ---------- pedidos: etapas (acompanhamento do cliente) ---------- */
+.ped-bts{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.ped-linha{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px;font-size:12px}
+.ped-linha span{padding:3px 9px;border-radius:999px;border:1px dashed var(--line-2);color:var(--muted-2);white-space:nowrap}
+.ped-linha span.ok{border-style:solid;border-color:rgba(79,224,140,.4);color:var(--ok);background:var(--ok-soft)}
+.ped-linha time{font-family:var(--mono);opacity:.85}
+.ped-ver{margin-left:auto;color:var(--muted);font-size:12px;white-space:nowrap}
+.ped-avisa{display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;margin-top:10px;border-radius:var(--r);background:#25D366;color:#fff;font-weight:700;font-size:14px;text-decoration:none}
 
 /* ---------- clientes ---------- */
 .cli-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
@@ -759,6 +874,8 @@ const ICON = {
   ext:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
   chev:'<path d="m9 18 6-6-6-6"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',
+  spark:'<path d="M9.94 14.06 4 20"/><path d="m14 4 1.2 3.3L18.5 8.5l-3.3 1.2L14 13l-1.2-3.3L9.5 8.5l3.3-1.2Z"/><path d="M19 15v4M17 17h4"/><path d="M5 3v4M3 5h4"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
   users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   dl:'<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>',
   up:'<path d="M12 3v12"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/>',
@@ -769,7 +886,7 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 /* navegação lateral agrupada. Só destinos que existem em ROUTES. Tela nova = ROUTES + item aqui. */
 const NAV = [
   ["Operação", [["visao","Visão geral","dash"],["home","Produtos","pkg"],["pedidos","Pedidos online","bag","pedidos"],["clientes","Clientes","users"],["estoque-baixo","Estoque baixo","alert","estoque"]]],
-  ["Gestão",   [["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"]]],
+  ["Gestão",   [["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"]]],
   ["Planilhas",[["planilha","Planilha de compra","sheet"],["vendidos","Mais vendidos","trend"]]],
 ];
 const ABAS = NAV.flatMap(([, itens]) => itens.map(([r, t]) => [r, t]));
@@ -811,7 +928,7 @@ function bindTopbar(){
   document.querySelectorAll("[data-inicio]").forEach(b => b.onclick = () => go("visao"));
   document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { if(b.dataset.tab === "fotos") window.__fotosAlvos = null; go(b.dataset.tab); });
   const ativa = document.querySelector(".nav-i.on"); if(ativa) ativa.scrollIntoView({ block:"nearest" });
-  const out = $("#outBtn"); if(out) out.onclick = async () => { await sb.auth.signOut(); state.staff = null; navCont = { t:0, v:null, p:null }; novosAntes = null; document.title = tituloBase; location.hash = ""; renderLogin(); };
+  const out = $("#outBtn"); if(out) out.onclick = async () => { await sb.auth.signOut(); state.staff = null; navCont = { t:0, v:null, p:null }; novosAntes = null; pixAntes = null; document.title = tituloBase; location.hash = ""; renderLogin(); };
   if($("#sideAbre")) $("#sideAbre").onclick = () => menuLateral(true);
   if($("#sideX")) $("#sideX").onclick = () => menuLateral(false);
   if($("#sideScrim")) $("#sideScrim").onclick = () => menuLateral(false);
@@ -830,7 +947,8 @@ function contadoresNav(){
     sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago"),
     filtroEstoqueBaixo(sb.from("products").select("id", { count:"exact", head:true })),
     sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago").is("visto_em", null),
-  ]).then(([a, b, c]) => { const v = { pedidos: a.error ? 0 : (a.count || 0), estoque: b.error ? 0 : (b.count || 0), novos: c.error ? 0 : (c.count || 0) }; navCont = { t:Date.now(), v, p:null }; vigiaNovos(v.novos); return v; })
+    sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "aguardando_pagamento").is("visto_em", null).gt("pix_expira_em", new Date().toISOString()),
+  ]).then(([a, b, c, d]) => { const v = { pedidos: a.error ? 0 : (a.count || 0), estoque: b.error ? 0 : (b.count || 0), novos: c.error ? 0 : (c.count || 0), pix: d.error ? 0 : (d.count || 0) }; navCont = { t:Date.now(), v, p:null }; vigiaNovos(v.novos, v.pix); return v; })
     .catch(() => { navCont.p = null; return null; });
   return navCont.p;
 }
@@ -840,20 +958,21 @@ function contadoresNav(){
    até alguém da equipe clicar nele ou concluir. A cada 30 s o painel confere se chegou pedido novo:
    toca um aviso curto, mostra o número no título da aba e atualiza a tela de pedidos/visão geral. */
 let novosAntes = null, vigiaTimer = null, tituloBase = document.title;
-function vigiaNovos(n){
-  document.title = n ? `(${n}) 🔴 Pedido novo · ${tituloBase}` : tituloBase;
-  if(novosAntes !== null && n > novosAntes){
-    toast(n - novosAntes > 1 ? `🔴 ${n - novosAntes} pedidos novos pagos!` : "🔴 Pedido novo pago no site!");
-    bipe();
-    const r = rotaAtual(); if(r === "pedidos") renderPedidos(); else if(r === "visao") renderVisao();
-  }
-  novosAntes = n;
+let pixAntes = null;
+function vigiaNovos(n, pix){
+  pix = pix || 0;
+  document.title = n ? `(${n}) 🔴 Pedido novo · ${tituloBase}` : pix ? `(${pix}) 🟡 Pix gerado · ${tituloBase}` : tituloBase;
+  const novoPago = novosAntes !== null && n > novosAntes, novoPix = pixAntes !== null && pix > pixAntes;
+  if(novoPago){ toast(n - novosAntes > 1 ? `🔴 ${n - novosAntes} pedidos novos pagos!` : "🔴 Pedido novo pago no site!"); bipe(); }
+  else if(novoPix){ toast("🟡 Um cliente gerou o Pix. Aguardando o pagamento."); bipe(true); }
+  if(novoPago || novoPix){ const r = rotaAtual(); if(r === "pedidos") renderPedidos(); else if(r === "visao") renderVisao(); }
+  novosAntes = n; pixAntes = pix;
 }
-function bipe(){
+function bipe(leve){
   try{
     const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
     const ctx = bipe.ctx || (bipe.ctx = new C()), t = ctx.currentTime;
-    [0, .22].forEach(d => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = 880;
+    (leve ? [0] : [0, .22]).forEach(d => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = 880;
       g.gain.setValueAtTime(.0001, t + d); g.gain.exponentialRampToValueAtTime(.25, t + d + .02); g.gain.exponentialRampToValueAtTime(.0001, t + d + .18);
       o.connect(g).connect(ctx.destination); o.start(t + d); o.stop(t + d + .2); });
   }catch(_){}
@@ -872,6 +991,89 @@ async function marcarVisto(id){
   if(error){ toast("Não deu para marcar como visto: " + error.message); return false; }
   navCont.t = 0; contadoresNav().then(v => { if(!v) return; const el = document.querySelector('[data-badge="pedidos"]'); if(el){ el.hidden = !v.pedidos; el.textContent = v.pedidos; el.className = "nav-b " + (v.novos ? "novo" : "acao"); } });
   return true;
+}
+/* ---------------- notificações neste aparelho (Web Push) ----------------
+   O aparelho se inscreve no serviço de push do navegador com a chave pública do servidor (checkout?acao=push_chave)
+   e a inscrição vai para push_assinaturas (RPC push_registrar). A função checkout avisa "Pix gerado" e "Pedido PAGO"
+   mesmo com o painel fechado; o sw.js mostra a notificação e abre o painel no toque.
+   iPhone/iPad: só funciona com o painel instalado na Tela de Início (iOS 16.4+). */
+const NTF_SUPORTA = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const NTF_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const NTF_INSTALADO = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const ntfBytes = s => { const t = s.replace(/-/g, "+").replace(/_/g, "/"), b = atob(t + "=".repeat((4 - t.length % 4) % 4)); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+function ntfAparelho(){
+  const u = navigator.userAgent, so = /iPhone/.test(u) ? "iPhone" : /iPad/.test(u) || NTF_IOS ? "iPad" : /Android/.test(u) ? "Android" : /Windows/.test(u) ? "Windows" : /Mac/.test(u) ? "Mac" : "Computador";
+  const nav = /Edg\//.test(u) ? "Edge" : /SamsungBrowser/.test(u) ? "Samsung" : /CriOS|Chrome\//.test(u) ? "Chrome" : /Firefox|FxiOS/.test(u) ? "Firefox" : /Safari/.test(u) ? "Safari" : "navegador";
+  return `${so} · ${nav}${NTF_INSTALADO ? " (app)" : ""}`;
+}
+async function ntfReg(){ return NTF_SUPORTA ? (await navigator.serviceWorker.getRegistration("./")) || null : null; }
+async function ntfEstado(){
+  if(!NTF_SUPORTA) return NTF_IOS && !NTF_INSTALADO ? "ios" : "sem";
+  if(Notification.permission === "denied") return "bloqueado";
+  const reg = await ntfReg(), sub = reg && await reg.pushManager.getSubscription();
+  return sub && Notification.permission === "granted" ? "ativo" : "inativo";
+}
+async function ntfChamar(acao, corpo){
+  const { data:{ session } } = await sb.auth.getSession();
+  const r = await fetch(`${SUPA_URL}/functions/v1/checkout?acao=${acao}`, { method:"POST",
+    headers:{ apikey: SUPA_KEY, Authorization: "Bearer " + session.access_token, "Content-Type":"application/json" }, body: JSON.stringify(corpo || {}) });
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok) throw new Error(j.erro || ("erro " + r.status));
+  return j;
+}
+async function ntfSalvar(sub){
+  const js = sub.toJSON();
+  const { error } = await sb.rpc("push_registrar", { p_endpoint: js.endpoint, p_p256dh: js.keys.p256dh, p_auth: js.keys.auth, p_aparelho: ntfAparelho() });
+  if(error) throw new Error(error.message);
+}
+async function ntfAtivar(){
+  const perm = await Notification.requestPermission();
+  if(perm !== "granted") throw new Error(perm === "denied" ? "Você bloqueou as notificações. Libere nas configurações do navegador." : "Permissão não concedida.");
+  const reg = await navigator.serviceWorker.register("sw.js", { scope: "./" });
+  await navigator.serviceWorker.ready;
+  const { publicKey } = await ntfChamar("push_chave");
+  if(!publicKey) throw new Error("O servidor não mandou a chave de notificação. Tente de novo em instantes.");
+  let sub = await reg.pushManager.getSubscription();
+  if(sub){   /* inscrição antiga com outra chave do servidor: refaz */
+    const k = sub.options && sub.options.applicationServerKey;
+    const igual = k && btoa(String.fromCharCode(...new Uint8Array(k))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") === publicKey;
+    if(!igual){ await sub.unsubscribe().catch(() => {}); sub = null; }
+  }
+  if(!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: ntfBytes(publicKey) });
+  await ntfSalvar(sub);
+  return sub;
+}
+async function ntfDesativar(){
+  const reg = await ntfReg(), sub = reg && await reg.pushManager.getSubscription();
+  if(sub){ await sb.rpc("push_remover", { p_endpoint: sub.endpoint }); await sub.unsubscribe().catch(() => {}); }
+}
+async function ntfTestar(){
+  const reg = await ntfReg(), sub = reg && await reg.pushManager.getSubscription();
+  if(!sub) throw new Error("Este aparelho não está inscrito.");
+  await ntfChamar("push_teste", { endpoint: sub.endpoint });
+}
+let ntfRenovado = false;
+async function desenhaNotif(){
+  const box = $("#ntfBox"); if(!box) return;
+  const st = await ntfEstado(); if(!$("#ntfBox")) return;
+  if(st === "ativo" && !ntfRenovado){   /* 1x por sessão: confirma a inscrição no banco (o navegador pode ter trocado) */
+    ntfRenovado = true; ntfReg().then(r => r && r.pushManager.getSubscription()).then(s => s && ntfSalvar(s)).catch(() => {});
+  }
+  const txt = {
+    ativo:     ["ok",  "Notificações ligadas neste aparelho", "Você recebe “Pix gerado” e “Pedido PAGO” mesmo com o painel fechado."],
+    inativo:   ["off", "Receba aviso de pedido neste aparelho", "Pix gerado e pedido pago chegam como notificação, igual app, mesmo com o painel fechado."],
+    bloqueado: ["bad", "Notificações bloqueadas neste navegador", "Libere em: cadeado/ⓘ ao lado do endereço → Notificações → Permitir. Depois toque em “Ativar”."],
+    ios:       ["off", "No iPhone: instale o painel para receber avisos", "Toque em Compartilhar (□↑) → “Adicionar à Tela de Início”. Abra o “Brutt Painel” pelo ícone e ative aqui."],
+    sem:       ["bad", "Este navegador não recebe notificações", "Use o Chrome (Android/PC), Edge, Firefox ou o Safari com o painel instalado na Tela de Início."],
+  }[st];
+  box.innerHTML = `<div class="ntf ntf-${txt[0]}"><span class="ntf-ic">${ic("bell")}</span><span class="ntf-tx"><b>${txt[1]}</b><small>${txt[2]}</small></span>
+    <span class="ntf-bt">${st === "ativo" ? `<button class="btn-ghost btn-sm" id="ntfTeste">Testar</button><button class="btn-ghost btn-sm" id="ntfDes">Desligar</button>`
+      : st === "inativo" || st === "bloqueado" ? `<button class="btn-gold btn-sm" id="ntfAtv">Ativar notificações</button>` : ""}</span></div>`;
+  const acao = (id, fn, ok) => { const b = $("#" + id); if(b) b.onclick = async () => { b.disabled = true;
+    try{ await fn(); if(ok) toast(ok); }catch(e){ toast(e.message || String(e)); } b.disabled = false; desenhaNotif(); }; };
+  acao("ntfAtv", async () => { await ntfAtivar(); await ntfTestar().catch(() => {}); }, "Pronto! Mandei uma notificação de teste.");
+  acao("ntfTeste", ntfTestar, "Notificação de teste enviada. Deve chegar em segundos.");
+  acao("ntfDes", ntfDesativar, "Notificações desligadas neste aparelho.");
 }
 /* mesmo critério da tela "Estoque baixo" (ativos com menos de LOW_STOCK_LIMIT, sem destilados/vinho/Red Bull) */
 function filtroEstoqueBaixo(q){
@@ -1012,7 +1214,7 @@ async function carregarStatusInicio(){
     const linhas = HR_DIAS.map(({d}) => { const r = porDia[d], pad = HR_PADRAO[d];
       return { d, aberto: r ? !!r.aberto : !!pad, a: r ? r.abre_min : (pad?pad[0]:840), b: r ? r.fecha_min : (pad?pad[1]:1440) }; });
     const st = hrStatus(linhas);
-    $("#stLoja").innerHTML = `<div class="k">Loja agora</div><div class="v"><span class="dot ${st.aberto?"ok":"bad"}"></span>${st.aberto?"ABERTA":"FECHADA"}</div>
+    $("#stLoja").innerHTML = `<div class="k">Loja agora</div><div class="v" style="color:${st.aberto?"var(--ok)":"var(--danger)"}"><span class="dot ${st.aberto?"ok":"bad"}"></span>${st.aberto?"ABERTA":"FECHADA"}</div>
       <div class="d">${st.aberto ? "até "+st.fim : (st.nunca ? "nenhum dia aberto" : "abre "+st.quando+" às "+st.hora)} · toque para editar</div>`;
     $("#stLoja").classList.toggle("bad", false);
   }catch(_){ $("#stLoja").innerHTML = `<div class="k">Loja agora</div><div class="v">—</div>`; }
@@ -2733,6 +2935,40 @@ async function ftCarregaCatalogo(){
   }
 }
 
+/* recomprime as fotos já enviadas que passam de 100 KB (fotos antigas em JPEG): WebP 86%, mesmo tamanho em pixels
+   (no máximo 1000 px). Só troca se o arquivo novo ficar pelo menos 20% menor — senão deixa a original. */
+async function ftOtimizar(){
+  const b = $("#ftOtim"), txt = $("#ftOtimTxt"); if(b.disabled) return;
+  b.disabled = true; b.textContent = "Procurando fotos pesadas…";
+  const fim = m => { b.disabled = false; b.textContent = "Otimizar fotos pesadas"; if(txt) txt.textContent = m; toast(m); };
+  const { data: arqs, error } = await sb.storage.from(BUCKET).list("", { limit: 2000 });
+  if(error) return fim("Não consegui listar as fotos: " + error.message);
+  const pesadas = (arqs || []).filter(a => (a.metadata?.size || 0) > 100 * 1024 && /\.(jpe?g|png|webp)$/i.test(a.name));
+  if(!pesadas.length) return fim("Nenhuma foto acima de 100 KB. Está tudo leve.");
+  if(!confirm(`${pesadas.length} foto(s) acima de 100 KB. Recomprimir em WebP (sem mudar o tamanho da imagem)?`)) return fim("Nada foi alterado.");
+  let trocadas = 0, antes = 0, depois = 0, i = 0;
+  for(const a of pesadas){
+    b.textContent = `Otimizando ${++i}/${pesadas.length}…`;
+    try{
+      const pid = a.name.replace(/\.[^.]+$/, ""), { data: pub } = sb.storage.from(BUCKET).getPublicUrl(a.name);
+      const bm = await createImageBitmap(await (await fetch(pub.publicUrl + "?t=" + Date.now(), { cache: "no-store" })).blob());
+      const k = Math.min(1, 1000 / Math.max(bm.width, bm.height)), c = document.createElement("canvas");
+      c.width = Math.round(bm.width * k); c.height = Math.round(bm.height * k);
+      const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(bm, 0, 0, c.width, c.height);
+      const novo = await new Promise(r => c.toBlob(r, "image/webp", 0.86));
+      if(!novo || novo.type !== "image/webp" || novo.size > a.metadata.size * 0.8) continue;
+      const path = pid + ".webp";
+      const up = await sb.storage.from(BUCKET).upload(path, novo, { upsert: true, contentType: "image/webp", cacheControl: "31536000" });
+      if(up.error) continue;
+      const url = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl + "?v=" + Date.now();
+      const r = await sb.from("product_images").update({ url }).eq("product_id", pid);
+      if(r.error) continue;
+      if(a.name !== path) sb.storage.from(BUCKET).remove([a.name]).catch(() => {});
+      trocadas++; antes += a.metadata.size; depois += novo.size;
+    }catch(_){ /* foto que não abre: deixa como está */ }
+  }
+  fim(trocadas ? `${trocadas} foto(s) otimizada(s): de ${Math.round(antes / 1024)} KB para ${Math.round(depois / 1024)} KB.` : "Nenhuma ficou menor o bastante; mantive as originais.");
+}
 async function renderFotos(){
   FT.itens.forEach(i => i.url && URL.revokeObjectURL(i.url)); FT.itens = [];
   const alvos = window.__fotosAlvos; window.__fotosAlvos = null; FT.alvos = alvos && alvos.length ? alvos : null;
@@ -2745,6 +2981,7 @@ async function renderFotos(){
         <label><input type="checkbox" id="ftIA" ${FT.ia?"checked":""}> Ler a embalagem com IA quando o nome do arquivo não ajudar</label>
         <label><input type="checkbox" id="ftSub" ${FT.substituir?"checked":""}> Marcar para enviar também os produtos que <b>já têm foto</b> (substitui)</label>
       </div>
+      <div class="ft-otim"><button type="button" class="btn-ghost btn-sm" id="ftOtim">Otimizar fotos pesadas</button><small id="ftOtimTxt">Recomprime em WebP as fotos acima de 100 KB, sem mudar o tamanho da imagem. Só troca quando fica bem menor.</small></div>
       <label class="ft-drop" id="ftDrop"><input type="file" id="ftFile" accept="image/*" multiple hidden>
         <span class="ft-ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg></span><b>Toque ou arraste as fotos aqui</b><small>JPG, PNG, WebP ou HEIC · quantas quiser · dica: nomeie o arquivo com o nome do produto ou o código de barras</small></label>
     </section>
@@ -2759,6 +2996,7 @@ async function renderFotos(){
   ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
   drop.addEventListener("drop", e => ftAdiciona(e.dataTransfer.files));
   $("#ftIA").onchange = e => FT.ia = e.target.checked;
+  $("#ftOtim").onclick = ftOtimizar;
   $("#ftSub").onchange = e => { FT.substituir = e.target.checked; };
   if($("#ftTodos")) $("#ftTodos").onclick = () => { FT.alvos = null; renderFotos(); };
 
@@ -2794,20 +3032,43 @@ async function renderFotos(){
 }
 
 /* ---------------- pedidos online (Mercado Pago) ---------------- */
-const PED_ST = { aguardando_pagamento:"⏳ Aguardando pagamento", pago:"✅ Pago", recusado:"⚠️ Recusado", expirado:"⌛ Pix expirado", cancelado:"↩️ Cancelado/estornado", concluido:"📦 Concluído" };
+const PED_ST = { aguardando_pagamento:"⏳ Aguardando pagamento", pago:"✅ Pago", recusado:"⚠️ Recusado", expirado:"⌛ Pix expirado", cancelado:"✖️ Cancelado", estornado:"↩️ Estornado", concluido:"📦 Concluído" };
 const PED_MET = { pix:"Pix", debito:"Débito", credito:"Crédito à vista" };
-const PED_ROT = { aguardando_pagamento:"Aguardando pagamento", pago:"Pago · a concluir", recusado:"Recusado", expirado:"Pix expirado", cancelado:"Cancelado/estornado", concluido:"Concluído" };
+const PED_ROT = { aguardando_pagamento:"Aguardando pagamento", pago:"Pago · a concluir", recusado:"Recusado", expirado:"Pix expirado", cancelado:"Cancelado", estornado:"Estornado · devolvido", concluido:"Concluído" };
+/* "Estornado" = cancelado porque o Mercado Pago devolveu o valor inteiro (mp_status refunded). */
+const pedSt = p => p.status === "cancelado" && p.mp_status === "refunded" ? "estornado" : p.status;
+/* pedido pendente só pode ser cancelado pela equipe se não houver Pix válido em aberto (sem Pix ou Pix vencido) */
+const pedCancelavel = p => p.status === "aguardando_pagamento" && (!p.mp_payment_id || (p.pix_expira_em && new Date(p.pix_expira_em) < new Date()));
+/* próxima etapa de um pedido pago: entrega da loja = "Saiu para entrega" → "Pedido entregue"; Uber/99 = "Motoboy retirou" */
+const PED_ETAPA_OK = { saiu:"saiu para entrega", entregue:"pedido entregue", retirou:"motoboy retirou" };
+const pedAvisa = {};   /* link do WhatsApp com a mensagem pronta (quando o robô do WhatsApp não está ligado) */
+function pedBotao(p){
+  if(p.status !== "pago") return "";
+  const b = (q, t) => `<button class="btn-gold btn-sm" data-etapa="${q}" data-pid="${esc(p.id)}">${t}</button>`;
+  if((p.entrega || {}).tipo === "entrega") return p.saiu_em ? b("entregue", "Pedido entregue") : b("saiu", "🛵 Saiu para entrega");
+  return b("retirou", "Motoboy retirou");
+}
+function pedLinha(p){
+  if(!["pago","concluido"].includes(p.status)) return "";
+  const ent = (p.entrega || {}).tipo === "entrega", h = iso => iso ? new Date(iso).toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit", timeZone:"America/Sao_Paulo" }) : "";
+  const passos = [["Recebido", p.created_at, true], ["Pago", p.pago_em, true]];
+  if(ent){ passos.push(["Saiu", p.saiu_em, !!p.saiu_em || p.status === "concluido"]); passos.push(["Entregue", p.concluido_em, p.status === "concluido"]); }
+  else passos.push(["Motoboy retirou", p.concluido_em, p.status === "concluido"]);
+  return `<div class="ped-linha">${passos.map(([t, iso, ok]) => `<span class="${ok ? "ok" : ""}">${t}${ok && iso ? ` <time>${h(iso)}</time>` : ""}</span>`).join("")}
+    <a class="ped-ver" href="/?pedido=${esc(p.id)}" target="_blank" rel="noopener" title="Abrir a tela que o cliente vê">ver como o cliente vê ↗</a></div>`;
+}
 let pedFiltro = "todos";
 async function renderPedidos(){
   app.innerHTML = `${topbarHTML("Pedidos online")}
     <div class="pg">
       <h2 class="pg-t">Pedidos online</h2>
-      <p class="pg-d" style="margin-bottom:16px">Pedidos pagos pelo site (Mercado Pago). Pedido <b style="color:var(--danger)">novo pisca em vermelho</b> até alguém tocar nele. Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp. Mostra os 60 mais recentes.</p>
+      <p class="pg-d" style="margin-bottom:16px">Pedidos pagos pelo site (Mercado Pago). Pedido <b style="color:var(--danger)">pago pisca em vermelho</b> e <b style="color:var(--warn)">Pix gerado (ainda não pago) em laranja</b>, até alguém tocar nele. Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp. Mostra os 60 mais recentes.</p>
+      <div id="ntfBox"></div>
       <div class="ped-filtros" id="pedFiltros" role="group" aria-label="Filtrar pedidos" hidden></div>
       <div id="pedLista"><div class="loading">Carregando…</div></div>
     </div>`;
-  bindTopbar();
-  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,visto_em").order("created_at", { ascending:false }).limit(60);
+  bindTopbar(); desenhaNotif();
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,saiu_em,concluido_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em").order("created_at", { ascending:false }).limit(60);
   const el = $("#pedLista");
   if(!el) return;
   if(error){ el.innerHTML = `<div class="err">Não foi possível carregar os pedidos (${esc(error.message)}).</div>`; return; }
@@ -2819,21 +3080,29 @@ async function renderPedidos(){
     ["novos", "Novos", p => p.status === "pago" && !p.visto_em],
     ["aguardando_pagamento", "Aguardando pagamento", p => p.status === "aguardando_pagamento"],
     ["concluido", "Concluídos", p => p.status === "concluido"],
-    ["outros", "Recusados / expirados", p => ["recusado","expirado","cancelado"].includes(p.status)],
+    ["estornado", "Estornados", p => pedSt(p) === "estornado"],
+    ["outros", "Cancelados / expirados", p => ["recusado","expirado","cancelado"].includes(pedSt(p))],
   ];
   if(!FILTROS.some(f => f[0] === pedFiltro)) pedFiltro = "todos";
   const cartao = p => {
     const e = p.entrega || {}, a = e.endereco || {};
     const ent = e.tipo === "entrega" ? `Entrega: ${esc(a.rua)}, ${esc(a.numero)}${a.complemento ? " ("+esc(a.complemento)+")" : ""} — ${esc(a.bairro||"")} · ${esc(String(e.km||"").replace(".", ","))} km` : "Cliente chama Uber Flash/99";
-    const novo = p.status === "pago" && !p.visto_em;
-    return `<article class="ped-card${novo ? " novo" : p.status === "pago" ? " acao" : ""}" data-ped="${esc(p.id)}">
-      <div class="ped-h"><b>${novo ? `<span class="ped-novo">Novo</span>` : ""}<code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</b>
-        <span><span class="st st-${esc(p.status)}">${PED_ROT[p.status] || esc(p.status)}</span>${p.reserva ? ' <span class="st st-reserva">reserva</span>' : ""}</span></div>
+    const novo = p.status === "pago" && !p.visto_em, st = pedSt(p);
+    const pixNovo = p.status === "aguardando_pagamento" && !p.visto_em && p.pix_expira_em && new Date(p.pix_expira_em) > new Date();
+    const nota = st === "estornado" ? `O Mercado Pago devolveu ${brl(p.total)} ao cliente${p.pago_em ? ` (pago em ${fmtQuando(p.pago_em)})` : ""}. Não conta como venda.`
+      : st === "cancelado" && /cancelado pela equipe/.test(p.mp_status_detail || "") ? esc(p.mp_status_detail.replace(/^c/, "C")) + "."
+      : p.status === "aguardando_pagamento" && !pedCancelavel(p) ? "Pix em aberto: se o cliente não pagar, ele vence em 30 min e o pedido pode ser cancelado." : "";
+    return `<article class="ped-card${novo ? " novo" : pixNovo ? " pixnovo" : p.status === "pago" ? " acao" : ["estornado","cancelado","expirado","recusado"].includes(st) ? " apagado" : ""}" data-ped="${esc(p.id)}">
+      <div class="ped-h"><b>${novo ? `<span class="ped-novo">Novo</span>` : pixNovo ? `<span class="ped-pix">Pix gerado</span>` : ""}<code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</b>
+        <span><span class="st st-${esc(st)}">${PED_ROT[st] || esc(st)}</span>${p.reserva ? ' <span class="st st-reserva">reserva</span>' : ""}</span></div>
       <div class="ped-meta"><span>${fmtQuando(p.created_at)}</span><span>${PED_MET[p.metodo] || "—"}</span><a href="https://wa.me/${esc(p.cliente_whats)}" target="_blank" rel="noopener">WhatsApp ${esc(p.cliente_whats)}</a></div>
       <div class="ped-itens">${(p.itens||[]).map(i => `<span><b>${esc(i.qtd)}×</b>${esc(i.nome)}</span>`).join("")}</div>
       <div class="ped-ent">${ent}</div>
+      ${pedLinha(p)}
       <div class="ped-f"><b>${brl(p.total)}</b>
-        ${p.status === "pago" ? `<button class="btn-gold btn-sm" data-concluir="${esc(p.id)}">Marcar como concluído</button>` : ""}</div>
+        <span class="ped-bts">${pedBotao(p)}${pedCancelavel(p) ? `<button class="btn-ghost btn-sm" data-cancelar="${esc(p.id)}">Cancelar pedido</button>` : ""}</span></div>
+      ${pedAvisa[p.id] ? `<a class="ped-avisa" href="${esc(pedAvisa[p.id])}" target="_blank" rel="noopener">Avisar o cliente no WhatsApp (mensagem pronta)</a>` : ""}
+      ${nota ? `<p class="ped-nota">${nota}</p>` : ""}
       ${novo ? `<p class="ped-novo-dica">Toque no pedido para parar o alerta.</p>` : ""}
     </article>`;
   };
@@ -2843,26 +3112,37 @@ async function renderPedidos(){
     fx.innerHTML = FILTROS.map(([k, t, fn]) => `<button type="button" class="chip${k === pedFiltro ? " active" : ""}" data-pf="${k}" aria-pressed="${k === pedFiltro}">${t}<span class="n">${data.filter(fn).length}</span></button>`).join("");
     fx.querySelectorAll("[data-pf]").forEach(b => b.onclick = () => { pedFiltro = b.dataset.pf; desenha(); });
     el.innerHTML = lista.length ? lista.map(cartao).join("") : `<div class="empty">Nenhum pedido neste filtro.</div>`;
-    el.querySelectorAll(".ped-card.novo").forEach(c => c.addEventListener("click", async e => {
-      if(e.target.closest("a,[data-concluir]") || c.dataset.marcando) return;
+    el.querySelectorAll(".ped-card.novo,.ped-card.pixnovo").forEach(c => c.addEventListener("click", async e => {
+      if(e.target.closest("a,[data-etapa],[data-cancelar]") || c.dataset.marcando) return;
       c.dataset.marcando = "1";
       const ped = data.find(x => x.id === c.dataset.ped);
       if(await marcarVisto(ped.id)){ ped.visto_em = new Date().toISOString(); desenha(); } else delete c.dataset.marcando;
     }));
-    el.querySelectorAll("[data-concluir]").forEach(b => b.onclick = async () => {
+    el.querySelectorAll("[data-cancelar]").forEach(b => b.onclick = async () => {
+      const ped = data.find(x => x.id === b.dataset.cancelar); if(!ped || b.disabled) return;
+      const motivo = prompt(`Cancelar o pedido #${ped.numero} (${ped.cliente_nome})?\nEle não foi pago. Escreva o motivo (ex.: teste, cliente desistiu) e confirme:`, "teste");
+      if(motivo === null) return;
+      b.disabled = true; b.textContent = "Cancelando…";
+      const { error } = await sb.rpc("pedido_cancelar_aberto", { p_id: ped.id, p_motivo: motivo.trim().slice(0, 120) });
+      if(error){ toast("Não deu pra cancelar: " + error.message); b.disabled = false; b.textContent = "Cancelar pedido"; return; }
+      Object.assign(ped, { status:"cancelado", mp_status_detail:"cancelado pela equipe" + (motivo.trim() ? ": " + motivo.trim() : "") });
+      navCont.t = 0; toast(`Pedido #${ped.numero} cancelado.`); desenha();
+    });
+    /* etapas do pedido (o cliente vê na tela "Acompanhe seu pedido"): saiu para entrega → entregue / motoboy retirou */
+    el.querySelectorAll("[data-etapa]").forEach(b => b.onclick = async () => {
       if(b.disabled) return;
+      const ped = data.find(x => x.id === b.dataset.pid), qual = b.dataset.etapa, rot = b.textContent;
       b.disabled = true; b.textContent = "Enviando…";
-      const ped = data.find(x => x.id === b.dataset.concluir);
-      if(ped && !ped.visto_em) await marcarVisto(ped.id);
+      if(ped && !ped.visto_em){ await marcarVisto(ped.id); ped.visto_em = new Date().toISOString(); }
       try{
-        const { data:{ session } } = await sb.auth.getSession();
-        const r = await fetch(`${SUPA_URL}/functions/v1/checkout?acao=concluir`, { method:"POST",
-          headers:{ apikey: SUPA_KEY, Authorization: "Bearer " + session.access_token, "Content-Type":"application/json" }, body: JSON.stringify({ pedido_id: b.dataset.concluir }) });
-        const j = await r.json().catch(() => ({}));
-        if(!r.ok) throw new Error(j.erro || r.status);
+        const j = await ntfChamar(qual === "saiu" ? "etapa" : "concluir", qual === "saiu" ? { pedido_id: ped.id, etapa: "saiu" } : { pedido_id: ped.id });
+        if(qual === "saiu") ped.saiu_em = j.saiu_em || new Date().toISOString();
+        else { ped.status = "concluido"; ped.concluido_em = new Date().toISOString(); }
         navCont.t = 0;
-        toast(`Pedido #${j.numero} concluído. Cliente avisado no WhatsApp.`); renderPedidos();
-      }catch(err){ toast("Não deu pra concluir: " + (err.message || err)); b.disabled = false; b.textContent = "Marcar como concluído"; }
+        if(j.whats && !j.whats.auto && j.whats.link){ pedAvisa[ped.id] = j.whats.link; toast(`#${j.numero}: ${PED_ETAPA_OK[qual]}. Toque em “Avisar o cliente no WhatsApp”.`); }
+        else toast(`#${j.numero}: ${PED_ETAPA_OK[qual]}. O cliente foi avisado no WhatsApp.`);
+        desenha();
+      }catch(err){ toast("Não deu: " + (err.message || err)); b.disabled = false; b.textContent = rot; }
     });
   };
   desenha();
@@ -2875,6 +3155,7 @@ async function renderVisao(){
     <div class="pg">
       <div class="pg-h"><div><h2 class="pg-t">Visão geral</h2><p class="pg-d">O que precisa de atenção agora. Números do banco da loja no momento em que a tela abriu.</p></div>
         <button class="btn-ghost btn-sm" id="ovAtualiza">${ic("sync")} Atualizar</button></div>
+      <div id="ntfBox"></div>
       <div class="ov-grid" id="ovKpis">${["Pedidos a concluir","Estoque baixo","Ativos sem estoque","Sincronização Nex","Loja agora"].map(kpiSk).join("")}</div>
       <div class="ov-cols">
         <section class="ov-box"><h3>O que resolver agora</h3><div class="ov-todo" id="ovTodo"><div class="loading">Verificando…</div></div></section>
@@ -2887,7 +3168,7 @@ async function renderVisao(){
         <button class="btn-ghost" data-ir="nex">${ic("sync")} Sincronização Nex</button>
       </div></section>
     </div>`;
-  bindTopbar();
+  bindTopbar(); desenhaNotif();
   const irPara = r => { if(r === "fotos") window.__fotosAlvos = null; go(r); };
   app.querySelectorAll("[data-ir]").forEach(b => b.onclick = () => irPara(b.dataset.ir));
   $("#ovNovo").onclick = () => openNewProduct();
@@ -2901,7 +3182,7 @@ async function renderVisao(){
     cont(sb.from("products").select("id", { count:"exact", head:true }).eq("is_active", true).lte("stock", 0)),
     sb.from("nex_sync_log").select("ran_at,ok,erro,modo,estoque_alterado,preco_alterado").order("id", { ascending:false }).limit(1),
     sb.from("loja_horarios").select("*"),
-    sb.from("pedidos").select("id,numero,status,cliente_nome,total,created_at").order("created_at", { ascending:false }).limit(5),
+    sb.from("pedidos").select("id,numero,status,mp_status,cliente_nome,total,created_at").order("created_at", { ascending:false }).limit(5),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago").is("visto_em", null)),
   ]);
   if(rotaAtual() !== "visao" || !$("#ovKpis")) return;
@@ -2925,9 +3206,9 @@ async function renderVisao(){
     kpi("estoque-baixo", "alert", "Estoque baixo", num(nBaixo), nBaixo == null ? "não disponível" : `ativos com menos de ${LOW_STOCK_LIMIT} unidades`, nBaixo ? "alerta" : "") +
     kpi("estoque-baixo", "pkg", "Ativos sem estoque", num(nZero), nZero == null ? "não disponível" : "aparecem como esgotados no site", nZero ? "alerta" : "") +
     kpi("nex", "sync", "Sincronização Nex", !u ? "Sem registro" : !u.ok ? "Última rodada falhou" : nexVelho ? "Parou de sincronizar?" : "Em dia",
-        !u ? (nex.error ? "não disponível" : "nenhuma rodada ainda") : `${haQuanto(u.ran_at)} · ${u.modo === "teste" ? "simulação" : (u.estoque_alterado ?? 0) + " estoque(s), " + (u.preco_alterado ?? 0) + " preço(s)"}`, nexRuim ? "ruim" : "", true) +
+        !u ? (nex.error ? "não disponível" : "nenhuma rodada ainda") : `${haQuanto(u.ran_at)} · ${u.modo === "teste" ? "simulação" : (u.estoque_alterado ?? 0) + " estoque(s), " + (u.preco_alterado ?? 0) + " preço(s)"}`, nexRuim ? "ruim" : u ? "bom" : "", true) +
     kpi("horarios", "store", "Loja agora", !loja ? "—" : loja.aberto ? "Aberta" : "Fechada",
-        !loja ? "não disponível" : loja.aberto ? "até " + loja.fim : (loja.nunca ? "nenhum dia aberto" : "abre " + loja.quando + " às " + loja.hora), "", true);
+        !loja ? "não disponível" : loja.aberto ? "até " + loja.fim : (loja.nunca ? "nenhum dia aberto" : "abre " + loja.quando + " às " + loja.hora), !loja ? "" : loja.aberto ? "bom" : "alerta", true);
 
   /* o que resolver agora: só itens que existem de verdade */
   const it = (rota, icone, cls, titulo, sub) => `<button class="ov-item ${cls}" data-ir="${rota}"><span class="ic">${ic(icone)}</span><span class="tx"><b>${titulo}</b><small>${sub}</small></span><span class="go">${ic("chev")}</span></button>`;
@@ -2946,7 +3227,7 @@ async function renderVisao(){
   $("#ovPed").innerHTML = ult.error ? `<div class="empty" style="padding:20px">Não foi possível carregar os pedidos.</div>` :
     !(ult.data||[]).length ? `<div class="empty" style="padding:20px">Nenhum pedido online ainda.</div>` :
     ult.data.map(p => `<div class="ov-ped-r"><span class="n"><code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</span>
-      <span class="t">${brlV(p.total)}<span class="st st-${esc(p.status)}">${PED_ROT[p.status] || esc(p.status)}</span></span>
+      <span class="t">${brlV(p.total)}<span class="st st-${esc(pedSt(p))}">${PED_ROT[pedSt(p)] || esc(p.status)}</span></span>
       <span class="q">${fmtQuando(p.created_at)}</span></div>`).join("");
   app.querySelectorAll("#ovKpis [data-ir], #ovTodo [data-ir]").forEach(b => b.onclick = () => irPara(b.dataset.ir));
 }
@@ -3133,6 +3414,188 @@ function exportarClientes(){
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+/* ---------------- Sommelier em massa ----------------
+   Roda o Sommelier (função gerar-ficha-sommelier) em fila, vários produtos ao mesmo tempo, e grava sozinho só o que
+   a regra escolhida permite. Cada mudança fica em sommelier_log (antes/depois) para desfazer um produto ou o lote todo.
+   A fila roda no navegador: a aba precisa ficar aberta até terminar (pode navegar por outras telas do painel). */
+const SM_GENERICAS = ["headshop-outros", "doces-outros", "bebidas-bebidas"];
+const SM_LOTES = [
+  ["desc", "Descrição faltando, rasa ou cortada", p => { const d = (p.description||"").trim().length; return d <= 80 || d > SOM_DESC_MAX; }],
+  ["ficha", "Ficha técnica curta (até 2 itens)", p => (p.specs||[]).length <= 2],
+  ["perfil", "Essências sem perfil de sabor", p => somCatInfo(p.category_id).essencia && !p.flavor_profile],
+  ["whisky", "Whisky sem detalhes", p => somCatInfo(p.category_id).whisky && !p.whisky_details],
+  ["generica", "Categoria genérica (Outros)", p => SM_GENERICAS.includes((state.categories.find(c => c.id === p.category_id)||{}).slug)],
+  ["incompletos", "Qualquer coisa faltando", null],
+  ["todos", "Todos os produtos", () => true],
+];
+let smRun = null;   /* lote em andamento (sobrevive à troca de tela) */
+const smCatSlug = id => (state.categories.find(c => c.id === id) || {}).slug || "";
+const smCatNome = slug => { const c = state.categories.find(x => x.slug === slug), pa = c && state.categories.find(x => x.id === c.parent_id); return c ? (pa ? pa.name + " › " : "") + c.name : slug; };
+function smFiltro(k){
+  if(k === "incompletos"){ const fs = SM_LOTES.filter(l => ["desc","ficha","perfil","whisky","generica"].includes(l[0])).map(l => l[2]); return p => fs.some(f => f(p)); }
+  return (SM_LOTES.find(l => l[0] === k) || SM_LOTES[0])[2];
+}
+/* decide o que gravar a partir da sugestão `d`; devolve { upd, antes } (vazio = nada a mudar) */
+function smDecide(p, d, o){
+  const upd = {}, info = somCatInfo(p.category_id), dl = (p.description||"").trim().length, nSpecs = (p.specs||[]).length, tudo = o.modo === "reescrever";
+  if(o.desc && (d.description||"").length >= 40 && (tudo || dl <= 80 || dl > SOM_DESC_MAX) && d.description.trim() !== (p.description||"").trim()) upd.description = d.description.trim();
+  if(o.ficha && (d.specs||[]).length >= 2 && (tudo ? true : nSpecs <= 2 && d.specs.length > nSpecs)) upd.specs = d.specs;
+  if(o.perfil && info.essencia && d.flavor_profile && (tudo || !p.flavor_profile)) upd.flavor_profile = d.flavor_profile;
+  if(o.whisky && info.whisky && d.whisky_details && (tudo || !p.whisky_details)) upd.whisky_details = d.whisky_details;
+  if(o.cat && d.categoria_sugerida && d.confianca === "alta" && d.categoria_sugerida !== smCatSlug(p.category_id)){
+    const c = state.categories.find(x => x.slug === d.categoria_sugerida); if(c && c.parent_id) upd.category_id = c.id;
+  }
+  const antes = {}; Object.keys(upd).forEach(k => antes[k] = p[k] ?? null);
+  return { upd, antes };
+}
+function smResumoMud(upd){
+  const t = [];
+  if("description" in upd) t.push("descrição"); if("specs" in upd) t.push(`ficha (${upd.specs.length})`);
+  if("flavor_profile" in upd) t.push("perfil de sabor"); if("whisky_details" in upd) t.push("detalhes do whisky");
+  if("category_id" in upd) t.push("categoria → " + smCatNome(smCatSlug(upd.category_id)));
+  return t.join(", ");
+}
+async function renderSommelier(){
+  app.innerHTML = `${topbarHTML("Sommelier em massa")}
+    <div class="pg">
+      <h2 class="pg-t">Sommelier em massa</h2>
+      <p class="pg-d">A IA escreve descrição, ficha técnica, perfil de sabor e sugere a categoria de vários produtos de uma vez e <b>grava sozinha</b> seguindo a regra abaixo. Tudo fica no histórico e pode ser desfeito.</p>
+      <div id="smCorpo"><div class="loading">Carregando produtos…</div></div>
+    </div>`;
+  bindTopbar();
+  const { data: prods, error } = await sb.from("products").select("id,name,brand,ean,category_id,description,specs,flavor_profile,whisky_details,stock,is_active").order("name").limit(5000);
+  const corpo = $("#smCorpo"); if(!corpo) return;
+  if(error){ corpo.innerHTML = `<div class="err">Não foi possível carregar os produtos (${esc(error.message)}).</div>`; return; }
+  const o = smRun ? smRun.o : JSON.parse(localStorage.getItem("brutt_sm_opts") || "null") || { lote:"desc", estoque:true, desc:true, ficha:true, perfil:true, whisky:true, cat:true, modo:"completar", pesquisar:true, baixa:false, juntos:3 };
+  const chk = (id, rot, dica) => `<label class="sm-chk"><input type="checkbox" id="${id}"${o[id.slice(2).toLowerCase()] ? " checked" : ""}><span><b>${rot}</b>${dica ? `<small>${dica}</small>` : ""}</span></label>`;
+  corpo.innerHTML = `
+    <section class="section sm-sec"><h3>1. Quais produtos</h3>
+      <select id="smLote" aria-label="Quais produtos">${SM_LOTES.map(([k, t]) => `<option value="${k}"${o.lote === k ? " selected" : ""}>${t}</option>`).join("")}</select>
+      <label class="sm-chk"><input type="checkbox" id="smEstoque"${o.estoque ? " checked" : ""}><span><b>Só produtos com estoque</b></span></label>
+      <p class="sm-qtd" id="smQtd"></p>
+    </section>
+    <section class="section sm-sec"><h3>2. O que ele pode mudar</h3>
+      <div class="sm-grid">${chk("smDesc", "Descrição", `até ${SOM_DESC_MAX} caracteres`)}${chk("smFicha", "Ficha técnica")}${chk("smPerfil", "Perfil de sabor", "essências")}${chk("smWhisky", "Detalhes do whisky")}${chk("smCat", "Categoria", "só quando tiver certeza (confiança alta)")}</div>
+      <div class="sm-modo" role="radiogroup" aria-label="Regra">
+        <label><input type="radio" name="smModo" value="completar"${o.modo !== "reescrever" ? " checked" : ""}><span><b>Só completar o que falta</b><small>Recomendado. Não mexe no que já está bom.</small></span></label>
+        <label><input type="radio" name="smModo" value="reescrever"${o.modo === "reescrever" ? " checked" : ""}><span><b>Reescrever tudo</b><small>Troca o que existe pela versão nova.</small></span></label>
+      </div>
+    </section>
+    <section class="section sm-sec"><h3>3. Velocidade e cuidado</h3>
+      <div class="sm-grid">${chk("smPesquisar", "Pesquisar na internet", "mais preciso; ~20 s por produto")}${chk("smBaixa", "Gravar mesmo com confiança baixa", "desligado = fica “para revisar”")}</div>
+      <label class="sm-vel">Produtos ao mesmo tempo <select id="smJuntos">${[1,2,3,4].map(n => `<option${(o.juntos||3) === n ? " selected" : ""}>${n}</option>`).join("")}</select></label>
+    </section>
+    <div class="sm-acoes"><button class="btn-gold" id="smIr"></button><button class="btn-ghost" id="smPausa" hidden>Pausar</button><button class="btn-ghost" id="smParar" hidden>Parar</button></div>
+    <div class="sm-prog" id="smProg" hidden><div class="sm-barra"><i id="smBarra"></i></div><p id="smStatus"></p></div>
+    <div class="sm-log-h" id="smLogH" hidden><h3>Resultado</h3><button class="btn-ghost btn-sm" id="smDesfazLote">Desfazer este lote inteiro</button></div>
+    <div id="smLog" class="sm-log"></div>`;
+  const ler = () => ({ lote: $("#smLote").value, estoque: $("#smEstoque").checked, desc: $("#smDesc").checked, ficha: $("#smFicha").checked, perfil: $("#smPerfil").checked,
+    whisky: $("#smWhisky").checked, cat: $("#smCat").checked, modo: (document.querySelector('[name="smModo"]:checked')||{}).value || "completar",
+    pesquisar: $("#smPesquisar").checked, baixa: $("#smBaixa").checked, juntos: +$("#smJuntos").value || 3 });
+  const fila = () => { const x = ler(), f = smFiltro(x.lote); return prods.filter(p => f(p) && (!x.estoque || (Number(p.stock)||0) > 0)); };
+  const contar = () => {
+    const x = ler(), n = fila().length, seg = x.pesquisar ? 22 : 7, min = Math.max(1, Math.round(n * seg / x.juntos / 60));
+    $("#smQtd").innerHTML = n ? `<b>${n}</b> produto${n > 1 ? "s" : ""} · cerca de ${min} min` : "Nenhum produto nesse filtro.";
+    if(!smRun || smRun.fim){ $("#smIr").textContent = n ? `Começar (${n})` : "Nada para fazer"; $("#smIr").disabled = !n || !(x.desc || x.ficha || x.perfil || x.whisky || x.cat); }
+    try{ localStorage.setItem("brutt_sm_opts", JSON.stringify(x)); }catch(_){}
+  };
+  corpo.querySelectorAll("input,select").forEach(el => el.addEventListener("change", contar));
+  contar();
+  $("#smIr").onclick = () => { if(smRun && !smRun.fim) return; smComeca(fila(), ler()); };
+  $("#smPausa").onclick = () => { if(!smRun) return; smRun.pausa = !smRun.pausa; smDesenha(); };
+  $("#smParar").onclick = () => { if(smRun && confirm("Parar o lote? O que já foi gravado continua salvo (e pode ser desfeito).")){ smRun.parar = true; smRun.pausa = false; smDesenha(); } };
+  $("#smDesfazLote").onclick = smDesfazLote;
+  smDesenha();
+}
+function smComeca(lista, o){
+  if(!lista.length) return;
+  const cats = o.cat ? state.categories.filter(c => c.parent_id).map(c => ({ slug: c.slug, nome: smCatNome(c.slug).replace(" › ", " > ") })) : null;
+  smRun = { o, cats, fila: lista.map(p => ({ p, st: "fila" })), lote: "sm-" + Date.now().toString(36), ini: Date.now(), pausa: false, parar: false, fim: false, feitos: 0, tempos: [] };
+  window.addEventListener("beforeunload", smAvisoSaida);
+  for(let i = 0; i < Math.min(o.juntos || 3, smRun.fila.length); i++) smTrabalhador(smRun);
+  smDesenha();
+}
+function smAvisoSaida(e){ if(smRun && !smRun.fim){ e.preventDefault(); e.returnValue = ""; } }
+async function smTrabalhador(run){
+  for(;;){
+    if(run.parar) break;
+    while(run.pausa && !run.parar) await new Promise(r => setTimeout(r, 500));
+    const it = run.fila.find(x => x.st === "fila"); if(!it || run.parar) break;
+    it.st = "rodando"; smDesenha();
+    const t0 = Date.now(), p = it.p, info = somCatInfo(p.category_id);
+    for(let tent = 0; tent < 3; tent++){
+      try{
+        const d = await somChamar({ name: p.name, brand: p.brand||"", ean: p.ean||"", categoria: info.categoria, subcategoria: info.subcategoria, pesquisar: run.o.pesquisar,
+          existente: { description: p.description||"", specs: p.specs||[], flavor_profile: p.flavor_profile||null, whisky_details: p.whisky_details||null },
+          ...(run.cats ? { categorias: run.cats, categoria_slug_atual: smCatSlug(p.category_id) } : {}) });
+        it.conf = d.confianca; it.avisos = d.avisos || [];
+        if(d.confianca === "baixa" && !run.o.baixa){ it.st = "revisar"; it.msg = "Confiança baixa: abra a ficha e revise."; break; }
+        const { upd, antes } = smDecide(p, d, run.o);
+        if(!Object.keys(upd).length){ it.st = "nada"; it.msg = "Já estava completo."; break; }
+        const lg = await sb.from("sommelier_log").insert({ product_id: p.id, antes, depois: upd, confianca: d.confianca, avisos: it.avisos, lote: run.lote }).select("id").single();
+        if(lg.error) throw new Error("histórico: " + lg.error.message);
+        const { error } = await sb.from("products").update(upd).eq("id", p.id);
+        if(error) throw new Error(error.message);
+        Object.assign(p, upd); it.st = "ok"; it.logId = lg.data.id; it.msg = smResumoMud(upd); break;
+      }catch(e){
+        const m = e.message || String(e);
+        if(/limite|429/i.test(m) && tent < 2){ it.msg = "Limite do Gemini: esperando 1 min…"; smDesenha(); await new Promise(r => setTimeout(r, 60000)); continue; }
+        it.st = "erro"; it.msg = m; break;
+      }
+    }
+    run.feitos++; run.tempos.push(Date.now() - t0); smDesenha();
+  }
+  if(!run.fim && !run.fila.some(x => x.st === "rodando")){
+    run.fim = true; window.removeEventListener("beforeunload", smAvisoSaida);
+    const ok = run.fila.filter(x => x.st === "ok").length;
+    toast(run.parar ? `Lote parado. ${ok} produto(s) atualizado(s).` : `Sommelier terminou: ${ok} produto(s) atualizado(s).`); bipe(); smDesenha();
+  }
+}
+function smDesenha(){
+  const r = smRun, prog = $("#smProg"); if(!prog) return;
+  const pausa = $("#smPausa"), parar = $("#smParar"), ir = $("#smIr");
+  if(!r){ return; }
+  const tot = r.fila.length, c = s => r.fila.filter(x => x.st === s).length, ativo = !r.fim;
+  prog.hidden = false; $("#smLogH").hidden = !r.fila.some(x => x.logId);
+  pausa.hidden = parar.hidden = !ativo; pausa.textContent = r.pausa ? "Continuar" : "Pausar";
+  if(ativo){ ir.textContent = r.parar ? "Parando…" : r.pausa ? "Pausado" : "Trabalhando…"; ir.disabled = true; }
+  else { ir.disabled = false; ir.textContent = "Começar outro lote"; }
+  $("#smBarra").style.transform = `scaleX(${tot ? r.feitos / tot : 0})`;
+  const med = r.tempos.length ? r.tempos.reduce((a, b) => a + b, 0) / r.tempos.length : 0, falta = tot - r.feitos;
+  const resta = ativo && med ? ` · faltam ~${Math.max(1, Math.round(falta * med / (r.o.juntos || 3) / 60000))} min` : "";
+  $("#smStatus").innerHTML = `<b>${r.feitos} de ${tot}</b> · ✓ ${c("ok")} gravados · ${c("nada")} já completos · <span class="sm-rev">${c("revisar")} para revisar</span> · <span class="sm-err">${c("erro")} com erro</span>${resta}${r.pausa && ativo ? " · <b>pausado</b>" : ""}${ativo ? `<br><small>Deixe esta aba aberta até terminar.</small>` : ""}`;
+  const rot = { fila:"na fila", rodando:"analisando…", ok:"gravado", nada:"sem mudança", revisar:"revisar", erro:"erro", desfeito:"desfeito" };
+  const vis = r.fila.filter(x => x.st !== "fila").slice().reverse().slice(0, 300);
+  $("#smLog").innerHTML = vis.map(x => `<div class="sm-it st-${x.st}">
+      <div class="sm-it-h"><b>${esc(x.p.name)}</b><span class="sm-tag t-${x.st}">${rot[x.st]}</span></div>
+      ${x.msg ? `<p>${esc(x.msg)}</p>` : ""}${x.conf ? `<small>confiança ${esc(x.conf)}${(x.avisos||[]).length ? " · ⚠ " + esc(x.avisos[0]) : ""}</small>` : ""}
+      <div class="sm-it-a"><button class="btn-ghost btn-sm" data-sm-abrir="${esc(x.p.id)}">Abrir ficha</button>${x.st === "ok" ? `<button class="btn-ghost btn-sm" data-sm-desfaz="${x.logId}">Desfazer</button>` : ""}</div>
+    </div>`).join("");
+  $("#smLog").querySelectorAll("[data-sm-abrir]").forEach(b => b.onclick = () => openProduct(b.dataset.smAbrir));
+  $("#smLog").querySelectorAll("[data-sm-desfaz]").forEach(b => b.onclick = () => smDesfaz(+b.dataset.smDesfaz, b));
+}
+async function smDesfaz(logId, b){
+  const it = smRun && smRun.fila.find(x => x.logId === logId);
+  if(b) b.disabled = true;
+  const { data: lg, error } = await sb.from("sommelier_log").select("id,product_id,antes,desfeito_em").eq("id", logId).single();
+  if(error || !lg){ toast("Não achei o histórico desse produto."); if(b) b.disabled = false; return false; }
+  if(lg.desfeito_em){ toast("Esse já foi desfeito."); return false; }
+  const up = await sb.from("products").update(lg.antes).eq("id", lg.product_id);
+  if(up.error){ toast("Não deu para desfazer: " + up.error.message); if(b) b.disabled = false; return false; }
+  await sb.from("sommelier_log").update({ desfeito_em: new Date().toISOString() }).eq("id", logId);
+  if(it){ Object.assign(it.p, lg.antes); it.st = "desfeito"; it.msg = "Voltou como era antes."; }
+  if(b){ toast("Desfeito."); smDesenha(); }
+  return true;
+}
+async function smDesfazLote(){
+  if(!smRun) return;
+  const alvos = smRun.fila.filter(x => x.st === "ok" && x.logId);
+  if(!alvos.length){ toast("Nada para desfazer neste lote."); return; }
+  if(!confirm(`Desfazer as mudanças de ${alvos.length} produto(s) deste lote? Eles voltam exatamente como eram antes.`)) return;
+  let n = 0; for(const x of alvos){ if(await smDesfaz(x.logId)) n++; }
+  toast(`${n} produto(s) voltaram como eram.`); smDesenha();
+}
+
 /* tabela de rotas — toda tela nova entra aqui */
 Object.assign(ROUTES, {
   "visao": renderVisao,
@@ -3145,6 +3608,7 @@ Object.assign(ROUTES, {
   "fotos": renderFotos,
   "pedidos": renderPedidos,
   "clientes": renderClientes,
+  "sommelier": renderSommelier,
 });
 
 boot();

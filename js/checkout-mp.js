@@ -29,7 +29,8 @@ function clienteHTML(){
 }
 /* Só Pix: sem cartão digitado no site (prevenção de fraude). Cartão só volta se a loja decidir. */
 var OPT=[["pix","Pix","QR Code na hora"]];
-var PAY_IC={pix:'<path d="M12 2.6 21.4 12 12 21.4 2.6 12Z"/><path d="M8.6 9.2 12 12.6l3.4-3.4M8.6 14.8 12 11.4l3.4 3.4"/>',cartao:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19M6 15h4"/>'};
+/* Pix = símbolo oficial (simple-icons, CC0) na cor oficial do Banco Central #32BCAD — não redesenhar nem tingir */
+var PAY_IC={pix:'<path style="fill:#32BCAD;stroke:none" d="M5.283 18.36a3.505 3.505 0 0 0 2.493-1.032l3.6-3.6a.684.684 0 0 1 .946 0l3.613 3.613a3.504 3.504 0 0 0 2.493 1.032h.71l-4.56 4.56a3.647 3.647 0 0 1-5.156 0L4.85 18.36ZM18.428 5.627a3.505 3.505 0 0 0-2.493 1.032l-3.613 3.614a.67.67 0 0 1-.946 0l-3.6-3.6A3.505 3.505 0 0 0 5.283 5.64h-.434l4.573-4.572a3.646 3.646 0 0 1 5.156 0l4.559 4.559ZM1.068 9.422 3.79 6.699h1.492a2.483 2.483 0 0 1 1.744.722l3.6 3.6a1.73 1.73 0 0 0 2.443 0l3.614-3.613a2.482 2.482 0 0 1 1.744-.723h1.767l2.737 2.737a3.646 3.646 0 0 1 0 5.156l-2.736 2.736h-1.768a2.482 2.482 0 0 1-1.744-.722l-3.613-3.613a1.77 1.77 0 0 0-2.444 0l-3.6 3.6a2.483 2.483 0 0 1-1.744.722H3.791l-2.723-2.723a3.646 3.646 0 0 1 0-5.156"/>',cartao:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19M6 15h4"/>'};
 function pagamentoHTML(){
   var teste=CFG.teste?'<p class="mp-teste">🧪 MODO TESTE do pagamento online.</p>':"";
   if(OPT.length===1)return teste+'<div class="pix-aviso"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+PAY_IC.pix+'</svg><span><b>Pagamento por Pix</b><small>Ao tocar no botão, o QR Code e o código copia e cola aparecem na hora. Não aceitamos cartão no site.</small></span></div>';
@@ -188,6 +189,7 @@ function mostrarPix(px){
     +'<p class="pix-t">No app do banco: <b>Pix → Ler QR Code</b> ou <b>Pix copia e cola</b>. O código vale 30 min e é só deste pedido.</p>'
     +'<div class="mp-wait">'+spin()+'<b>Aguardando o pagamento…</b><span id="pixTempo"></span></div></div>';
   tempoPix(px.expira_em);
+  if(window.ACOMP&&pedido)ACOMP.guarda(pedido.pedido_id,pedido.numero);   /* atalho "Acompanhar" aparece se o cliente fechar a tela */
   acompanhar();
 }
 function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado!";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código Pix";b.classList.remove("done")}},2500)})}
@@ -231,10 +233,12 @@ function msgLojaPago(numero){
 }
 function sucesso(numero){
   clearTimeout(poll);clearInterval(_tempo);desmontar();
-  var reserva=_ctx&&_ctx.reserva,txtLoja=pedido?msgLojaPago(numero):"";
+  var reserva=_ctx&&_ctx.reserva,txtLoja=pedido?msgLojaPago(numero):"",idPed=pedido&&pedido.pedido_id;
   try{sSet("brutt_nome",_ctx&&_ctx.nome||"")}catch(e){}
   pedido=null;_ctx=null;
   cart={};minHit=false;closeAll();updateCart();cartView="";
+  /* tela "Acompanhe seu pedido" (js/acompanhar.js); sem ela, o aviso simples de antes */
+  if(window.ACOMP&&idPed){ACOMP.abrir(idPed,{numero:numero,txtLoja:txtLoja});return}
   mostrarFeito(numero,reserva);
   var t=$("#feitoT"),s=$("#feitoS");
   if(t)t.textContent="✅ Pagamento confirmado!";

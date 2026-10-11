@@ -15,7 +15,8 @@ Leia antes de alterar qualquer arquivo.
 ├── index.html            # LOJA inteira: <head>, CSS (3 blocos <style>), HTML base e o JS principal inline
 ├── js/
 │   ├── fluidez.js        # Lenis (scroll suave), navegação ←/→ e gesto no modal de produto
-│   └── checkout-mp.js    # window.MPX: pagamento Mercado Pago (Payment Brick, Pix), campo WhatsApp, pin da loja
+│   ├── checkout-mp.js    # window.MPX: pagamento Mercado Pago (Payment Brick, Pix), campo WhatsApp, pin da loja
+│   └── acompanhar.js     # window.ACOMP: tela "Acompanhe seu pedido" (pós-pagamento, estilo iFood) + atalho no topo
 ├── vendor/lenis.min.js   # Lenis 1.3.26 servido localmente (sem CDN)
 ├── admin/index.html      # PAINEL interno (login Supabase), roteador por hash + abas
 ├── 404.html              # só redireciona /qualquer-rota → /?r=... (o index reescreve a URL)
@@ -28,6 +29,7 @@ Leia antes de alterar qualquer arquivo.
     ├── migrations/       # SQL das tabelas novas (pedidos, mp_eventos, wa_notificacoes, wa_contatos, clientes)
     ├── functions/checkout/  # pedido + Mercado Pago + webhook + WhatsApp (Evolution API) + testes
     ├── functions/brutt-ia/  # vendedor virtual (Gemini) + testes
+    ├── functions/gerar-ficha-sommelier/  # Sommelier IA (ficha, perfil, categoria) + testes
     ├── CHECKOUT.md       # como ativar/operar o pagamento online
     └── EVOLUTION.md      # instalar a Evolution API (WhatsApp automático) no VPS
 ```
@@ -64,6 +66,8 @@ Regras:
 - **Raios:** 10–14px em botões/cards, 999px em chips/pílulas, 18px no topo de sheets/modais.
 
 ### Admin (`admin/index.html`, `:root` próprio)
+
+**Camada de cores (bloco "CORES" no fim do CSS do admin, sobrescreve os tokens abaixo):** texto `--ink:#f0dcb8` (creme da loja, não branco), secundário caramelo `--muted:#c09f76`, títulos/menu ativo/valores em R$ em dourado (`--accent`), e cores vivas com significado: `--ok:#4fe08c` (bom/positivo), `--danger:#ff5a4a` (alerta), `--warn:#ff9640` (aviso), `--info:#7fbfff`. KPI com classe `bom`/`alerta`/`ruim`/`novo` pinta o número.
 
 Paleta do painel = **variação** da loja (café/espresso + dourado-âmbar), não cópia dos mesmos valores. O dourado (`--accent`) é só para ação principal, item ativo e número que pede ação; alerta usa **cobre** (`--warn`) para não confundir com o dourado.
 
@@ -102,6 +106,7 @@ Principais "componentes" da loja (todos em `index.html`):
 | `ensureDlv()` / `abrirEntregaModal()` / `entregaBoxHTML()` | modal de endereço `#dlv` e caixa "Entrega disponível" |
 | `MPX.*` (`js/checkout-mp.js`) | forma de pagamento, Payment Brick, tela do Pix |
 | Brutt IA (último `<script>` inline) | `#ia` barra/painel, `cartao()` do pedido |
+| `ACOMP.*` (`js/acompanhar.js`) | tela `#acomp` "Acompanhe seu pedido" e atalho `#acompPill` |
 
 Interação por **delegação de eventos**: um único `document.addEventListener("click", …)` lê atributos `data-*` (`data-add`, `data-open`, `data-ship`, `data-send`, `data-copy`…). Para um botão novo, use um `data-*` novo e trate na delegação (ou num listener próprio no seu módulo).
 
@@ -111,7 +116,19 @@ Admin: roteador por hash (`ROUTES`, `go("nome")`, `rotaAtual()`); cada tela é `
 
 **Alerta de pedido novo:** pedido `pago` com `visto_em` vazio pisca em vermelho (badge do menu, visão geral e cartão em Pedidos, animação `piscaNovo` só de opacidade) até alguém da equipe tocar nele ou concluir (RPC `pedido_marcar_visto`). O painel confere a cada 30 s (`ligaVigia`): pedido novo dá aviso na tela, bipe curto e "(N) 🔴 Pedido novo" no título da aba.
 
+**Notificações no aparelho (Web Push):** `admin/manifest.webmanifest` (painel instalável) + `admin/sw.js` (mostra o aviso e abre `#/pedidos`). Cartão "Notificações neste aparelho" (`desenhaNotif`) em Pedidos e Visão geral: pede permissão, inscreve com a chave pública do servidor (`checkout?acao=push_chave`) e salva via RPC `push_registrar` (sair = `push_remover`). A função `checkout` (`push.ts`, sem bibliotecas: VAPID ES256 + aes128gcm) avisa "🟡 Pix gerado" e "🔴 Pedido PAGO", 1 vez por pedido (reserva em `wa_notificacoes`, tipo `push_*`). O par VAPID é gerado no servidor na 1ª vez e fica em `push_config` (RLS sem política: só a função lê). iPhone/iPad: só com o painel instalado na Tela de Início (iOS 16.4+). No painel, Pix gerado e não visto pisca em laranja (`.pixnovo`); quando o pedido é pago, `visto_em` volta a vazio e ele pisca em vermelho.
+
+**Acompanhe seu pedido (loja + admin):** depois do Pix pago, `MPX` abre `ACOMP.abrir(id)` (tela `#acomp`: gaveta no celular, janela no PC). Etapas: Recebemos seu pedido → Pagamento confirmado → (entrega da loja) Saiu para entrega → Pedido entregue · (cliente chama Uber/99) Motoboy já retirou seu pedido, com o endereço de coleta para copiar. Logo abaixo do status fica o botão verde **"Concluir pedido"** (símbolo oficial do WhatsApp), que abre o WhatsApp da loja com o pedido pago pronto (`msgLojaPago` → `txtLoja`); a mensagem fica guardada no aparelho, a 1ª tentativa de fechar sem concluir mostra um lembrete, e o atalho do topo mostra "Concluir ›" até o cliente tocar. Depois vira "✓ Pedido enviado à loja · reenviar". Dados de `checkout?acao=status` → `acomp` (sem endereço, telefone ou dados de pagamento). Pedidos ficam em `localStorage.brutt_pedidos`; atalho `#acompPill` no topo enquanto houver pedido em andamento (some 3 h depois de concluído); link `/?pedido=<uuid>` (capturado no `<head>` em `window.__PEDIDO_URL`, espera a confirmação +18). No admin, pedido pago tem o botão da próxima etapa (`data-etapa`): "🛵 Saiu para entrega" (`checkout?acao=etapa`, grava `saiu_em`) → "Pedido entregue" ou "Motoboy retirou" (`acao=concluir`). Cada etapa manda WhatsApp ao cliente pela Evolution; sem ela, o admin mostra "Avisar o cliente no WhatsApp" com a mensagem pronta (`whats.link`).
+
+**Estornado:** pedido `cancelado` com `mp_status = 'refunded'` (o MP devolveu o valor inteiro) aparece como "Estornado · devolvido" (`pedSt()`), com filtro próprio, e sai das estatísticas do cliente. Pedido "Aguardando pagamento" sem Pix ou com Pix vencido pode ser cancelado pela equipe (botão "Cancelar pedido" → RPC `pedido_cancelar_aberto`, que recusa se houver Pix válido em aberto).
+
 **Produtos em lote:** caixa "Selecionar todos" (`#bulkTodos`) acima da lista marca todos os produtos filtrados; fica "parcial" quando só alguns estão marcados.
+
+**Sommelier em massa** (`#/sommelier`): fila no navegador (1–4 ao mesmo tempo) chamando a função `gerar-ficha-sommelier` (código em `supabase/functions/gerar-ficha-sommelier/`, publicada pelo padrão de import fixado num commit). Regra "só completar" (padrão: descrição ≤80 ou >170 caracteres, ficha ≤2 itens, perfil/whisky vazios) ou "reescrever tudo"; categoria só muda com confiança alta e para um slug que existe. Confiança baixa não grava (fica "para revisar"). Cada gravação vai antes para `sommelier_log` (antes/depois, lote) e pode ser desfeita por produto ou por lote.
+
+**Fotos:** envio já comprime (WebP 88%, até 1000 px). "Otimizar fotos pesadas" (Fotos em lote) recomprime as acima de 100 KB em WebP 86% e só troca se ficar ≥20% menor.
+
+**Celular:** em telas de toque, campos usam 16px (igual à loja) para o iPhone não dar zoom ao tocar.
 
 Não há Storybook nem documentação de componentes além deste arquivo.
 
@@ -120,7 +137,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - **Fotos de produto:** vêm do Supabase (`product_images.url`); fallback local em `imagens/` via `fotoUrl()`. Sempre `loading="lazy" decoding="async"`.
 - **Logo:** constante `LOGO` (WebP base64 inline) aplicada em `img[data-logo]`.
 - **Vídeo** `fumaca.mp4`: só carrega após a 1ª interação (economia de dados).
-- **Intro** `#intro` (início do `<body>`): selo da marca + brasa animada; some quando o catálogo aparece (`js/fluidez.js`), mínimo ~1,4 s só na 1ª visita da sessão, e se remove sozinha em 9 s se algo falhar.
+- **Intro** `#intro` (início do `<body>`): selo da marca + brasa animada (ritmo lento: brasa/pulso 3,8 s, anel 3,4 s, fagulhas 3,5 s); some quando o catálogo aparece (`js/fluidez.js`), mínimo ~2,2 s só na 1ª visita da sessão, saída de 0,9 s, e se remove sozinha em 9 s se algo falhar.
 - **Favicons** (`favicon/`): `favicon.ico` (16–256), `favicon-16x16.png`/`32x32`/`48x48` (só o "B" dourado, legível em tamanho pequeno), `apple-touch-icon.png` 180 (opaco), `android-chrome-192/512`, `maskable-512` + `site.webmanifest`.
 - **CDN permitida:** Google Fonts, `sdk.mercadopago.com/js/v2` (obrigatório ser do Mercado Pago, carregado sob demanda), Supabase. Bibliotecas JS novas → servir em `vendor/` (fixar versão).
 
@@ -130,6 +147,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - No HTML estático: `<span data-ic="pin"></span>` é preenchido no carregamento.
 - Nomes curtos em inglês: `cart, chat, pin, copy, check, alert, trash, moto, card, drop, search…`.
 - **WhatsApp = sempre o símbolo oficial** (simple-icons / kit de marca da Meta), **preenchido**, em `#25D366` ou branco sobre fundo verde (`.wa-logo`, `.ic-wa`; o `ic("chat")` já usa esse símbolo). Nunca redesenhar nem tingir de dourado; se não couber o oficial, não coloque.
+- **Pix = símbolo oficial** (simple-icons, CC0) **preenchido em `#32BCAD`** (cor do Banco Central), em `PAY_IC.pix` de `js/checkout-mp.js`. Mesma regra: não redesenhar nem tingir.
 - **Google Maps = símbolo oficial multicolorido** (`svg.gmaps` no botão `#goMapa` do topo, paths do pacote `@iconify-json/logos`). Mesma regra do WhatsApp: não redesenhar nem tingir.
 - Ícones da Brutt IA: `<symbol>` no sprite `.ia-sprite` (`#iaI`, `#iaEye`) usados com `<use href>`.
 
@@ -143,6 +161,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
   Regras posteriores sobrescrevem anteriores: **CSS novo vai no fim do bloco adequado**, não edite a linha minificada salvo para corrigir um valor.
 - **Animações:** só `transform` e `opacity`, curva `var(--ease-app)`; sempre com alternativa em `@media(prefers-reduced-motion:reduce)`. Elevação/brilho no hover = pseudo-elemento cuja **opacidade** anima (não anime `box-shadow`).
 - **Responsivo (mobile-first na prática):** quebras usadas `≤380px`, `≤420px`, `≤480px`, `≤640px` (gaveta vira bottom sheet), `≥641px`, `≥1700/2200/3000px` (alarga `--maxw`); toque vs. mouse com `(hover:hover) and (pointer:fine)`.
+- **Trilhos (`.rail`):** têm margem negativa e espaçamento interno iguais (16 px; 10 px no `.fire` até 640 px) e `scroll-padding-inline` com o MESMO valor. Mudou um, mude o outro: senão o encaixe da rolagem abre o trilho andado e o 1º card fica cortado.
 - Modais/gavetas travam a página com `html.is-locked` (JS `syncLock`); o Lenis pausa junto. Contêineres com rolagem própria precisam estar no `prevent` do Lenis (`js/fluidez.js`).
 - Teclado virtual: alturas via `--vvh`/`--vvt` (loja) e `--ia-vh`/`--ia-kb` (Brutt IA), medidas com `visualViewport`.
 
@@ -156,4 +175,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 6. Rode os testes:
    - `node --experimental-strip-types supabase/functions/checkout/checkout.test.mts`
    - `node --experimental-strip-types supabase/functions/brutt-ia/brutt-ia.test.mts`
+   - `node --experimental-strip-types supabase/functions/gerar-ficha-sommelier/sommelier.test.mts`
 7. Segurança: nada de token/segredo no front. Só a **Public Key** do Mercado Pago (`window.__MP`) e a chave **anon** do Supabase podem ficar no HTML.
+
+**Pix online ligado para todos** (desde 11/10/2026): `MP_PRODUCAO` em `index.html` tem a Public Key de produção. Para voltar ao pedido pelo WhatsApp, deixe `MP_PRODUCAO=""` (ver `supabase/CHECKOUT.md`).

@@ -126,15 +126,15 @@ if(pm){
 }
 
 /* ───────── Intro (brasa) ─────────
-   Some quando o catálogo aparece. Na 1ª visita da sessão fica no mínimo ~1,4 s pra animação não piscar;
+   Some quando o catálogo aparece. Na 1ª visita da sessão fica no mínimo ~2,2 s pra animação não piscar;
    nas seguintes só enquanto carrega. O <script> junto do #intro remove tudo em 9 s se algo falhar. */
 (function(){
   var intro=document.getElementById("intro");if(!intro)return;
   var primeira=true;try{primeira=!sessionStorage.getItem("brutt_intro");sessionStorage.setItem("brutt_intro","1")}catch(_){}
-  var MIN=reduz.matches||!primeira?0:1400,foi=false;
+  var MIN=reduz.matches||!primeira?0:2200,foi=false;
   function some(){
     if(foi)return;foi=true;
-    setTimeout(function(){intro.classList.add("sai");setTimeout(function(){intro.remove()},650)},Math.max(0,MIN-performance.now()));
+    setTimeout(function(){intro.classList.add("sai");setTimeout(function(){intro.remove()},950)},Math.max(0,MIN-performance.now()));
   }
   var sec=document.getElementById("sections");
   function pronto(){return !sec||(sec.firstElementChild&&sec.textContent.indexOf("Carregando catálogo")<0)}
