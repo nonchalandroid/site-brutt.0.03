@@ -28,7 +28,20 @@ function guarda(id,numero,msg){
 }
 function item(id){return lista().filter(function(x){return x.id===id})[0]||null}
 /* "Concluir pedido": o cliente manda o pedido pago para o WhatsApp da loja (enquanto não há envio automático) */
-function marcaAvisou(id){var l=lista();l.forEach(function(x){if(x.id===id)x.avisou=true});grava(l)}
+function marcaAvisou(id){if(!item(id))guarda(id,ultimo[id]&&ultimo[id].numero);var l=lista();l.forEach(function(x){if(x.id===id)x.avisou=true});grava(l)}
+function pago(a){return!!a&&(a.status==="pago"||a.status==="concluido")}
+function falta(id,a){var it=item(id);return pago(a)&&a.status!=="concluido"&&!a.saiu&&!(it&&it.avisou)}   /* depois que saiu para entrega a loja já tem o pedido */
+/* Mensagem do pedido para a loja: a completa guardada no pagamento (itens, endereço, total) ou, se este aparelho não
+   tem (pedido aberto pelo link em outro celular), montada com o que a tela de acompanhamento sabe. */
+function msgPedido(id,a){
+  var it=item(id);if(it&&it.msg)return it.msg;
+  var L=["✅ *PEDIDO PAGO NO SITE #"+a.numero+"*"+(a.reserva?" (reserva: loja fechada)":""),"👤 "+(a.nome||"Cliente"),"","🛒 *Itens:*"];
+  (a.itens||[]).forEach(function(i){L.push("• "+i.qtd+"x "+i.nome)});L.push("");
+  if(a.tipo==="entrega"){L.push("🚚 Entrega pela loja"+(a.bairro?" — "+a.bairro:"")+" (endereço completo no painel)");L.push("Taxa de entrega: "+_R(a.taxa_entrega))}
+  else L.push("🛵 Vou solicitar a entrega por conta própria (Uber Flash ou 99).");
+  L.push("💰 *Total pago no Pix: "+_R(a.total)+"*");L.push("Pagamento confirmado pelo Mercado Pago no site.");
+  return L.join("\n");
+}
 var tentouFechar={};
 function esquece(id){grava(lista().filter(function(x){return x.id!==id}));pill()}
 
@@ -99,7 +112,7 @@ function copiar(t){
 }
 function html(a,id){
   var tp=topo(a),L=etapas(a),fim=final(a)||(a.status==="aguardando_pagamento"&&a.expira&&new Date(a.expira)<new Date());
-  var msgLoja="Oi! Sobre o meu pedido #"+a.numero+" no site.";
+  var msgLoja=falta(id,a)?msgPedido(id,a):"Oi! Sobre o meu pedido #"+a.numero+" no site.";   /* ainda não enviou: "Falar com a loja" também leva o pedido completo */
   return '<div class="ac-h"><span class="ac-num">Pedido <b>#'+_esc(String(a.numero).replace(/-/g,"‑"))+'</b></span><button type="button" class="ac-x" data-acomp-fechar aria-label="Fechar">×</button></div>'
    +'<div class="ac-hero ac-'+tp[3]+'"><span class="ac-ic">'+svg(tp[0])+'</span><div><h2 id="acT">'+_esc(tp[1])+'</h2><p>'+_esc(tp[2])+'</p></div></div>'
    +concluirHTML(id,a)
@@ -108,13 +121,13 @@ function html(a,id){
    +(a.tipo==="cliente"&&(a.status==="pago")?'<div class="ac-coleta">'+svg("pin")+'<div><b>Endereço de coleta para o Uber Flash / 99</b><span>'+_esc(END_LOJA)+'</span></div><button type="button" class="ac-copia" data-acomp-copiar>'+svg("copy")+'<span>Copiar endereço de coleta</span></button></div>':"")
    +'<div class="ac-itens"><b>Seu pedido</b>'+(a.itens||[]).map(function(i){return'<span><em>'+_esc(i.qtd)+'×</em> '+_esc(i.nome)+'</span>'}).join("")
      +(Number(a.taxa_entrega)>0?'<span class="ac-tx2">Entrega <em>'+_R(a.taxa_entrega)+'</em></span>':"")+'<span class="ac-tot">Total <em>'+_R(a.total)+'</em></span></div>'
-   +'<div class="ac-acoes"><a class="ac-wa" target="_blank" rel="noopener" href="https://wa.me/'+_whats()+'?text='+encodeURIComponent(msgLoja)+'">'+waIc()+'<span>Falar com a loja</span></a><button type="button" class="ac-volta" data-acomp-fechar>Voltar à loja</button></div>'
+   +'<div class="ac-acoes"><a class="ac-wa"'+(falta(id,a)?" data-acomp-concluir":"")+' target="_blank" rel="noopener" href="https://wa.me/'+_whats()+'?text='+encodeURIComponent(msgLoja)+'">'+waIc()+'<span>Falar com a loja</span></a><button type="button" class="ac-volta" data-acomp-fechar>Voltar à loja</button></div>'
    +'<p class="ac-pe">Esta tela se atualiza sozinha. Para ver de novo depois, toque em “Acompanhar” no topo da loja.</p>';
 }
 function concluirHTML(id,a){
-  var it=item(id);if(!it||!it.msg||a.status==="cancelado"||a.status==="expirado"||a.status==="recusado")return"";
-  var href="https://wa.me/"+_whats()+"?text="+encodeURIComponent(it.msg);
-  if(it.avisou)return'<a class="ac-reenvia" data-acomp-concluir target="_blank" rel="noopener" href="'+href+'">'+waIc()+'<span><b>✓ Pedido enviado à loja</b> · reenviar</span></a>';
+  if(!pago(a)||(a.saiu||a.status==="concluido")&&!(item(id)&&item(id).avisou))return"";   /* só depois do Pix aprovado; some quando a loja já despachou */
+  var it=item(id),href="https://wa.me/"+_whats()+"?text="+encodeURIComponent(msgPedido(id,a));
+  if(it&&it.avisou)return'<a class="ac-reenvia" data-acomp-concluir target="_blank" rel="noopener" href="'+href+'">'+waIc()+'<span><b>✓ Pedido enviado à loja</b> · reenviar</span></a>';
   return'<div class="ac-fim" id="acFim"><b>Último passo</b><span>Toque em <strong>Concluir pedido</strong> para enviar o pedido ao WhatsApp da loja. Assim a gente começa a separar.</span>'
     +'<a class="ac-concluir" data-acomp-concluir target="_blank" rel="noopener" href="'+href+'">'+waIc()+'<span>Concluir pedido</span></a></div>';
 }
@@ -154,7 +167,7 @@ function abrir(id,op){
 }
 function fechar(forcar){
   var it=abertoId&&item(abertoId),a=abertoId&&ultimo[abertoId];
-  if(!forcar&&it&&it.msg&&!it.avisou&&!tentouFechar[abertoId]&&!(a&&final(a))){   /* lembra 1 vez antes de sair sem concluir */
+  if(!forcar&&falta(abertoId,a)&&!tentouFechar[abertoId]){   /* lembra 1 vez antes de sair sem concluir */
     tentouFechar[abertoId]=true;_toast("Falta só um passo: toque em “Concluir pedido” para enviar à loja.");
     var f=document.getElementById("acFim");if(f){f.classList.remove("chama");void f.offsetWidth;f.classList.add("chama");f.scrollIntoView({block:"nearest",behavior:reduz?"auto":"smooth"})}
     return;
@@ -184,8 +197,8 @@ function pill(){
   if(!x||abertoId){b.hidden=true;return}
   var a2=ultimo[x.id],tp=a2?topo(a2):["bag","Acompanhar pedido","","vivo"];
   b.dataset.id=x.id;b.className="acomp-pill ac-"+tp[3];
-  var falta=x.msg&&!x.avisou&&!(a2&&final(a2));
-  b.innerHTML='<span class="ap-ic">'+svg(tp[0])+'</span><span class="ap-tx"><b>Pedido #'+_esc(String(x.numero||(a2&&a2.numero)||"").replace(/-/g,"‑"))+'</b><small>'+_esc(falta?"Falta concluir o pedido":tp[1])+'</small></span><span class="ap-go'+(falta?" ap-falta":"")+'">'+(falta?"Concluir ›":"Acompanhar ›")+'</span>';
+  var falta_=falta(x.id,a2);
+  b.innerHTML='<span class="ap-ic">'+svg(tp[0])+'</span><span class="ap-tx"><b>Pedido #'+_esc(String(x.numero||(a2&&a2.numero)||"").replace(/-/g,"‑"))+'</b><small>'+_esc(falta_?"Falta concluir o pedido":tp[1])+'</small></span><span class="ap-go'+(falta_?" ap-falta":"")+'">'+(falta_?"Concluir ›":"Acompanhar ›")+'</span>';
   b.hidden=false;
 }
 function vigiaPill(){
