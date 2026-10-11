@@ -1,0 +1,16 @@
+{
+  "name": "Tabacaria Brutt",
+  "short_name": "Brutt",
+  "description": "Catálogo online da Tabacaria Brutt · Campo Grande, Rio de Janeiro",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0e0806",
+  "theme_color": "#0e0806",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/favicon/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/favicon/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/favicon/maskable-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

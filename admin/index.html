@@ -404,6 +404,23 @@ details.nx-box summary{cursor:pointer;font-weight:600}
 .hr-tempo input[type=time]{width:100%}
 .hr-dica{grid-column:1 / -1;font-size:12px;color:var(--muted)}.hr-dica:empty{display:none}
 @media (max-width:560px){.hr-row{grid-template-columns:1fr 1fr}.hr-top{grid-column:1 / -1}}
+
+/* abas do painel (fixas no topo de todas as telas) */
+.abas{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;background:var(--bg);border-bottom:1px solid var(--line);margin:0 -2px;padding:8px 2px 0}
+.abas::-webkit-scrollbar{display:none}
+.aba{flex:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:9px 12px;font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;border-radius:8px 8px 0 0}
+.aba:hover{color:var(--ink);background:rgba(255,255,255,.03)}
+.aba.on{color:var(--gold-2);border-bottom-color:var(--gold)}
+.aba:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+/* busca + novo produto */
+.scan-row{display:flex;gap:10px;align-items:stretch}
+.scan-row input{flex:1;min-width:0}
+.scan-row .btn-gold{flex:none;padding:0 20px;border-radius:12px;font-weight:700;font-size:14px;white-space:nowrap}
+@media (max-width:560px){.scan-row{flex-direction:column}.scan-row .btn-gold{padding:12px}}
+/* filtros da lista de produtos */
+.gr-filtros{display:grid;gap:8px;margin:10px 0}
+.gr-filtros select{margin:0}
+@media (min-width:700px){.gr-filtros{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -445,16 +462,25 @@ function go(nome){
   if(location.hash === alvo) dispatch(); else location.hash = alvo;   // hashchange chama dispatch()
 }
 window.addEventListener("hashchange", dispatch);
+const ABAS = [["home","📦 Produtos"],["pedidos","💳 Pedidos online"],["estoque-baixo","⚠️ Estoque baixo"],["horarios","🕐 Horários"],["nex","🔄 Sincronização Nex"],["fotos","📷 Fotos"]];
+function abasHTML(){
+  const atual = rotaAtual();
+  return `<nav class="abas" aria-label="Seções do painel">${ABAS.map(([r,t]) => `<button type="button" class="aba${atual===r?" on":""}" data-tab="${r}"${atual===r?' aria-current="page"':""}>${t}</button>`).join("")}</nav>`;
+}
 function topbarHTML(titulo){
+  const ehAba = ABAS.some(a => a[0] === rotaAtual());
   return `
     <div class="topbar">
       <button class="brand-btn" data-home aria-label="Ir para o início"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><b>Brutt</b><span>admin</span></button>
       <div class="who">${esc(state.staff?.name||"")} <button class="btn-ghost btn-sm" id="outBtn">Sair</button></div>
     </div>
-    ${titulo ? `<nav class="crumb" aria-label="Você está em"><button class="btn-ghost btn-sm" data-home>🏠 Início</button><span>›</span><b>${esc(titulo)}</b></nav>` : ""}`;
+    ${abasHTML()}
+    ${titulo && !ehAba ? `<nav class="crumb" aria-label="Você está em"><button class="btn-ghost btn-sm" data-home>🏠 Início</button><span>›</span><b>${esc(titulo)}</b></nav>` : ""}`;
 }
 function bindTopbar(){
   document.querySelectorAll("[data-home]").forEach(b => b.onclick = () => go("home"));
+  document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { if(b.dataset.tab === "fotos") window.__fotosAlvos = null; go(b.dataset.tab); });
+  const ativa = document.querySelector(".aba.on"); if(ativa) ativa.scrollIntoView({ block:"nearest", inline:"center" });
   const out = $("#outBtn"); if(out) out.onclick = async () => { await sb.auth.signOut(); state.staff = null; location.hash = ""; renderLogin(); };
 }
 const fmtQuando = iso => iso ? new Date(iso).toLocaleString("pt-BR", {timeZone:"America/Sao_Paulo", day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"}) : "—";
@@ -528,14 +554,8 @@ async function renderMain(){
       <button class="stcard" id="stNex"><div class="k">Estoque × Nex</div><div class="v">Carregando…</div></button>
     </div>
     <div class="scan-wrap">
-      <input id="searchBox" placeholder="Bipar EAN, ou buscar por nome / SKU…" autofocus>
+      <div class="scan-row"><input id="searchBox" placeholder="Bipar EAN, ou buscar por nome / SKU…" autofocus><button class="btn-gold" id="newBtn">+ Novo produto</button></div>
       <div class="scan-hint">Um leitor de código de barras funciona direto aqui — ele "digita" o código e aperta Enter sozinho.</div>
-    </div>
-    <div class="toolbar">
-      <button class="btn-gold btn-sm" id="newBtn">+ Novo produto</button>
-      <button class="btn-ghost btn-sm" id="nexBtn">🔄 Sincronização Nex</button>
-      <button class="btn-ghost btn-sm" id="lowStockBtn">⚠️ Estoque baixo</button>
-      <button class="btn-ghost btn-sm" id="horarioBtn">🕐 Horário de funcionamento</button>
     </div>
     <details class="manual"><summary>Ferramentas manuais (planilhas) — o estoque já sincroniza sozinho</summary>
       <div class="toolbar">
@@ -547,13 +567,10 @@ async function renderMain(){
   `;
   bindTopbar();
   $("#newBtn").onclick = () => openNewProduct();
-  $("#nexBtn").onclick = () => go("nex");
   $("#stNex").onclick = () => go("nex");
   $("#stLoja").onclick = () => go("horarios");
   $("#syncBtn").onclick = () => go("planilha");
   $("#bestBtn").onclick = () => go("vendidos");
-  $("#lowStockBtn").onclick = () => go("estoque-baixo");
-  $("#horarioBtn").onclick = () => go("horarios");
   carregarStatusInicio();
 
   gestaoFiltro = { parentId: null, busca: "" };
@@ -1691,8 +1708,8 @@ async function renderGestaoRapida(){
   area.innerHTML = `
     <div class="gr-top"><b style="font-family:'Barlow Condensed',sans-serif;font-size:20px;letter-spacing:.3px">Produtos</b><button class="btn-ghost btn-sm" id="irFotos">📷 Fotos em lote</button></div>
     <div class="gr-hint"><i>ℹ</i><span>Estoque e preço vêm do <b>Nex</b> e são atualizados sozinhos a cada 15 min — uma edição manual de preço/estoque vale só até a próxima sincronização.</span></div>
-    <select id="bulkCatFiltro" style="margin:10px 0 8px">${parentOptions}</select>
-    <select id="bulkFalta" style="margin:0 0 10px" title="Mostra só os produtos que precisam passar pelo Sommelier">
+    <div class="gr-filtros"><select id="bulkCatFiltro" aria-label="Categoria">${parentOptions}</select>
+    <select id="bulkFalta" aria-label="Filtro de produtos" title="Mostra só os produtos que precisam passar pelo Sommelier">
       <option value="">Todos os produtos</option>
       <option value="desc" ${falta==="desc"?"selected":""}>✨ Sem descrição ou rasa (até 80 caracteres)</option>
       <option value="cortada" ${falta==="cortada"?"selected":""}>✨ Descrição cortada no site (mais de 170)</option>
@@ -1701,7 +1718,7 @@ async function renderGestaoRapida(){
       <option value="whisky" ${falta==="whisky"?"selected":""}>✨ Whisky sem detalhes</option>
       <option value="emestoque" ${falta==="emestoque"?"selected":""}>📦 Só o que está em estoque</option>
       <option value="semfoto" ${falta==="semfoto"?"selected":""}>📷 Em estoque e sem foto</option>
-    </select>
+    </select></div>
     <div id="bulkCount" class="t" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
     <div id="bulkList"><div class="loading">Carregando produtos…</div></div>
     <div id="bulkBar" class="bulk-actionbar" hidden></div>`;
@@ -2361,6 +2378,47 @@ async function renderFotos(){
   FT.itens.length || ftRodape();
 }
 
+/* ---------------- pedidos online (Mercado Pago) ---------------- */
+const PED_ST = { aguardando_pagamento:"⏳ Aguardando pagamento", pago:"✅ Pago", recusado:"⚠️ Recusado", expirado:"⌛ Pix expirado", cancelado:"↩️ Cancelado/estornado", concluido:"📦 Concluído" };
+const PED_MET = { pix:"Pix", debito:"Débito", credito:"Crédito à vista" };
+async function renderPedidos(){
+  app.innerHTML = `${topbarHTML("Pedidos online")}
+    <div style="padding:16px 0">
+      <h2 style="font-size:20px;margin-bottom:4px">💳 Pedidos online</h2>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Pedidos pagos pelo site (Mercado Pago). Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp.</p>
+      <div id="pedLista"><div class="loading">Carregando…</div></div>
+    </div>`;
+  bindTopbar();
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em").order("created_at", { ascending:false }).limit(60);
+  const el = $("#pedLista");
+  if(error){ el.innerHTML = `<div class="err">Não foi possível carregar os pedidos (${esc(error.message)}).</div>`; return; }
+  if(!data.length){ el.innerHTML = `<div class="empty">Nenhum pedido online ainda.</div>`; return; }
+  const brl = v => "R$ " + Number(v).toFixed(2).replace(".", ",");
+  el.innerHTML = data.map(p => {
+    const e = p.entrega || {}, a = e.endereco || {};
+    const ent = e.tipo === "entrega" ? `🚚 ${esc(a.rua)}, ${esc(a.numero)}${a.complemento ? " ("+esc(a.complemento)+")" : ""} — ${esc(a.bairro||"")} · ${esc(String(e.km||"").replace(".", ","))} km` : "🛵 Cliente chama Uber Flash/99";
+    return `<div class="card" style="margin:10px 0;padding:14px;font-size:14px;line-height:1.45">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px 10px;flex-wrap:wrap"><b style="font-size:15px">#${esc(p.numero)} · ${esc(p.cliente_nome)}</b><span style="font-size:13px;white-space:nowrap">${PED_ST[p.status] || esc(p.status)}${p.reserva ? " · reserva" : ""}</span></div>
+      <div style="margin:4px 0;font-size:12px;color:var(--muted)">${fmtQuando(p.created_at)} · ${PED_MET[p.metodo] || "—"} · <a href="https://wa.me/${esc(p.cliente_whats)}" target="_blank" rel="noopener">wa.me/${esc(p.cliente_whats)}</a></div>
+      <div>${(p.itens||[]).map(i => `${i.qtd}x ${esc(i.nome)}`).join(" · ")}</div>
+      <div style="margin-top:4px;font-size:12px;color:var(--muted)">${ent}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:10px"><b>${brl(p.total)}</b>
+        ${p.status === "pago" ? `<button class="btn-gold btn-sm" data-concluir="${esc(p.id)}">Marcar como concluído</button>` : ""}</div>
+    </div>`;
+  }).join("");
+  el.querySelectorAll("[data-concluir]").forEach(b => b.onclick = async () => {
+    b.disabled = true; b.textContent = "Enviando…";
+    try{
+      const { data:{ session } } = await sb.auth.getSession();
+      const r = await fetch(`${SUPA_URL}/functions/v1/checkout?acao=concluir`, { method:"POST",
+        headers:{ apikey: SUPA_KEY, Authorization: "Bearer " + session.access_token, "Content-Type":"application/json" }, body: JSON.stringify({ pedido_id: b.dataset.concluir }) });
+      const j = await r.json().catch(() => ({}));
+      if(!r.ok) throw new Error(j.erro || r.status);
+      toast(`Pedido #${j.numero} concluído. Cliente avisado no WhatsApp.`); renderPedidos();
+    }catch(err){ toast("Não deu pra concluir: " + (err.message || err)); b.disabled = false; b.textContent = "Marcar como concluído"; }
+  });
+}
+
 /* tabela de rotas — toda tela nova entra aqui */
 Object.assign(ROUTES, {
   "home": renderMain,
@@ -2370,6 +2428,7 @@ Object.assign(ROUTES, {
   "planilha": renderSyncScreen,
   "vendidos": renderBestsellersScreen,
   "fotos": renderFotos,
+  "pedidos": renderPedidos,
 });
 
 boot();
