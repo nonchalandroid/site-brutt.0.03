@@ -11,6 +11,8 @@ Só cria tabelas novas (`pedidos`, `mp_eventos`, `wa_notificacoes`, `wa_contatos
 ## 2. Segredos da edge function `checkout`
 Supabase → Edge Functions → Secrets (nunca no site):
 
+> Instalação da Evolution API passo a passo (VPS, Docker, HTTPS, QR Code): veja [`EVOLUTION.md`](EVOLUTION.md).
+
 | Variável | Onde pegar |
 |---|---|
 | `MP_ACCESS_TOKEN` | Mercado Pago → Suas integrações → (sua aplicação) → Credenciais de produção → Access Token |

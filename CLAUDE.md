@@ -28,7 +28,8 @@ Leia antes de alterar qualquer arquivo.
     ├── migrations/       # SQL das tabelas novas (pedidos, mp_eventos, wa_notificacoes, wa_contatos)
     ├── functions/checkout/  # pedido + Mercado Pago + webhook + WhatsApp (Evolution API) + testes
     ├── functions/brutt-ia/  # vendedor virtual (Gemini) + testes
-    └── CHECKOUT.md       # como ativar/operar o pagamento online
+    ├── CHECKOUT.md       # como ativar/operar o pagamento online
+    └── EVOLUTION.md      # instalar a Evolution API (WhatsApp automático) no VPS
 ```
 
 ## 2. Tokens de design
