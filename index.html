@@ -207,8 +207,19 @@ button.ia-wa{width:100%;border:0;cursor:pointer;font-family:inherit}
 .ac-itens .ac-tx2,.ac-itens .ac-tot{display:flex;justify-content:space-between;gap:10px}
 .ac-itens .ac-tot{margin-top:4px;padding-top:8px;border-top:1px solid var(--line);font-weight:700;font-size:15px}
 .ac-itens .ac-tx2 em,.ac-itens .ac-tot em{white-space:nowrap}
-.ac-avisa{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;margin:0 0 10px;border-radius:12px;background:#25D366;color:#fff;font-weight:700;font-size:14px;text-decoration:none}
-.ac-avisa .ic{width:20px;height:20px}
+.ac-fim{display:flex;flex-direction:column;gap:8px;padding:14px;margin:0 0 14px;border:1.5px solid #25D366;border-radius:14px;background:rgba(37,211,102,.08)}
+.ac-fim>b{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#25D366}
+.ac-fim>span{font-size:14px;line-height:1.4;color:var(--ink)}.ac-fim strong{color:#fff}
+.ac-concluir{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;border-radius:12px;background:#25D366;color:#fff;font-weight:800;font-size:17px;letter-spacing:.01em;text-decoration:none;overflow:hidden}
+.ac-concluir .ic{width:26px;height:26px;color:#fff;fill:#fff}
+.ac-concluir::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-100%);animation:acBrilho 2.8s var(--ease-app) 1s infinite}
+@keyframes acBrilho{0%{transform:translateX(-100%)}45%,100%{transform:translateX(100%)}}
+.ac-fim.chama{animation:acChama .55s var(--ease-app) 2}
+@keyframes acChama{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.ac-reenvia{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;margin:0 0 14px;border-radius:12px;border:1px solid rgba(37,211,102,.5);color:#7ee2a6;font-size:14px;text-decoration:none}
+.ac-reenvia .ic{width:18px;height:18px;color:#25D366;fill:#25D366}.ac-reenvia b{color:#25D366}
+.acomp-pill .ap-go.ap-falta{background:#25D366;color:#fff}
+@media(prefers-reduced-motion:reduce){.ac-concluir::after,.ac-fim.chama{animation:none}}
 .ac-acoes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ac-wa,.ac-volta{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:12px;font-weight:700;font-size:14px;text-decoration:none}
 .ac-wa{border:1px solid #25D366;color:#25D366;background:rgba(37,211,102,.07)}.ac-wa .ic{width:20px;height:20px}
@@ -620,6 +631,6 @@ function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox
 <script src="/vendor/lenis.min.js" defer></script>
 <script src="/js/fluidez.js?v=20261012a" defer></script>
 <script src="/js/checkout-mp.js?v=20261012b" defer></script>
-<script src="/js/acompanhar.js?v=20261012b" defer></script>
+<script src="/js/acompanhar.js?v=20261012c" defer></script>
 </body>
 </html>
