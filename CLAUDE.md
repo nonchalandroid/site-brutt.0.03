@@ -62,11 +62,17 @@ Regras:
 
 ### Admin (`admin/index.html`, `:root` próprio)
 
+Paleta do painel = **variação** da loja (café/espresso + dourado-âmbar), não cópia dos mesmos valores. O dourado (`--accent`) é só para ação principal, item ativo e número que pede ação; alerta usa **cobre** (`--warn`) para não confundir com o dourado.
+
 ```css
---bg:#120b07; --surface:#1c130c; --surface-2:#241a11; --line:#3a2a1a;
---gold:#d8a638; --gold-2:#f0cc74; --ink:#f3e4c8; --muted:#b8a184; --red:#c0453a; --green:#3f7a4e;
+--bg:#100a07; --side:#150e0a; --surface:#1c140f; --surface-2:#261b14; --field:#160f0b;
+--line:#35271d; --line-2:#4c3929;                 /* bordas (normal / hover) */
+--ink:#f6ead6; --muted:#c2ab8e; --muted-2:#8f7a62;
+--accent:#eab54a; --accent-2:#cf962c; --accent-ink:#2a1704; --accent-soft:rgba(234,181,74,.10);
+--ok:#79c48e; --warn:#e5843f; --danger:#e15a4a; --info:#a9b3bd;   /* + *-soft para fundos */
+--gold / --gold-2 / --red / --green = apelidos antigos (templates do JS), apontam para os tokens acima
 ```
-Fontes: Barlow + **Barlow Condensed** (títulos). Os tokens do admin são parecidos mas **não idênticos** aos da loja: não copie valores de um para o outro.
+Fontes: **Geist** (texto e títulos) + **Geist Mono** (códigos, EAN, valores), via Google Fonts. Ícones: mapa `ICON` + `ic(nome)` (traço 24×24, desenho do Lucide/ISC). Os tokens do admin **não** são os da loja: não copie valores de um para o outro.
 
 Não há sistema de transformação de tokens (Style Dictionary etc.). Ao importar do Figma, **mapeie as variáveis do Figma para as custom properties acima** em vez de criar novas cores.
 
@@ -96,7 +102,7 @@ Principais "componentes" da loja (todos em `index.html`):
 
 Interação por **delegação de eventos**: um único `document.addEventListener("click", …)` lê atributos `data-*` (`data-add`, `data-open`, `data-ship`, `data-send`, `data-copy`…). Para um botão novo, use um `data-*` novo e trate na delegação (ou num listener próprio no seu módulo).
 
-Admin: roteador por hash (`ROUTES`, `go("nome")`, `rotaAtual()`); cada tela é `renderX()`; cabeçalho comum `topbarHTML()` + abas `abasHTML()` (`ABAS = [[rota, rótulo], …]`). **Tela nova = função `renderX` + entrada em `ROUTES` + (se for seção principal) item em `ABAS`.** Padrão visual de tela: `<h2 style="font-size:20px">` + `<p style="font-size:12px;color:var(--muted)">` + conteúdo.
+Admin: roteador por hash (`ROUTES`, `go("nome")`, `rotaAtual()`); cada tela é `renderX()` e começa com `topbarHTML(titulo)` + `bindTopbar()`, que desenham a **sidebar** (fixa a partir de 1024px; abaixo disso vira gaveta com o botão ☰) e a barra superior. A navegação vem de `NAV = [[grupo, [[rota, rótulo, ícone, badge?], …]], …]` (`ABAS` é derivado dele). **Tela nova = função `renderX` + entrada em `ROUTES` + item em `NAV`.** Padrão visual de tela: `<div class="pg"><h2 class="pg-t">…</h2><p class="pg-d">…</p>` + conteúdo. Entrada sem hash vai para `#/visao` (Visão geral); `#/` continua sendo Produtos.
 
 Não há Storybook nem documentação de componentes além deste arquivo.
 
@@ -105,6 +111,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - **Fotos de produto:** vêm do Supabase (`product_images.url`); fallback local em `imagens/` via `fotoUrl()`. Sempre `loading="lazy" decoding="async"`.
 - **Logo:** constante `LOGO` (WebP base64 inline) aplicada em `img[data-logo]`.
 - **Vídeo** `fumaca.mp4`: só carrega após a 1ª interação (economia de dados).
+- **Intro** `#intro` (início do `<body>`): selo da marca + brasa animada; some quando o catálogo aparece (`js/fluidez.js`), mínimo ~1,4 s só na 1ª visita da sessão, e se remove sozinha em 9 s se algo falhar.
 - **Favicons** (`favicon/`): `favicon.ico` (16–256), `favicon-16x16.png`/`32x32`/`48x48` (só o "B" dourado, legível em tamanho pequeno), `apple-touch-icon.png` 180 (opaco), `android-chrome-192/512`, `maskable-512` + `site.webmanifest`.
 - **CDN permitida:** Google Fonts, `sdk.mercadopago.com/js/v2` (obrigatório ser do Mercado Pago, carregado sob demanda), Supabase. Bibliotecas JS novas → servir em `vendor/` (fixar versão).
 
@@ -114,6 +121,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - No HTML estático: `<span data-ic="pin"></span>` é preenchido no carregamento.
 - Nomes curtos em inglês: `cart, chat, pin, copy, check, alert, trash, moto, card, drop, search…`.
 - **WhatsApp = sempre o símbolo oficial** (simple-icons / kit de marca da Meta), **preenchido**, em `#25D366` ou branco sobre fundo verde (`.wa-logo`, `.ic-wa`; o `ic("chat")` já usa esse símbolo). Nunca redesenhar nem tingir de dourado; se não couber o oficial, não coloque.
+- **Google Maps = símbolo oficial multicolorido** (`svg.gmaps` no botão `#goMapa` do topo, paths do pacote `@iconify-json/logos`). Mesma regra do WhatsApp: não redesenhar nem tingir.
 - Ícones da Brutt IA: `<symbol>` no sprite `.ia-sprite` (`#iaI`, `#iaEye`) usados com `<use href>`.
 
 ## 6. Estilo

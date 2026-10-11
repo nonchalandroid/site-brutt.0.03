@@ -47,6 +47,7 @@ const res = (o: any, status = 200) => new Response(o == null ? "" : JSON.stringi
     assert.equal(init.headers.Authorization, "Bearer TEST-token");
     if (m === "POST") {
       idemKeys.push(init.headers["X-Idempotency-Key"]);
+      if (body.payer?.email === "dono@loja.com") return res({ message: "Invalid users involved", status: 400, cause: [{ code: 4390 }] }, 400);
       const id = String(++mpSeq);
       const p = { id: +id, currency_id: "BRL", transaction_amount: body.transaction_amount, external_reference: body.external_reference, payment_method_id: body.payment_method_id, ...proximoMp, _req: body,
         point_of_interaction: body.payment_method_id === "pix" ? { transaction_data: { qr_code: "000201PIX" + id, qr_code_base64: "aW1n" } } : undefined, date_of_expiration: body.date_of_expiration };
@@ -139,6 +140,18 @@ await t("Pix sem e-mail: o servidor usa o e-mail interno do pedido e gera o QR",
   const p = await call("pagar", { pedido_id: c.j.pedido_id, metodo: "pix", formData: { payment_method_id: "pix" } });
   assert.equal(p.status, 200); assert.match(p.j.pix.qr_code, /^000201PIX/);
   assert.equal(mpPays.get(String(mpSeq))._req.payer.email, `pix+${c.j.numero.toLowerCase()}@tabacariabrutt.com.br`);
+});
+await t("Pix com e-mail do cliente: vai pro Mercado Pago; se o MP recusar o e-mail, tenta 1x com o interno", async () => {
+  const c = await call("criar", { ...base, whats: "21944443334", entrega: { tipo: "cliente" } });
+  proximoMp = { status: "pending", status_detail: "pending_waiting_transfer" };
+  const p = await call("pagar", { pedido_id: c.j.pedido_id, metodo: "pix", formData: { payment_method_id: "pix", payer: { email: "cliente@gmail.com" } } });
+  assert.equal(p.status, 200); assert.equal(mpPays.get(String(mpSeq))._req.payer.email, "cliente@gmail.com");
+  const c2 = await call("criar", { ...base, whats: "21944443335", entrega: { tipo: "cliente" } });
+  const n = idemKeys.length;
+  const p2 = await call("pagar", { pedido_id: c2.j.pedido_id, metodo: "pix", formData: { payment_method_id: "pix", payer: { email: "dono@loja.com" } } });
+  assert.equal(p2.status, 200); assert.match(p2.j.pix.qr_code, /^000201PIX/);
+  assert.equal(mpPays.get(String(mpSeq))._req.payer.email, `pix+${c2.j.numero.toLowerCase()}@tabacariabrutt.com.br`);
+  assert.deepEqual(idemKeys.slice(n), [`${c2.j.pedido_id}-1`, `${c2.j.pedido_id}-1-interno`], "a 2ª chamada usa outra chave de idempotência");
 });
 await t("saudação não se repete para o mesmo contato", async () => {
   const c = await call("criar", { ...base, entrega: { tipo: "cliente" } });

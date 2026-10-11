@@ -136,6 +136,7 @@ export function dataMP(d: Date) {
 }
 const METODO: Record<string, string> = { pix: "pix", debito: "debito", credito: "credito" };
 
+const emailInterno = (numero: string) => `pix+${String(numero).toLowerCase()}@tabacariabrutt.com.br`;
 export async function pagar(body: any, urlFuncao: string) {
   const id = String(body?.pedido_id ?? "");
   if (!UUID.test(id)) return { erro: "Pedido inválido.", status: 400 };
@@ -168,7 +169,7 @@ export async function pagar(body: any, urlFuncao: string) {
     if (pm !== "pix") return { erro: "Forma de pagamento inválida.", status: 400 };
     // O Mercado Pago exige e-mail do pagador no Pix. O site gera o QR direto (sem pedir e-mail ao cliente):
     // sem e-mail informado, usa um endereço interno do pedido.
-    if (!/^\S+@\S+\.\S+$/.test(email)) pay.payer.email = `pix+${ped.numero.toLowerCase()}@tabacariabrutt.com.br`;
+    if (!/^\S+@\S+\.\S+$/.test(email)) pay.payer.email = emailInterno(ped.numero);
     pay.payment_method_id = "pix";
     pay.date_of_expiration = dataMP(new Date(Date.now() + PIX_MINUTOS * 60e3));
   } else {
@@ -185,7 +186,14 @@ export async function pagar(body: any, urlFuncao: string) {
   }
   const tentativa = ped.tentativas + 1;
   await sbPatch(`pedidos?id=eq.${id}`, { tentativas: tentativa, metodo, status: "aguardando_pagamento", mp_payment_id: null, pix_qr: null, pix_qr_base64: null, pix_expira_em: null });
-  const r = await mp("/v1/payments", { method: "POST", headers: { "X-Idempotency-Key": `${ped.id}-${tentativa}` }, body: JSON.stringify(pay) });
+  let r = await mp("/v1/payments", { method: "POST", headers: { "X-Idempotency-Key": `${ped.id}-${tentativa}` }, body: JSON.stringify(pay) });
+  // Pix recusado por causa do e-mail digitado (inválido no MP, ou o mesmo da conta da loja): tenta UMA vez com o
+  // e-mail interno do pedido — o cliente nunca fica sem QR Code por causa do e-mail.
+  if (metodo === "pix" && r.status >= 400 && r.status < 500 && r.status !== 401 && pay.payer.email !== emailInterno(ped.numero)) {
+    console.error("mp pix recusou o e-mail do cliente, tentando com o interno", r.status, JSON.stringify(r.j).slice(0, 300));
+    pay.payer.email = emailInterno(ped.numero);
+    r = await mp("/v1/payments", { method: "POST", headers: { "X-Idempotency-Key": `${ped.id}-${tentativa}-interno` }, body: JSON.stringify(pay) });
+  }
   if (!r.ok || !r.j?.id) {
     console.error("mp pagar", r.status, JSON.stringify(r.j).slice(0, 400));
     if (r.status === 401) {   // diagnóstico SEM expor o segredo: só o formato do que foi cadastrado
