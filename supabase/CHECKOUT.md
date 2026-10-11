@@ -68,7 +68,10 @@ Em `index.html`: `<script>window.__MP={publicKey:"APP_USR-..."};</script>` (Publ
   deste repositório (público). Para atualizar, faça commit/push e publique um `index.ts` com o novo SHA.
   Para voltar atrás, publique apontando para um commit anterior.
 
-## Modo teste
-Enquanto `MP_PRODUCAO` estiver vazio em `index.html`, o pagamento online só aparece para quem abrir
-`https://tabacariabrutt.com.br/?mpteste=1` (fica lembrado no aparelho; `?mpteste=0` desliga).
-Para produção: credenciais de produção nos Secrets e a Public Key de produção em `MP_PRODUCAO`.
+## Ligado para todos (produção) — desde 11/10/2026
+`MP_PRODUCAO` em `index.html` tem a Public Key de produção: todo cliente paga pelo Pix no site (QR Code + copia e cola)
+e depois vê a tela "Acompanhe seu pedido". Se a função `checkout` responder 503 (sem `MP_ACCESS_TOKEN`), o site volta
+sozinho para o pedido pelo WhatsApp.
+
+**Para desligar** (voltar ao pedido pelo WhatsApp): deixe `MP_PRODUCAO=""` em `index.html`. Aí o pagamento online só
+aparece para quem abrir `https://tabacariabrutt.com.br/?mpteste=1` (fica lembrado no aparelho; `?mpteste=0` desliga).

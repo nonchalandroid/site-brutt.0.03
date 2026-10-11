@@ -177,3 +177,5 @@ Não há Storybook nem documentação de componentes além deste arquivo.
    - `node --experimental-strip-types supabase/functions/brutt-ia/brutt-ia.test.mts`
    - `node --experimental-strip-types supabase/functions/gerar-ficha-sommelier/sommelier.test.mts`
 7. Segurança: nada de token/segredo no front. Só a **Public Key** do Mercado Pago (`window.__MP`) e a chave **anon** do Supabase podem ficar no HTML.
+
+**Pix online ligado para todos** (desde 11/10/2026): `MP_PRODUCAO` em `index.html` tem a Public Key de produção. Para voltar ao pedido pelo WhatsApp, deixe `MP_PRODUCAO=""` (ver `supabase/CHECKOUT.md`).
