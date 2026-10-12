@@ -496,6 +496,10 @@ html.nav-indo .sec{content-visibility:visible}
   transition:opacity .9s ease calc(var(--k) * 18ms + .1s),transform 1.15s ease-out calc(var(--k) * 18ms + .1s)}
 .ia-dica.ja .ia-nuvem i,.ia-dica.ja .ia-pens i,.ia-dica.ja .l{opacity:0;transition:opacity .25s ease}
 @media(prefers-reduced-motion:reduce){.ia-dica{animation:none!important}.ia-dica i,.ia-dica .l{transform:none!important;transition:opacity .3s ease!important}.ia-nuvem i::after{display:none}.ia-dica.sai .ia-nuvem i{opacity:0}}
+/* menu do topo como carrossel (js/menu-carrossel.js): a fita anda sozinha, então a dica "arrasta pro lado" sai;
+   no PC dá pra arrastar com o mouse */
+html.menu-carrossel .navhint{display:none!important}
+@media(hover:hover) and (pointer:fine){html.menu-carrossel .navwrap nav{cursor:grab}html.menu-carrossel .navwrap nav.arrastando{cursor:grabbing;user-select:none}}
 </style>
 </head>
 <body>
@@ -761,6 +765,7 @@ function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox
 <script src="/js/topo-fogo.js?v=20261012b" defer></script>
 <script src="/js/ia-sugestoes.js?v=20261012a" defer></script>
 <script src="/js/ia-dica.js?v=20261012b" defer></script>
+<script src="/js/menu-carrossel.js?v=20261012a" defer></script>
 <script src="/js/checkout-mp.js?v=20261012m" defer></script>
 <script src="/js/acompanhar.js?v=20261012m" defer></script>
 <script src="/js/sons.js?v=20261012a" defer></script>
