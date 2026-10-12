@@ -49,7 +49,7 @@ export const LOJA = { nome: "Tabacaria Brutt", endereco: "Rua 18, 145 - Campo Gr
 export const linkAcomp = (ped: any) => `${LOJA.site}/?pedido=${ped.id}`;
 const evolutionOk = () => !!(env("EVOLUTION_API_URL") && env("EVOLUTION_API_KEY") && env("EVOLUTION_INSTANCE"));
 // R$ 5,00 até 2 km de rota; acima, + R$ 1,50 por km (fração de km conta como km inteiro); só até 2,5 km (Conjunto Campinho e arredores); teto R$ 8,00.
-export const ENTREGA_LOJA = { lat: -22.881489, lng: -43.61375, raioMaxKm: 2.5, taxaBase: 5, baseAteKm: 2, porKmExtra: 1.5, taxaMaxima: 8 };
+export const ENTREGA_LOJA = { lat: -22.8814745, lng: -43.6137391, raioMaxKm: 2.5, taxaBase: 5, baseAteKm: 2, porKmExtra: 1.5, taxaMaxima: 8 };
 export const PEDIDO_MINIMO = 20;
 export const PIX_MINUTOS = 30;
 const INTERVALO_MSG_MS = 3000;
@@ -72,6 +72,37 @@ async function distanciaKm(lat: number, lng: number) {
     if (j?.code === "Ok" && j.routes?.[0]?.distance > 0) return Math.round(j.routes[0].distance / 100) / 10;
   } catch { /* cai na estimativa */ }
   return Math.round(haversineKm(ENTREGA_LOJA.lat, ENTREGA_LOJA.lng, lat, lng) * 1.3 * 10) / 10;
+}
+
+// ── Conferência do endereço: o navegador manda as coordenadas, e a taxa sai delas. O servidor acha o endereço DIGITADO
+// no mesmo serviço de mapa do site (geoapify-autocomplete) e compara. Diferença grande = vale a distância maior (não dá
+// para pagar a taxa de perto mandando a coordenada da loja com um endereço longe) e a equipe vê o aviso no pedido.
+const GENERICAS = new Set(["rua", "r", "avenida", "av", "estrada", "est", "travessa", "tv", "praca", "pca", "largo", "alameda", "rodovia", "beco", "de", "da", "do", "das", "dos"]);
+const semAcento = (s: unknown) => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const NUMEROS: Record<string, string> = { um: "1", uma: "1", dois: "2", duas: "2", tres: "3", quatro: "4", cinco: "5", seis: "6", sete: "7", oito: "8", nove: "9", dez: "10", onze: "11", doze: "12", treze: "13", quatorze: "14", catorze: "14", quinze: "15", dezesseis: "16", dezessete: "17", dezoito: "18", dezenove: "19", vinte: "20", trinta: "30" };
+// ruas numeradas ("Rua 5", "Rua Dezoito" = "Rua 18") contam o número; palavras genéricas não contam
+const palavras = (s: string) => semAcento(s).split(/[^a-z0-9]+/).map(w => NUMEROS[w] ?? w).filter(w => (w.length > 1 || /\d/.test(w)) && !GENERICAS.has(w));
+export const mesmaRua = (digitada: string, achada: string) => { const a = palavras(digitada), b = new Set(palavras(achada)); if (!a.length) return false; return a.filter(w => b.has(w)).length / a.length >= 0.6; };
+export const TOLERANCIA_KM = 0.6;
+// Conjunto Campinho (colado na loja, ruas numeradas): igual à Brutt IA. Rua homônima achada longe do conjunto não vale.
+export const CONJUNTO = { lat: -22.882284, lng: -43.6161089, raioKm: 2.5 };
+export const ehConjunto = (...t: unknown[]) => { const x = semAcento(t.filter(Boolean).join(" ")); return /campinho/.test(x) || /\bconjunto\b/.test(x) && !/marinha|bnh|madureira|cascadura/.test(x); };
+/** mesmo bairro? (o digitado pode vir "Conjunto Campinho (Campo Grande)"; o mapa devolve "Campo Grande") */
+const mesmoBairro = (dig: string, mapa: string) => { const a = semAcento(dig).trim(), b = semAcento(mapa).trim(); return !a || !b || a.includes(b) || b.includes(a); };
+export async function conferirEndereco(e: { rua: string; numero: string; bairro: string }, lat: number, lng: number) {
+  try {
+    const c = new AbortController(), t = setTimeout(() => c.abort(), 6000);
+    // chama com a chave pública, igual à loja (a função de mapa exige um JWT válido)
+    const r = await fetch(`${SB()}/functions/v1/geoapify-autocomplete?text=${encodeURIComponent([e.rua, e.numero, e.bairro].filter(Boolean).join(" "))}`, { headers: env("SUPABASE_ANON_KEY") ? { apikey: env("SUPABASE_ANON_KEY"), Authorization: "Bearer " + env("SUPABASE_ANON_KEY") } : hdr(), signal: c.signal }).finally(() => clearTimeout(t));
+    if (!r.ok) return null;
+    const num = String(e.numero).replace(/\D/g, "");
+    // rua igual, número exato e mesmo bairro (ruas homônimas tipo "Rua 5" existem em vários bairros); no conjunto, perto dele
+    const conj = ehConjunto(e.bairro);
+    const x = ((await r.json())?.resultados ?? []).find((y: any) => mesmaRua(e.rua, y?.rua) && num && String(y?.numero ?? "").replace(/\D/g, "") === num && Number.isFinite(+y?.lat) && Number.isFinite(+y?.lng)
+      && mesmoBairro(e.bairro, y?.bairro) && (!conj || haversineKm(CONJUNTO.lat, CONJUNTO.lng, +y.lat, +y.lng) <= CONJUNTO.raioKm));
+    if (!x) return { exato: false };      // número não existe no mapa: não dá para conferir (a equipe vê "não conferido")
+    return { exato: true, lat: +x.lat, lng: +x.lng, dif_km: Math.round(haversineKm(lat, lng, +x.lat, +x.lng) * 10) / 10 };
+  } catch { return null; }
 }
 
 export function normalizaWhats(s: unknown): string | null {
@@ -142,10 +173,15 @@ export async function criarPedido(body: any, ip = "") {
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return { erro: "Confirme o endereço de entrega de novo.", status: 400 };
     const endereco = { rua: texto(e.rua, 120), numero: texto(e.numero, 20), complemento: texto(e.complemento, 80), bairro: texto(e.bairro, 80), cidade: texto(e.cidade, 80), uf: texto(e.uf, 2).toUpperCase(), cep: String(e.cep ?? "").replace(/\D/g, "").slice(0, 8) };
     if (!endereco.rua || !endereco.numero || !endereco.cidade) return { erro: "Endereço de entrega incompleto.", status: 400 };
-    const km = await distanciaKm(lat, lng);
+    const [kmPin, conf] = await Promise.all([distanciaKm(lat, lng), conferirEndereco(endereco, lat, lng)]);
+    let km = kmPin, conferencia: any = conf ? { exato: conf.exato } : { exato: false, erro: true };
+    if (conf?.exato) {
+      conferencia.dif_km = conf.dif_km;
+      if (conf.dif_km > TOLERANCIA_KM) { const kmMapa = await distanciaKm(conf.lat, conf.lng); conferencia.km_mapa = kmMapa; km = Math.max(km, kmMapa); }
+    }
     if (km > ENTREGA_LOJA.raioMaxKm) return { erro: "Entrega indisponível para esse endereço. Escolha “Prefiro eu mesmo solicitar a entrega”.", status: 400 };
     taxa = taxaEntrega(km);
-    entrega = { tipo: "entrega", endereco, geo: { lat, lng }, km };
+    entrega = { tipo: "entrega", endereco, geo: { lat, lng }, km, conferencia };
   } else if (body?.entrega?.tipo === "cliente") {
     entrega = { tipo: "cliente" };   // cliente chama Uber Flash/99 por conta própria; frete da loja = 0
   } else return { erro: "Escolha como você quer receber o pedido.", status: 400 };

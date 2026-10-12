@@ -34,6 +34,7 @@ function filtros(q: URLSearchParams) {
   return (r: any) => fs.every(f => f(r));
 }
 let seq = 41, mpSeq = 9000, rotaM = 1800;
+let mapa: any[] = []; const rotaPorLng: Record<string, number> = {};
 const mpPays = new Map<string, any>();
 let proximoMp: any = { status: "pending", status_detail: "pending_waiting_transfer" };
 const whats: { numero: string; text: string }[] = [];
@@ -44,7 +45,8 @@ const res = (o: any, status = 200) => new Response(o == null ? "" : JSON.stringi
 (globalThis as any).fetch = async (input: string, init: any = {}) => {
   const u = new URL(input), m = (init.method || "GET").toUpperCase(), body = typeof init.body === "string" ? JSON.parse(init.body) : null;
   if (u.host === "push.test") { pushes.push({ path: u.pathname, headers: init.headers, corpo: init.body }); return new Response("", { status: u.pathname === "/morto" ? 410 : 201 }); }
-  if (u.host === "router.project-osrm.org") return res({ code: "Ok", routes: [{ distance: rotaM }] });
+  if (u.host === "router.project-osrm.org") { const lngB = u.pathname.split(";")[1]?.split(",")[0]; return res({ code: "Ok", routes: [{ distance: rotaPorLng[lngB] ?? rotaM }] }); }
+  if (u.host === "sb.test" && u.pathname === "/functions/v1/geoapify-autocomplete") { assert.match(init.headers.Authorization, /^Bearer ./); return res({ resultados: mapa }); }
   if (u.host === "evo.test") { assert.equal(init.headers.apikey, "evo"); whats.push(body); return res({ key: { id: "x" } }, 201); }
   if (u.host === "api.mercadopago.com") {
     assert.equal(init.headers.Authorization, "Bearer TEST-token");
@@ -352,6 +354,45 @@ await t("sem o robô do WhatsApp: a equipe recebe o link com a mensagem pronta",
   const fim = await call("concluir", { pedido_id: c.j.pedido_id }, equipe);
   assert.equal(fim.j.whats.auto, false); assert.ok(fim.j.whats.link.startsWith("https://wa.me/5521933330000?text="));
   ENV.EVOLUTION_API_URL = url;
+});
+await t("taxa de entrega: endereço digitado conferido no mapa (coordenada do navegador não manda sozinha)", async () => {
+  const end = { rua: "Rua Dezoito", numero: "200", cidade: "Rio de Janeiro", uf: "RJ", bairro: "Campo Grande" };
+  const cli = { ...base, whats: "21944440000" };
+  // confere: o mapa acha o mesmo lugar (diferença pequena) → taxa normal, conferido
+  rotaM = 1500; mapa = [{ rua: "Rua Dezoito", numero: "200", lat: -22.8819, lng: -43.6140 }];
+  let r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo: { lat: -22.8817, lng: -43.6138 }, endereco: end } });
+  assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 5);
+  let ped = db.pedidos.find(p => p.id === r.j.pedido_id); assert.equal(ped.entrega.conferencia.exato, true); assert.ok(ped.entrega.conferencia.dif_km < 0.6);
+  // golpe: manda a coordenada da porta da loja, mas o endereço digitado fica a 9 km → vale a distância do mapa → fora da área
+  mapa = [{ rua: "Rua Dezoito", numero: "200", lat: -22.95, lng: -43.70 }]; rotaPorLng["-43.7"] = 9000;
+  r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo: { lat: -22.8815, lng: -43.6136 }, endereco: end } });
+  assert.equal(r.status, 400); assert.match(r.j.erro, /indisponível/);
+  // golpe menor: endereço real a 2,4 km, coordenada a 1,5 km → cobra a taxa dos 2,4 km
+  mapa = [{ rua: "Rua Dezoito", numero: "200", lat: -22.90, lng: -43.63 }]; rotaPorLng["-43.63"] = 2400;
+  r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo: { lat: -22.8815, lng: -43.6136 }, endereco: end } });
+  assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 6.5); assert.equal(r.j.km, 2.4);
+  ped = db.pedidos.find(p => p.id === r.j.pedido_id); assert.equal(ped.entrega.conferencia.km_mapa, 2.4);
+  // número que o mapa não conhece: não bloqueia, mas fica "não conferido" para a equipe
+  mapa = [{ rua: "Rua Dezoito", numero: "1", lat: -22.90, lng: -43.63 }];
+  r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo: { lat: -22.8817, lng: -43.6138 }, endereco: end } });
+  assert.equal(r.status, 200); ped = db.pedidos.find(p => p.id === r.j.pedido_id); assert.equal(ped.entrega.conferencia.exato, false);
+  mapa = []; rotaM = 1800;
+});
+await t("Conjunto Campinho (pedido da IA): homônima longe não muda a taxa; casa achada no conjunto a 2,4 km soma por km", async () => {
+  const end = { rua: "Rua 5", numero: "120", cidade: "Rio de Janeiro", uf: "RJ", bairro: "Conjunto Campinho (Campo Grande)" };
+  const geo = { lat: -22.882284, lng: -43.6161089 }, cli = { ...base, whats: "21933330001" };
+  rotaM = 500; mapa = [{ rua: "Rua 5", numero: "120", bairro: "Santa Cruz", lat: -22.92, lng: -43.69 }];
+  let r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo, endereco: end } });
+  assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 5);
+  assert.equal(db.pedidos.find(p => p.id === r.j.pedido_id).entrega.conferencia.exato, false);
+  mapa = [{ rua: "Rua 5", numero: "120", bairro: "Campo Grande", lat: -22.8890, lng: -43.6300 }]; rotaPorLng["-43.63"] = 2400;
+  r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo, endereco: end } });
+  assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 6.5);
+  // fora do conjunto, rua homônima em OUTRO bairro também não vale como conferência
+  mapa = [{ rua: "Rua 5", numero: "120", bairro: "Santa Cruz", lat: -22.92, lng: -43.69 }];
+  r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo: { lat: -22.8817, lng: -43.6138 }, endereco: { ...end, bairro: "Campo Grande" } } });
+  assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 5);
+  mapa = []; rotaM = 1800; delete rotaPorLng["-43.63"];
 });
 await t("segurança: nome sem links, freio de pedidos em massa, estoque conferido de novo no pagar, aviso só p/ equipe ativa", async () => {
   assert.equal(C.nomeLimpo("https://golpe.example/pix Maria"), "Maria");

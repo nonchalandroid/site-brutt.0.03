@@ -10,7 +10,7 @@
 // ============================================================
 
 // ---------- MESMAS REGRAS DO SITE (ENTREGA_LOJA / HORARIOS / MIN) ----------
-const LOJA = { lat: -22.881489, lng: -43.613750 };
+const LOJA = { lat: -22.8814745, lng: -43.6137391 };
 // mesma tabela do site e do checkout: R$ 5,00 até 2 km; + R$ 1,50 por km fracionado; só até 2,5 km; teto R$ 8,00
 const RAIO_MAX_KM = 2.5, TAXA_BASE = 5.00, BASE_ATE_KM = 2, POR_KM_EXTRA = 1.50, TAXA_MAXIMA = 8.00;
 const RAIO_TXT = String(RAIO_MAX_KM).replace(".", ",");
@@ -134,7 +134,9 @@ const itensParaWidget = (r: any) => r.linhas.map((l: any) => ({ nome: l.qtd > 1 
 
 // ---------- endereço -> coordenadas -> rota -> taxa (mesmo método do site) ----------
 const GENERICAS = new Set(["rua", "r", "avenida", "av", "estrada", "est", "travessa", "tv", "praca", "pca", "largo", "alameda", "rodovia", "beco", "de", "da", "do", "das", "dos"]);
-const palavras = (s: string) => semAcento(s).split(/[^a-z0-9]+/).filter(w => w.length > 1 && !GENERICAS.has(w));
+const NUMEROS: Record<string, string> = { um: "1", uma: "1", dois: "2", duas: "2", tres: "3", quatro: "4", cinco: "5", seis: "6", sete: "7", oito: "8", nove: "9", dez: "10", onze: "11", doze: "12", treze: "13", quatorze: "14", catorze: "14", quinze: "15", dezesseis: "16", dezessete: "17", dezoito: "18", dezenove: "19", vinte: "20", trinta: "30" };
+// ruas numeradas ("Rua 5", "Rua Dezoito" = "Rua 18") contam o número; palavras genéricas não contam
+const palavras = (s: string) => semAcento(s).split(/[^a-z0-9]+/).map(w => NUMEROS[w] ?? w).filter(w => (w.length > 1 || /\d/.test(w)) && !GENERICAS.has(w));
 const mesmaRua = (digitada: string, achada: string) => { const a = palavras(digitada), b = new Set(palavras(achada)); if (!a.length) return true; return a.filter(w => b.has(w)).length / a.length >= 0.6; };
 const UF_NOME: Record<string, string> = { acre: "AC", alagoas: "AL", amapa: "AP", amazonas: "AM", bahia: "BA", ceara: "CE", "distrito federal": "DF", "espirito santo": "ES", goias: "GO", maranhao: "MA", "mato grosso": "MT", "mato grosso do sul": "MS", "minas gerais": "MG", para: "PA", paraiba: "PB", parana: "PR", pernambuco: "PE", piaui: "PI", "rio de janeiro": "RJ", "rio grande do norte": "RN", "rio grande do sul": "RS", rondonia: "RO", roraima: "RR", "santa catarina": "SC", "sao paulo": "SP", sergipe: "SE", tocantins: "TO" };
 // sub-bairros, localidades e vizinhos de Campo Grande (o cliente fala assim; o mapa só conhece o bairro oficial): chave sem acento -> bairro oficial
@@ -143,6 +145,11 @@ const SUBBAIRROS: Record<string, string> = (() => {
   const viz = ["Cosmos", "Inhoaíba", "Senador Vasconcelos", "Santíssimo", "Paciência", "Santa Cruz", "Guaratiba", "Sepetiba", "Bangu", "Realengo", "Senador Camará", "Gerincó", "Padre Miguel"];
   const m: Record<string, string> = {}; for (const n of cg) m[semAcento(n)] = "Campo Grande"; for (const n of viz) m[semAcento(n)] = n; return m;
 })();
+// Conjunto Campinho: fica colado na loja (centro a ~250 m). As ruas são numeradas ("Rua 5", "Rua 18") e o mapa
+// costuma não achar o número ou acha uma rua homônima longe. Regra da loja: no conjunto é a TAXA MÍNIMA; se a casa for
+// achada no mapa com o número exato, vale o km rodado (passou de 2 km, soma por km, igual a qualquer endereço).
+export const CONJUNTO = { nome: "Conjunto Campinho", lat: -22.882284, lng: -43.6161089, raioKm: 2.5 };
+export const ehConjunto = (...t: unknown[]) => { const x = semAcento(t.filter(Boolean).join(" ")); return /campinho/.test(x) || /^(o )?conjunto$/.test(x.trim()) || /\bconjunto\b/.test(x) && !/marinha|bnh|madureira|cascadura/.test(x); };
 async function comTempo(url: string, init: any = {}, ms = 6000) {
   const c = new AbortController(), t = setTimeout(() => c.abort(), ms);
   try { return await fetch(url, { ...init, signal: c.signal }); } finally { clearTimeout(t); }
@@ -410,8 +417,17 @@ async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
     const faltando: string[] = []; if (!rua) faltando.push("o nome da rua"); if (!numero) faltando.push("o número da casa/prédio");
     if (faltando.length) return { ok: false, erro: !rua ? "falta_rua" : "falta_numero", faltando, mensagem: `Ainda faltam dados para calcular a entrega: ${faltando.join(" e ")}. Peça AO CLIENTE exatamente isso (e só isso), de forma direta, em uma única mensagem. NÃO diga que deu erro no mapa.` };
     const adr = { rua, numero, bairro: subOficial ?? bairroDig, cidade: limpaTexto(a.cidade, 50) || "Rio de Janeiro", uf: (limpaTexto(a.uf, 2) || "RJ").toUpperCase(), cep: String(a.cep ?? "").replace(/\D/g, "").slice(0, 8) };
+    const conj = ehConjunto(bairroDig, a.complemento);
     let g = await geocodificar(adr);
     if (!g && adr.bairro) g = await geocodificar({ ...adr, bairro: "" });          // o bairro/localidade pode confundir o mapa: tenta só pela rua e número
+    if (conj && g && haversineKm(CONJUNTO.lat, CONJUNTO.lng, g.lat, g.lng) > CONJUNTO.raioKm) g = null;   // rua homônima em outro lugar: não é a do conjunto
+    if (conj && (!g || g.estimado)) {                                               // conjunto sem a casa exata no mapa: taxa mínima
+      const bairroC = `${CONJUNTO.nome} (Campo Grande)`;
+      d.entrega = { modo: "entrega", rua, numero: adr.numero, complemento: limpaTexto(a.complemento, 60), bairro: bairroC, cidade: "Rio de Janeiro", uf: "RJ", cep: adr.cep, km: Math.round(haversineKm(LOJA.lat, LOJA.lng, CONJUNTO.lat, CONJUNTO.lng) * 1.3 * 10) / 10, taxa: TAXA_BASE, estimado: true, lat: CONJUNTO.lat, lng: CONJUNTO.lng }; c.mudouPedido = true;
+      const r = await resumoPedido(d);
+      c.sug = r.linhas.length ? [{ t: "Fechar pedido", q: "Pode fechar o pedido" }, { t: "Adicionar mais itens", q: "Quero adicionar mais itens" }] : ATALHOS_VITRINE;
+      return { ok: true, endereco: `${rua}, ${adr.numero} — ${bairroC}`, taxa_entrega: TAXA_BASE, conjunto: true, aviso: `No ${CONJUNTO.nome} a entrega é a taxa mínima (${R(TAXA_BASE)}), porque fica do lado da loja.`, ...(r.linhas.length ? { subtotal: r.subtotal, total: r.total, minimo: r.minimo } : {}) };
+    }
     if (!g) return { ok: false, erro: "nao_encontrado", informado: { rua, numero, bairro: bairroDig || null, cep: adr.cep || null }, mensagem: `Não localizei esse endereço no mapa (rua "${rua}", nº ${numero}${bairroDig ? `, bairro "${bairroDig}"` : ", sem bairro"}). Diga ao cliente, de forma clara, o que você recebeu e o que precisa conferir ou completar: a grafia da rua, o bairro (ou localidade, ex.: Salim, Mendanha, Cosmos) e/ou o CEP. Liste TUDO que falta de uma vez, sem frases vagas como "deu ruim".` };
     if (subOficial && semAcento(bairroDig) !== semAcento(subOficial)) g = { ...g, bairro: `${bairroDig} (${subOficial})` };
     const km = Math.round((await distanciaRotaKm(g)) * 10) / 10;                  // km com 1 casa ANTES da taxa, igual ao site
@@ -487,6 +503,7 @@ COMO TRABALHAR
 - Pedido mínimo: ${R(MIN_PEDIDO)} em produtos. Se faltar, avise quanto falta e sugira um complemento.
 - COMO RECEBER: quando o pedido estiver montado (ou o cliente perguntar de entrega), ofereça as DUAS opções, nesta ordem: 1) **Prefiro eu mesmo solicitar a entrega** (recomendado): o cliente chama o Uber Flash ou 99 por conta própria e o frete da loja fica R$ 0,00; o MOTORISTA do app busca na loja (${LOJA_ENDERECO}) e leva até o cliente — o cliente NÃO precisa vir à loja (nunca diga que ele "retira" ou "busca"). Se ele escolher, chame escolher_uber_99; 2) **Entrega pela loja**: taxa pela distância (a partir de ${R(TAXA_BASE)}, raio de ${RAIO_TXT} km). Sempre marque a opção 1 como (recomendado) e apresente nessa ordem. Não invente como a loja faz a entrega (motoboy, parceiros, prazo, horário de saída): diga só o que está aqui.
 - ENTREGA PELA LOJA: peça rua, o NÚMERO (obrigatório), bairro e, se tiver, complemento; depois chame definir_entrega. Sem número, não calcule: peça o número. Quando faltar algo, diga EXATAMENTE o que falta e peça tudo de uma vez numa única mensagem (ex.: "me passa o número da casa e o bairro"). Se o endereço não for achado, diga o que recebeu e o que conferir (grafia da rua, número, bairro/CEP). Nunca use frases vagas tipo "deu ruim" ou "deu errinho".
+- CONJUNTO CAMPINHO: "o conjunto", "Conjunto Campinho" ou "Campinho" (de Campo Grande) fica do lado da loja: a entrega lá é a TAXA MÍNIMA (${R(TAXA_BASE)}). Mesmo assim peça rua e número e chame definir_entrega com bairro "Conjunto Campinho": se a casa for achada no mapa e passar de ${BASE_ATE_KM} km, a taxa sobe pelo km rodado (o servidor calcula). Nunca diga que não achou o endereço por ser rua numerada do conjunto.
 - LOCALIDADES: o cliente pode citar sub-bairros e localidades de Campo Grande e vizinhança (Mendanha, Cachamorra, Benjamim do Monte, Monte Líbano, Carobinha, São Basílio, Posse, Conjunto da Marinha, BNH, Salim, Conjunto Campinho/Novo Campinho, Rio da Prata, Cosmos, Inhoaíba, Senador Vasconcelos, Santíssimo, Paciência, Santa Cruz, Guaratiba, Sepetiba, Bangu, Realengo…). Aceite como bairro e passe o nome que ele disse em definir_entrega (o servidor ajusta pro mapa). Nunca peça pra ele "conferir se é Campo Grande" por causa disso.
 - Se definir_entrega indicar fora_do_raio, explique com delicadeza que fica fora da área de entrega da loja e ofereça a opção **Prefiro eu mesmo solicitar a entrega** (Uber Flash ou 99, frete da loja R$ 0,00; ele é o destinatário e a loja é o ponto de coleta: ${LOJA_ENDERECO}). Se o cliente aceitar, chame escolher_uber_99.
 - Retirada na loja não é feita por aqui: se pedirem, diga que para retirar o cliente usa o carrinho do site (tabacariabrutt.com.br).
@@ -579,6 +596,14 @@ const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 const acessos = new Map<string, { n: number; t: number }>(); const LIMITE_POR_MIN = 24;
 export function _resetLimite() { acessos.clear(); }
+/** Cota diária (tabela ia_uso, RPC ia_cota): COTA.total mensagens por dia na loja toda e COTA.ip por aparelho.
+ *  O IP vai com hash (não guardamos o IP de ninguém). Banco fora do ar = deixa passar (o limite por minuto continua valendo). */
+export const COTA = { total: 1500, ip: 120 };
+async function hashIp(ip: string) { const b = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("brutt-ia:" + ip))); return [...b.slice(0, 12)].map(x => x.toString(16).padStart(2, "0")).join(""); }
+export async function dentroDaCota(ip: string) {
+  try { const r = await sbRpc("ia_cota", { p_chave: await hashIp(ip), p_lim_ip: COTA.ip, p_lim_total: COTA.total }); return r?.ok !== false; }
+  catch { return true; }
+}
 
 async function registra(linha: any) { try { await sbSend("ia_log", "POST", linha); } catch { /* o registro nunca derruba a resposta */ } }
 async function limpezaOcasional() {
@@ -605,6 +630,11 @@ export async function handler(req: Request): Promise<Response> {
   else if (++a.n > LIMITE_POR_MIN) {                                              // limite: em vez de só barrar, oferece a equipe no WhatsApp (com o pedido em andamento)
     const aviso = "Muitas mensagens seguidas. Aguarde um instante, ou toque no botão verde para falar com a nossa equipe no WhatsApp.";
     if (a.n > LIMITE_POR_MIN + 3) return json({ error: aviso }, 429);              // insistência: não gasta banco
+    return json({ error: aviso, humano_url: await linkHumano(await draftDaSessao(session)) }, 429);
+  }
+  // cota do DIA no banco (vale entre cópias da função e depois de reiniciar): passou, não chama o Gemini e oferece a equipe
+  if (!(await dentroDaCota(ip))) {
+    const aviso = "Nosso atendente virtual descansou por hoje. Toque no botão verde para falar com a nossa equipe no WhatsApp.";
     return json({ error: aviso, humano_url: await linkHumano(await draftDaSessao(session)) }, 429);
   }
 
