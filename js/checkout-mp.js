@@ -99,7 +99,7 @@ function iniciar(o){
 }
 function spin(){return'<svg class="mp-spin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg>'}
 /* Rede de proteção: se o pagamento online falhar, o cliente não perde a venda — manda o mesmo pedido pelo WhatsApp. */
-var BTN_WHATS='<button type="button" class="go mp-whats" data-mp-whats>Enviar pedido pelo WhatsApp</button>';
+var BTN_WHATS='<button type="button" class="go mp-whats" data-mp-whats>Enviar no WhatsApp</button>';
 function falha(msg){if(window.SOM)SOM.toca("falha");$("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button><p class="mp-err" role="alert">'+esc(msg)+'</p>'+BTN_WHATS}
 function viaWhats(){
   clearTimeout(poll);clearInterval(_tempo);desmontar();
@@ -185,14 +185,14 @@ function mostrarPix(px){if(window.SOM)SOM.toca("pix");
   if(res&&pedido)res.outerHTML='<div class="pix-topo"><span>Pedido <b>#'+esc(pedido.numero)+'</b></span><span>Total <b>'+R(pedido.total)+'</b></span></div>';
   a.innerHTML='<div class="pix">'
     +(px.qr_code_base64?'<img class="pix-qr" alt="QR Code Pix do pedido" width="220" height="220" src="data:image/png;base64,'+esc(px.qr_code_base64)+'">':"")
-    +'<div class="pix-code"><input id="pixCode" readonly value="'+esc(px.qr_code||"")+'" aria-label="Código Pix copia e cola"><button type="button" class="go pix-copy" data-mp-copiar>Copiar código Pix</button></div>'
+    +'<div class="pix-code"><input id="pixCode" readonly value="'+esc(px.qr_code||"")+'" aria-label="Código Pix copia e cola"><button type="button" class="go pix-copy" data-mp-copiar>Copiar código</button></div>'
     +'<p class="pix-t">No app do banco: <b>Pix → Ler QR Code</b> ou <b>Pix copia e cola</b>. O código vale 30 min e é só deste pedido.</p>'
     +'<div class="mp-wait">'+spin()+'<b>Aguardando o pagamento…</b><span id="pixTempo"></span></div></div>';
   tempoPix(px.expira_em);
   if(window.ACOMP&&pedido)ACOMP.guarda(pedido.pedido_id,pedido.numero,msgLojaPago(pedido.numero));   /* atalho "Acompanhar" + mensagem completa do pedido guardada JÁ AQUI: o celular pode recarregar a página enquanto o cliente paga no app do banco */
   acompanhar();
 }
-function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado!";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código Pix";b.classList.remove("done")}},2500)})}
+function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado!";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código";b.classList.remove("done")}},2500)})}
 var _tempo=null;
 function tempoPix(fim){
   clearInterval(_tempo);var f=fim?new Date(fim).getTime():0;if(!f)return;
@@ -215,7 +215,7 @@ function acompanhar(){
     },document.hidden?8e3:4e3);
   })();
 }
-function aviso(t,s){if(window.SOM)SOM.toca("falha");var a=$("#mpArea");if(a)a.innerHTML='<div class="mp-wait off"><b>'+esc(t)+'</b><span>'+esc(s)+'</span><button type="button" class="go" data-mp-tentar>Gerar novo pagamento</button></div>'}
+function aviso(t,s){if(window.SOM)SOM.toca("falha");var a=$("#mpArea");if(a)a.innerHTML='<div class="mp-wait off"><b>'+esc(t)+'</b><span>'+esc(s)+'</span><button type="button" class="go" data-mp-tentar>Gerar novo Pix</button></div>'}
 /* Mensagem do pedido PAGO para o WhatsApp da loja (o cliente toca em enviar). Valores vindos do servidor. */
 function msgLojaPago(numero){
   var p=pedido||{},c=_ctx||{},L=[];

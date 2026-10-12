@@ -854,6 +854,12 @@ html,body{overflow-x:clip}
 @font-face{font-family:"DejaVu Sans Mono";font-style:normal;font-weight:100 550;font-display:swap;src:url(/vendor/fonts/dejavu-sans-mono-400.woff2) format("woff2")}
 @font-face{font-family:"DejaVu Sans Mono";font-style:normal;font-weight:551 900;font-display:swap;src:url(/vendor/fonts/dejavu-sans-mono-700.woff2) format("woff2")}
 .side{--font:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-family:var(--font)}
+/* Botões mais compactos: do tamanho do texto (sem esticar na largura toda), alinhados à direita nas gavetas */
+.save-row{justify-content:flex-end;flex-wrap:wrap}
+.save-row>button{flex:0 1 auto!important;min-width:120px;padding-left:22px;padding-right:22px}
+.drawer .btn-gold.full,.drawer .btn-danger.full,.drawer .full{width:auto;min-width:140px;padding-left:22px;padding-right:22px}
+.ped-avisa{display:inline-flex;width:auto;padding:0 16px;min-height:36px;font-size:13px}
+.ped-avisa .i{width:16px;height:16px}
 </style>
 </head>
 <body>
@@ -1222,8 +1228,8 @@ async function renderMain(){
     </div>
     <details class="manual"><summary>Ferramentas manuais (planilhas) — o estoque já sincroniza sozinho</summary>
       <div class="toolbar">
-        <button class="btn-ghost btn-sm" id="syncBtn">📥 Planilha de compra (custo)</button>
-        <button class="btn-ghost btn-sm" id="bestBtn">📊 Atualizar mais vendidos (planilha NEX)</button>
+        <button class="btn-ghost btn-sm" id="syncBtn">📥 Planilha de compra</button>
+        <button class="btn-ghost btn-sm" id="bestBtn">📊 Mais vendidos (NEX)</button>
       </div>
     </details>
     <div id="browseArea"></div>
@@ -1586,7 +1592,7 @@ async function openProduct(id){
         <input type="number" min="0" id="mvQty" placeholder="Quantidade">
         <input type="text" id="mvNote" placeholder="Observação (opcional)">
       </div>
-      <div class="save-row"><button class="btn-gold" id="mvBtn" style="width:100%">Registrar movimentação</button></div>
+      <div class="save-row"><button class="btn-gold" id="mvBtn">Registrar</button></div>
       <div class="hist" id="histBox">
         ${(hist && hist.length) ? hist.map(h => `
           <div class="hist-row">
@@ -1609,7 +1615,7 @@ async function openProduct(id){
         <span>Produto ativo no site</span>
         <label class="switch"><input type="checkbox" id="fActive" ${p.is_active?'checked':''}><span class="track"></span></label>
       </div>
-      <div class="save-row"><button class="btn-gold" id="saveBtn" style="width:100%">Salvar alterações</button></div>
+      <div class="save-row"><button class="btn-gold" id="saveBtn">Salvar</button></div>
     </div>
 
     <div class="section" id="somSec">
@@ -1872,7 +1878,7 @@ function openNewProduct(){
       <h3>✨ Sommelier IA</h3>
       <p class="t" style="font-size:12px;color:var(--muted);margin:0 0 8px;line-height:1.45">Escolha a categoria, digite o nome e clique abaixo: ele monta a descrição (até 170 caracteres), a ficha e, nas essências, as barrinhas de sabor (cítrico, tropical, adocicado e mentolado). Você revisa e edita tudo antes de cadastrar.</p>
       <div class="field"><label>Notas pra IA (opcional)</label><textarea id="nNotas" rows="2" placeholder="Ex.: sabor de melancia com toque de menta, bem refrescante"></textarea></div>
-      <button class="btn-gold" id="nGerarBtn" style="width:100%">✨ Gerar descrição, ficha e perfil de sabor</button>
+      <button class="btn-gold" id="nGerarBtn" style="width:100%">✨ Gerar ficha e perfil</button>
       <div id="nSommelierPreview" style="margin-top:10px"></div>
     </div>
 
@@ -2708,7 +2714,7 @@ async function renderNex(){
       </p>
       <div class="nx-acoes">
         <button class="btn-gold" id="nxReal">Sincronizar agora</button>
-        <button class="btn-ghost" id="nxTeste">Só simular (não grava)</button>
+        <button class="btn-ghost" id="nxTeste">Só simular</button>
       </div>
       <p id="nxMsg" style="font-size:12px;color:var(--muted);margin:6px 0 0"></p>
       <div id="nxBody"><div class="loading">Carregando…</div></div>
@@ -3087,23 +3093,23 @@ const PED_ROT = { aguardando_pagamento:"Aguardando pagamento", pago:"Pago · a c
 const pedSt = p => p.status === "cancelado" && p.mp_status === "refunded" ? "estornado" : p.status;
 /* pedido pendente só pode ser cancelado pela equipe se não houver Pix válido em aberto (sem Pix ou Pix vencido) */
 const pedCancelavel = p => p.status === "aguardando_pagamento" && (!p.mp_payment_id || (p.pix_expira_em && new Date(p.pix_expira_em) < new Date()));
-/* próxima etapa de um pedido pago: entrega da loja = "Saiu para entrega" → "Pedido entregue"; Uber/99 = "Motoboy retirou" */
-const PED_ETAPA_OK = { saiu:"saiu para entrega", entregue:"pedido entregue", retirou:"motoboy retirou" };
+/* próxima etapa de um pedido pago: entrega da loja = "Saiu para entrega" → "Pedido entregue"; Uber/99 = "Motoboy retirou" → "Concluir pedido" */
+const PED_ETAPA_OK = { saiu:"saiu para entrega", entregue:"pedido entregue", retirou:"motoboy retirou", concluir:"pedido concluído" };
 const pedAvisa = {};   /* link do WhatsApp com a mensagem pronta (quando o robô do WhatsApp não está ligado) */
 function pedBotao(p){
   if(p.status !== "pago") return "";
   const b = (q, t) => `<button class="btn-gold btn-sm" data-etapa="${q}" data-pid="${esc(p.id)}">${t}</button>`;
   if((p.entrega || {}).tipo === "entrega") return p.saiu_em ? b("entregue", "Pedido entregue") : b("saiu", "🛵 Saiu para entrega");
-  return b("retirou", "Motoboy retirou");
+  return p.saiu_em ? b("concluir", "✅ Concluir pedido") : b("retirou", "🛵 Motoboy retirou");   /* Uber/99 do cliente: retirou → concluir (some da tela do cliente) */
 }
 function pedLinha(p){
   if(!["pago","concluido"].includes(p.status)) return "";
   const ent = (p.entrega || {}).tipo === "entrega", h = iso => iso ? new Date(iso).toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit", timeZone:"America/Sao_Paulo" }) : "";
   const passos = [["Recebido", p.created_at, true], ["Pago", p.pago_em, true]];
   if(ent){ passos.push(["Saiu", p.saiu_em, !!p.saiu_em || p.status === "concluido"]); passos.push(["Entregue", p.concluido_em, p.status === "concluido"]); }
-  else passos.push(["Motoboy retirou", p.concluido_em, p.status === "concluido"]);
+  else { passos.push(["Motoboy retirou", p.saiu_em, !!p.saiu_em || p.status === "concluido"]); passos.push(["Concluído", p.concluido_em, p.status === "concluido"]); }
   return `<div class="ped-linha">${passos.map(([t, iso, ok]) => `<span class="${ok ? "ok" : ""}">${t}${ok && iso ? ` <time>${h(iso)}</time>` : ""}</span>`).join("")}
-    <a class="ped-ver" href="/?pedido=${esc(p.id)}" target="_blank" rel="noopener" title="Abrir a tela que o cliente vê">ver como o cliente vê ↗</a></div>`;
+    <a class="ped-ver" href="/?pedido=${esc(p.id)}&equipe=1" target="_blank" rel="noopener" title="Abrir a tela que o cliente vê">ver como o cliente vê ↗</a></div>`;
 }
 let pedFiltro = "todos";
 async function renderPedidos(){
@@ -3149,7 +3155,7 @@ async function renderPedidos(){
       ${pedLinha(p)}
       <div class="ped-f"><b>${brl(p.total)}</b>
         <span class="ped-bts">${pedBotao(p)}${pedCancelavel(p) ? `<button class="btn-ghost btn-sm" data-cancelar="${esc(p.id)}">Cancelar pedido</button>` : ""}</span></div>
-      ${pedAvisa[p.id] ? `<a class="ped-avisa" href="${esc(pedAvisa[p.id])}" target="_blank" rel="noopener">Avisar o cliente no WhatsApp (mensagem pronta)</a>` : ""}
+      ${pedAvisa[p.id] ? `<a class="ped-avisa" data-avisa="${esc(p.id)}" href="${esc(pedAvisa[p.id])}" target="_blank" rel="noopener">${ic("ext")}Avisar no WhatsApp</a>` : ""}
       ${nota ? `<p class="ped-nota">${nota}</p>` : ""}
       ${novo ? `<p class="ped-novo-dica">Toque no pedido para parar o alerta.</p>` : ""}
     </article>`;
@@ -3176,19 +3182,22 @@ async function renderPedidos(){
       Object.assign(ped, { status:"cancelado", mp_status_detail:"cancelado pela equipe" + (motivo.trim() ? ": " + motivo.trim() : "") });
       navCont.t = 0; toast(`Pedido #${ped.numero} cancelado.`); desenha();
     });
-    /* etapas do pedido (o cliente vê na tela "Acompanhe seu pedido"): saiu para entrega → entregue / motoboy retirou */
+    /* "Avisar o cliente no WhatsApp": abriu a mensagem pronta → o botão some (não fica pendurado no pedido concluído) */
+    el.querySelectorAll("[data-avisa]").forEach(a => a.addEventListener("click", () => { delete pedAvisa[a.dataset.avisa]; setTimeout(desenha, 300); }));
+    /* etapas do pedido (o cliente vê na tela "Acompanhe seu pedido"): saiu para entrega → entregue / motoboy retirou → concluído */
     el.querySelectorAll("[data-etapa]").forEach(b => b.onclick = async () => {
       if(b.disabled) return;
       const ped = data.find(x => x.id === b.dataset.pid), qual = b.dataset.etapa, rot = b.textContent;
       b.disabled = true; b.textContent = "Enviando…";
       if(ped && !ped.visto_em){ await marcarVisto(ped.id); ped.visto_em = new Date().toISOString(); }
       try{
-        const j = await ntfChamar(qual === "saiu" ? "etapa" : "concluir", qual === "saiu" ? { pedido_id: ped.id, etapa: "saiu" } : { pedido_id: ped.id });
-        if(qual === "saiu") ped.saiu_em = j.saiu_em || new Date().toISOString();
+        const saida = qual === "saiu" || qual === "retirou";   /* "saiu" no servidor = saiu para entrega (loja) / motoboy retirou (Uber/99) */
+        const j = await ntfChamar(saida ? "etapa" : "concluir", saida ? { pedido_id: ped.id, etapa: "saiu" } : { pedido_id: ped.id });
+        if(saida) ped.saiu_em = j.saiu_em || new Date().toISOString();
         else { ped.status = "concluido"; ped.concluido_em = new Date().toISOString(); }
         navCont.t = 0;
-        if(j.whats && !j.whats.auto && j.whats.link){ pedAvisa[ped.id] = j.whats.link; toast(`#${j.numero}: ${PED_ETAPA_OK[qual]}. Toque em “Avisar o cliente no WhatsApp”.`); }
-        else toast(`#${j.numero}: ${PED_ETAPA_OK[qual]}. O cliente foi avisado no WhatsApp.`);
+        if(j.whats && !j.whats.auto && j.whats.link){ pedAvisa[ped.id] = j.whats.link; toast(`#${j.numero}: ${PED_ETAPA_OK[qual]}. Toque em “Avisar no WhatsApp”.`); }
+        else { delete pedAvisa[ped.id]; toast(`#${j.numero}: ${PED_ETAPA_OK[qual]}. O cliente foi avisado no WhatsApp.`); }   /* link da etapa anterior não fica pendurado */
         desenha();
       }catch(err){ toast("Não deu: " + (err.message || err)); b.disabled = false; b.textContent = rot; }
     });
@@ -3393,7 +3402,7 @@ function abrirCliente(c){
       ${c.endereco_txt || !c.rua ? `<div class="field"><label for="cEndTxt">Endereço em uma linha (como veio do site ou da planilha)</label><textarea id="cEndTxt">${esc(c.endereco_txt || "")}</textarea></div>` : ""}
     </div>
     <div class="section"><h3>Observações</h3><div class="field" style="margin:0"><textarea id="cObs" placeholder="Preferências, ponto de referência…">${esc(c.obs || "")}</textarea></div></div>
-    <div class="save-row"><button class="btn-gold" id="cSalvar" style="flex:1">${novo ? "Cadastrar cliente" : "Salvar alterações"}</button>${novo ? "" : `<button class="btn-danger" id="cApagar">Excluir</button>`}</div>`);
+    <div class="save-row"><button class="btn-gold" id="cSalvar" style="flex:1">${novo ? "Cadastrar cliente" : "Salvar"}</button>${novo ? "" : `<button class="btn-danger" id="cApagar">Excluir</button>`}</div>`);
   const v = id => { const el = $("#" + id); return el ? el.value.trim() : undefined; };
   $("#cSalvar").onclick = async () => {
     const b = $("#cSalvar"); if(b.disabled) return;
@@ -3412,7 +3421,7 @@ function abrirCliente(c){
     const r = novo ? await sb.from("clientes").insert({ ...reg, origem:"admin" }).select(CLI_CAMPOS).single()
                    : await sb.from("clientes").update(reg).eq("id", c.id).select(CLI_CAMPOS).single();
     if(r.error){
-      b.disabled = false; b.textContent = novo ? "Cadastrar cliente" : "Salvar alterações";
+      b.disabled = false; b.textContent = novo ? "Cadastrar cliente" : "Salvar";
       const dup = r.error.code === "23505" && /whatsapp/.test(r.error.message || "");
       toast(dup ? "Já existe outro cliente com esse WhatsApp. Busque por ele na lista." : "Não deu para salvar: " + r.error.message); return;
     }
@@ -3535,7 +3544,7 @@ async function renderSommelier(){
     </section>
     <div class="sm-acoes"><button class="btn-gold" id="smIr"></button><button class="btn-ghost" id="smPausa" hidden>Pausar</button><button class="btn-ghost" id="smParar" hidden>Parar</button></div>
     <div class="sm-prog" id="smProg" hidden><div class="sm-barra"><i id="smBarra"></i></div><p id="smStatus"></p></div>
-    <div class="sm-log-h" id="smLogH" hidden><h3>Resultado</h3><button class="btn-ghost btn-sm" id="smDesfazLote">Desfazer este lote inteiro</button></div>
+    <div class="sm-log-h" id="smLogH" hidden><h3>Resultado</h3><button class="btn-ghost btn-sm" id="smDesfazLote">Desfazer o lote</button></div>
     <div id="smLog" class="sm-log"></div>`;
   const ler = () => ({ lote: $("#smLote").value, estoque: $("#smEstoque").checked, desc: $("#smDesc").checked, ficha: $("#smFicha").checked, perfil: $("#smPerfil").checked,
     whisky: $("#smWhisky").checked, cat: $("#smCat").checked, modo: (document.querySelector('[name="smModo"]:checked')||{}).value || "completar",
@@ -3720,7 +3729,7 @@ function eqAbrirNovo(){
     <div class="section"><h3>Papel</h3>${eqPapelHTML("atendente", souDono)}</div>
     <div class="section"><h3>Senha inicial</h3>${eqSenhaHTML("eqSenha", "Senha")}
       <p class="eq-nota">Passe a senha para a pessoa por mensagem. Se ela esquecer, você define outra aqui na Equipe.</p></div>
-    <div class="save-row"><button class="btn-gold" id="eqCriar" style="flex:1">Adicionar à equipe</button></div>`);
+    <div class="save-row"><button class="btn-gold" id="eqCriar" style="flex:1">Adicionar</button></div>`);
   eqBindGera(); setTimeout(() => $("#eqNome")?.focus(), 250);
   $("#eqCriar").onclick = async () => {
     const b = $("#eqCriar"); if(b.disabled) return;

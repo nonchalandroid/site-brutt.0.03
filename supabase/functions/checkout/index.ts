@@ -7,7 +7,7 @@
 //   GET  status    → situação do pedido (o site consulta enquanto espera o Pix)
 //   POST webhook   → notificações oficiais do Mercado Pago (assinatura x-signature conferida)
 //   POST concluir  → equipe marca o pedido como concluído (exige login de staff)
-//   POST etapa     → equipe avança a etapa "saiu para entrega" (só entrega feita pela loja; staff)
+//   POST etapa     → equipe avança a etapa "saiu": saiu para entrega (loja) / motoboy retirou (Uber/99 do cliente); staff
 //   POST push_chave → chave pública VAPID para o painel inscrever o aparelho (staff)
 //   POST push_teste → manda uma notificação de teste para o aparelho que pediu (staff)
 //
@@ -308,13 +308,14 @@ const METODO_TXT: Record<string, string> = { pix: "Pix", debito: "Cartão de dé
 export function mensagens(ped: any) {
   const n = primeiroNome(ped.cliente_nome);
   return {
-    pagamento_confirmado: [`✅ *Pagamento confirmado!*`, ``, `Oi${n ? ", " + n : ""}! Recebemos o pagamento do pedido *#${ped.numero}* (${METODO_TXT[ped.metodo] || "online"}).`, ``, linhasItens(ped), ``, `💰 Total pago: *${brl(ped.total)}*`, linhaEntrega(ped), ``, ped.reserva ? `🕐 A loja estava fechada quando você pediu: a gente separa tudo assim que abrir.` : `Já estamos separando seu pedido. Avisamos por aqui quando estiver pronto.`, ``, `📍 Acompanhe aqui: ${linkAcomp(ped)}`].join("\n"),
+    pagamento_confirmado: [`✅ *Pagamento confirmado!*`, ``, `Oi${n ? ", " + n : ""}! Recebemos o pagamento do pedido *#${ped.numero}* (${METODO_TXT[ped.metodo] || "online"}).`, ``, linhasItens(ped), ``, `💰 Total pago: *${brl(ped.total)}*`, linhaEntrega(ped), ``, ped.reserva ? `🕐 A loja estava fechada quando você pediu: a gente separa tudo assim que abrir.` : ped.entrega?.tipo === "entrega" ? `Já estamos separando seu pedido. Avisamos por aqui quando sair para entrega.` : `Já estamos separando seu pedido. Pode pedir o Uber Flash ou 99 para *${LOJA.endereco}* e mandar o link da corrida aqui pra gente acompanhar.`, ``, `📍 Acompanhe aqui: ${linkAcomp(ped)}`].join("\n"),
     pagamento_recusado: [`⚠️ *Pagamento não aprovado*`, ``, `Oi${n ? ", " + n : ""}. O pagamento do pedido *#${ped.numero}* não foi aprovado pelo emissor do cartão. Nenhum valor foi cobrado.`, `Você pode tentar de novo no site com outro cartão ou pagar com Pix.`].join("\n"),
     pix_expirado: [`⌛ *Pix expirado*`, ``, `Oi${n ? ", " + n : ""}. O código Pix do pedido *#${ped.numero}* (${brl(ped.total)}) expirou antes do pagamento. Nada foi cobrado.`, `Se ainda quiser os produtos, é só finalizar o pedido de novo no site.`].join("\n"),
     saiu_entrega: [`🛵 *Seu pedido saiu para entrega!*`, ``, `${n ? n + ", o" : "O"} pedido *#${ped.numero}* já está a caminho${ped.entrega?.endereco?.rua ? ` de ${ped.entrega.endereco.rua}, ${ped.entrega.endereco.numero}` : ""}. Fique de olho no portão 😉`, ``, `📍 Acompanhe: ${linkAcomp(ped)}`].join("\n"),
+    motoboy_retirou: [`🛵 *Motoboy já retirou seu pedido!*`, ``, `${n ? n + ", o" : "O"} entregador do app já está com o pedido *#${ped.numero}* e segue para o seu endereço.`, ``, `📍 Acompanhe: ${linkAcomp(ped)}`].join("\n"),
     pedido_concluido: ped.entrega?.tipo === "entrega"
       ? [`✅ *Pedido entregue!*`, ``, `${n ? n + ", s" : "S"}eu pedido *#${ped.numero}* foi entregue. Obrigado pela preferência! 🔥`].join("\n")
-      : [`🛵 *Motoboy já retirou seu pedido!*`, ``, `${n ? n + ", o" : "O"} entregador do app já está com o pedido *#${ped.numero}* e segue para o seu endereço. Obrigado pela preferência! 🔥`].join("\n"),
+      : [`✅ *Pedido concluído!*`, ``, `${n ? n + ", o" : "O"} pedido *#${ped.numero}* foi finalizado. Obrigado pela preferência! 🔥`].join("\n"),
     saudacao: [`👋 Seja bem-vindo(a) à *${LOJA.nome}*!`, `Este é o nosso WhatsApp oficial: salve o número pra receber as novidades e falar com a equipe.`, `📍 ${LOJA.endereco}`].join("\n"),
     loja_novo_pedido: [`🔔 *NOVO PEDIDO PAGO #${ped.numero}*${ped.reserva ? " (reserva: loja fechada)" : ""}`, `👤 ${ped.cliente_nome} · wa.me/${ped.cliente_whats}`, `💳 ${METODO_TXT[ped.metodo] || "-"} · MP ${ped.mp_payment_id || "-"}`, ``, linhasItens(ped), ``, `🛒 Produtos: ${brl(ped.subtotal)} · 🚚 Entrega: ${brl(ped.taxa_entrega)}`, `💰 *Total pago: ${brl(ped.total)}*`, linhaEntrega(ped)].join("\n"),
   };
@@ -433,12 +434,12 @@ export async function etapa(req: Request, body: any) {
   if (qual !== "saiu") return { erro: "Etapa inválida.", status: 400 };
   const [ped] = await sbGet(`pedidos?id=eq.${id}&select=*`);
   if (!ped) return { erro: "Pedido não encontrado.", status: 404 };
-  if (ped.entrega?.tipo !== "entrega") return { erro: "Este pedido é retirado pelo motoboy do cliente: use “Motoboy retirou”.", status: 409 };
-  if (ped.status !== "pago") return { erro: "Só pedido pago pode sair para entrega.", status: 409 };
+  const daLoja = ped.entrega?.tipo === "entrega";   // entrega da loja: "saiu para entrega"; Uber/99 do cliente: "motoboy retirou"
+  if (ped.status !== "pago") return { erro: daLoja ? "Só pedido pago pode sair para entrega." : "Só pedido pago pode ser retirado.", status: 409 };
   let atual = ped;
   if (!ped.saiu_em) { const rows = await sbPatch(`pedidos?id=eq.${id}&status=eq.pago&saiu_em=is.null`, { saiu_em: new Date().toISOString() }); if (rows?.[0]) atual = rows[0]; }
-  const msg = mensagens(atual).saiu_entrega;
-  const enviou = await enviarUmaVez(atual.id, "saiu_entrega", atual.cliente_whats, msg);
+  const tipoMsg = daLoja ? "saiu_entrega" : "motoboy_retirou", msg = mensagens(atual)[tipoMsg];
+  const enviou = await enviarUmaVez(atual.id, tipoMsg, atual.cliente_whats, msg);
   return { ok: true, numero: atual.numero, saiu_em: atual.saiu_em, whats: whatsDe(atual, msg, enviou) };
 }
 
