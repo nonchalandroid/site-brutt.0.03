@@ -8,7 +8,8 @@
 //
 // Quem pode o quê vem do banco (equipe_pode, chamada COM o token de quem pediu):
 //   dono → cria/altera administradores e atendentes · administrador → só atendentes · atendente → nada.
-// Cada um pode trocar a PRÓPRIA senha.
+// Cada um pode trocar a PRÓPRIA senha. Criar e trocar senha também confirmam o e-mail (sem isso o Supabase recusa o login:
+// convites antigos do painel do Supabase deixavam a conta sem confirmação).
 
 const env = (k: string) => String(((globalThis as any).Deno?.env?.get(k) as string | undefined) ?? "").trim().replace(/^["']|["']$/g, "");
 const SB = () => env("SUPABASE_URL"), SK = () => env("SUPABASE_SERVICE_ROLE_KEY");
@@ -65,6 +66,9 @@ export async function criar(req: Request, body: any) {
   if (userId) {
     const m = await membro(userId);
     if (m) return { erro: m.active ? "Essa pessoa já está na equipe." : "Essa pessoa já está na lista, desativada. Use “Reativar” na lista.", status: 409 };
+    // login antigo (ex.: convite do Supabase nunca aceito): só confirma o e-mail (a senha dele não muda; sem senha → "Definir nova senha")
+    const c = await pede(`/auth/v1/admin/users/${userId}`, { method: "PUT", body: JSON.stringify({ email_confirm: true }) });
+    if (!c.ok) { console.error("equipe confirmar", c.status, JSON.stringify(c.corpo).slice(0, 300)); return { erro: "Não deu para liberar o login dessa pessoa agora. Tente de novo.", status: 502 }; }
   } else {
     const s = validaSenha(senha); if (s) return { erro: s, status: 400 };
     const c = await pede("/auth/v1/admin/users", { method: "POST", body: JSON.stringify({ email, password: senha, email_confirm: true, user_metadata: { nome } }) });
@@ -88,7 +92,7 @@ export async function trocarSenha(req: Request, body: any) {
   const s = validaSenha(body?.senha); if (s) return { erro: s, status: 400 };
   const m = await membro(alvo); if (!m) return { erro: "Pessoa não encontrada na equipe.", status: 404 };
   if (alvo !== eu.id && !(await pode(eu.token, m.role, m.role))) return { erro: "Você não tem permissão para trocar a senha dessa pessoa.", status: 403 };
-  const r = await pede(`/auth/v1/admin/users/${alvo}`, { method: "PUT", body: JSON.stringify({ password: String(body.senha) }) });
+  const r = await pede(`/auth/v1/admin/users/${alvo}`, { method: "PUT", body: JSON.stringify({ password: String(body.senha), email_confirm: true }) });
   if (!r.ok) { console.error("equipe senha", r.status, JSON.stringify(r.corpo).slice(0, 300)); return { erro: "Não deu para trocar a senha agora.", status: 502 }; }
   return { ok: true };
 }

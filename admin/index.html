@@ -860,6 +860,91 @@ html,body{overflow-x:clip}
 .drawer .btn-gold.full,.drawer .btn-danger.full,.drawer .full{width:auto;min-width:140px;padding-left:22px;padding-right:22px}
 .ped-avisa{display:inline-flex;width:auto;padding:0 16px;min-height:36px;font-size:13px}
 .ped-avisa .i{width:16px;height:16px}
+/* =====================================================================
+   PALETA DO PAINEL (aprovada em 12/10/2026): parte das cores da logo (ouro, bronze, café)
+   e explora tons vizinhos, claros e escuros, cada um com um papel fixo:
+   ouro = ação principal, item ativo, títulos e R$ · bronze = códigos e quantidades ·
+   bordô = pedido novo e ações destrutivas · petróleo = botão secundário, links, foco e etapas feitas ·
+   índigo = administrador e "a concluir" · ameixa = clientes e estornos · sálvia = bom/pago/atendente ·
+   terracota = aviso (estoque baixo, Pix sem pagar). WhatsApp segue #25D366.
+   ===================================================================== */
+:root{
+  --bg:#120c09; --side:#150e0a; --surface:#1c140f; --surface-2:#261b14; --line:#35271d;
+  --creme:#f2e3c6; --areia:#c9ae8a; --apagado:#8f7a62;
+  --ouro:#e3ac3d; --ouro-cl:#f2cf7e; --ouro-es:#a87a1c;
+  --bronze:#b07a3a; --bronze-cl:#dcae74; --bronze-es:#6e4a20;
+  --bordo:#8a3328; --bordo-cl:#e08a7c; --bordo-es:#3a1414;
+  --petroleo:#1f6f7a; --petroleo-cl:#7fd0d8; --petroleo-es:#0f3a40;
+  --indigo:#3f4fb8; --indigo-cl:#a9b4ff; --indigo-es:#1d2459;
+  --ameixa:#7a3d7b; --ameixa-cl:#d79ad8; --ameixa-es:#351a36;
+  --salvia:#8fb873; --salvia-cl:#b5d49b; --salvia-es:#2d3d22;
+  --terracota:#c9603a; --terracota-cl:#ec8b5e; --terracota-es:#4a2213;
+  --ink:var(--creme); --muted:var(--areia); --muted-2:var(--apagado);
+  --accent:var(--ouro); --accent-2:var(--ouro-es); --accent-soft:rgba(227,172,61,.11);
+  --ok:var(--salvia-cl); --ok-soft:rgba(143,184,115,.14);
+  --warn:var(--terracota-cl); --warn-soft:rgba(201,96,58,.16);
+  --danger:var(--bordo-cl); --danger-soft:rgba(138,51,40,.28);
+  --info:var(--petroleo-cl); --info-soft:rgba(31,111,122,.22);
+}
+/* textos de marca */
+.section h3,.sm-log-h h3{color:var(--ouro-cl)}
+.ped-h code,.ov-ped-r .n code,.cli-card .h code,.gr-meta code,.eq-mail,.bulk-count,.stock-now .n{color:var(--bronze-cl)}
+/* menu lateral: cada grupo com o seu tom; item ativo em ouro com barrinha */
+.side-g.g-operacao>span{color:var(--petroleo-cl)}
+.side-g.g-gestao>span{color:var(--ameixa-cl)}
+.side-g.g-planilhas>span{color:var(--salvia-cl)}
+.nav-i.on{box-shadow:inset 3px 0 0 var(--ouro)}
+.nav-b{background:var(--bordo);color:var(--creme);border-color:var(--bordo)}
+/* botões */
+.btn-gold:hover:not(:disabled){background:var(--ouro-cl)}
+.btn-ghost:hover:not(:disabled){border-color:var(--petroleo);color:var(--petroleo-cl)}
+.btn-danger{color:var(--bordo-cl);border-color:var(--bordo-cl)}
+.btn-danger:hover:not(:disabled){background:var(--bordo-es)}
+.btn-sec{background:var(--petroleo);color:var(--creme)}
+.btn-sec:hover:not(:disabled){background:#268391}
+.btn-indigo{background:var(--indigo);color:#fff}
+.btn-indigo:hover:not(:disabled){background:#4b5cc9}
+.btn-salvia{background:var(--salvia);color:#14200d}
+.btn-salvia:hover:not(:disabled){background:var(--salvia-cl)}
+#smDesfazLote,[data-sm-desfaz],#hrDesfazer{color:var(--bordo-cl);border-color:rgba(224,138,124,.45)}
+/* campos e links */
+input:focus,select:focus,textarea:focus{border-color:var(--petroleo-cl);box-shadow:0 0 0 3px rgba(127,208,216,.16)}
+.cli-card:focus-visible,.eq-card:focus-visible{border-color:var(--petroleo-cl);box-shadow:0 0 0 3px rgba(127,208,216,.16)}
+.ped-ver{color:var(--petroleo-cl)}
+/* visão geral: cada indicador com o seu tom (ícone e filete); o número segue o estado (bom/alerta/ruim) */
+.ov-kpi{position:relative;overflow:hidden}
+.ov-kpi::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--kc,transparent);opacity:.9}
+.ov-kpi .k .i{color:var(--kc,var(--muted))}
+.ov-kpi.k-bag{--kc:var(--indigo-cl)}
+.ov-kpi.k-alert{--kc:var(--terracota-cl)}
+.ov-kpi.k-pkg{--kc:var(--bronze-cl)}
+.ov-kpi.k-sync{--kc:var(--petroleo-cl)}
+.ov-kpi.k-store{--kc:var(--salvia-cl)}
+.ov-kpi.acao .v{color:var(--indigo-cl)}
+.ov-kpi.bom{border-color:rgba(181,212,155,.35)}
+.ov-kpi.alerta{border-color:rgba(236,139,94,.38)}
+.ov-kpi.ruim,.ov-kpi.novo{border-color:rgba(224,138,124,.45)}
+/* etiquetas de status */
+.st-pago{color:var(--salvia-cl);background:var(--ok-soft);border-color:rgba(181,212,155,.38)}
+.st-concluido{color:var(--salvia-cl);background:var(--salvia-es);border-color:rgba(181,212,155,.3)}
+.st-aguardando_pagamento{color:var(--terracota-cl);background:var(--warn-soft);border-color:rgba(236,139,94,.38)}
+.st-recusado{color:var(--bordo-cl);background:var(--danger-soft);border-color:rgba(224,138,124,.38)}
+.st-estornado{color:var(--ameixa-cl);background:var(--ameixa-es);border-color:rgba(215,154,216,.35)}
+.st-reserva{color:var(--petroleo-cl);background:var(--info-soft);border-color:rgba(127,208,216,.35)}
+.ped-novo{background:var(--bordo);color:var(--creme)}
+.ped-novo-dica{color:var(--bordo-cl)}
+.ped-pix{background:var(--terracota);color:#1d0b04}
+.ped-card.pixnovo,.ped-card.pixnovo::after{border-color:var(--terracota-cl)}
+.ped-linha span.ok{color:var(--petroleo-cl);background:var(--info-soft);border-color:rgba(127,208,216,.4)}
+.cli-tag.ok{color:var(--salvia-cl);border-color:rgba(181,212,155,.38);background:var(--ok-soft)}
+.cli-tag.inc{color:var(--terracota-cl);border-color:rgba(236,139,94,.38);background:var(--warn-soft)}
+.cli-tag.ac{color:var(--ameixa-cl);border-color:rgba(215,154,216,.38);background:var(--ameixa-es)}
+.eq-pp.eq-admin b,.eq-tag.eq-admin{color:var(--indigo-cl)}
+.eq-tag.eq-admin{border-color:rgba(169,180,255,.38);background:var(--indigo-es)}
+.eq-pp.eq-atendente b,.eq-tag.eq-atendente{color:var(--salvia-cl)}
+.eq-tag.eq-atendente{border-color:rgba(181,212,155,.38);background:var(--salvia-es)}
+.ntf-ok{border-color:rgba(181,212,155,.38)}
+.ntf-bad{border-color:rgba(224,138,124,.45)}
 </style>
 </head>
 <body>
@@ -947,7 +1032,7 @@ const grupoDe = r => (NAV.find(([, itens]) => itens.some(i => i[0] === r)) || ["
 function abasHTML(){
   const atual = rotaAtual();
   const nav = NAV.map(([g, itens]) => [g, itens.filter(i => podeRota(i[0]))]).filter(([, itens]) => itens.length);
-  return `<nav class="side-nav" aria-label="Seções do painel">${nav.map(([g, itens]) => `<div class="side-g"><span>${g}</span>${itens.map(([r, t, i, badge]) =>
+  return `<nav class="side-nav" aria-label="Seções do painel">${nav.map(([g, itens]) => `<div class="side-g g-${g.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()}"><span>${g}</span>${itens.map(([r, t, i, badge]) =>
     `<button type="button" class="nav-i${atual===r?" on":""}" data-tab="${r}"${atual===r?' aria-current="page"':""}>${ic(i)}<span class="lbl">${t}</span>${badge?`<span class="nav-b" data-badge="${badge}" hidden></span>`:""}</button>`).join("")}</div>`).join("")}</nav>`;
 }
 function topbarHTML(titulo){
@@ -1122,7 +1207,7 @@ async function desenhaNotif(){
   }[st];
   box.innerHTML = `<div class="ntf ntf-${txt[0]}"><span class="ntf-ic">${ic("bell")}</span><span class="ntf-tx"><b>${txt[1]}</b><small>${txt[2]}</small></span>
     <span class="ntf-bt">${st === "ativo" ? `<button class="btn-ghost btn-sm" id="ntfTeste">Testar</button><button class="btn-ghost btn-sm" id="ntfDes">Desligar</button>`
-      : st === "inativo" || st === "bloqueado" ? `<button class="btn-gold btn-sm" id="ntfAtv">Ativar notificações</button>` : ""}</span></div>`;
+      : st === "inativo" || st === "bloqueado" ? `<button class="btn-salvia btn-sm" id="ntfAtv">Ativar notificações</button>` : ""}</span></div>`;
   const acao = (id, fn, ok) => { const b = $("#" + id); if(b) b.onclick = async () => { b.disabled = true;
     try{ await fn(); if(ok) toast(ok); }catch(e){ toast(e.message || String(e)); } b.disabled = false; desenhaNotif(); }; };
   acao("ntfAtv", async () => { await ntfAtivar(); await ntfTestar().catch(() => {}); }, "Pronto! Mandei uma notificação de teste.");
@@ -1622,7 +1707,7 @@ async function openProduct(id){
       <h3>✨ Sommelier: ficha do produto</h3>
       <p class="t" id="somResumo" style="font-size:12.5px;line-height:1.5;margin:0 0 8px"></p>
       <label class="som-pesq"><input type="checkbox" id="somPesq"> Pesquisar na internet (mais preciso; um pouco mais lento)</label>
-      <button class="btn-gold" id="somBtn" style="width:100%">✨ Analisar com Sommelier</button>
+      <button class="btn-sec" id="somBtn" style="width:100%">✨ Analisar com Sommelier</button>
       <div id="somOut"></div><div id="somFila"></div>
     </div>
   `);
@@ -1878,7 +1963,7 @@ function openNewProduct(){
       <h3>✨ Sommelier IA</h3>
       <p class="t" style="font-size:12px;color:var(--muted);margin:0 0 8px;line-height:1.45">Escolha a categoria, digite o nome e clique abaixo: ele monta a descrição (até 170 caracteres), a ficha e, nas essências, as barrinhas de sabor (cítrico, tropical, adocicado e mentolado). Você revisa e edita tudo antes de cadastrar.</p>
       <div class="field"><label>Notas pra IA (opcional)</label><textarea id="nNotas" rows="2" placeholder="Ex.: sabor de melancia com toque de menta, bem refrescante"></textarea></div>
-      <button class="btn-gold" id="nGerarBtn" style="width:100%">✨ Gerar ficha e perfil</button>
+      <button class="btn-sec" id="nGerarBtn" style="width:100%">✨ Gerar ficha e perfil</button>
       <div id="nSommelierPreview" style="margin-top:10px"></div>
     </div>
 
@@ -3256,7 +3341,7 @@ async function renderVisao(){
   const u = !nex.error && nex.data && nex.data[0];
   const nexVelho = u && (Date.now() - new Date(u.ran_at).getTime()) > 45*60000, nexRuim = !!u && (!u.ok || nexVelho);
   const num = n => n == null ? "—" : n;
-  const kpi = (rota, icone, k, v, d, cls, txt) => `<button class="ov-kpi ${cls||""}" data-ir="${rota}">
+  const kpi = (rota, icone, k, v, d, cls, txt) => `<button class="ov-kpi k-${icone} ${cls||""}" data-ir="${rota}">
       <span class="k">${ic(icone)}${k}</span><span class="v${txt?" txt":""}">${v}</span><span class="d">${d}</span></button>`;
   $("#ovKpis").innerHTML =
     kpi("pedidos", "bag", "Pedidos a concluir", num(nPago), nPago == null ? "não disponível" : nNovo ? `${nNovo} novo${nNovo > 1 ? "s" : ""}: abra para parar o alerta` : `pagos, esperando conclusão${nAguard ? ` · ${nAguard} aguardando pagamento` : ""}`, nNovo ? "novo" : nPago ? "acao" : "") +
@@ -3686,7 +3771,7 @@ async function renderEquipe(){
   app.innerHTML = `${topbarHTML("Equipe")}
     <div class="pg">
       <div class="pg-h"><div><h2 class="pg-t">Equipe</h2><p class="pg-d">Quem entra no painel e o que cada um pode fazer. Ninguém é apagado: quem sai da loja é <b>desativado</b> e perde o acesso na hora.</p></div>
-        <button class="btn-gold btn-sm" id="eqNovo">${ic("plus")} Adicionar pessoa</button></div>
+        <button class="btn-indigo btn-sm" id="eqNovo">${ic("plus")} Adicionar pessoa</button></div>
       <div class="eq-papeis">${["owner","admin","atendente"].map(p => `<div class="eq-pp eq-${p}"><b>${PAPEL[p]}</b><span>${EQ_PODE[p]}</span></div>`).join("")}</div>
       <div id="eqLista"><div class="loading">Carregando…</div></div>
     </div>`;
@@ -3742,7 +3827,7 @@ function eqAbrirNovo(){
     try{
       const r = await equipeChamar("criar", { nome, email, papel, senha });
       closeDrawer();
-      toast(r.ja_tinha_login ? `${nome} já tinha login: entra com a senha que já usa.` : `${nome} adicionado. Login: ${email}`);
+      toast(r.ja_tinha_login ? `${nome} já tinha login: entra com a senha que já usa (se não lembrar, abra o nome e use “Definir nova senha”).` : `${nome} adicionado. Login: ${email}`);
       await eqCarregar();
     }catch(e){ toast(e.message); }
     finally{ b.disabled = false; b.classList.remove("is-busy"); }

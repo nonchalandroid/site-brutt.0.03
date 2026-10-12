@@ -72,7 +72,16 @@ Regras:
 
 ### Admin (`admin/index.html`, `:root` próprio)
 
-**Camada de cores (bloco "CORES" no fim do CSS do admin, sobrescreve os tokens abaixo):** texto `--ink:#f0dcb8` (creme da loja, não branco), secundário caramelo `--muted:#c09f76`, títulos/menu ativo/valores em R$ em dourado (`--accent`), e cores vivas com significado: `--ok:#4fe08c` (bom/positivo), `--danger:#ff5a4a` (alerta), `--warn:#ff9640` (aviso), `--info:#7fbfff`. KPI com classe `bom`/`alerta`/`ruim`/`novo` pinta o número.
+**Paleta do painel (bloco "PALETA DO PAINEL", o último do CSS do admin, sobrescreve os tokens abaixo e o bloco "CORES"):** parte das cores da logo e explora tons vizinhos, cada um com variação clara (`-cl`) e escura (`-es`) e um papel fixo:
+- **Ouro** (`--ouro`): ação principal (`.btn-gold`, uma por tela), item ativo do menu (texto + barrinha), títulos, valores em R$.
+- **Bronze** (`--bronze-cl`): códigos, EAN, quantidades.
+- **Bordô** (`--bordo`/`--bordo-cl`): pedido novo, badge do menu, ações destrutivas (`.btn-danger`, "Desfazer").
+- **Petróleo** (`--petroleo`): botão secundário `.btn-sec` (Sommelier ✨), links, foco dos campos, etapas feitas em `.ped-linha`, grupo "Operação".
+- **Índigo** (`--indigo`): "Pedidos a concluir", papel Administrador, `.btn-indigo` (Adicionar pessoa).
+- **Ameixa** (`--ameixa`): clientes, estornos, grupo "Gestão".
+- **Sálvia** (`--salvia`): bom/pago/concluído, Atendente, grupo "Planilhas", `.btn-salvia` (Ativar notificações, texto escuro).
+- **Terracota** (`--terracota`): aviso (estoque baixo, Pix gerado sem pagar).
+Cada KPI da visão geral tem classe `k-<ícone>` (filete e ícone no tom dele); `bom`/`alerta`/`ruim`/`novo` continuam pintando o número. WhatsApp segue `#25D366`. Texto colorido sempre com contraste ≥ 4,5.
 
 Paleta do painel = **variação** da loja (café/espresso + dourado-âmbar), não cópia dos mesmos valores. O dourado (`--accent`) é só para ação principal, item ativo e número que pede ação; alerta usa **cobre** (`--warn`) para não confundir com o dourado.
 
@@ -157,6 +166,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - No HTML estático: `<span data-ic="pin"></span>` é preenchido no carregamento.
 - Nomes curtos em inglês: `cart, chat, pin, copy, check, alert, trash, moto, card, drop, search…`.
 - **WhatsApp = sempre o símbolo oficial** (simple-icons / kit de marca da Meta), **preenchido**, em `#25D366` ou branco sobre fundo verde (`.wa-logo`, `.ic-wa`; o `ic("chat")` já usa esse símbolo). Nunca redesenhar nem tingir de dourado; se não couber o oficial, não coloque.
+- **Selos de pagamento seguro** (`MPX.selosHTML()` em `js/checkout-mp.js`): "Conexão segura SSL" (só aparece em https), Mercado Pago (símbolo oficial `#00B1EA`) e Pix, abaixo do botão "Gerar Pix"/"Reservar e pagar" e na tela do Pix.
 - **Pix = símbolo oficial** (simple-icons, CC0) **preenchido em `#32BCAD`** (cor do Banco Central), em `PAY_IC.pix` de `js/checkout-mp.js`. Mesma regra: não redesenhar nem tingir.
 - **Google Maps = símbolo oficial multicolorido** (`svg.gmaps` no botão `#goMapa` do topo, paths do pacote `@iconify-json/logos`). Mesma regra do WhatsApp: não redesenhar nem tingir.
 - Ícones da Brutt IA: `<symbol>` no sprite `.ia-sprite` (`#iaI`, `#iaEye`) usados com `<use href>`.
