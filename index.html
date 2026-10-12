@@ -269,6 +269,13 @@ button.ia-wa{width:100%;border:0;cursor:pointer;font-family:inherit}
 .selo .ic{width:16px;height:16px;flex:none}
 .selo .ic.cad{color:var(--ok-txt);stroke-width:1.8}
 .pix .selos{margin-top:14px}
+
+/* Mapa do Google (incorporado oficial) no "Como chegar", acima dos botões: 300 px no celular, 400 px no PC; só carrega perto do rodapé (loading=lazy) */
+.ir-mapa{flex:1 1 100%;order:2;min-width:0;height:300px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--cocoa)}
+.ir-mapa,.ir-mapa iframe{scrollbar-gutter:auto}   /* o *{scrollbar-gutter:stable} da linha minificada deixava uma faixa vazia à direita */
+.ir-mapa iframe{display:block;width:100%;height:100%;border:0}
+.ir-b{order:3}
+@media(min-width:641px){.ir-mapa{height:400px}}
 </style>
 <style id="ajustes">
 /* ── Auditoria visual: correções de alinhamento e responsividade ── */
@@ -502,6 +509,7 @@ svg{scrollbar-gutter:auto}
     <section class="sec" id="como-chegar">
       <div class="ir">
         <div class="ir-t"><span class="ib" data-ic="pin"></span><div><h2>Como chegar</h2><p>Tabacaria Brutt · Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ · Conjunto Campinho</p></div></div>
+        <div class="ir-mapa"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d324.9034990156571!2d-43.61375886575415!3d-22.881501075159658!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9be312c3189ad9%3A0x9d9e83f447199a5d!2sTabacaria%20Brutt!5e0!3m2!1spt-BR!2sbr!4v1791785619709!5m2!1spt-BR!2sbr" title="Mapa: Tabacaria Brutt no Google Maps" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
         <div class="ir-b">
           <a class="ibtn" href="https://www.google.com/maps/dir//Tabacaria+Brutt,+Rua+18,+145+-+Campo+Grande,+Rio+de+Janeiro+-+RJ,+23067-030/@-22.8716397,-43.5895216,15z/data=!4m8!4m7!1m0!1m5!1m1!1s0x9be312c3189ad9:0x9d9e83f447199a5d!2m2!1d-43.6137391!2d-22.8814745?entry=ttu&amp;g_ep=EgoyMDI2MDkzMC4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener"><span data-ic="pin"></span>Google Maps</a>
           <a class="ibtn" href="https://ul.waze.com/ul?venue_id=207357475.2073509216.41035760&amp;overview=yes&amp;utm_campaign=default&amp;utm_source=waze_website&amp;utm_medium=lm_share_location" target="_blank" rel="noopener"><span data-ic="waze"></span>Waze</a>
