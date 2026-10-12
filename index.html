@@ -367,7 +367,7 @@ body.ia-on footer{padding-bottom:calc(var(--ia-h) + var(--mb-h) + 48px)}
 /* ── desempenho (iPhone): só desenha o que está perto da tela, sem blend que recompõe a página inteira ── */
 .sec{content-visibility:auto;contain-intrinsic-size:auto 420px}
 .card{contain:layout paint style;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-.smoke video{mix-blend-mode:normal;opacity:.12;filter:none}
+.smoke video{mix-blend-mode:normal;opacity:.084;filter:none}
 .thumb.foto{background:#f6ead2!important}
 .thumb.foto img{mix-blend-mode:normal}
 @media (hover:none){.smoke{display:none}}
@@ -438,6 +438,9 @@ svg{scrollbar-gutter:auto}
 .ac-wa,.ac-volta{min-height:42px;padding:0 18px}
 .ac-copia,.ac-corrida{justify-self:start;min-height:40px;padding:0 14px}
 @media(hover:hover) and (pointer:fine){.d-f .go,.pix-code .pix-copy,.ac-concluir{min-height:42px}.ac-wa,.ac-volta{min-height:40px}}
+/* menu do topo centralizado: a lista tem a largura do conteúdo (não a --maxw, que a fonte Anton estourava e o menu
+   vazava pra direita); cabe na tela = centraliza; não cabe = começa na esquerda e rola com as setas */
+nav ul{width:max-content;max-width:none;margin-inline:auto}
 </style>
 </head>
 <body>
