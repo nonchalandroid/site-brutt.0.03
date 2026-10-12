@@ -60,6 +60,7 @@ async function nexTodos(cfg: Record<string, string>, stockControl: boolean): Pro
   return res;
 }
 
+export const LIMITE_SEM_PAR = 60;   // mais que isso sem par = algo errado na lista do Nex: trava em vez de zerar
 type Prod = { id: string; name: string; ean: string | null; stock: number; price: number; promo_price: number | null; is_active: boolean };
 type Par = { nex: Nex; prod: Prod; metodo: "ean" | "nome" | "nome~"; score?: number };
 export function ligar(nex: Nex[], prods: Prod[]) {
@@ -132,16 +133,28 @@ export async function handler(req: Request): Promise<Response> {
     if (nex.length < 50) avisos.push(`Nex devolveu só ${nex.length} produtos`);
     if (ultimo && nex.length < ultimo * 0.5) avisos.push(`Nex devolveu ${nex.length} (na última vez eram ${ultimo})`);
     if (pares.length < 100) avisos.push(`só ${pares.length} produtos foram ligados`);
+    // REGRA: o site nunca mostra mais estoque que o Nex (o Nex é a fonte da verdade; tudo é AJUSTE, nunca entrada/saída).
     const suspeitos: any[] = [], aplicar: any[] = [];
     for (const p of pares) {
       const a = Number(p.prod.price), b = p.nex.preco;
-      if (b > 0 && a > 0 && (b / a > 3 || b / a < 0.33)) { suspeitos.push({ nex: p.nex.nome, site: p.prod.name, preco_site: a, preco_nex: b, metodo: p.metodo }); continue; }
       const promoSite = p.prod.promo_price == null ? null : Number(p.prod.promo_price);
+      if (b > 0 && a > 0 && (b / a > 3 || b / a < 0.33)) {
+        suspeitos.push({ nex: p.nex.nome, site: p.prod.name, preco_site: a, preco_nex: b, metodo: p.metodo });
+        // preço fica parado para conferência; o estoque só DESCE até o do Nex (par duvidoso não pode inflar o site)
+        if (p.prod.stock > p.nex.estoque) aplicar.push({ p, item: { id: p.prod.id, stock: p.nex.estoque, price: null, promo: promoSite } });
+        continue;
+      }
       if (p.prod.stock !== p.nex.estoque || (b > 0 && a !== b) || promoSite !== p.nex.promo) aplicar.push({ p, item: { id: p.prod.id, stock: p.nex.estoque, price: b > 0 ? b : null, promo: p.nex.promo } });
     }
     const zeram = aplicar.filter(x => x.p.nex.estoque <= 0 && x.p.prod.stock > 0);
+    // ativo no site, com estoque, sem par confiável no Nex (sem par ou em conflito): estoque 0 até ligar (EAN/nome)
+    const ligados = new Set(pares.map(p => p.prod.id));
+    const semPar = prods.filter(p => p.is_active && p.stock > 0 && !ligados.has(p.id));
+    const muitosSemPar = semPar.length > LIMITE_SEM_PAR;   // só trava o ZERAR; o resto da sincronização segue
+    const zerarSemPar = muitosSemPar ? [] : semPar.map(p => ({ id: p.id, stock: 0, price: null, promo: p.promo_price == null ? null : Number(p.promo_price) }));
+    const alertaSemPar = muitosSemPar ? `${semPar.length} produtos ativos sem par no Nex (limite ${LIMITE_SEM_PAR}): não zerei nenhum, confira a ligação` : null;
     const resumo: any = { lista, nex_total: nex.length, site_total: prods.length, casados: pares.length, por_ean: pares.filter(p => p.metodo === "ean").length, por_nome: pares.filter(p => p.metodo !== "ean").length,
-      sem_par_nex: semParNex.length, sem_par_site: semParSite.length, conflitos: conflitos.length, suspeitos: suspeitos.length, mudariam: aplicar.length, vao_zerar: zeram.length };
+      sem_par_nex: semParNex.length, sem_par_site: semParSite.length, conflitos: conflitos.length, suspeitos: suspeitos.length, mudariam: aplicar.length, vao_zerar: zeram.length, sem_par_zerar: semPar.length };
     const amostra = {
       nome_aproximado: pares.filter(p => p.metodo === "nome~").slice(0, 40).map(p => `${p.score} | Nex: ${p.nex.nome} ⇄ Site: ${p.prod.name}`),
       sem_par_nex: semParNex.slice(0, 60).map(n => `${n.code} ${n.nome} (est ${n.estoque}, ${brl(n.preco)}${n.eans.length ? ", ean " + n.eans[0] : ""})`),
@@ -149,6 +162,7 @@ export async function handler(req: Request): Promise<Response> {
       suspeitos: suspeitos.slice(0, 30), conflitos: conflitos.slice(0, 30),
       maiores_mudancas_de_estoque: aplicar.map(x => ({ n: x.p.nex.nome, de: x.p.prod.stock, para: x.p.nex.estoque })).sort((a, b) => Math.abs(b.de - b.para) - Math.abs(a.de - a.para)).slice(0, 25),
       vao_zerar: zeram.slice(0, 80).map(x => `${x.p.prod.name} (era ${x.p.prod.stock}${x.p.nex.combo ? ", COMBO no Nex" : ""})`),
+      sem_par_zerados: semPar.slice(0, 80).map(p => `${p.name} (era ${p.stock}${p.ean ? ", ean " + p.ean : ""})`),
     };
     let aplicado: any = null;
     if (modo === "real") {
@@ -156,12 +170,13 @@ export async function handler(req: Request): Promise<Response> {
       else {
         aplicado = { estoque_alterado: 0, preco_alterado: 0, zerados: 0 };
         for (let i = 0; i < aplicar.length; i += 150) { const r = await sbRpc("nex_aplicar", { p_itens: aplicar.slice(i, i + 150).map(x => x.item), p_nota: "Sync Nex" }); for (const k of Object.keys(aplicado)) aplicado[k] += r[k] ?? 0; }
+        for (let i = 0; i < zerarSemPar.length; i += 150) { const r = await sbRpc("nex_aplicar", { p_itens: zerarSemPar.slice(i, i + 150), p_nota: "Sync Nex: sem par no Nex" }); for (const k of Object.keys(aplicado)) aplicado[k] += r[k] ?? 0; }
       }
     }
     Object.assign(log, { nex_total: nex.length, casados: pares.length, por_ean: resumo.por_ean, por_nome: resumo.por_nome, estoque_alterado: aplicado?.estoque_alterado ?? null, preco_alterado: aplicado?.preco_alterado ?? null, zerados: aplicado?.zerados ?? null,
-      sem_par_nex: semParNex.length, sem_par_site: semParSite.filter(p => p.is_active).length, ms: Date.now() - t0, detalhe: { resumo, avisos, ...amostra } });
+      sem_par_nex: semParNex.length, sem_par_site: semParSite.filter(p => p.is_active).length, ms: Date.now() - t0, detalhe: { resumo, avisos, alerta_sem_par: alertaSemPar, ...amostra } });
     await sbInsert("nex_sync_log", log);
-    return json({ ok: log.ok, modo, ...(log.erro ? { erro: log.erro } : {}), resumo, aplicado, avisos, ...amostra });
+    return json({ ok: log.ok, modo, ...(log.erro ? { erro: log.erro } : {}), resumo, aplicado, avisos, alerta_sem_par: alertaSemPar, ...amostra });
   } catch (e) {
     const msg = String((e as any)?.message ?? e).slice(0, 300);
     try { await sbInsert("nex_sync_log", { ...log, ok: false, erro: msg, ms: Date.now() - t0 }); } catch { /* ok */ }

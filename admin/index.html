@@ -1204,6 +1204,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .cf-nums i{font:500 11px var(--font);font-style:normal;color:var(--muted-2)}
 .cf-nums em{font-style:normal}.cf-nums em.neg{color:var(--danger)}.cf-nums em.baixa{color:var(--terracota-cl)}.cf-nums em.ok{color:var(--ok)}
 @media (max-width:760px){.cf-row{grid-template-columns:minmax(0,1fr) auto}.cf-nums{grid-column:1/-1;grid-row:2;grid-template-columns:repeat(4,minmax(0,1fr))}.cf-nums span{text-align:left}.cf-row .btn-sm{grid-column:2;grid-row:1}.cf-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* estoque: só ajuste (o Nex manda) */
+.mv-info{margin:0 0 10px;font-size:13px;line-height:1.45;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -1220,7 +1222,7 @@ const BUCKET = "product-images";
 
 const $ = (s, r=document) => r.querySelector(s);
 const app = $("#app");
-let state = { session:null, staff:null, categories:[], results:[], current:null, mvType:"entrada" };
+let state = { session:null, staff:null, categories:[], results:[], current:null, mvType:"ajuste" };
 
 function toast(msg){
   const t = $("#toast"); t.textContent = msg; t.classList.add("on");
@@ -1991,16 +1993,12 @@ async function openProduct(id){
     <div class="section">
       <h3>Estoque</h3>
       <div class="stock-now"><span class="n">${p.stock}</span><span style="color:var(--muted)">unidades em estoque</span></div>
-      <div class="mv-tabs">
-        <button data-mv="entrada" class="active">Entrada</button>
-        <button data-mv="saida">Saída</button>
-        <button data-mv="ajuste">Ajuste</button>
-      </div>
+      <p class="mv-info">O Nex manda no estoque: a sincronização iguala o site ao Nex a cada 15 min. Aqui só dá para <b>ajustar</b>, colocando a mesma quantidade que está no Nex.</p>
       <div class="grid2">
-        <input type="number" min="0" id="mvQty" placeholder="Quantidade">
+        <input type="number" min="0" step="1" inputmode="numeric" id="mvQty" placeholder="Quantidade no Nex">
         <input type="text" id="mvNote" placeholder="Observação (opcional)">
       </div>
-      <div class="save-row"><button class="btn-gold" id="mvBtn">Registrar</button></div>
+      <div class="save-row"><button class="btn-gold" id="mvBtn">Ajustar</button></div>
       <div class="hist" id="histBox">
         ${(hist && hist.length) ? hist.map(h => `
           <div class="hist-row">
@@ -2048,10 +2046,6 @@ async function openProduct(id){
     };
   }
 
-  {
-    const tabs = document.querySelectorAll("[data-mv]");
-    tabs.forEach(b => b.onclick = () => { tabs.forEach(x=>x.classList.remove("active")); b.classList.add("active"); state.mvType = b.dataset.mv; });
-  }
   $("#mvBtn").onclick = () => registerMovement(p.id);
 
   $("#saveBtn").onclick = () => saveProduct(p.id);
@@ -2103,13 +2097,13 @@ async function saveProduct(id){
 
 async function registerMovement(productId){
   const qty = parseInt($("#mvQty").value, 10);
-  if(!qty && qty !== 0){ toast("Informe a quantidade."); return; }
+  if(!Number.isFinite(qty) || qty < 0){ toast("Informe a quantidade que está no Nex (0 ou mais)."); return; }
   const note = $("#mvNote").value.trim() || null;
   const { error } = await sb.rpc("registrar_movimento_estoque", {
-    p_product_id: productId, p_type: state.mvType, p_quantity: qty, p_note: note
+    p_product_id: productId, p_type: "ajuste", p_quantity: qty, p_note: note
   });
   if(error){ toast("Erro: " + error.message); return; }
-  toast("Estoque atualizado.");
+  toast("Estoque ajustado.");
   openProduct(productId);
 }
 
@@ -2347,7 +2341,7 @@ function openNewProduct(){
     if(error){ toast("Erro ao cadastrar: " + error.message); return; }
     const initial = parseInt($("#nStock").value, 10) || 0;
     if(initial > 0){
-      await sb.rpc("registrar_movimento_estoque", { p_product_id: data.id, p_type: "entrada", p_quantity: initial, p_note: "Cadastro inicial" });
+      await sb.rpc("registrar_movimento_estoque", { p_product_id: data.id, p_type: "ajuste", p_quantity: initial, p_note: "Cadastro inicial" });
     }
     let avisoFoto = "";
     if(novaFotoStaged){
