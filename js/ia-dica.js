@@ -24,13 +24,17 @@
     return'<span class="'+cls+'" style="--k:'+(k++)+';--dx:'+((Math.random()-.5)*26).toFixed(1)+'px;--rot:'+((Math.random()-.5)*30).toFixed(0)+'deg">'+c+"</span>"}).join("")+"</span>"}).join(" ")}
   /* pedaços da nuvem: [esquerda %, topo %, tamanho px]; ao sumir cada um vai pra um lado */
   var PUFFS=[[6,38,40],[20,16,52],[42,4,64],[64,14,54],[80,34,42],[30,40,50],[56,40,52],[14,52,34],[78,54,34]];
+  /* fiapos de fumaça que sobem balançando, esticam e somem quando a nuvem se desfaz */
+  function fumaca(n){var h="",r=function(a,b){return(a+Math.random()*(b-a)).toFixed(0)};
+    for(var i=0;i<n;i++)h+='<i style="--x:'+r(10,90)+'%;--y:'+r(30,75)+'%;--dx1:'+r(-18,18)+'px;--dx2:'+r(-30,30)+'px;--dx3:'+r(-42,42)+'px;--up:'+r(55,105)+'px;--r:'+r(-35,35)+'deg;--d:'+(Math.random()*.4).toFixed(2)+'s;--dur:'+(1.9+Math.random()*.9).toFixed(2)+'s"></i>';
+    return h}
   function nuvem(){return PUFFS.map(function(p,i){
     return'<i style="--x:'+p[0]+'%;--y:'+p[1]+'%;--t:'+p[2]+'px;--d:'+(i*45)+'ms;--dx:'+((p[0]-45)*1.1+(Math.random()-.5)*20).toFixed(0)+'px;--dy:'+(-20-Math.random()*26).toFixed(0)+'px"></i>'}).join("")}
 
   function mostra(){
     try{sessionStorage.setItem("brutt_ia_dica","1")}catch(e){}
     el=document.createElement("button");el.type="button";el.className="ia-dica";el.setAttribute("aria-label","Abrir o assistente Brutt IA");
-    el.innerHTML='<span class="ia-nuvem" aria-hidden="true">'+nuvem()+'</span><span class="ia-pens" aria-hidden="true"><i></i><i></i></span><b>'+letras(TITULO,"l")+'</b>';
+    el.innerHTML='<span class="ia-fumaca" aria-hidden="true">'+fumaca(14)+'</span><span class="ia-nuvem" aria-hidden="true">'+nuvem()+'</span><span class="ia-pens" aria-hidden="true"><i></i><i></i></span><b>'+letras(TITULO,"l")+'</b>';
     document.body.appendChild(el);posiciona();
     el.addEventListener("click",function(){some(true);orb.click()});
     requestAnimationFrame(function(){el.classList.add("on")});
@@ -44,7 +48,7 @@
   function some(rapido){
     if(!el||el.classList.contains("sai"))return;clearTimeout(fora);
     el.classList.remove("on");el.classList.add("sai");if(rapido)el.classList.add("ja");
-    var x=el;setTimeout(function(){x.remove();removeEventListener("resize",posiciona)},rapido?300:2200);
+    var x=el;setTimeout(function(){x.remove();removeEventListener("resize",posiciona)},rapido?300:3300);
   }
 
   function comeca(){quandoLivre(function(){setTimeout(function(){if(livre())mostra()},1000)})}
