@@ -9,7 +9,7 @@ window.ACOMP=(function(){
 var S=window.__SUPA||{},FN=(S.url||"")+"/functions/v1/checkout",CHAVE="brutt_pedidos";
 var END_LOJA="Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ";
 var UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-var FIM_MS=3*3600e3;                         /* pedido concluído some do atalho 3 h depois */
+var equipe={};                               /* pedidos abertos pelo "ver como o cliente vê" do painel: não guarda no aparelho */
 var abertoId=null,tPoll=null,tPill=null,ultimo={};
 var _esc=typeof esc==="function"?esc:function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
 var _R=function(v){return typeof R==="function"?R(Number(v)||0):"R$ "+(Number(v)||0).toFixed(2).replace(".",",")};
@@ -30,7 +30,7 @@ function item(id){return lista().filter(function(x){return x.id===id})[0]||null}
 /* "Concluir pedido": o cliente manda o pedido pago para o WhatsApp da loja (enquanto não há envio automático) */
 function marcaAvisou(id){if(!item(id))guarda(id,ultimo[id]&&ultimo[id].numero);var l=lista();l.forEach(function(x){if(x.id===id)x.avisou=true});grava(l)}
 function pago(a){return!!a&&(a.status==="pago"||a.status==="concluido")}
-function falta(id,a){var it=item(id);return pago(a)&&a.status!=="concluido"&&!a.saiu&&!(it&&it.avisou)}   /* depois que saiu para entrega a loja já tem o pedido */
+function falta(id,a){var it=item(id);return!equipe[id]&&pago(a)&&a.status!=="concluido"&&!a.saiu&&!(it&&it.avisou)}   /* depois que saiu para entrega a loja já tem o pedido */
 /* Mensagem do pedido para a loja: a completa guardada no pagamento (itens, endereço, total) ou, se este aparelho não
    tem (pedido aberto pelo link em outro celular), montada com o que a tela de acompanhamento sabe. */
 function msgPedido(id,a){
@@ -60,7 +60,10 @@ function etapas(a){
   if(a.tipo==="entrega"){
     L.push({t:"Saiu para entrega",s:a.bairro?"A caminho de "+a.bairro:"A caminho do seu endereço",h:a.saiu,ok:!!a.saiu||fim});
     L.push({t:"Pedido entregue",s:"Bom proveito!",h:a.concluido,ok:fim});
-  }else L.push({t:"Motoboy já retirou seu pedido",s:"Retirada na loja pelo Uber Flash / 99",h:a.concluido,ok:fim});
+  }else{                                                              /* o cliente chama o Uber Flash / 99 */
+    L.push({t:"Separando · aguardando seu Uber / 99",s:a.saiu||fim?"Corrida chegou na loja":"Peça a corrida e mande o link pra gente",h:a.saiu,ok:!!a.saiu||fim});
+    L.push({t:"Motoboy já retirou seu pedido",s:"A caminho com o entregador do app",h:a.saiu,ok:!!a.saiu||fim});
+  }
   var atual=-1;L.forEach(function(e,i){if(e.ok)atual=i});
   L.forEach(function(e,i){e.atual=!final(a)&&i===atual+1});          /* a próxima etapa (ainda não feita) pulsa */
   return L;
@@ -72,11 +75,11 @@ function topo(a){
   if(a.status==="recusado")return["x","Pagamento não aprovado","Nada foi cobrado. Você pode tentar de novo pelo site.","off"];
   if(a.status==="expirado"||exp)return["clock","Pix expirado","O código venceu antes do pagamento e nada foi cobrado.","off"];
   if(a.status==="aguardando_pagamento")return["pix","Aguardando o pagamento","Assim que o Pix cair, a gente começa a separar.","vivo"];
-  if(a.status==="concluido")return a.tipo==="entrega"?["check","Pedido entregue!","Obrigado pela preferência. Bom proveito! 🔥","ok"]:["moto","Motoboy já retirou seu pedido","O entregador do app está levando até você. Obrigado pela preferência! 🔥","ok"];
-  if(a.saiu)return["moto","Saiu para entrega","Seu pedido está a caminho. Fique de olho no portão 😉","vivo"];
+  if(a.status==="concluido")return a.tipo==="entrega"?["check","Pedido entregue!","Obrigado pela preferência. Bom proveito! 🔥","ok"]:["check","Pedido concluído!","Obrigado pela preferência. Bom proveito! 🔥","ok"];
+  if(a.saiu)return a.tipo==="entrega"?["moto","Saiu para entrega","Seu pedido está a caminho. Fique de olho no portão 😉","vivo"]:["moto","Motoboy já retirou seu pedido","O entregador do app está levando até você.","vivo"];
   if(a.reserva)return["clock","Pagamento confirmado","A loja estava fechada: separamos seu pedido assim que abrir.","vivo"];
   return a.tipo==="entrega"?["bag","Pagamento confirmado","Estamos separando seu pedido. Avisamos quando sair para entrega.","vivo"]
-    :["bag","Pagamento confirmado","Estamos separando seu pedido. Já pode chamar o Uber Flash ou 99 para buscar.","vivo"];
+    :["bag","Pedido em separação","Já pode pedir o Uber Flash ou 99 para o endereço abaixo. Depois, mande o link da corrida pra gente no WhatsApp.","vivo"];
 }
 var IC={
   pix:'<path style="fill:#32BCAD;stroke:none" d="M5.283 18.36a3.505 3.505 0 0 0 2.493-1.032l3.6-3.6a.684.684 0 0 1 .946 0l3.613 3.613a3.504 3.504 0 0 0 2.493 1.032h.71l-4.56 4.56a3.647 3.647 0 0 1-5.156 0L4.85 18.36ZM18.428 5.627a3.505 3.505 0 0 0-2.493 1.032l-3.613 3.614a.67.67 0 0 1-.946 0l-3.6-3.6A3.505 3.505 0 0 0 5.283 5.64h-.434l4.573-4.572a3.646 3.646 0 0 1 5.156 0l4.559 4.559ZM1.068 9.422 3.79 6.699h1.492a2.483 2.483 0 0 1 1.744.722l3.6 3.6a1.73 1.73 0 0 0 2.443 0l3.614-3.613a2.482 2.482 0 0 1 1.744-.723h1.767l2.737 2.737a3.646 3.646 0 0 1 0 5.156l-2.736 2.736h-1.768a2.482 2.482 0 0 1-1.744-.722l-3.613-3.613a1.77 1.77 0 0 0-2.444 0l-3.6 3.6a2.483 2.483 0 0 1-1.744.722H3.791l-2.723-2.723a3.646 3.646 0 0 1 0-5.156"/>',
@@ -101,7 +104,7 @@ function el(){
     var t=e.target.closest&&e.target.closest("[data-acomp-fechar],[data-acomp-copiar],[data-acomp-concluir]");if(!t)return;
     if(t.hasAttribute("data-acomp-concluir")){var id=abertoId;marcaAvisou(id);setTimeout(function(){if(abertoId===id&&ultimo[id])desenha(id,ultimo[id])},800);return}   /* o link abre o WhatsApp normalmente */
     if(t.hasAttribute("data-acomp-fechar"))fechar();
-    else copiar(END_LOJA).then(function(){t.classList.add("done");t.querySelector("span").textContent="Endereço copiado!";_toast("Endereço da loja copiado");setTimeout(function(){if(t.isConnected){t.classList.remove("done");t.querySelector("span").textContent="Copiar endereço de coleta"}},2500)});
+    else copiar(END_LOJA).then(function(){t.classList.add("done");t.querySelector("span").textContent="Endereço copiado!";_toast("Endereço da loja copiado");setTimeout(function(){if(t.isConnected){t.classList.remove("done");t.querySelector("span").textContent="Copiar endereço"}},2500)});
   });
   return m;
 }
@@ -118,16 +121,19 @@ function html(a,id){
    +concluirHTML(id,a)
    +(fim&&a.status!=="concluido"?"":'<ol class="ac-linha">'+L.map(function(e){
       return'<li class="'+(e.ok?"ok":"")+(e.atual?" atual":"")+'"><span class="ac-dot" aria-hidden="true"></span><span class="ac-tx"><b>'+_esc(e.t)+'</b>'+(e.s?'<small>'+_esc(e.s)+'</small>':"")+'</span><time>'+_esc(e.ok?hora(e.h):"")+'</time></li>'}).join("")+'</ol>')
-   +(a.tipo==="cliente"&&(a.status==="pago")?'<div class="ac-coleta">'+svg("pin")+'<div><b>Endereço de coleta para o Uber Flash / 99</b><span>'+_esc(END_LOJA)+'</span></div><button type="button" class="ac-copia" data-acomp-copiar>'+svg("copy")+'<span>Copiar endereço de coleta</span></button></div>':"")
+   +(a.tipo==="cliente"&&a.status==="pago"&&!a.saiu?'<div class="ac-coleta">'+svg("pin")+'<div><b>Peça o Uber Flash / 99 para este endereço</b><span>'+_esc(END_LOJA)+'</span></div><button type="button" class="ac-copia" data-acomp-copiar>'+svg("copy")+'<span>Copiar endereço</span></button>'
+     +'<a class="ac-corrida" target="_blank" rel="noopener" href="https://wa.me/'+_whats()+'?text='+encodeURIComponent("Oi! Segue o link da corrida do pedido #"+a.numero+": ")+'">'+waIc()+'<span>Enviar link da corrida</span></a>'
+     +'<small class="ac-dica">No app, toque em “Compartilhar corrida” e mande o link pra gente acompanhar o motoboy.</small></div>':"")
    +'<div class="ac-itens"><b>Seu pedido</b>'+(a.itens||[]).map(function(i){return'<span><em>'+_esc(i.qtd)+'×</em> '+_esc(i.nome)+'</span>'}).join("")
      +(Number(a.taxa_entrega)>0?'<span class="ac-tx2">Entrega <em>'+_R(a.taxa_entrega)+'</em></span>':"")+'<span class="ac-tot">Total <em>'+_R(a.total)+'</em></span></div>'
-   +'<div class="ac-acoes"><a class="ac-wa"'+(falta(id,a)?" data-acomp-concluir":"")+' target="_blank" rel="noopener" href="https://wa.me/'+_whats()+'?text='+encodeURIComponent(msgLoja)+'">'+waIc()+'<span>Falar com a loja</span></a><button type="button" class="ac-volta" data-acomp-fechar>Voltar à loja</button></div>'
+   +'<div class="ac-acoes"><a class="ac-wa"'+(falta(id,a)?" data-acomp-concluir":"")+' target="_blank" rel="noopener" href="https://wa.me/'+_whats()+'?text='+encodeURIComponent(msgLoja)+'">'+waIc()+'<span>Falar com a loja</span></a><button type="button" class="ac-volta" data-acomp-fechar>Voltar</button></div>'
    +'<p class="ac-pe">Esta tela se atualiza sozinha. Para ver de novo depois, toque em “Acompanhar” no topo da loja.</p>';
 }
 function concluirHTML(id,a){
+  if(equipe[id])return'<p class="ac-equipe">Visualização da equipe: é assim que o cliente vê. Nada fica salvo neste aparelho.</p>';
   if(!pago(a)||(a.saiu||a.status==="concluido")&&!(item(id)&&item(id).avisou))return"";   /* só depois do Pix aprovado; some quando a loja já despachou */
   var it=item(id),href="https://wa.me/"+_whats()+"?text="+encodeURIComponent(msgPedido(id,a));
-  if(it&&it.avisou)return'<a class="ac-reenvia" data-acomp-concluir target="_blank" rel="noopener" href="'+href+'">'+waIc()+'<span><b>✓ Pedido enviado à loja</b> · reenviar</span></a>';
+  if(it&&it.avisou)return'<a class="ac-reenvia" data-acomp-concluir target="_blank" rel="noopener" href="'+href+'">'+waIc()+'<span><b>✓ Enviado à loja</b> · reenviar</span></a>';
   return'<div class="ac-fim" id="acFim"><b>Último passo</b><span>Toque em <strong>Concluir pedido</strong> para enviar o pedido ao WhatsApp da loja. Assim a gente começa a separar.</span>'
     +'<a class="ac-concluir" data-acomp-concluir target="_blank" rel="noopener" href="'+href+'">'+waIc()+'<span>Concluir pedido</span></a></div>';
 }
@@ -153,7 +159,7 @@ function avisaMudanca(antes,a){
 function abrir(id,op){
   if(!UUID.test(String(id)))return;
   op=op||{};
-  guarda(id,op.numero||(ultimo[id]&&ultimo[id].numero)||"",op.txtLoja||"");
+  if(op.equipe)equipe[id]=true;else guarda(id,op.numero||(ultimo[id]&&ultimo[id].numero)||"",op.txtLoja||"");
   var m=el();if(!m.classList.contains("on")&&window.SOM)SOM.toca("abre");abertoId=id;
   m.innerHTML=ultimo[id]?html(ultimo[id],id):'<div class="ac-h"><span class="ac-num">Pedido'+(op.numero?' <b>#'+_esc(op.numero)+'</b>':"")+'</span><button type="button" class="ac-x" data-acomp-fechar aria-label="Fechar">×</button></div><div class="ac-load" role="status"><span class="ac-spin"></span>Carregando seu pedido…</div>';
   var v=document.getElementById("veil");if(v)v.classList.add("on");
@@ -172,7 +178,9 @@ function fechar(forcar){
     var f=document.getElementById("acFim");if(f){f.classList.remove("chama");void f.offsetWidth;f.classList.add("chama");f.scrollIntoView({block:"nearest",behavior:reduz?"auto":"smooth"})}
     return;
   }
+  var fechou=abertoId;
   var m=document.getElementById("acomp");abertoId=null;clearTimeout(tPoll);
+  if(fechou&&a&&a.status==="concluido")esquece(fechou);   /* pedido concluído: o acompanhamento some do aparelho */
   if(!m)return;if(m.classList.contains("on")&&window.SOM)SOM.toca("fecha");m.classList.remove("on");m.setAttribute("aria-hidden","true");
   if(!document.querySelector("#drawer.on,#pm.on")){var v=document.getElementById("veil");if(v)v.classList.remove("on")}
   pill();
@@ -190,7 +198,7 @@ function pill(){
   for(var i=0;i<l.length;i++){
     var a=ultimo[l[i].id];
     if(a&&(a.status==="cancelado"||a.status==="expirado"||a.status==="recusado"))continue;
-    if(a&&a.status==="concluido"&&Date.now()-new Date(a.concluido||0).getTime()>FIM_MS)continue;
+    if(a&&a.status==="concluido")continue;                     /* concluído pela loja: some na hora */
     if(!a&&Date.now()-l[i].t>24*3600e3)continue;
     x=l[i];break;
   }
@@ -219,7 +227,7 @@ function inicio(){
   var p=window.__PEDIDO_URL||null;try{p=p||new URLSearchParams(location.search).get("pedido")}catch(_){}
   if(p&&UUID.test(p))setTimeout(function espera(){            /* primeiro a confirmação de idade (+18), depois o pedido */
     var g=document.getElementById("age");if(g&&g.classList.contains("on"))return setTimeout(espera,400);
-    abrir(p);
+    abrir(p,{equipe:!!window.__PEDIDO_EQUIPE});
   },400);
   vigiaPill();
 }

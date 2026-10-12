@@ -324,13 +324,23 @@ await t("etapa 'saiu para entrega': só equipe, só entrega da loja, 1 vez, com 
   const fim = await call("concluir", { pedido_id: c.j.pedido_id }, equipe);
   assert.match(decodeURIComponent(fim.j.whats.link), /Pedido entregue/);
 });
-await t("cliente que chama Uber/99: 'saiu' recusado e concluir avisa 'Motoboy já retirou'", async () => {
+await t("cliente que chama Uber/99: pago (pede a corrida) → motoboy retirou → concluído", async () => {
+  whats.length = 0;
   const c = await call("criar", { ...base, whats: "21944443333", entrega: { tipo: "cliente" } });
   await call("pagar", { pedido_id: c.j.pedido_id, metodo: "pix", formData: { payment_method_id: "pix", payer: { email: "c@c.com" } } });
+  assert.equal((await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe)).status, 409);   // ainda não pago
   await C.processarPagamento({ ...mpPays.get(String(mpSeq)), status: "approved", status_detail: "accredited" }); await flush();
-  assert.equal((await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe)).status, 409);
+  const pago = whats.find(w => /Pagamento confirmado/.test(w.text) && w.number === "5521944443333");
+  assert.match(pago.text, /pedir o Uber Flash ou 99[\s\S]*Rua 18, 145[\s\S]*link da corrida/);
+  const r = await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe);
+  assert.equal(r.status, 200); assert.ok(r.j.saiu_em);
+  assert.match(decodeURIComponent(r.j.whats.link), /Motoboy já retirou seu pedido[\s\S]*\?pedido=/);
+  assert.equal(whats.filter(w => /Motoboy já retirou/.test(w.text)).length, 1);
+  await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe);
+  assert.equal(whats.filter(w => /Motoboy já retirou/.test(w.text)).length, 1);                // 1 vez só
+  const a = (await getStatus(c.j.pedido_id)).acomp; assert.equal(a.status, "pago"); assert.ok(a.saiu);
   const fim = await call("concluir", { pedido_id: c.j.pedido_id }, equipe);
-  assert.equal(fim.status, 200); assert.match(decodeURIComponent(fim.j.whats.link), /Motoboy já retirou seu pedido/);
+  assert.equal(fim.status, 200); assert.match(decodeURIComponent(fim.j.whats.link), /Pedido concluído/);
   assert.equal((await getStatus(c.j.pedido_id)).acomp.status, "concluido");
 });
 await t("sem o robô do WhatsApp: a equipe recebe o link com a mensagem pronta", async () => {
