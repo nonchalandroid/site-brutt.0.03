@@ -378,6 +378,22 @@ await t("taxa de entrega: endereço digitado conferido no mapa (coordenada do na
   assert.equal(r.status, 200); ped = db.pedidos.find(p => p.id === r.j.pedido_id); assert.equal(ped.entrega.conferencia.exato, false);
   mapa = []; rotaM = 1800;
 });
+await t("Conjunto Campinho (pedido da IA): homônima longe não muda a taxa; casa achada no conjunto a 2,4 km soma por km", async () => {
+  const end = { rua: "Rua 5", numero: "120", cidade: "Rio de Janeiro", uf: "RJ", bairro: "Conjunto Campinho (Campo Grande)" };
+  const geo = { lat: -22.882284, lng: -43.6161089 }, cli = { ...base, whats: "21933330001" };
+  rotaM = 500; mapa = [{ rua: "Rua 5", numero: "120", bairro: "Santa Cruz", lat: -22.92, lng: -43.69 }];
+  let r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo, endereco: end } });
+  assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 5);
+  assert.equal(db.pedidos.find(p => p.id === r.j.pedido_id).entrega.conferencia.exato, false);
+  mapa = [{ rua: "Rua 5", numero: "120", bairro: "Campo Grande", lat: -22.8890, lng: -43.6300 }]; rotaPorLng["-43.63"] = 2400;
+  r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo, endereco: end } });
+  assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 6.5);
+  // fora do conjunto, rua homônima em OUTRO bairro também não vale como conferência
+  mapa = [{ rua: "Rua 5", numero: "120", bairro: "Santa Cruz", lat: -22.92, lng: -43.69 }];
+  r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo: { lat: -22.8817, lng: -43.6138 }, endereco: { ...end, bairro: "Campo Grande" } } });
+  assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 5);
+  mapa = []; rotaM = 1800; delete rotaPorLng["-43.63"];
+});
 await t("segurança: nome sem links, freio de pedidos em massa, estoque conferido de novo no pagar, aviso só p/ equipe ativa", async () => {
   assert.equal(C.nomeLimpo("https://golpe.example/pix Maria"), "Maria");
   assert.equal(C.nomeLimpo("golpe.com.br João"), "João");

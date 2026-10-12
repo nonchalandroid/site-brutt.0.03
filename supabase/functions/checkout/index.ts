@@ -79,9 +79,16 @@ async function distanciaKm(lat: number, lng: number) {
 // para pagar a taxa de perto mandando a coordenada da loja com um endereço longe) e a equipe vê o aviso no pedido.
 const GENERICAS = new Set(["rua", "r", "avenida", "av", "estrada", "est", "travessa", "tv", "praca", "pca", "largo", "alameda", "rodovia", "beco", "de", "da", "do", "das", "dos"]);
 const semAcento = (s: unknown) => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-const palavras = (s: string) => semAcento(s).split(/[^a-z0-9]+/).filter(w => w.length > 1 && !GENERICAS.has(w));
+const NUMEROS: Record<string, string> = { um: "1", uma: "1", dois: "2", duas: "2", tres: "3", quatro: "4", cinco: "5", seis: "6", sete: "7", oito: "8", nove: "9", dez: "10", onze: "11", doze: "12", treze: "13", quatorze: "14", catorze: "14", quinze: "15", dezesseis: "16", dezessete: "17", dezoito: "18", dezenove: "19", vinte: "20", trinta: "30" };
+// ruas numeradas ("Rua 5", "Rua Dezoito" = "Rua 18") contam o número; palavras genéricas não contam
+const palavras = (s: string) => semAcento(s).split(/[^a-z0-9]+/).map(w => NUMEROS[w] ?? w).filter(w => (w.length > 1 || /\d/.test(w)) && !GENERICAS.has(w));
 export const mesmaRua = (digitada: string, achada: string) => { const a = palavras(digitada), b = new Set(palavras(achada)); if (!a.length) return false; return a.filter(w => b.has(w)).length / a.length >= 0.6; };
 export const TOLERANCIA_KM = 0.6;
+// Conjunto Campinho (colado na loja, ruas numeradas): igual à Brutt IA. Rua homônima achada longe do conjunto não vale.
+export const CONJUNTO = { lat: -22.882284, lng: -43.6161089, raioKm: 2.5 };
+export const ehConjunto = (...t: unknown[]) => { const x = semAcento(t.filter(Boolean).join(" ")); return /campinho/.test(x) || /\bconjunto\b/.test(x) && !/marinha|bnh|madureira|cascadura/.test(x); };
+/** mesmo bairro? (o digitado pode vir "Conjunto Campinho (Campo Grande)"; o mapa devolve "Campo Grande") */
+const mesmoBairro = (dig: string, mapa: string) => { const a = semAcento(dig).trim(), b = semAcento(mapa).trim(); return !a || !b || a.includes(b) || b.includes(a); };
 export async function conferirEndereco(e: { rua: string; numero: string; bairro: string }, lat: number, lng: number) {
   try {
     const c = new AbortController(), t = setTimeout(() => c.abort(), 6000);
@@ -89,7 +96,10 @@ export async function conferirEndereco(e: { rua: string; numero: string; bairro:
     const r = await fetch(`${SB()}/functions/v1/geoapify-autocomplete?text=${encodeURIComponent([e.rua, e.numero, e.bairro].filter(Boolean).join(" "))}`, { headers: env("SUPABASE_ANON_KEY") ? { apikey: env("SUPABASE_ANON_KEY"), Authorization: "Bearer " + env("SUPABASE_ANON_KEY") } : hdr(), signal: c.signal }).finally(() => clearTimeout(t));
     if (!r.ok) return null;
     const num = String(e.numero).replace(/\D/g, "");
-    const x = ((await r.json())?.resultados ?? []).find((y: any) => mesmaRua(e.rua, y?.rua) && num && String(y?.numero ?? "").replace(/\D/g, "") === num && Number.isFinite(+y?.lat) && Number.isFinite(+y?.lng));
+    // rua igual, número exato e mesmo bairro (ruas homônimas tipo "Rua 5" existem em vários bairros); no conjunto, perto dele
+    const conj = ehConjunto(e.bairro);
+    const x = ((await r.json())?.resultados ?? []).find((y: any) => mesmaRua(e.rua, y?.rua) && num && String(y?.numero ?? "").replace(/\D/g, "") === num && Number.isFinite(+y?.lat) && Number.isFinite(+y?.lng)
+      && mesmoBairro(e.bairro, y?.bairro) && (!conj || haversineKm(CONJUNTO.lat, CONJUNTO.lng, +y.lat, +y.lng) <= CONJUNTO.raioKm));
     if (!x) return { exato: false };      // número não existe no mapa: não dá para conferir (a equipe vê "não conferido")
     return { exato: true, lat: +x.lat, lng: +x.lng, dif_km: Math.round(haversineKm(lat, lng, +x.lat, +x.lng) * 10) / 10 };
   } catch { return null; }
