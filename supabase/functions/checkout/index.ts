@@ -85,7 +85,8 @@ export const TOLERANCIA_KM = 0.6;
 export async function conferirEndereco(e: { rua: string; numero: string; bairro: string }, lat: number, lng: number) {
   try {
     const c = new AbortController(), t = setTimeout(() => c.abort(), 6000);
-    const r = await fetch(`${SB()}/functions/v1/geoapify-autocomplete?text=${encodeURIComponent([e.rua, e.numero, e.bairro].filter(Boolean).join(" "))}`, { headers: hdr(), signal: c.signal }).finally(() => clearTimeout(t));
+    // chama com a chave pública, igual à loja (a função de mapa exige um JWT válido)
+    const r = await fetch(`${SB()}/functions/v1/geoapify-autocomplete?text=${encodeURIComponent([e.rua, e.numero, e.bairro].filter(Boolean).join(" "))}`, { headers: env("SUPABASE_ANON_KEY") ? { apikey: env("SUPABASE_ANON_KEY"), Authorization: "Bearer " + env("SUPABASE_ANON_KEY") } : hdr(), signal: c.signal }).finally(() => clearTimeout(t));
     if (!r.ok) return null;
     const num = String(e.numero).replace(/\D/g, "");
     const x = ((await r.json())?.resultados ?? []).find((y: any) => mesmaRua(e.rua, y?.rua) && num && String(y?.numero ?? "").replace(/\D/g, "") === num && Number.isFinite(+y?.lat) && Number.isFinite(+y?.lng));
