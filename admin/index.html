@@ -22,7 +22,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <!-- bibliotecas servidas daqui mesmo (versão fixa, sem CDN): ninguém de fora troca o código que roda no painel -->
 <script src="/vendor/supabase-js-2.117.2.js"></script>
-<script src="/vendor/xlsx-0.18.5.full.min.js"></script>
 <script src="/vendor/html5-qrcode-2.3.8.min.js"></script>
 <style>
 /* =====================================================================
@@ -969,6 +968,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--petroleo-cl);box-shad
 .ped-card.pixnovo::after{border-color:var(--al-pix)}
 .ped-pix{background:var(--al-pix);color:var(--al-pix-ink)}
 
+.ped-geo{display:inline-block;margin-left:4px;font-size:12px;font-weight:600;color:var(--terracota-cl);white-space:normal}
+.ped-geo.ruim{color:var(--al-pix)}
 /* =====================================================================
    CELULAR E TABLET (até 1023px): mesma arquitetura da loja.
    Barra do topo compacta (☰ · logo · nome da tela · ver loja), sem repetir o título da tela,
@@ -1021,6 +1022,16 @@ function toast(msg){
 }
 function esc(s){ return (s??"").toString().replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 /* valor digitado ou vindo de planilha dentro de um filtro .or() do PostgREST: vírgula, parênteses e aspas mudariam o filtro */
+/* planilha lida num Web Worker descartável (vendor/planilha-worker.js): falha da biblioteca de planilhas não alcança o painel */
+function lerPlanilha(buf, ms = 20000){
+  return new Promise((ok, falha) => {
+    const w = new Worker("/vendor/planilha-worker.js");
+    const fim = setTimeout(() => { w.terminate(); falha(new Error("demorou demais")); }, ms);
+    w.onmessage = e => { clearTimeout(fim); w.terminate(); e.data && e.data.ok ? ok(e.data.rows) : falha(new Error((e.data && e.data.erro) || "arquivo inválido")); };
+    w.onerror = e => { clearTimeout(fim); w.terminate(); falha(new Error(e.message || "arquivo inválido")); };
+    w.postMessage(buf, [buf]);
+  });
+}
 function pgv(s){ return (s??"").toString().replace(/[,()"\\]/g, " ").trim(); }
 function brl(v){ return (v==null) ? "—" : "R$ " + Number(v).toFixed(2).replace(".", ","); }
 
@@ -2159,9 +2170,9 @@ async function handleSyncFile(file){
   body.innerHTML = `<div class="loading">Lendo planilha…</div>`;
 
   const buf = await file.arrayBuffer();
-  const wb = XLSX.read(buf, { type: "array" });
-  const sheet = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+  let rows;
+  try { rows = await lerPlanilha(buf); }
+  catch(e){ body.innerHTML = `<div class="empty">Não consegui ler essa planilha (${esc(e.message)}). Exporte de novo do Nex e tente outra vez.</div>`; return; }
   if(rows.length < 2){ body.innerHTML = `<div class="empty">Planilha vazia ou sem linhas de dados.</div>`; return; }
 
   const headers = rows[0];
@@ -2311,9 +2322,9 @@ async function handleBestsellersFile(file){
   body.innerHTML = `<div class="loading">Lendo planilha…</div>`;
 
   const buf = await file.arrayBuffer();
-  const wb = XLSX.read(buf, { type: "array" });
-  const sheet = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+  let rows;
+  try { rows = await lerPlanilha(buf); }
+  catch(e){ body.innerHTML = `<div class="empty">Não consegui ler essa planilha (${esc(e.message)}). Exporte de novo do Nex e tente outra vez.</div>`; return; }
   if(rows.length < 2){ body.innerHTML = `<div class="empty">Planilha vazia ou sem linhas de dados.</div>`; return; }
 
   const headers = rows[0];
@@ -3230,6 +3241,10 @@ const PED_ST = { aguardando_pagamento:"⏳ Aguardando pagamento", pago:"✅ Pago
 const PED_MET = { pix:"Pix", debito:"Débito", credito:"Crédito à vista" };
 const PED_ROT = { aguardando_pagamento:"Aguardando pagamento", pago:"Pago · a concluir", recusado:"Recusado", expirado:"Pix expirado", cancelado:"Cancelado", estornado:"Estornado · devolvido", concluido:"Concluído" };
 /* "Estornado" = cancelado porque o Mercado Pago devolveu o valor inteiro (mp_status refunded). */
+/* conferência do endereço feita no servidor (checkout): localização do celular x endereço digitado achado no mapa */
+const pedGeo = c => !c ? "" : c.exato && c.dif_km > 0.6
+  ? ` <span class="ped-geo ruim">⚠️ localização do celular a ${esc(String(c.dif_km).replace(".", ","))} km do endereço digitado · taxa cobrada pelo mais longe</span>`
+  : c.exato ? "" : ` <span class="ped-geo">endereço não achado no mapa: confira antes de sair</span>`;
 const pedSt = p => p.status === "cancelado" && p.mp_status === "refunded" ? "estornado" : p.status;
 /* pedido pendente só pode ser cancelado pela equipe se não houver Pix válido em aberto (sem Pix ou Pix vencido) */
 const pedCancelavel = p => p.status === "aguardando_pagamento" && (!p.mp_payment_id || (p.pix_expira_em && new Date(p.pix_expira_em) < new Date()));
@@ -3280,7 +3295,7 @@ async function renderPedidos(){
   if(!FILTROS.some(f => f[0] === pedFiltro)) pedFiltro = "todos";
   const cartao = p => {
     const e = p.entrega || {}, a = e.endereco || {};
-    const ent = e.tipo === "entrega" ? `Entrega: ${esc(a.rua)}, ${esc(a.numero)}${a.complemento ? " ("+esc(a.complemento)+")" : ""} — ${esc(a.bairro||"")} · ${esc(String(e.km||"").replace(".", ","))} km` : "Cliente chama Uber Flash/99";
+    const ent = e.tipo === "entrega" ? `Entrega: ${esc(a.rua)}, ${esc(a.numero)}${a.complemento ? " ("+esc(a.complemento)+")" : ""} — ${esc(a.bairro||"")} · ${esc(String(e.km||"").replace(".", ","))} km${pedGeo(e.conferencia)}` : "Cliente chama Uber Flash/99";
     const novo = p.status === "pago" && !p.visto_em, st = pedSt(p);
     const pixNovo = p.status === "aguardando_pagamento" && !p.visto_em && p.pix_expira_em && new Date(p.pix_expira_em) > new Date();
     const nota = st === "estornado" ? `O Mercado Pago devolveu ${brl(p.total)} ao cliente${p.pago_em ? ` (pago em ${fmtQuando(p.pago_em)})` : ""}. Não conta como venda.`

@@ -74,6 +74,26 @@ async function distanciaKm(lat: number, lng: number) {
   return Math.round(haversineKm(ENTREGA_LOJA.lat, ENTREGA_LOJA.lng, lat, lng) * 1.3 * 10) / 10;
 }
 
+// ── Conferência do endereço: o navegador manda as coordenadas, e a taxa sai delas. O servidor acha o endereço DIGITADO
+// no mesmo serviço de mapa do site (geoapify-autocomplete) e compara. Diferença grande = vale a distância maior (não dá
+// para pagar a taxa de perto mandando a coordenada da loja com um endereço longe) e a equipe vê o aviso no pedido.
+const GENERICAS = new Set(["rua", "r", "avenida", "av", "estrada", "est", "travessa", "tv", "praca", "pca", "largo", "alameda", "rodovia", "beco", "de", "da", "do", "das", "dos"]);
+const semAcento = (s: unknown) => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const palavras = (s: string) => semAcento(s).split(/[^a-z0-9]+/).filter(w => w.length > 1 && !GENERICAS.has(w));
+export const mesmaRua = (digitada: string, achada: string) => { const a = palavras(digitada), b = new Set(palavras(achada)); if (!a.length) return false; return a.filter(w => b.has(w)).length / a.length >= 0.6; };
+export const TOLERANCIA_KM = 0.6;
+export async function conferirEndereco(e: { rua: string; numero: string; bairro: string }, lat: number, lng: number) {
+  try {
+    const c = new AbortController(), t = setTimeout(() => c.abort(), 6000);
+    const r = await fetch(`${SB()}/functions/v1/geoapify-autocomplete?text=${encodeURIComponent([e.rua, e.numero, e.bairro].filter(Boolean).join(" "))}`, { headers: hdr(), signal: c.signal }).finally(() => clearTimeout(t));
+    if (!r.ok) return null;
+    const num = String(e.numero).replace(/\D/g, "");
+    const x = ((await r.json())?.resultados ?? []).find((y: any) => mesmaRua(e.rua, y?.rua) && num && String(y?.numero ?? "").replace(/\D/g, "") === num && Number.isFinite(+y?.lat) && Number.isFinite(+y?.lng));
+    if (!x) return { exato: false };      // número não existe no mapa: não dá para conferir (a equipe vê "não conferido")
+    return { exato: true, lat: +x.lat, lng: +x.lng, dif_km: Math.round(haversineKm(lat, lng, +x.lat, +x.lng) * 10) / 10 };
+  } catch { return null; }
+}
+
 export function normalizaWhats(s: unknown): string | null {
   let d = String(s ?? "").replace(/\D/g, "");
   if (d.length === 10 || d.length === 11) d = "55" + d;
@@ -142,10 +162,15 @@ export async function criarPedido(body: any, ip = "") {
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return { erro: "Confirme o endereço de entrega de novo.", status: 400 };
     const endereco = { rua: texto(e.rua, 120), numero: texto(e.numero, 20), complemento: texto(e.complemento, 80), bairro: texto(e.bairro, 80), cidade: texto(e.cidade, 80), uf: texto(e.uf, 2).toUpperCase(), cep: String(e.cep ?? "").replace(/\D/g, "").slice(0, 8) };
     if (!endereco.rua || !endereco.numero || !endereco.cidade) return { erro: "Endereço de entrega incompleto.", status: 400 };
-    const km = await distanciaKm(lat, lng);
+    const [kmPin, conf] = await Promise.all([distanciaKm(lat, lng), conferirEndereco(endereco, lat, lng)]);
+    let km = kmPin, conferencia: any = conf ? { exato: conf.exato } : { exato: false, erro: true };
+    if (conf?.exato) {
+      conferencia.dif_km = conf.dif_km;
+      if (conf.dif_km > TOLERANCIA_KM) { const kmMapa = await distanciaKm(conf.lat, conf.lng); conferencia.km_mapa = kmMapa; km = Math.max(km, kmMapa); }
+    }
     if (km > ENTREGA_LOJA.raioMaxKm) return { erro: "Entrega indisponível para esse endereço. Escolha “Prefiro eu mesmo solicitar a entrega”.", status: 400 };
     taxa = taxaEntrega(km);
-    entrega = { tipo: "entrega", endereco, geo: { lat, lng }, km };
+    entrega = { tipo: "entrega", endereco, geo: { lat, lng }, km, conferencia };
   } else if (body?.entrega?.tipo === "cliente") {
     entrega = { tipo: "cliente" };   // cliente chama Uber Flash/99 por conta própria; frete da loja = 0
   } else return { erro: "Escolha como você quer receber o pedido.", status: 400 };

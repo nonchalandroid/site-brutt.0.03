@@ -579,6 +579,14 @@ const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 const acessos = new Map<string, { n: number; t: number }>(); const LIMITE_POR_MIN = 24;
 export function _resetLimite() { acessos.clear(); }
+/** Cota diária (tabela ia_uso, RPC ia_cota): COTA.total mensagens por dia na loja toda e COTA.ip por aparelho.
+ *  O IP vai com hash (não guardamos o IP de ninguém). Banco fora do ar = deixa passar (o limite por minuto continua valendo). */
+export const COTA = { total: 1500, ip: 120 };
+async function hashIp(ip: string) { const b = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("brutt-ia:" + ip))); return [...b.slice(0, 12)].map(x => x.toString(16).padStart(2, "0")).join(""); }
+export async function dentroDaCota(ip: string) {
+  try { const r = await sbRpc("ia_cota", { p_chave: await hashIp(ip), p_lim_ip: COTA.ip, p_lim_total: COTA.total }); return r?.ok !== false; }
+  catch { return true; }
+}
 
 async function registra(linha: any) { try { await sbSend("ia_log", "POST", linha); } catch { /* o registro nunca derruba a resposta */ } }
 async function limpezaOcasional() {
@@ -605,6 +613,11 @@ export async function handler(req: Request): Promise<Response> {
   else if (++a.n > LIMITE_POR_MIN) {                                              // limite: em vez de só barrar, oferece a equipe no WhatsApp (com o pedido em andamento)
     const aviso = "Muitas mensagens seguidas. Aguarde um instante, ou toque no botão verde para falar com a nossa equipe no WhatsApp.";
     if (a.n > LIMITE_POR_MIN + 3) return json({ error: aviso }, 429);              // insistência: não gasta banco
+    return json({ error: aviso, humano_url: await linkHumano(await draftDaSessao(session)) }, 429);
+  }
+  // cota do DIA no banco (vale entre cópias da função e depois de reiniciar): passou, não chama o Gemini e oferece a equipe
+  if (!(await dentroDaCota(ip))) {
+    const aviso = "Nosso atendente virtual descansou por hoje. Toque no botão verde para falar com a nossa equipe no WhatsApp.";
     return json({ error: aviso, humano_url: await linkHumano(await draftDaSessao(session)) }, 429);
   }
 

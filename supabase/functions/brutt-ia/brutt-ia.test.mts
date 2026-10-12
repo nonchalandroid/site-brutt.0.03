@@ -17,9 +17,11 @@ const R=(o:any,s=200)=>new Response(JSON.stringify(o),{status:s});
   if(p==="products") return R([{site_product_id:"p1",name:"Essência X",price:25,promo_price:null,stock:5,is_active:true}]);
   if(p==="ia_sessoes"&&init.method==="POST"){sessoes[body.session_id]=body.draft;return R({},201)}
   if(p==="ia_sessoes") {const sid=u.searchParams.get("session_id")!.slice(3);return R(sessoes[sid]?[{draft:sessoes[sid]}]:[])}
+  if(p==="rpc/ia_cota") { cotaChamadas.push(body); return R({ok:cotaOk,total:1,ip:1}); }
   if(p==="rpc/ia_buscar_produtos") return R([]);
   return R([],201);
 };
+let cotaOk=true; const cotaChamadas:any[]=[];
 const M=await import(new URL("./index.ts", import.meta.url).href);
 const chama=async(msg:string,pag:boolean)=>{const r=await M.handler(new Request("https://x/brutt-ia",{method:"POST",body:JSON.stringify({message:msg,session:"sessao-teste-1",history:[],pagamento_online:pag})}));return r.json()};
 // 1) cliente escolhe "eu mesmo" SEM ter informado endereço; 2) fecha
@@ -40,3 +42,12 @@ assert.match(decodeURIComponent(j.whatsapp_url),/frete da loja R\$ 0,00/);
 roteiro=[[{text:"oi"}]]; await chama("oi",false);
 assert.ok(prompts.at(-1)!.includes("só por Pix")&&prompts.at(-1)!.includes("botão verde"));
 console.log("IA: 'eu mesmo peço' sem endereço, fechamento com checkout e prompts conforme o modo — OK");
+
+// cota diária no banco: passou do limite, não chama o Gemini e oferece a equipe; IP nunca vai em claro
+{ const antes=prompts.length; cotaOk=false;
+  const r=await M.handler(new Request("https://x/brutt-ia",{method:"POST",headers:{"x-forwarded-for":"200.1.2.3"},body:JSON.stringify({message:"oi",session:"sessao-cota-1",history:[]})}));
+  const j=await r.json();
+  if(r.status!==429||!/descansou/.test(j.error)||!j.humano_url) throw new Error("cota: devia barrar com 429 e link da equipe "+JSON.stringify(j));
+  if(prompts.length!==antes) throw new Error("cota: não podia chamar o Gemini");
+  const c=cotaChamadas[cotaChamadas.length-1]; if(!c||/200\.1\.2\.3/.test(JSON.stringify(c))||c.p_lim_total!==M.COTA.total) throw new Error("cota: chave deve ser hash do IP "+JSON.stringify(c));
+  cotaOk=true; console.log("IA: cota diária barra sem chamar o Gemini e não guarda o IP — OK"); }
