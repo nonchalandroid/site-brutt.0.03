@@ -1,17 +1,18 @@
 /* ───────── Avaliações do Google (carrossel no rodapé, depois do Como chegar) ─────────
    As avaliações são copiadas do perfil da loja no Google e ficam em AVALIACOES abaixo (a Places API do Google
-   exige cobrança ativada). Lista vazia = seção #avaliacoes escondida. Cartões em trilho horizontal com encaixe;
-   passa sozinho a cada 6 s e para com mouse, toque ou foco; setas e "Ler mais". Tudo passa por esc().
+   exige cobrança ativada). Lista vazia = seção #avaliacoes escondida. Fita contínua sem fim (ver fita());
+   setas e "Ler mais". Tudo passa por esc().
    Para atualizar: troque nota/total e a lista (nota de 1 a 5; quando = texto livre, ex. "há 2 semanas"). */
 var AVALIACOES={
   nota:5.0,          /* nota média do perfil (12/10/2026) */
   total:61,          /* quantas avaliações o perfil tem */
   link:"https://www.google.com/maps?cid=11357660395463088733",   /* "Ver todas no Google": perfil da loja (cid do mapa incorporado) */
   avaliacoes:[
-    /* copiadas do perfil no Google em 12/10/2026, na ordem do Google (mais recentes primeiro) */
+    /* copiadas do perfil no Google em 12/10/2026 (vídeo do perfil), mais recentes primeiro; só as que têm comentário */
     {"nome": "Hayla Kesi", "nota": 5, "quando": "2 meses atrás", "texto": "Excelente experiência de compra. O que mais destaco é a atenção que recebi: além da agilidade na entrega, recebi sugestões muito precisas sobre minha compra, saibam que vocês podem contar com um lugar profissional e atencioso quando necessitarem principalmente de um serviço de delivery. O atendimento diferenciado faz toda a diferença!"},
     {"nome": "Help Mathica", "nota": 5, "quando": "2 meses atrás", "texto": "Atendimento de qualidade, entrega rápida e a tabacaria ainda se preocupa com o pós venda. Bem atenciosos. Recomendo ."},
     {"nome": "Emiliano Oliveira", "nota": 5, "quando": "3 meses atrás", "texto": "Ótimo atendimento"},
+    {"nome": "Gabriel Seixas", "nota": 5, "quando": "3 meses atrás", "texto": "Lugar tranquilo, som ambiente, confortável e ótimo atendimento!! Aconchegante demais"},
     {"nome": "Thiago da Silveira", "nota": 5, "quando": "6 meses atrás", "texto": "Atendimento 100%! Entrega rápida e produtos todos certinhos. Cerveja gelada!"},
     {"nome": "Marcelo Eduardo", "nota": 5, "quando": "7 meses atrás", "texto": "Sabe aquele lugar que quando você conhece tu acaba abandonando os outros? A Tabacaria Brutt é assim ! Atendimento nota 10, ótimos preços, agilidade nas entregas e uma ótima variedade de produtos, podem confiar !"},
     {"nome": "Jhoon Tattoo", "nota": 5, "quando": "7 meses atrás", "texto": "Serviço excelente, várias opções para todos os gostos! Entrega e atendimento rápidos! Parabéns aos envolvidos!!"},
@@ -20,8 +21,12 @@ var AVALIACOES={
     {"nome": "other friends", "nota": 5, "quando": "8 meses atrás", "texto": "entrega rapida dms e vendedor mt maneiro recomendo pra geral"},
     {"nome": "Casa da prainha", "nota": 5, "quando": "8 meses atrás", "texto": "Lugar maravilhoso,! Atendimento top!"},
     {"nome": "Douglas Barbosa", "nota": 5, "quando": "8 meses atrás", "texto": "Bela loja , ótimas variedades,  ótimos preços.... recomendo..."},
+    {"nome": "Ritá Portugal", "nota": 5, "quando": "8 meses atrás", "texto": "Atendimento excelente"},
+    {"nome": "Maralice Magliano", "nota": 5, "quando": "8 meses atrás", "texto": "lugar aconchegante, atendimento personalizado, ótimo ambiente!"},
     {"nome": "Ellen Victória", "nota": 5, "quando": "9 meses atrás", "texto": "Ótimo atendimento, entrega super rápido e produtos de qualidade, variedades de cigarros. 🔥"},
     {"nome": "Júpiter Mc", "nota": 5, "quando": "9 meses atrás", "texto": "Ótimos produtos , preços acessíveis ,ótimo atendimento ao cliente , e ótimo horário de funcionamento principalmente para quem precisa fazer uma compra de última hora"},
+    {"nome": "Miguel Araújo", "nota": 5, "quando": "9 meses atrás", "texto": "Atendimento muito top, preço bom e boa variedade. Recomendo muito!!!"},
+    {"nome": "Julia Meireles", "nota": 5, "quando": "9 meses atrás", "texto": "Atendimento excelente, super simpático e atencioso!"},
     {"nome": "Thayná Cardial", "nota": 5, "quando": "9 meses atrás", "texto": "Eles possuem o melhor atendimento da região. Estao sempre dispostos a serem solicitos aos variados gostos e pedidos dos clientes. Sao 6 estrelas!!!"},
     {"nome": "karen vieira", "nota": 5, "quando": "9 meses atrás", "texto": "Amei o atendimento, preços acessíveis e ambiente aconchegante"},
     {"nome": "Giovanna Alcântara", "nota": 5, "quando": "9 meses atrás", "texto": "otimo atendimento e experiencia"},
@@ -62,25 +67,47 @@ var AVALIACOES={
     rail.innerHTML=lista.map(cartao).join("");
     sec.hidden=false;
     /* "Ler mais" só onde o texto foi cortado */
-    requestAnimationFrame(function(){rail.querySelectorAll(".av-card").forEach(function(c){var p=c.querySelector(".av-txt");if(p&&p.scrollHeight>p.clientHeight+2)c.querySelector(".av-mais").hidden=false})});
-    roda();
+    rail.querySelectorAll(".av-card").forEach(function(c){var p=c.querySelector(".av-txt");if(p&&p.scrollHeight>p.clientHeight+2)c.querySelector(".av-mais").hidden=false});
+    fita();
   }
 
-  /* carrossel: passo = um cartão; no fim volta pro começo */
-  function passo(dir){var c=rail.querySelector(".av-card");if(!c)return;var w=c.getBoundingClientRect().width+12;
-    var fim=rail.scrollLeft+rail.clientWidth>=rail.scrollWidth-4,ini=rail.scrollLeft<=4;
-    rail.scrollTo({left:dir>0&&fim?0:dir<0&&ini?rail.scrollWidth:rail.scrollLeft+dir*w,behavior:calma?"auto":"smooth"})}
-  var pausa=0,parado=false,t=0;
-  function roda(){if(calma)return;clearInterval(t);t=setInterval(function(){
-    if(parado||document.hidden||Date.now()<pausa)return;var r=sec.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;passo(1)},6000)}
-  sec.addEventListener("pointerenter",function(e){if(e.pointerType==="mouse")parado=true});
-  sec.addEventListener("pointerleave",function(e){if(e.pointerType==="mouse"){parado=false;pausa=Date.now()+2000}});
-  rail.addEventListener("touchstart",function(){pausa=Date.now()+8000},{passive:true});
-  sec.addEventListener("focusin",function(){parado=true});sec.addEventListener("focusout",function(){parado=false});
+  /* carrossel contínuo sem fim (como o menu do topo): os cartões se repetem em cópias aria-hidden e a
+     posição fica sempre na cópia do meio; anda devagar e para só com mouse em cima, dedo encostado,
+     teclado (foco visível) ou "Ler mais" aberto; volta a andar sozinho */
+  var VEL=26,setW=0,pos=0,ultimo=0,pausa=0,mouse=false,toque=false,anima=false,ult=0;
+  function fita(){
+    var orig=[].slice.call(rail.children);if(!orig.length)return;
+    rail.querySelectorAll(".av-clone").forEach(function(c){c.remove()});
+    var larg=rail.scrollWidth,copias=Math.max(3,Math.ceil(rail.clientWidth/Math.max(1,larg))+2),prim=null;
+    for(var c=1;c<copias;c++)orig.forEach(function(el){var k=el.cloneNode(true);k.classList.add("av-clone");k.setAttribute("aria-hidden","true");
+      k.querySelectorAll("a,button").forEach(function(b){b.tabIndex=-1});rail.appendChild(k);if(!prim)prim=k});
+    setW=prim.offsetLeft-orig[0].offsetLeft;vai(setW);
+    if(!ult)requestAnimationFrame(quadro);
+  }
+  function vai(x){pos=x;rail.scrollLeft=x;ultimo=rail.scrollLeft}
+  function meio(){if(!setW)return;var x=rail.scrollLeft;if(x<setW*.5)vai(x+setW);else if(x>=setW*1.5)vai(x-setW)}
+  function parado(now){var f=document.activeElement;
+    return calma||mouse||toque||anima||document.hidden||now<pausa||!!rail.querySelector(".av-card.aberto")||(sec.contains(f)&&f.matches(":focus-visible"))}
+  function quadro(now){requestAnimationFrame(quadro);var dt=Math.min(.05,(now-(ult||now))/1000);ult=now;
+    if(!setW||parado(now)){pos=rail.scrollLeft;return}
+    var r=sec.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight){pos=rail.scrollLeft;return}   /* fora da tela: não gasta */
+    pos+=VEL*dt;rail.scrollLeft=pos;ultimo=rail.scrollLeft;meio()}
+  rail.addEventListener("scroll",function(){if(!anima&&Math.abs(rail.scrollLeft-ultimo)>1)pausa=performance.now()+3000;
+    clearTimeout(rail._t);rail._t=setTimeout(function(){if(!anima)meio()},160)},{passive:true});
+  /* setas: um cartão por clique, animado, mantendo a fita sem fim */
+  function passo(dir){var c=rail.querySelector(".av-card");if(!c||!setW)return;meio();
+    var de=rail.scrollLeft,ate=de+dir*(c.getBoundingClientRect().width+12),t0=performance.now(),dur=calma?1:450;anima=true;
+    (function f(now){var k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,3);vai(de+(ate-de)*e);if(k<1)requestAnimationFrame(f);else{anima=false;meio();pausa=performance.now()+2500}})(t0)}
+  sec.addEventListener("pointerenter",function(e){if(e.pointerType==="mouse")mouse=true});
+  sec.addEventListener("pointerleave",function(e){if(e.pointerType==="mouse"){mouse=false;pausa=performance.now()+800}});
+  rail.addEventListener("touchstart",function(){toque=true},{passive:true});
+  rail.addEventListener("touchend",function(){toque=false;pausa=performance.now()+3000},{passive:true});
+  rail.addEventListener("touchcancel",function(){toque=false},{passive:true});
   sec.addEventListener("click",function(e){
-    var b=e.target.closest("[data-av]");if(b){pausa=Date.now()+8000;passo(+b.dataset.av);return}
-    var m=e.target.closest(".av-mais");if(m){var c=m.closest(".av-card");var aberto=c.classList.toggle("aberto");m.textContent=aberto?"Ler menos":"Ler mais";pausa=Date.now()+15000}
+    var b=e.target.closest("[data-av]");if(b){passo(+b.dataset.av);return}
+    var m=e.target.closest(".av-mais");if(m){var c=m.closest(".av-card");var aberto=c.classList.toggle("aberto");m.textContent=aberto?"Ler menos":"Ler mais"}
   });
+  var tR=0;addEventListener("resize",function(){clearTimeout(tR);tR=setTimeout(fita,200)});
 
   /* depois da carga: não disputa com o catálogo */
   function depois(){(window.requestIdleCallback||function(f){setTimeout(f,800)})(function(){desenha(AVALIACOES)},{timeout:3000})}
