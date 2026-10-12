@@ -1040,13 +1040,14 @@ html,body{padding-top:0;padding-bottom:0}
 html,body{background:var(--bg);color:var(--ink)}
 /* fundo: manchas desfocadas (só transform anima) */
 .fundo{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:linear-gradient(160deg,var(--bg) 0%,var(--bg-2) 100%)}
-.fundo i{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;will-change:transform;animation:fundoDeriva 18s ease-in-out infinite alternate}
-.fundo i:nth-child(1){width:520px;height:420px;left:-120px;top:-120px;background:#c08a52}
-.fundo i:nth-child(2){width:460px;height:380px;right:-140px;top:12%;background:#e3ac3d;opacity:.34;animation-duration:22s;animation-delay:-6s}
-.fundo i:nth-child(3){width:560px;height:440px;left:30%;bottom:-220px;background:#7a4a2a;opacity:.26;animation-duration:26s;animation-delay:-11s}
-.fundo i:nth-child(4){width:300px;height:260px;left:55%;top:30%;background:#f2cf7e;opacity:.32;animation-duration:20s;animation-delay:-3s}
+/* manchas = gradientes radiais (mesmo visual do desfoque, sem o custo do filter: leve no celular e na bateria) */
+.fundo i{position:absolute;border-radius:50%;will-change:transform;animation:fundoDeriva 18s ease-in-out infinite alternate;background:radial-gradient(closest-side,var(--c),transparent)}
+.fundo i:nth-child(1){width:720px;height:620px;left:-220px;top:-220px;--c:rgba(192,138,82,.55)}
+.fundo i:nth-child(2){width:660px;height:580px;right:-240px;top:6%;--c:rgba(227,172,61,.40);animation-duration:22s;animation-delay:-6s}
+.fundo i:nth-child(3){width:760px;height:640px;left:24%;bottom:-320px;--c:rgba(122,74,42,.30);animation-duration:26s;animation-delay:-11s}
+.fundo i:nth-child(4){width:500px;height:460px;left:50%;top:24%;--c:rgba(242,207,126,.36);animation-duration:20s;animation-delay:-3s}
 @keyframes fundoDeriva{from{transform:translate3d(-30px,0,0) scale(1)}to{transform:translate3d(60px,40px,0) scale(1.08)}}
-@media (max-width:760px){.fundo i{filter:blur(60px)}.fundo i:nth-child(1){width:340px;height:300px}.fundo i:nth-child(2){width:300px;height:260px}.fundo i:nth-child(3){width:380px;height:320px}.fundo i:nth-child(4){display:none}}
+@media (max-width:760px){.fundo i:nth-child(1){width:460px;height:420px}.fundo i:nth-child(2){width:420px;height:380px}.fundo i:nth-child(3){width:520px;height:460px}.fundo i:nth-child(4){display:none}}
 @media (prefers-reduced-motion:reduce){.fundo i{animation:none}}
 #app{position:relative;z-index:1}
 /* vidro com desfoque: blocos grandes e fixos */
@@ -1061,7 +1062,7 @@ button.stcard:hover,.prow:hover,.dropzone:hover,details.nx-box summary:hover,.ft
 .empty{background:rgba(255,252,247,.45)}
 /* menu lateral e gavetas: vidro mais opaco (leitura) */
 .side{background:rgba(250,246,239,.78);border-right-color:var(--line);-webkit-backdrop-filter:var(--vidro-blur);backdrop-filter:var(--vidro-blur)}
-.drawer{background:var(--side);border-left-color:var(--line);-webkit-backdrop-filter:var(--vidro-blur);backdrop-filter:var(--vidro-blur)}
+.drawer{background:rgba(250,246,239,.97);border-left-color:var(--line)}   /* sem desfoque: quase opaca, e a animação de entrar fica leve no celular */
 .drawer-h{background:rgba(250,246,239,.96);border-bottom-color:var(--line)}
 .side-scrim,.veil{background:rgba(43,26,16,.32)}
 .topbar{background:rgba(246,241,233,.74);border-bottom-color:var(--line)}
