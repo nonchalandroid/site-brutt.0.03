@@ -661,7 +661,7 @@ details.nx-box[open]{padding-bottom:12px}
   .gr,.ft-card,.ft-sk,.ft-chip.busy,.gr-ph.subindo::after{animation:none}
 }
 
-/* ---------- alerta de pedido novo (pago e ainda não aberto): pisca em vermelho até alguém clicar ---------- */
+/* ---------- alerta de pedido novo (pago e ainda não aberto): pisca (cor no bloco ALERTAS: verde) até alguém clicar ---------- */
 @keyframes piscaNovo{0%,100%{opacity:1}50%{opacity:.15}}
 .nav-b.novo{background:var(--danger);color:#fff;border-color:var(--danger);animation:piscaNovo 1s ease-in-out infinite}
 .ped-card.novo{position:relative;border-color:var(--danger);box-shadow:inset 3px 0 0 var(--danger);cursor:pointer}
@@ -860,6 +860,138 @@ html,body{overflow-x:clip}
 .drawer .btn-gold.full,.drawer .btn-danger.full,.drawer .full{width:auto;min-width:140px;padding-left:22px;padding-right:22px}
 .ped-avisa{display:inline-flex;width:auto;padding:0 16px;min-height:36px;font-size:13px}
 .ped-avisa .i{width:16px;height:16px}
+/* =====================================================================
+   PALETA DO PAINEL (aprovada em 12/10/2026): parte das cores da logo (ouro, bronze, café)
+   e explora tons vizinhos, claros e escuros, cada um com um papel fixo:
+   ouro = ação principal, item ativo, títulos e R$ · bronze = códigos e quantidades ·
+   bordô = pedido novo e ações destrutivas · petróleo = botão secundário, links, foco e etapas feitas ·
+   índigo = administrador e "a concluir" · ameixa = clientes e estornos · sálvia = bom/pago/atendente ·
+   terracota = aviso (estoque baixo, Pix sem pagar). WhatsApp segue #25D366.
+   ===================================================================== */
+:root{
+  --bg:#120c09; --side:#150e0a; --surface:#1c140f; --surface-2:#261b14; --line:#35271d;
+  --creme:#f2e3c6; --areia:#c9ae8a; --apagado:#8f7a62;
+  --ouro:#e3ac3d; --ouro-cl:#f2cf7e; --ouro-es:#a87a1c;
+  --bronze:#b07a3a; --bronze-cl:#dcae74; --bronze-es:#6e4a20;
+  --bordo:#8a3328; --bordo-cl:#e08a7c; --bordo-es:#3a1414;
+  --petroleo:#1f6f7a; --petroleo-cl:#7fd0d8; --petroleo-es:#0f3a40;
+  --indigo:#3f4fb8; --indigo-cl:#a9b4ff; --indigo-es:#1d2459;
+  --ameixa:#7a3d7b; --ameixa-cl:#d79ad8; --ameixa-es:#351a36;
+  --salvia:#8fb873; --salvia-cl:#b5d49b; --salvia-es:#2d3d22;
+  --terracota:#c9603a; --terracota-cl:#ec8b5e; --terracota-es:#4a2213;
+  --ink:var(--creme); --muted:var(--areia); --muted-2:var(--apagado);
+  --accent:var(--ouro); --accent-2:var(--ouro-es); --accent-soft:rgba(227,172,61,.11);
+  --ok:var(--salvia-cl); --ok-soft:rgba(143,184,115,.14);
+  --warn:var(--terracota-cl); --warn-soft:rgba(201,96,58,.16);
+  --danger:var(--bordo-cl); --danger-soft:rgba(138,51,40,.28);
+  --info:var(--petroleo-cl); --info-soft:rgba(31,111,122,.22);
+}
+/* textos de marca */
+.section h3,.sm-log-h h3{color:var(--ouro-cl)}
+.ped-h code,.ov-ped-r .n code,.cli-card .h code,.gr-meta code,.eq-mail,.bulk-count,.stock-now .n{color:var(--bronze-cl)}
+/* menu lateral: cada grupo com o seu tom; item ativo em ouro com barrinha */
+.side-g.g-operacao>span{color:var(--petroleo-cl)}
+.side-g.g-gestao>span{color:var(--ameixa-cl)}
+.side-g.g-planilhas>span{color:var(--salvia-cl)}
+.nav-i.on{box-shadow:inset 3px 0 0 var(--ouro)}
+.nav-b{background:var(--bordo);color:var(--creme);border-color:var(--bordo)}
+/* botões */
+.btn-gold:hover:not(:disabled){background:var(--ouro-cl)}
+.btn-ghost:hover:not(:disabled){border-color:var(--petroleo);color:var(--petroleo-cl)}
+.btn-danger{color:var(--bordo-cl);border-color:var(--bordo-cl)}
+.btn-danger:hover:not(:disabled){background:var(--bordo-es)}
+.btn-sec{background:var(--petroleo);color:var(--creme)}
+.btn-sec:hover:not(:disabled){background:#268391}
+.btn-indigo{background:var(--indigo);color:#fff}
+.btn-indigo:hover:not(:disabled){background:#4b5cc9}
+.btn-salvia{background:var(--salvia);color:#14200d}
+.btn-salvia:hover:not(:disabled){background:var(--salvia-cl)}
+#smDesfazLote,[data-sm-desfaz],#hrDesfazer{color:var(--bordo-cl);border-color:rgba(224,138,124,.45)}
+/* campos e links */
+input:focus,select:focus,textarea:focus{border-color:var(--petroleo-cl);box-shadow:0 0 0 3px rgba(127,208,216,.16)}
+.cli-card:focus-visible,.eq-card:focus-visible{border-color:var(--petroleo-cl);box-shadow:0 0 0 3px rgba(127,208,216,.16)}
+.ped-ver{color:var(--petroleo-cl)}
+/* visão geral: cada indicador com o seu tom (ícone e filete); o número segue o estado (bom/alerta/ruim) */
+.ov-kpi{position:relative;overflow:hidden}
+.ov-kpi::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--kc,transparent);opacity:.9}
+.ov-kpi .k .i{color:var(--kc,var(--muted))}
+.ov-kpi.k-bag{--kc:var(--indigo-cl)}
+.ov-kpi.k-alert{--kc:var(--terracota-cl)}
+.ov-kpi.k-pkg{--kc:var(--bronze-cl)}
+.ov-kpi.k-sync{--kc:var(--petroleo-cl)}
+.ov-kpi.k-store{--kc:var(--salvia-cl)}
+.ov-kpi.acao .v{color:var(--indigo-cl)}
+.ov-kpi.bom{border-color:rgba(181,212,155,.35)}
+.ov-kpi.alerta{border-color:rgba(236,139,94,.38)}
+.ov-kpi.ruim,.ov-kpi.novo{border-color:rgba(224,138,124,.45)}
+/* etiquetas de status */
+.st-pago{color:var(--salvia-cl);background:var(--ok-soft);border-color:rgba(181,212,155,.38)}
+.st-concluido{color:var(--salvia-cl);background:var(--salvia-es);border-color:rgba(181,212,155,.3)}
+.st-aguardando_pagamento{color:var(--terracota-cl);background:var(--warn-soft);border-color:rgba(236,139,94,.38)}
+.st-recusado{color:var(--bordo-cl);background:var(--danger-soft);border-color:rgba(224,138,124,.38)}
+.st-estornado{color:var(--ameixa-cl);background:var(--ameixa-es);border-color:rgba(215,154,216,.35)}
+.st-reserva{color:var(--petroleo-cl);background:var(--info-soft);border-color:rgba(127,208,216,.35)}
+.ped-novo{background:var(--bordo);color:var(--creme)}
+.ped-novo-dica{color:var(--bordo-cl)}
+.ped-pix{background:var(--terracota);color:#1d0b04}
+.ped-card.pixnovo,.ped-card.pixnovo::after{border-color:var(--terracota-cl)}
+.ped-linha span.ok{color:var(--petroleo-cl);background:var(--info-soft);border-color:rgba(127,208,216,.4)}
+.cli-tag.ok{color:var(--salvia-cl);border-color:rgba(181,212,155,.38);background:var(--ok-soft)}
+.cli-tag.inc{color:var(--terracota-cl);border-color:rgba(236,139,94,.38);background:var(--warn-soft)}
+.cli-tag.ac{color:var(--ameixa-cl);border-color:rgba(215,154,216,.38);background:var(--ameixa-es)}
+.eq-pp.eq-admin b,.eq-tag.eq-admin{color:var(--indigo-cl)}
+.eq-tag.eq-admin{border-color:rgba(169,180,255,.38);background:var(--indigo-es)}
+.eq-pp.eq-atendente b,.eq-tag.eq-atendente{color:var(--salvia-cl)}
+.eq-tag.eq-atendente{border-color:rgba(181,212,155,.38);background:var(--salvia-es)}
+.ntf-ok{border-color:rgba(181,212,155,.38)}
+.ntf-bad{border-color:rgba(224,138,124,.45)}
+/* =====================================================================
+   ALERTAS (pedido do dono, 12/10): verde = pedido PAGO (✅), vermelho = Pix gerado, aguardando (⚠️).
+   Os dois piscam (só opacidade) até alguém da equipe tocar no pedido.
+   ===================================================================== */
+:root{--al-pago:#3ddc84; --al-pago-soft:rgba(61,220,132,.16); --al-pago-ink:#04230f;
+  --al-pix:#ff4d3d; --al-pix-soft:rgba(255,77,61,.16); --al-pix-ink:#2b0603}
+.nav-b.novo{background:var(--al-pago);color:var(--al-pago-ink);border-color:var(--al-pago)}
+.ped-card.novo{border-color:var(--al-pago);box-shadow:inset 3px 0 0 var(--al-pago)}
+.ped-card.novo::after{border-color:var(--al-pago);background:var(--al-pago-soft)}
+.ped-novo{background:var(--al-pago);color:var(--al-pago-ink)}
+.ped-novo-dica{color:var(--al-pago)}
+.ov-kpi.novo{border-color:var(--al-pago)}.ov-kpi.novo .v{color:var(--al-pago)}
+.ov-kpi.novo::after{border-color:var(--al-pago)}
+.ov-item.novo{border-color:var(--al-pago)}.ov-item.novo .ic{background:var(--al-pago-soft);color:var(--al-pago)}
+.ped-card.pixnovo{border-color:var(--al-pix)}
+.ped-card.pixnovo::after{border-color:var(--al-pix)}
+.ped-pix{background:var(--al-pix);color:var(--al-pix-ink)}
+
+/* =====================================================================
+   CELULAR E TABLET (até 1023px): mesma arquitetura da loja.
+   Barra do topo compacta (☰ · logo · nome da tela · ver loja), sem repetir o título da tela,
+   e o recuo do entalhe do iPhone aplicado UMA vez só (antes somava html + body + barra).
+   ===================================================================== */
+html,body{padding-top:0;padding-bottom:0}
+#app{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+.top-logo{display:none}
+@media (max-width:1023px){
+  :root{--top-h:54px}
+  .topbar{gap:10px}
+  .top-logo{display:block;width:30px;height:30px;border-radius:8px;flex:none}
+  .top-t small{display:none}
+  .top-t b{font-size:16px}
+  .top-menu{width:40px;min-height:40px}
+  .top-link{min-height:40px;min-width:40px;justify-content:center}
+  .pg{padding-top:14px}
+  .pg-t,.pg h2.pg-t{display:none}
+  .pg-h{margin-bottom:12px}
+  .ped-filtros,.chips{margin-inline:-16px;padding-inline:16px;scroll-padding-inline:16px}
+}
+@media (max-width:560px){
+  .gr{grid-template-columns:56px minmax(0,1fr);grid-template-areas:"ph id" "stk stk" "pr pr" "act act" "dsc dsc";padding:12px}
+  .gr-sel{position:absolute;top:5px;left:5px;z-index:2}
+  .gr-sel input{background:var(--bg);box-shadow:0 0 0 2px var(--bg)}
+}
+/* indicador que sobra sozinho na última linha ocupa a largura toda (sem buraco ao lado) */
+@media (min-width:560px) and (max-width:1023px){#ovKpis{grid-template-columns:repeat(6,minmax(0,1fr))}#ovKpis>*{grid-column:span 2}#ovKpis>:nth-child(n+4){grid-column:span 3}}
+@media (max-width:559px){#ovKpis>:last-child:nth-child(odd){grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -947,7 +1079,7 @@ const grupoDe = r => (NAV.find(([, itens]) => itens.some(i => i[0] === r)) || ["
 function abasHTML(){
   const atual = rotaAtual();
   const nav = NAV.map(([g, itens]) => [g, itens.filter(i => podeRota(i[0]))]).filter(([, itens]) => itens.length);
-  return `<nav class="side-nav" aria-label="Seções do painel">${nav.map(([g, itens]) => `<div class="side-g"><span>${g}</span>${itens.map(([r, t, i, badge]) =>
+  return `<nav class="side-nav" aria-label="Seções do painel">${nav.map(([g, itens]) => `<div class="side-g g-${g.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()}"><span>${g}</span>${itens.map(([r, t, i, badge]) =>
     `<button type="button" class="nav-i${atual===r?" on":""}" data-tab="${r}"${atual===r?' aria-current="page"':""}>${ic(i)}<span class="lbl">${t}</span>${badge?`<span class="nav-b" data-badge="${badge}" hidden></span>`:""}</button>`).join("")}</div>`).join("")}</nav>`;
 }
 function topbarHTML(titulo){
@@ -964,7 +1096,7 @@ function topbarHTML(titulo){
     <div class="side-scrim" id="sideScrim"></div>
     <header class="topbar">
       <button type="button" class="top-menu" id="sideAbre" aria-label="Abrir menu" aria-controls="side" aria-expanded="false">${ic("menu")}</button>
-      <div class="top-t"><small>${esc(grupoDe(r) || "Painel")}</small><b>${esc(nome)}</b></div>
+      <img src="../favicon/apple-touch-icon.png" alt="" class="top-logo"><div class="top-t"><small>${esc(grupoDe(r) || "Painel")}</small><b>${esc(nome)}</b></div>
       <div class="top-r"><a class="top-link" href="/" target="_blank" rel="noopener" title="Abrir a loja em outra aba">${ic("ext")}<span>Ver loja</span></a></div>
     </header>`;
 }
@@ -1008,17 +1140,17 @@ function contadoresNav(){
 }
 
 /* ---------------- alerta de pedido novo ----------------
-   Pedido PAGO que ninguém abriu ainda (visto_em vazio) pisca em vermelho no menu, na visão geral e na lista,
+   Pedido PAGO que ninguém abriu ainda (visto_em vazio) pisca em verde no menu, na visão geral e na lista,
    até alguém da equipe clicar nele ou concluir. A cada 30 s o painel confere se chegou pedido novo:
    toca um aviso curto, mostra o número no título da aba e atualiza a tela de pedidos/visão geral. */
 let novosAntes = null, vigiaTimer = null, tituloBase = document.title;
 let pixAntes = null;
 function vigiaNovos(n, pix){
   pix = pix || 0;
-  document.title = n ? `(${n}) 🔴 Pedido novo · ${tituloBase}` : pix ? `(${pix}) 🟡 Pix gerado · ${tituloBase}` : tituloBase;
+  document.title = n ? `(${n}) ✅ Pedido pago · ${tituloBase}` : pix ? `(${pix}) ⚠️ Pix gerado · ${tituloBase}` : tituloBase;
   const novoPago = novosAntes !== null && n > novosAntes, novoPix = pixAntes !== null && pix > pixAntes;
-  if(novoPago){ toast(n - novosAntes > 1 ? `🔴 ${n - novosAntes} pedidos novos pagos!` : "🔴 Pedido novo pago no site!"); bipe(); }
-  else if(novoPix){ toast("🟡 Um cliente gerou o Pix. Aguardando o pagamento."); bipe(true); }
+  if(novoPago){ toast(n - novosAntes > 1 ? `✅ ${n - novosAntes} pedidos novos pagos!` : "✅ Pedido novo pago no site!"); bipe(); }
+  else if(novoPix){ toast("⚠️ Um cliente gerou o Pix. Aguardando o pagamento."); bipe(true); }
   if(novoPago || novoPix){ const r = rotaAtual(); if(r === "pedidos") renderPedidos(); else if(r === "visao") renderVisao(); }
   novosAntes = n; pixAntes = pix;
 }
@@ -1122,7 +1254,7 @@ async function desenhaNotif(){
   }[st];
   box.innerHTML = `<div class="ntf ntf-${txt[0]}"><span class="ntf-ic">${ic("bell")}</span><span class="ntf-tx"><b>${txt[1]}</b><small>${txt[2]}</small></span>
     <span class="ntf-bt">${st === "ativo" ? `<button class="btn-ghost btn-sm" id="ntfTeste">Testar</button><button class="btn-ghost btn-sm" id="ntfDes">Desligar</button>`
-      : st === "inativo" || st === "bloqueado" ? `<button class="btn-gold btn-sm" id="ntfAtv">Ativar notificações</button>` : ""}</span></div>`;
+      : st === "inativo" || st === "bloqueado" ? `<button class="btn-salvia btn-sm" id="ntfAtv">Ativar notificações</button>` : ""}</span></div>`;
   const acao = (id, fn, ok) => { const b = $("#" + id); if(b) b.onclick = async () => { b.disabled = true;
     try{ await fn(); if(ok) toast(ok); }catch(e){ toast(e.message || String(e)); } b.disabled = false; desenhaNotif(); }; };
   acao("ntfAtv", async () => { await ntfAtivar(); await ntfTestar().catch(() => {}); }, "Pronto! Mandei uma notificação de teste.");
@@ -1622,7 +1754,7 @@ async function openProduct(id){
       <h3>✨ Sommelier: ficha do produto</h3>
       <p class="t" id="somResumo" style="font-size:12.5px;line-height:1.5;margin:0 0 8px"></p>
       <label class="som-pesq"><input type="checkbox" id="somPesq"> Pesquisar na internet (mais preciso; um pouco mais lento)</label>
-      <button class="btn-gold" id="somBtn" style="width:100%">✨ Analisar com Sommelier</button>
+      <button class="btn-sec" id="somBtn" style="width:100%">✨ Analisar com Sommelier</button>
       <div id="somOut"></div><div id="somFila"></div>
     </div>
   `);
@@ -1878,7 +2010,7 @@ function openNewProduct(){
       <h3>✨ Sommelier IA</h3>
       <p class="t" style="font-size:12px;color:var(--muted);margin:0 0 8px;line-height:1.45">Escolha a categoria, digite o nome e clique abaixo: ele monta a descrição (até 170 caracteres), a ficha e, nas essências, as barrinhas de sabor (cítrico, tropical, adocicado e mentolado). Você revisa e edita tudo antes de cadastrar.</p>
       <div class="field"><label>Notas pra IA (opcional)</label><textarea id="nNotas" rows="2" placeholder="Ex.: sabor de melancia com toque de menta, bem refrescante"></textarea></div>
-      <button class="btn-gold" id="nGerarBtn" style="width:100%">✨ Gerar ficha e perfil</button>
+      <button class="btn-sec" id="nGerarBtn" style="width:100%">✨ Gerar ficha e perfil</button>
       <div id="nSommelierPreview" style="margin-top:10px"></div>
     </div>
 
@@ -3116,7 +3248,7 @@ async function renderPedidos(){
   app.innerHTML = `${topbarHTML("Pedidos online")}
     <div class="pg">
       <h2 class="pg-t">Pedidos online</h2>
-      <p class="pg-d" style="margin-bottom:16px">Pedidos pagos pelo site (Mercado Pago). Pedido <b style="color:var(--danger)">pago pisca em vermelho</b> e <b style="color:var(--warn)">Pix gerado (ainda não pago) em laranja</b>, até alguém tocar nele. Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp. Mostra os 60 mais recentes.</p>
+      <p class="pg-d" style="margin-bottom:16px">Pedidos pagos pelo site (Mercado Pago). Pedido <b style="color:var(--al-pago)">pago pisca em verde ✅</b> e <b style="color:var(--al-pix)">Pix gerado (ainda não pago) em vermelho ⚠️</b>, até alguém tocar nele. Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp. Mostra os 60 mais recentes.</p>
       <div id="ntfBox"></div>
       <div class="ped-filtros" id="pedFiltros" role="group" aria-label="Filtrar pedidos" hidden></div>
       <div id="pedLista"><div class="loading">Carregando…</div></div>
@@ -3147,7 +3279,7 @@ async function renderPedidos(){
       : st === "cancelado" && /cancelado pela equipe/.test(p.mp_status_detail || "") ? esc(p.mp_status_detail.replace(/^c/, "C")) + "."
       : p.status === "aguardando_pagamento" && !pedCancelavel(p) ? "Pix em aberto: se o cliente não pagar, ele vence em 30 min e o pedido pode ser cancelado." : "";
     return `<article class="ped-card${novo ? " novo" : pixNovo ? " pixnovo" : p.status === "pago" ? " acao" : ["estornado","cancelado","expirado","recusado"].includes(st) ? " apagado" : ""}" data-ped="${esc(p.id)}">
-      <div class="ped-h"><b>${novo ? `<span class="ped-novo">Novo</span>` : pixNovo ? `<span class="ped-pix">Pix gerado</span>` : ""}<code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</b>
+      <div class="ped-h"><b>${novo ? `<span class="ped-novo">✓ Pago</span>` : pixNovo ? `<span class="ped-pix">Pix gerado</span>` : ""}<code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</b>
         <span><span class="st st-${esc(st)}">${PED_ROT[st] || esc(st)}</span>${p.reserva ? ' <span class="st st-reserva">reserva</span>' : ""}</span></div>
       <div class="ped-meta"><span>${fmtQuando(p.created_at)}</span><span>${PED_MET[p.metodo] || "—"}</span><a href="https://wa.me/${esc(p.cliente_whats)}" target="_blank" rel="noopener">WhatsApp ${esc(p.cliente_whats)}</a></div>
       <div class="ped-itens">${(p.itens||[]).map(i => `<span><b>${esc(i.qtd)}×</b>${esc(i.nome)}</span>`).join("")}</div>
@@ -3256,7 +3388,7 @@ async function renderVisao(){
   const u = !nex.error && nex.data && nex.data[0];
   const nexVelho = u && (Date.now() - new Date(u.ran_at).getTime()) > 45*60000, nexRuim = !!u && (!u.ok || nexVelho);
   const num = n => n == null ? "—" : n;
-  const kpi = (rota, icone, k, v, d, cls, txt) => `<button class="ov-kpi ${cls||""}" data-ir="${rota}">
+  const kpi = (rota, icone, k, v, d, cls, txt) => `<button class="ov-kpi k-${icone} ${cls||""}" data-ir="${rota}">
       <span class="k">${ic(icone)}${k}</span><span class="v${txt?" txt":""}">${v}</span><span class="d">${d}</span></button>`;
   $("#ovKpis").innerHTML =
     kpi("pedidos", "bag", "Pedidos a concluir", num(nPago), nPago == null ? "não disponível" : nNovo ? `${nNovo} novo${nNovo > 1 ? "s" : ""}: abra para parar o alerta` : `pagos, esperando conclusão${nAguard ? ` · ${nAguard} aguardando pagamento` : ""}`, nNovo ? "novo" : nPago ? "acao" : "") +
@@ -3686,7 +3818,7 @@ async function renderEquipe(){
   app.innerHTML = `${topbarHTML("Equipe")}
     <div class="pg">
       <div class="pg-h"><div><h2 class="pg-t">Equipe</h2><p class="pg-d">Quem entra no painel e o que cada um pode fazer. Ninguém é apagado: quem sai da loja é <b>desativado</b> e perde o acesso na hora.</p></div>
-        <button class="btn-gold btn-sm" id="eqNovo">${ic("plus")} Adicionar pessoa</button></div>
+        <button class="btn-indigo btn-sm" id="eqNovo">${ic("plus")} Adicionar pessoa</button></div>
       <div class="eq-papeis">${["owner","admin","atendente"].map(p => `<div class="eq-pp eq-${p}"><b>${PAPEL[p]}</b><span>${EQ_PODE[p]}</span></div>`).join("")}</div>
       <div id="eqLista"><div class="loading">Carregando…</div></div>
     </div>`;
@@ -3742,7 +3874,7 @@ function eqAbrirNovo(){
     try{
       const r = await equipeChamar("criar", { nome, email, papel, senha });
       closeDrawer();
-      toast(r.ja_tinha_login ? `${nome} já tinha login: entra com a senha que já usa.` : `${nome} adicionado. Login: ${email}`);
+      toast(r.ja_tinha_login ? `${nome} já tinha login: entra com a senha que já usa (se não lembrar, abra o nome e use “Definir nova senha”).` : `${nome} adicionado. Login: ${email}`);
       await eqCarregar();
     }catch(e){ toast(e.message); }
     finally{ b.disabled = false; b.classList.remove("is-busy"); }

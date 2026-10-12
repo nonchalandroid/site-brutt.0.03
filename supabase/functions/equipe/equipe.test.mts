@@ -33,7 +33,7 @@ const resp = (b: unknown, status = 200) => new Response(JSON.stringify(b), { sta
     const id = `00000000-0000-4000-8000-0000000001${String(users.length).padStart(2, "0")}`; users.push({ id, email: corpo.email, password: corpo.password }); return resp({ id });
   }
   const m = u.pathname.match(/^\/auth\/v1\/admin\/users\/(.+)$/);
-  if (m && init.method === "PUT") { assert.equal(auth, "srv"); const x = users.find(y => y.id === m[1]); if (!x) return resp({}, 404); x.password = corpo.password; return resp({ id: x.id }); }
+  if (m && init.method === "PUT") { assert.equal(auth, "srv"); const x = users.find(y => y.id === m[1]); if (!x) return resp({}, 404); if ("password" in corpo) x.password = corpo.password; if (corpo.email_confirm) x.confirmado = true; return resp({ id: x.id }); }
   if (u.pathname === "/rest/v1/staff" && init.method === "POST") {
     assert.equal(auth, "srv"); assert.match(init.headers.Prefer, /merge-duplicates/);
     const i = staff.findIndex(s => s.user_id === corpo.user_id); if (i >= 0) staff[i] = { ...staff[i], ...corpo }; else staff.push(corpo); return resp([corpo], 201);
@@ -82,10 +82,11 @@ await t("validações: e-mail, nome, papel, senha fraca", async () => {
   assert.match((await chama("criar", "tk-dono", { email: "x@y.com", nome: "Xx", papel: "atendente", senha: "123" })).j.erro, /8 caracteres/);
   assert.equal(users.length, 4);
 });
-await t("e-mail que já tem login: só entra na equipe (senha dele não muda)", async () => {
+await t("e-mail que já tem login: entra na equipe, e-mail confirmado (senha dele não muda)", async () => {
   const r = await chama("criar", "tk-dono", { email: "antigo@x.com", nome: "Antigo", papel: "atendente", senha: "outra2026" });
   assert.equal(r.status, 200); assert.equal(r.j.ja_tinha_login, true);
-  assert.equal(users.find(x => x.email === "antigo@x.com")!.password, "velha123"); assert.ok(!chamadas.some(c => c.startsWith("POST /auth/v1/admin")));
+  const u = users.find(x => x.email === "antigo@x.com")!;
+  assert.equal(u.password, "velha123"); assert.equal(u.confirmado, true); assert.ok(!chamadas.some(c => c.startsWith("POST /auth/v1/admin")));
 });
 await t("já na equipe → 409 (ativo) / pede para reativar (desativado)", async () => {
   assert.equal((await chama("criar", "tk-dono", { email: "atd@x.com", nome: "Atd", papel: "atendente", senha: "brutt2026" })).status, 409);
@@ -93,7 +94,7 @@ await t("já na equipe → 409 (ativo) / pede para reativar (desativado)", async
   assert.match((await chama("criar", "tk-dono", { email: "atd@x.com", nome: "Atd", papel: "atendente", senha: "brutt2026" })).j.erro, /Reativar/);
 });
 await t("trocar senha: dono troca de admin e atendente; nunca a do dono por outro", async () => {
-  assert.equal((await chama("senha", "tk-dono", { user_id: ATD, senha: "nova2026x" })).status, 200); assert.equal(users[2].password, "nova2026x");
+  assert.equal((await chama("senha", "tk-dono", { user_id: ATD, senha: "nova2026x" })).status, 200); assert.equal(users[2].password, "nova2026x"); assert.equal(users[2].confirmado, true);
   assert.equal((await chama("senha", "tk-dono", { user_id: ADM, senha: "nova2026y" })).status, 200);
   assert.equal((await chama("senha", "tk-adm", { user_id: DONO, senha: "nova2026z" })).status, 403); assert.equal(users[0].password, "x");
 });
