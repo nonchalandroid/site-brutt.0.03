@@ -199,7 +199,7 @@ function mostrarPix(px){if(window.SOM)SOM.toca("pix");
     +'<p class="pix-t">No app do banco: <b>Pix → Ler QR Code</b> ou <b>Pix copia e cola</b>. O código vale 30 min e é só deste pedido.</p>'
     +'<div class="mp-wait">'+spin()+'<b>Aguardando o pagamento…</b><span id="pixTempo"></span></div>'+selosHTML()+'</div>';
   tempoPix(px.expira_em);
-  if(window.ACOMP&&pedido)ACOMP.guarda(pedido.pedido_id,pedido.numero,msgLojaPago(pedido.numero));   /* atalho "Acompanhar" + mensagem completa do pedido guardada JÁ AQUI: o celular pode recarregar a página enquanto o cliente paga no app do banco */
+  if(window.ACOMP&&pedido)ACOMP.guarda(pedido.pedido_id,pedido.numero,msgLojaPedido(pedido.numero));   /* atalho "Acompanhar" + mensagem completa do pedido guardada JÁ AQUI: o celular pode recarregar a página enquanto o cliente paga no app do banco */
   acompanhar();
 }
 function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado!";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código";b.classList.remove("done")}},2500)})}
@@ -227,20 +227,36 @@ function acompanhar(){
 }
 function aviso(t,s){if(window.SOM)SOM.toca("falha");var a=$("#mpArea");if(a)a.innerHTML='<div class="mp-wait off"><b>'+esc(t)+'</b><span>'+esc(s)+'</span><button type="button" class="go" data-mp-tentar>Gerar novo Pix</button></div>'}
 /* Mensagem do pedido PAGO para o WhatsApp da loja (o cliente toca em enviar). Valores vindos do servidor. */
-function msgLojaPago(numero){
-  var p=pedido||{},c=_ctx||{},L=[];
-  L.push("✅ *PEDIDO PAGO NO SITE #"+numero+"*"+(c.reserva?" (reserva: loja fechada)":""));
-  L.push("👤 "+(c.nome||"Cliente")+(whatsVal?" · WhatsApp "+mascara(whatsVal):""));
-  L.push("");L.push("🛒 *Itens:*");
-  var itens=(p.itens&&p.itens.length)?p.itens:Object.keys(cart).filter(function(id){return byId[id]}).map(function(id){return{qtd:cart[id],nome:byId[id].n,subtotal:byId[id].price*cart[id]}});
-  itens.forEach(function(i){L.push("• "+i.qtd+"x "+i.nome+" — "+R(Number(i.subtotal)||0))});
-  L.push("");
-  if(ship==="entrega"&&entrega&&entrega.endereco){var e=entrega.endereco;L.push("🚚 Entrega pela loja: "+e.rua+", "+e.numero+(e.complemento?" ("+e.complemento+")":"")+" — "+[e.bairro,e.cidade].filter(Boolean).join(", ")+(p.km!=null?" · ≈ "+String(p.km).replace(".",",")+" km":""));L.push("Taxa de entrega: "+R(Number(p.taxa_entrega)||0))}
-  else L.push("🛵 Vou solicitar a entrega por conta própria (Uber Flash ou 99). Frete da loja R$ 0,00.");
-  L.push("💰 *Total pago no Pix: "+R(Number(p.total)||0)+"*");
-  L.push("Pagamento confirmado pelo Mercado Pago no site.");
-  return L.join("\n");
+/* Mensagem do pedido para o WhatsApp da loja: o MESMO formato do pedido pelo WhatsApp (montarMsg da loja), para a equipe
+   saber tudo sem abrir o painel. A linha do pagamento fica como {PAGAMENTO} e é preenchida na hora do envio com a situação
+   do Pix (pago / aguardando / vencido) por MPX.pagamentoLinha() em js/acompanhar.js. */
+var PAG_TOKEN="{PAGAMENTO}";
+function pagamentoLinha(st){
+  var s={pago:"✅ PAGO",concluido:"✅ PAGO",aguardando_pagamento:"⏳ Pix gerado, aguardando pagamento",expirado:"⌛ Pix vencido (não foi pago)",recusado:"❌ pagamento recusado",cancelado:"cancelado"}[st]||"⏳ aguardando pagamento";
+  return "💳 *Pagamento:* Pix (Mercado Pago) — "+s;
 }
+function msgLojaPedido(numero){
+  var p=pedido||{},c=_ctx||{},r=c.reserva&&typeof c.reserva==="object"?c.reserva:(c.reserva?{nenhum:true}:null);
+  var itens=(p.itens&&p.itens.length)?p.itens:Object.keys(cart).filter(function(id){return byId[id]}).map(function(id){return{qtd:cart[id],nome:byId[id].n,subtotal:byId[id].price*cart[id]}});
+  var envio;
+  if(ship==="entrega"&&entrega&&entrega.endereco){
+    var e=entrega.endereco,cepF=(e.cep||"").length===8?e.cep.slice(0,5)+"-"+e.cep.slice(5):(e.cep||"");
+    var mapa=[e.rua+", "+e.numero,e.bairro,e.cidade+" - "+e.uf,cepF].filter(Boolean).join(", ");
+    var km=p.km!=null?p.km:entrega.distKm;
+    envio="Entrega pela loja — "+e.rua+", "+e.numero+(e.complemento?" ("+e.complemento+")":"")+", "+[e.bairro,(e.cidade||"")+(e.uf?"/"+e.uf:"")].filter(Boolean).join(", ")+"."+(e.cep?" CEP "+e.cep+".":"")
+      +(km!=null?" Distância ≈ "+String(km).replace(".",",")+" km.":"")+" Taxa de entrega: "+R(Number(p.taxa_entrega)||0)+" (já incluída no total)."
+      +"\n🗺️ Localização: https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(mapa).replace(/%20/g,"+");
+  }else envio="Vou solicitar a entrega por conta própria (Uber Flash ou 99) — frete da loja R$ 0,00. Eu sou o destinatário, a Tabacaria Brutt é o ponto de coleta.";
+  return [r?"📌 RESERVA DE PEDIDO #"+numero:"📦 NOVO PEDIDO #"+numero,
+    "👤 CLIENTE: *"+(c.nome||"Cliente")+"*"+(whatsVal?"\n📱 WhatsApp: "+mascara(whatsVal):""),
+    r?"⏰ *Loja fechada quando o cliente pediu.* Ele aguarda contato da equipe assim que abrirmos"+(r.nenhum?"":" ("+r.quando+" às "+r.hora+")")+".":null,
+    "----------","🛒 ITENS DO PEDIDO",
+    itens.map(function(i){return"• "+i.qtd+"x "+i.nome+" — "+R(Number(i.subtotal)||0)}).join("\n"),
+    "----------","💰 *Total:* "+R(Number(p.total)||0),
+    "🚚 *Recebimento:* "+envio,
+    PAG_TOKEN].filter(function(x){return x!==null}).join("\n");
+}
+function msgLojaPago(numero){return msgLojaPedido(numero).replace(PAG_TOKEN,pagamentoLinha("pago"))}
 function sucesso(numero){if(window.SOM)SOM.toca("pago");
   clearTimeout(poll);clearInterval(_tempo);desmontar();
   var reserva=_ctx&&_ctx.reserva,txtLoja=pedido?msgLojaPago(numero):"",idPed=pedido&&pedido.pedido_id;
@@ -280,5 +296,5 @@ function deIA(co){
 }
 function voltar(){clearTimeout(poll);clearInterval(_tempo);desmontar();drawCart("checkout")}
 
-return{deIA:deIA,ativo:ativo,emailOk:emailOk,whatsOk:whatsOk,whatsHTML:whatsHTML,clienteHTML:clienteHTML,pagamentoHTML:pagamentoHTML,iniciar:iniciar,selosHTML:selosHTML};
+return{deIA:deIA,ativo:ativo,pagamentoLinha:pagamentoLinha,emailOk:emailOk,whatsOk:whatsOk,whatsHTML:whatsHTML,clienteHTML:clienteHTML,pagamentoHTML:pagamentoHTML,iniciar:iniciar,selosHTML:selosHTML};
 })();

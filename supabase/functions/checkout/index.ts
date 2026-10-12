@@ -472,7 +472,7 @@ export function acompDe(ped: any) {
   return { numero: ped.numero, status: ped.status, estornado: ped.status === "cancelado" && ped.mp_status === "refunded",
     tipo: e.tipo === "entrega" ? "entrega" : "cliente", bairro: e.endereco?.bairro || null, reserva: !!ped.reserva,
     nome: primeiroNome(ped.cliente_nome), total: ped.total, taxa_entrega: ped.taxa_entrega,
-    itens: (ped.itens || []).map((i: any) => ({ qtd: i.qtd, nome: i.nome })),
+    itens: (ped.itens || []).map((i: any) => ({ qtd: i.qtd, nome: i.nome, subtotal: i.subtotal })),
     criado: ped.created_at ?? null, pago: ped.pago_em ?? null, saiu: ped.saiu_em ?? null, concluido: ped.concluido_em ?? null, expira: ped.pix_expira_em ?? null };
 }
 async function ehStaff(req: Request) {
