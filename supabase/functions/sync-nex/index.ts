@@ -101,7 +101,7 @@ async function autorizado(req: Request, cfg: Record<string, string>): Promise<st
   if (token) {
     try {
       const r = await fetch(`${SB()}/auth/v1/user`, { headers: { apikey: SK(), Authorization: "Bearer " + token } });
-      if (r.ok) { const u = await r.json(); if (u?.id && (await sbGet(`staff?select=user_id&user_id=eq.${u.id}&active=eq.true&role=in.(owner,admin)`)).length) return "admin";   // só dono/administrador ativos }
+      if (r.ok) { const u = await r.json(); if (u?.id && (await sbGet(`staff?select=user_id&user_id=eq.${u.id}&active=eq.true&role=in.(owner,admin)`)).length) return "admin"; }   // só dono/administrador ativos
     } catch { /* nega */ }
   }
   return null;
