@@ -511,12 +511,6 @@ html.nav-indo .sec{content-visibility:visible}
    no PC dá pra arrastar com o mouse */
 html.menu-carrossel .navhint{display:none!important}
 @media(hover:hover) and (pointer:fine){html.menu-carrossel .navwrap nav{cursor:grab}html.menu-carrossel .navwrap nav.arrastando{cursor:grabbing;user-select:none}}
-/* Como chegar: só o Waze, símbolo oficial (simple-icons, CC0) na cor da marca #33CCFF, sem redesenhar nem tingir */
-.ir-b{justify-content:center}
-.waze-btn{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.45);transition:transform .35s var(--ease-app)}
-.waze-btn:active{transform:scale(.94)}
-@media(hover:hover) and (pointer:fine){.waze-btn:hover{transform:translateY(-2px) scale(1.04)}}
-.waze-logo{width:34px;height:34px;fill:#33CCFF}
 /* botão do Maps no topo: ao chegar no mapa, um brilho dourado pulsa 2x em volta dele (pseudo-elemento, só opacidade) */
 .ir-mapa{position:relative}
 .ir-mapa::after{content:"";position:absolute;inset:0;border-radius:inherit;border:2px solid var(--gold);box-shadow:0 0 22px rgba(227,172,61,.55);opacity:0;pointer-events:none}
@@ -539,7 +533,7 @@ html.menu-carrossel .navhint{display:none!important}
 .av-est{display:inline-flex;gap:2px;color:var(--brand-2)}
 .av-est .ic{width:14px;height:14px;vertical-align:0}
 .av-h .arrows{display:flex;gap:8px;flex:none}
-.av-rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:2px;padding:2px 2px 6px;
+.av-rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:none;padding:2px 2px 6px;
   overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .av-rail::-webkit-scrollbar{display:none}
 .av-card{flex:0 0 min(340px,86%);scroll-snap-align:start;display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
@@ -549,9 +543,6 @@ html.menu-carrossel .navhint{display:none!important}
 .av-card b a{color:var(--ink);text-decoration:none}
 .av-card b a:hover{text-decoration:underline}
 .av-card small{font-size:12px;color:var(--muted)}
-.av-foto{position:relative;flex:none;width:40px;height:40px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#2c1d14;color:var(--brand-2);font:700 16px var(--body)}
-.av-foto::before{content:attr(data-i)}
-.av-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .av-txt{margin:0;font-size:14px;line-height:1.5;color:var(--ink);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:6;overflow:hidden;overflow-wrap:anywhere}
 .av-card.aberto .av-txt{-webkit-line-clamp:unset;display:block}
 .av-sem{color:var(--muted)}
@@ -561,6 +552,11 @@ html.menu-carrossel .navhint{display:none!important}
 .av-todas:hover{background:var(--gold);color:#2a1810}
 .av-pe small{font-size:12px;color:var(--muted)}
 @media(max-width:640px){.av-h .arrows{display:none}.av-tt h2{font-size:20px}.av-pe{justify-content:center;text-align:center}}
+/* Avaliações: "G" oficial do Google (pacote @iconify-json/logos, google-icon), cores da marca, sem tingir,
+   num círculo branco como manda o uso da marca sobre fundo escuro; a foto de perfil saiu dos cartões (só o nome) */
+.av-gw{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#fff}
+.av-g{width:20px;height:20px}
+.av-cab div{gap:4px}
 </style>
 </head>
 <body>
@@ -639,16 +635,13 @@ html.menu-carrossel .navhint{display:none!important}
       <div class="ir">
         <div class="ir-t"><span class="ib" data-ic="pin"></span><div><h2>Como chegar</h2><p>Tabacaria Brutt · Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ · Conjunto Campinho</p></div></div>
         <div class="ir-mapa"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d324.9034990156571!2d-43.61375886575415!3d-22.881501075159658!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9be312c3189ad9%3A0x9d9e83f447199a5d!2sTabacaria%20Brutt!5e0!3m2!1spt-BR!2sbr!4v1791785619709!5m2!1spt-BR!2sbr" title="Mapa: Tabacaria Brutt no Google Maps" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
-        <div class="ir-b">
-          <a class="waze-btn" href="https://ul.waze.com/ul?venue_id=207357475.2073509216.41035760&amp;overview=yes&amp;utm_campaign=default&amp;utm_source=waze_website&amp;utm_medium=lm_share_location" target="_blank" rel="noopener" aria-label="Abrir a rota até a Tabacaria Brutt no Waze" title="Ir pelo Waze"><svg class="waze-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.218 0C9.915 0 6.835 1.49 4.723 4.148c-1.515 1.913-2.31 4.272-2.31 6.706v1.739c0 .894-.62 1.738-1.862 1.813-.298.025-.547.224-.547.522-.05.82.82 2.31 2.012 3.502.82.844 1.788 1.515 2.832 2.036a3 3 0 0 0 2.955 3.528 2.966 2.966 0 0 0 2.931-2.385h2.509c.323 1.689 2.086 2.856 3.974 2.21 1.64-.546 2.36-2.409 1.763-3.924a12.84 12.84 0 0 0 1.838-1.465 10.73 10.73 0 0 0 3.18-7.65c0-2.882-1.118-5.589-3.155-7.625A10.899 10.899 0 0 0 13.218 0zm0 1.217c2.558 0 4.967.994 6.78 2.807a9.525 9.525 0 0 1 2.807 6.78A9.526 9.526 0 0 1 20 17.585a9.647 9.647 0 0 1-6.78 2.807h-2.46a3.008 3.008 0 0 0-2.93-2.41 3.03 3.03 0 0 0-2.534 1.367v.024a8.945 8.945 0 0 1-2.41-1.788c-.844-.844-1.316-1.614-1.515-2.11a2.858 2.858 0 0 0 1.441-.846 2.959 2.959 0 0 0 .795-2.036v-1.789c0-2.11.696-4.197 2.012-5.861 1.863-2.385 4.62-3.726 7.6-3.726zm-2.41 5.986a1.192 1.192 0 0 0-1.191 1.192 1.192 1.192 0 0 0 1.192 1.193A1.192 1.192 0 0 0 12 8.395a1.192 1.192 0 0 0-1.192-1.192zm7.204 0a1.192 1.192 0 0 0-1.192 1.192 1.192 1.192 0 0 0 1.192 1.193 1.192 1.192 0 0 0 1.192-1.193 1.192 1.192 0 0 0-1.192-1.192zm-7.377 4.769a.596.596 0 0 0-.546.845 4.813 4.813 0 0 0 4.346 2.757 4.77 4.77 0 0 0 4.347-2.757.596.596 0 0 0-.547-.845h-.025a.561.561 0 0 0-.521.348 3.59 3.59 0 0 1-3.254 2.061 3.591 3.591 0 0 1-3.254-2.061.64.64 0 0 0-.546-.348z"/></svg></a>
-        </div>
       </div>
     </section>
 
     <section class="sec" id="avaliacoes" aria-labelledby="avT" hidden>
       <div class="av">
         <div class="av-h">
-          <span class="ib" data-ic="star"></span>
+          <span class="av-gw"><svg class="av-g" viewBox="0 0 256 262" role="img" aria-label="Google"><path fill="#4285f4" d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622l38.755 30.023l2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"/><path fill="#34a853" d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055c-34.523 0-63.824-22.773-74.269-54.25l-1.531.13l-40.298 31.187l-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"/><path fill="#fbbc05" d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82c0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602z"/><path fill="#eb4335" d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"/></svg></span>
           <div class="av-tt"><h2 id="avT">Avaliações no Google</h2><p class="av-resumo" id="avResumo"></p></div>
           <div class="arrows"><button type="button" data-av="-1" aria-label="Avaliação anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg></button><button type="button" data-av="1" aria-label="Próxima avaliação"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.5 16.5 12 9 19.5"/></svg></button></div>
         </div>
@@ -837,7 +830,7 @@ function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox
 <script src="/js/ia-sugestoes.js?v=20261012a" defer></script>
 <script src="/js/ia-dica.js?v=20261012c" defer></script>
 <script src="/js/menu-carrossel.js?v=20261012a" defer></script>
-<script src="/js/avaliacoes.js?v=20261012c" defer></script>
+<script src="/js/avaliacoes.js?v=20261012e" defer></script>
 <script src="/js/checkout-mp.js?v=20261012m" defer></script>
 <script src="/js/acompanhar.js?v=20261012m" defer></script>
 <script src="/js/sons.js?v=20261012b" defer></script>
