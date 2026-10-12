@@ -73,6 +73,8 @@ Regras:
 
 ### Admin (`admin/index.html`, `:root` próprio)
 
+**Tema vidro claro (bloco "TEMA VIDRO CLARO", o ÚLTIMO do CSS do admin, aprovado em 12/10/2026):** fundo off-white `--bg:#f6f1e9` com manchas de luz marrom/caramelo/dourado que derivam devagar (`<div class="fundo">` antes do `#app`, como os `.ia-blobs` da Brutt IA, mas feitas com `radial-gradient` em vez de `filter:blur`: o desfoque pesado animado travava o painel e as gavetas; só `transform` anima, parado com `prefers-reduced-motion`); cartões de vidro (`--surface` translúcido + `backdrop-filter`) só nos blocos grandes e fixos (menu, topo, `.card`, `.section`, `.ov-box`, `.ov-kpi`, `.ntf`; a gaveta é quase opaca e sem desfoque para entrar leve); itens repetidos de lista (`.gr`, `.ped-card`, `.cli-card`, `.eq-card`) usam vidro **sem** desfoque, para não pesar no celular. Os papéis da paleta abaixo continuam, mas os tokens `-cl` viraram tons ESCUROS (texto legível sobre claro) e os `-es` viraram fundos claros; títulos em café `--marrom`, `.btn-gold` em degradê dourado com texto escuro. Logo = `favicon/selo-brutt.webp` (selo com fundo transparente, o mesmo da loja). `theme-color`/manifest em `#f6f1e9`. Contraste conferido ≥ 4,5 em todas as telas.
+
 **Paleta do painel (bloco "PALETA DO PAINEL", o último do CSS do admin, sobrescreve os tokens abaixo e o bloco "CORES"):** parte das cores da logo e explora tons vizinhos, cada um com variação clara (`-cl`) e escura (`-es`) e um papel fixo:
 - **Ouro** (`--ouro`): ação principal (`.btn-gold`, uma por tela), item ativo do menu (texto + barrinha), títulos, valores em R$.
 - **Bronze** (`--bronze-cl`): códigos, EAN, quantidades.
