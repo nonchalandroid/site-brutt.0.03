@@ -4,11 +4,38 @@
    passa sozinho a cada 6 s e para com mouse, toque ou foco; setas e "Ler mais". Tudo passa por esc().
    Para atualizar: troque nota/total e a lista (nota de 1 a 5; quando = texto livre, ex. "há 2 semanas"). */
 var AVALIACOES={
-  nota:0,            /* nota média do perfil, ex. 4.9 */
-  total:0,           /* quantas avaliações o perfil tem */
+  nota:5.0,          /* nota média do perfil (12/10/2026) */
+  total:61,          /* quantas avaliações o perfil tem */
   link:"https://www.google.com/maps?cid=11357660395463088733",   /* "Ver todas no Google": perfil da loja (cid do mapa incorporado) */
   avaliacoes:[
-    /* {nome:"Ana S.",nota:5,quando:"há 2 semanas",texto:"Atendimento excelente…"}, */
+    /* copiadas do perfil no Google em 12/10/2026, na ordem do Google (mais recentes primeiro) */
+    {"nome": "Hayla Kesi", "nota": 5, "quando": "2 meses atrás", "texto": "Excelente experiência de compra. O que mais destaco é a atenção que recebi: além da agilidade na entrega, recebi sugestões muito precisas sobre minha compra, saibam que vocês podem contar com um lugar profissional e atencioso quando necessitarem principalmente de um serviço de delivery. O atendimento diferenciado faz toda a diferença!"},
+    {"nome": "Help Mathica", "nota": 5, "quando": "2 meses atrás", "texto": "Atendimento de qualidade, entrega rápida e a tabacaria ainda se preocupa com o pós venda. Bem atenciosos. Recomendo ."},
+    {"nome": "Emiliano Oliveira", "nota": 5, "quando": "3 meses atrás", "texto": "Ótimo atendimento"},
+    {"nome": "Thiago da Silveira", "nota": 5, "quando": "6 meses atrás", "texto": "Atendimento 100%! Entrega rápida e produtos todos certinhos. Cerveja gelada!"},
+    {"nome": "Marcelo Eduardo", "nota": 5, "quando": "7 meses atrás", "texto": "Sabe aquele lugar que quando você conhece tu acaba abandonando os outros? A Tabacaria Brutt é assim ! Atendimento nota 10, ótimos preços, agilidade nas entregas e uma ótima variedade de produtos, podem confiar !"},
+    {"nome": "Jhoon Tattoo", "nota": 5, "quando": "7 meses atrás", "texto": "Serviço excelente, várias opções para todos os gostos! Entrega e atendimento rápidos! Parabéns aos envolvidos!!"},
+    {"nome": "Vitor Rocha", "nota": 5, "quando": "7 meses atrás", "texto": "Atendimento rápido, educado, produto ótimo e de qualidade."},
+    {"nome": "Da Doze", "nota": 5, "quando": "8 meses atrás", "texto": "Experiência maravilhosa. Muito bom!! Adorei tudo. Parabéns"},
+    {"nome": "other friends", "nota": 5, "quando": "8 meses atrás", "texto": "entrega rapida dms e vendedor mt maneiro recomendo pra geral"},
+    {"nome": "Casa da prainha", "nota": 5, "quando": "8 meses atrás", "texto": "Lugar maravilhoso,! Atendimento top!"},
+    {"nome": "Douglas Barbosa", "nota": 5, "quando": "8 meses atrás", "texto": "Bela loja , ótimas variedades,  ótimos preços.... recomendo..."},
+    {"nome": "Ellen Victória", "nota": 5, "quando": "9 meses atrás", "texto": "Ótimo atendimento, entrega super rápido e produtos de qualidade, variedades de cigarros. 🔥"},
+    {"nome": "Júpiter Mc", "nota": 5, "quando": "9 meses atrás", "texto": "Ótimos produtos , preços acessíveis ,ótimo atendimento ao cliente , e ótimo horário de funcionamento principalmente para quem precisa fazer uma compra de última hora"},
+    {"nome": "Thayná Cardial", "nota": 5, "quando": "9 meses atrás", "texto": "Eles possuem o melhor atendimento da região. Estao sempre dispostos a serem solicitos aos variados gostos e pedidos dos clientes. Sao 6 estrelas!!!"},
+    {"nome": "karen vieira", "nota": 5, "quando": "9 meses atrás", "texto": "Amei o atendimento, preços acessíveis e ambiente aconchegante"},
+    {"nome": "Giovanna Alcântara", "nota": 5, "quando": "9 meses atrás", "texto": "otimo atendimento e experiencia"},
+    {"nome": "Tarcisio Leite de Souza", "nota": 5, "quando": "9 meses atrás", "texto": "Muito bom!!!!!"},
+    {"nome": "Caua Felipe", "nota": 5, "quando": "9 meses atrás", "texto": "Melhor que tem"},
+    {"nome": "Jamile Silva", "nota": 5, "quando": "10 meses atrás", "texto": "atendimento topo!!! Ambiente super confortável, música do seu estilo, ambiente com ar mt ótimo!!"},
+    {"nome": "Pogbametefogo762", "nota": 5, "quando": "10 meses atrás", "texto": "Gostei muito da loja,  espaço tranquilo da pra reservar beber e curti, recomendo muito"},
+    {"nome": "Cris Borges Estética", "nota": 5, "quando": "10 meses atrás", "texto": "Melhor opção no quesito! Melhor drink! Ambiente top!"},
+    {"nome": "Marlon Monsores", "nota": 5, "quando": "11 meses atrás", "texto": "ótimo atendimento com produtos de qualidade"},
+    {"nome": "Weider Dias", "nota": 5, "quando": "11 meses atrás", "texto": "Ótimo ambiente, amei demais estar aí com os meus amigos, sempre recomendo 😎❤️"},
+    {"nome": "Cristiane Fernandes", "nota": 5, "quando": "11 meses atrás", "texto": "Excelente! A melhor do bairro, conjunto campinho merecia uma tabacaria e com muitas variedades."},
+    {"nome": "Mt Chef", "nota": 5, "quando": "11 meses atrás", "texto": "Lugar maravilhoso, aconchegante e elegante, muito bom recomendo muito"},
+    {"nome": "Wanderson Luiz", "nota": 5, "quando": "11 meses atrás", "texto": "Lugar incrível, limpo e organizado. Nota 10"},
+    {"nome": "Kel Designer", "nota": 5, "quando": "11 meses atrás", "texto": "A melhor e mais completa de região"}
   ]
 };
 (function(){
@@ -32,7 +59,7 @@ var AVALIACOES={
     var lista=(d.avaliacoes||[]).slice().sort(function(a,b){return(b.nota-a.nota)||((b.texto?1:0)-(a.texto?1:0))||String(b.data).localeCompare(String(a.data))});
     if(!lista.length)return;
     var res=document.getElementById("avResumo");
-    if(res&&d.nota)res.innerHTML='<b>'+String(d.nota).replace(".",",")+"</b>"+estrelas(d.nota)+(d.total?"<span>"+d.total.toLocaleString("pt-BR")+" avaliações</span>":"");
+    if(res&&d.nota)res.innerHTML='<b>'+Number(d.nota).toFixed(1).replace(".",",")+"</b>"+estrelas(d.nota)+(d.total?"<span>"+d.total.toLocaleString("pt-BR")+" avaliações</span>":"");
     var todas=document.getElementById("avTodas");if(todas){if(d.link)todas.href=d.link;else todas.hidden=true}
     rail.innerHTML=lista.map(cartao).join("");
     sec.hidden=false;
