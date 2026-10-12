@@ -457,6 +457,10 @@ html.nav-indo .sec{content-visibility:visible}
   .ia.ia-min .ia-panel::after{background:linear-gradient(270deg,rgba(0,0,0,.05),rgba(0,0,0,.55))}
   .ia[data-state=open] .ia-panel::after{opacity:0;transition:opacity .6s ease .1s}
 }
+/* Brutt IA: sugestões de entrada (js/ia-sugestoes.js) entram em cascata; "Outras ideias" mais discreto */
+#iaIntro .ia-chips .ia-chip{animation:iaMsg .36s var(--ia-ease) both;animation-delay:calc(var(--i,0) * 45ms)}
+#iaIntro .ia-chip.ia-mais{background:transparent;border-style:dashed;color:#cbbcff;font-weight:600}
+@media(prefers-reduced-motion:reduce){#iaIntro .ia-chips .ia-chip{animation:none}}
 </style>
 </head>
 <body>
@@ -720,6 +724,7 @@ function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox
 <script src="/vendor/lenis.min.js" defer></script>
 <script src="/js/fluidez.js?v=20261012b" defer></script>
 <script src="/js/topo-fogo.js?v=20261012b" defer></script>
+<script src="/js/ia-sugestoes.js?v=20261012a" defer></script>
 <script src="/js/checkout-mp.js?v=20261012m" defer></script>
 <script src="/js/acompanhar.js?v=20261012m" defer></script>
 <script src="/js/sons.js?v=20261012a" defer></script>
