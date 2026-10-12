@@ -1181,6 +1181,29 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .lc-ed .lc-in input{width:120px}
 @media (max-width:760px){.lc-grid{grid-template-columns:1fr}.lc-v{font-size:28px}.lc-in input{width:120px}.lc-l{font-size:13px}}
 @media (max-width:380px){.lc-ed{grid-template-columns:1fr auto}.lc-ed .lc-n{grid-column:1/-1}}
+
+/* ---------- conferência de produtos ---------- */
+.cf-esc{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);margin:0 0 12px;cursor:pointer}
+.cf-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:8px;margin:0 0 16px}
+.cf-it{display:flex;align-items:center;gap:12px;text-align:left;padding:12px 14px;border-radius:14px;background:rgba(255,252,247,.64);border:1px solid var(--line);color:var(--ink);font-weight:500;font-size:13px;min-height:56px}
+.cf-it b{font:700 22px/1 var(--mono);min-width:36px;font-variant-numeric:tabular-nums}
+.cf-it.ruim b{color:var(--danger)}.cf-it.alerta b{color:var(--terracota-cl)}.cf-it.info b{color:var(--petroleo-cl)}
+.cf-it.zero{opacity:.55}.cf-it.zero b{color:var(--ok)}
+.cf-it:hover{border-color:var(--line-2);background:rgba(255,255,255,.8)}
+.cf-it.on{border-color:var(--ouro);box-shadow:inset 0 0 0 1px var(--ouro);background:rgba(255,255,255,.9)}
+.cf-res{font:500 12px var(--mono);color:var(--muted-2)}
+.cf-dica{font-size:13px;color:var(--muted);margin:-4px 0 12px}
+.cf-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.cf-row.inativo .cf-nm b{color:var(--muted)}
+.cf-nm{min-width:0;display:flex;flex-direction:column;gap:2px}
+.cf-nm b{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-nm small{font-size:12px;color:var(--muted-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-nm code{font:500 12px var(--mono);color:var(--bronze-cl)}
+.cf-nums{display:grid;grid-template-columns:repeat(4,minmax(64px,auto));gap:12px;font:600 13px var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cf-nums span{display:flex;flex-direction:column;gap:2px;text-align:right}
+.cf-nums i{font:500 11px var(--font);font-style:normal;color:var(--muted-2)}
+.cf-nums em{font-style:normal}.cf-nums em.neg{color:var(--danger)}.cf-nums em.baixa{color:var(--terracota-cl)}.cf-nums em.ok{color:var(--ok)}
+@media (max-width:760px){.cf-row{grid-template-columns:minmax(0,1fr) auto}.cf-nums{grid-column:1/-1;grid-row:2;grid-template-columns:repeat(4,minmax(0,1fr))}.cf-nums span{text-align:left}.cf-row .btn-sm{grid-column:2;grid-row:1}.cf-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -1273,7 +1296,7 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 /* navegação lateral agrupada. Só destinos que existem em ROUTES. Tela nova = ROUTES + item aqui. */
 const NAV = [
   ["Operação", [["visao","Visão geral","dash"],["home","Produtos","pkg"],["pedidos","Pedidos online","bag","pedidos"],["clientes","Clientes","users"],["estoque-baixo","Estoque baixo","alert","estoque"]]],
-  ["Gestão",   [["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"],["equipe","Equipe","shield"]]],
+  ["Gestão",   [["conferencia","Conferência de produtos","check"],["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"],["equipe","Equipe","shield"]]],
   ["Planilhas",[["planilha","Planilha de compra","sheet"],["vendidos","Mais vendidos","trend"]]],
 ];
 const ABAS = NAV.flatMap(([, itens]) => itens.map(([r, t]) => [r, t]));
@@ -3594,6 +3617,64 @@ async function renderPedidos(){
 }
 
 /* ---------------- visão geral: o que precisa de atenção agora (só dados reais, consultas leves) ---------------- */
+/* ---------------- conferência de produtos (#/conferencia) ----------------
+   Tudo que deixa a margem, o lucro ou a vitrine errados, contado num lugar só. Cada problema vira um botão com o número;
+   tocar lista os produtos e "Abrir" leva para a ficha (openProduct) para corrigir. Só lê (não grava nada). */
+const CONF_REGRAS = [
+  ["sem-custo",   "Sem custo",                 "alerta", "Sem custo a margem e o lucro ficam errados.",            p => !(Number(p.cost_price) > 0)],
+  ["sem-preco",   "Sem preço",                 "ruim",   "Não dá para vender sem preço.",                          p => !(Number(p.price) > 0)],
+  ["margem-neg",  "Custo maior que o preço",   "ruim",   "Vende no prejuízo (ou o custo está errado).",            p => { const v = vendaDe(p), c = Number(p.cost_price); return c > 0 && v > 0 && c >= v; }],
+  ["margem-baixa","Margem baixa (menos de 20%)","alerta","Confira o preço ou o custo.",                            p => { const v = vendaDe(p), c = Number(p.cost_price); return c > 0 && v > c && (v - c) / v < .2; }],
+  ["promo",       "Promoção maior que o preço","alerta", "A promoção tem que ser menor que o preço normal.",       p => Number(p.promo_price) > 0 && Number(p.price) > 0 && Number(p.promo_price) >= Number(p.price)],
+  ["estoque-neg", "Estoque negativo",          "ruim",   "Confira no Nex: estoque abaixo de zero.",                p => Number(p.stock) < 0],
+  ["inativo-est", "Fora do site mas com estoque","info", "Tem na loja e não aparece para o cliente.",              p => !p.is_active && Number(p.stock) > 0],
+  ["sem-foto",    "Sem foto",                  "info",   "Produto sem foto vende menos.",                          (p, x) => !x.fotos.has(p.id)],
+  ["sem-categoria","Sem categoria",            "info",   "Não aparece em nenhuma seção da loja.",                  p => !p.category_id],
+  ["sem-ean",     "Sem código de barras (EAN)","info",   "Sem EAN o Nex liga só pelo nome (pode errar).",          p => !String(p.ean || "").trim()],
+  ["sem-desc",    "Sem descrição",             "info",   "Descrição curta ou vazia (o Sommelier em massa resolve).", p => String(p.description || "").trim().length < 20],
+  ["duplicado",   "Nome repetido",             "info",   "Mais de um produto com o mesmo nome.",                   (p, x) => (x.nomes.get(normNome(p.name)) || 0) > 1],
+];
+const vendaDe = p => Number(p.promo_price) > 0 ? Number(p.promo_price) : Number(p.price);
+const normNome = n => String(n || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+let confEstado = { regra: null, inativos: false };
+async function renderConferencia(){
+  app.innerHTML = `${topbarHTML("Conferência de produtos")}
+    <div class="pg">
+      <div class="pg-h"><div><h2 class="pg-t">Conferência de produtos</h2><p class="pg-d">Produtos com algo faltando ou errado: custo, preço, margem, foto, categoria, código de barras. Toque num item para ver a lista e corrigir.</p></div>
+        <button class="btn-ghost btn-sm" id="cfAtualiza">${ic("sync")} Atualizar</button></div>
+      <label class="cf-esc"><input type="checkbox" id="cfInativos" ${confEstado.inativos ? "checked" : ""}> Incluir produtos fora do site (inativos)</label>
+      <div class="cf-grade" id="cfGrade"><div class="loading">Conferindo o catálogo…</div></div>
+      <section class="ov-box cf-lista-box" id="cfListaBox" hidden><div class="ov-box-h"><h3 id="cfTit"></h3><span class="cf-res" id="cfRes"></span></div><p class="cf-dica" id="cfDica"></p><div id="cfLista"></div></section>
+    </div>`;
+  bindTopbar();
+  $("#cfAtualiza").onclick = () => renderConferencia();
+  $("#cfInativos").onchange = e => { confEstado.inativos = e.target.checked; renderConferencia(); };
+  const [pr, im] = await Promise.all([
+    sb.from("products").select("id,name,brand,ean,sku,category_id,description,price,promo_price,cost_price,stock,is_active").order("name").limit(5000),
+    sb.from("product_images").select("product_id").limit(10000),
+  ]);
+  if(rotaAtual() !== "conferencia" || !$("#cfGrade")) return;
+  if(pr.error){ $("#cfGrade").innerHTML = `<div class="empty">Não deu para ler os produtos: ${esc(pr.error.message)}</div>`; return; }
+  const todos = pr.data || [], base = confEstado.inativos ? todos : todos.filter(p => p.is_active);
+  const x = { fotos: new Set((im.data || []).map(i => i.product_id)), nomes: new Map() };
+  base.forEach(p => { const k = normNome(p.name); x.nomes.set(k, (x.nomes.get(k) || 0) + 1); });
+  const grupos = CONF_REGRAS.map(([id, rot, sev, dica, fn]) => ({ id, rot, sev, dica, itens: (id === "inativo-est" ? todos : base).filter(p => fn(p, x)) }));
+  $("#cfGrade").innerHTML = grupos.map(g => `<button type="button" class="cf-it ${g.sev}${g.itens.length ? "" : " zero"}${confEstado.regra === g.id ? " on" : ""}" data-cf="${g.id}" aria-pressed="${confEstado.regra === g.id}">
+      <b>${g.itens.length}</b><span>${esc(g.rot)}</span></button>`).join("");
+  const mostra = id => {
+    confEstado.regra = id; const g = grupos.find(y => y.id === id); if(!g) return;
+    $("#cfGrade").querySelectorAll("[data-cf]").forEach(b => { const on = b.dataset.cf === id; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+    $("#cfListaBox").hidden = false; $("#cfTit").textContent = g.rot; $("#cfRes").textContent = `${g.itens.length} produto${g.itens.length === 1 ? "" : "s"}`; $("#cfDica").textContent = g.dica;
+    $("#cfLista").innerHTML = g.itens.length ? g.itens.slice(0, 400).map(p => { const v = vendaDe(p), c = Number(p.cost_price), mg = c > 0 && v > 0 ? (v - c) / v * 100 : null;
+      return `<div class="cf-row${p.is_active ? "" : " inativo"}"><div class="cf-nm"><b>${esc(p.name)}</b><small>${p.brand ? esc(p.brand) + " · " : ""}${p.ean ? `<code>${esc(p.ean)}</code>` : "sem EAN"}${p.is_active ? "" : " · fora do site"}</small></div>
+        <div class="cf-nums"><span><i>Preço</i>${v > 0 ? brlM(v) : "—"}</span><span><i>Custo</i>${c > 0 ? brlM(c) : "—"}</span><span><i>Margem</i><em class="${mg == null ? "" : mg < 0 ? "neg" : mg < 20 ? "baixa" : "ok"}">${mg == null ? "—" : pctBR(mg)}</em></span><span><i>Estoque</i>${Number(p.stock) || 0}</span></div>
+        <button type="button" class="btn-ghost btn-sm" data-cf-abrir="${esc(p.id)}">Abrir</button></div>`; }).join("") + (g.itens.length > 400 ? `<p class="cf-dica">Mostrando 400 de ${g.itens.length}.</p>` : "")
+      : `<div class="empty">Nada aqui. Tudo certo!</div>`;
+    $("#cfLista").querySelectorAll("[data-cf-abrir]").forEach(b => b.onclick = () => openProduct(b.dataset.cfAbrir));
+  };
+  $("#cfGrade").querySelectorAll("[data-cf]").forEach(b => b.onclick = () => { mostra(b.dataset.cf); if(innerWidth < 1024) $("#cfListaBox").scrollIntoView({ behavior:"smooth", block:"start" }); });
+  mostra(confEstado.regra || (grupos.find(g => g.itens.length && g.sev !== "info") || grupos.find(g => g.itens.length) || grupos[0]).id);
+}
 /* ---------------- margem e projeção de lucro (Visão geral) ----------------
    Margem = (preço de venda − custo) / preço, dos produtos ativos com custo cadastrado. Quando há vendas na planilha
    "Mais vendidos" (sales_count), cada produto pesa pelo quanto vende (margem real do que sai), senão é a média simples.
@@ -3730,7 +3811,7 @@ async function renderVisao(){
     kpi("pedidos", "bag", "Pedidos a concluir", num(nPago), nPago == null ? "não disponível" : nNovo ? `${nNovo} novo${nNovo > 1 ? "s" : ""}: abra para parar o alerta` : `pagos, esperando conclusão${nAguard ? ` · ${nAguard} aguardando pagamento` : ""}`, nNovo ? "novo" : nPago ? "acao" : "") +
     kpi("estoque-baixo", "alert", "Estoque baixo", num(nBaixo), nBaixo == null ? "não disponível" : `ativos com menos de ${LOW_STOCK_LIMIT} unidades`, nBaixo ? "alerta" : "") +
     kpi("estoque-baixo", "pkg", "Ativos sem estoque", num(nZero), nZero == null ? "não disponível" : "aparecem como esgotados no site", nZero ? "alerta" : "") +
-    kpi("vendidos", "trend", "Margem de lucro", mg.pct == null ? "—" : pctBR(mg.pct),
+    kpi("conferencia", "trend", "Margem de lucro", mg.pct == null ? "—" : pctBR(mg.pct),
         mg.pct == null ? "cadastre o custo dos produtos" : `${mg.ponderada ? "pesada pelo que mais vende" : "média do catálogo"} · ${mg.comCusto} de ${mg.ativos} com custo`, mg.pct == null ? "" : mg.pct >= 35 ? "bom margem" : "alerta margem") +
     kpi("horarios", "store", "Loja agora", !loja ? "—" : loja.aberto ? "Aberta" : "Fechada",
         !loja ? "não disponível" : loja.aberto ? "até " + loja.fim : (loja.nunca ? "nenhum dia aberto" : "abre " + loja.quando + " às " + loja.hora), !loja ? "" : loja.aberto ? "bom" : "alerta", true);
@@ -4272,6 +4353,7 @@ Object.assign(ROUTES, {
   "pedidos": renderPedidos,
   "clientes": renderClientes,
   "sommelier": renderSommelier,
+  "conferencia": renderConferencia,
   "equipe": renderEquipe,
 });
 
