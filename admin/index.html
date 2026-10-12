@@ -1112,6 +1112,44 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 /* selo oficial com fundo transparente (favicon/selo-brutt.webp, o mesmo da loja) */
 .brand-logo{width:40px;height:auto;border-radius:0;filter:drop-shadow(0 3px 8px rgba(74,44,26,.22))}
 .login-logo .brand-logo{width:56px}
+
+/* ---------- sininho de avisos (topo, à direita) ---------- */
+.top-r{gap:8px}
+.top-sino{position:relative;width:40px;min-height:40px;height:40px;padding:0;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.55);border:1px solid var(--line-2);color:var(--ink)}
+.top-sino .i{width:20px;height:20px}
+.top-sino:hover{background:rgba(255,255,255,.85)}
+.top-sino[aria-expanded="true"]{background:#fff;border-color:var(--petroleo)}
+.sino-n{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;display:grid;place-items:center;font:700 11px/1 var(--mono);color:#2a1704;background:var(--grad-ouro);border:2px solid var(--bg);font-variant-numeric:tabular-nums}
+.top-sino.novo .sino-n{background:var(--al-pago);color:#fff}
+.top-sino.pix .sino-n{background:var(--al-pix);color:#fff}
+.top-sino.novo::after{content:"";position:absolute;inset:-1px;border-radius:inherit;border:2px solid var(--al-pago);pointer-events:none;animation:piscaNovo 1s ease-in-out infinite}
+.sino-painel{position:fixed;z-index:40;top:calc(var(--top-h) + env(safe-area-inset-top,0px) + 8px);right:16px;width:min(400px,calc(100vw - 32px));max-height:min(72vh,640px);display:flex;flex-direction:column;
+  border-radius:16px;background:rgba(250,246,239,.97);border:1px solid var(--line-2);box-shadow:0 24px 48px -16px rgba(43,26,16,.35);overflow:hidden}
+.sino-h{display:flex;align-items:center;justify-content:space-between;padding:12px 12px 8px 16px}
+.sino-h b{font-size:16px;color:var(--marrom)}
+.sino-x{width:36px;min-height:36px;height:36px;padding:0;display:grid;place-items:center;background:none;color:var(--muted)}
+.sino-lista{overflow-y:auto;overscroll-behavior:contain;padding:0 8px 8px;display:flex;flex-direction:column;gap:4px}
+.sino-it{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;text-align:left;padding:10px 8px;border-radius:12px;background:transparent;border:1px solid transparent;color:var(--ink);font-weight:400;min-height:0}
+.sino-it:hover{background:rgba(255,255,255,.8);border-color:var(--line)}
+.sino-e{font-size:16px;text-align:center}
+.sino-tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sino-tx b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sino-tx small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sino-it time{font:500 11px var(--mono);color:var(--muted-2);white-space:nowrap}
+.sino-it.novo{background:rgba(23,119,61,.06);border-color:rgba(23,119,61,.35)}
+.sino-it.novo b{color:#11612f}
+.sino-it.novo time,.sino-it.novo small{color:var(--muted)}
+.sino-it.pix b{color:var(--al-pix)}
+.sino-it.feito{opacity:.7}
+.sino-vazio{padding:24px 8px;text-align:center;font-size:13px;color:var(--muted)}
+.sino-todos{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;font-size:13px;font-weight:600;color:var(--petroleo-cl);text-decoration:none;border-top:1px solid var(--line)}
+.sino-todos .i{width:14px;height:14px}
+.sino-aparelho{padding:12px;border-top:1px solid var(--line);background:rgba(255,255,255,.45)}
+.sino-aparelho .ntf{margin:0;padding:0;background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;gap:10px}
+.sino-aparelho .ntf-ic{width:32px;height:32px}
+.sino-aparelho .ntf-tx b{font-size:13px}
+@media (max-width:560px){.sino-painel{right:8px;left:8px;width:auto;max-height:calc(100dvh - var(--top-h) - 24px)}}
+@media (prefers-reduced-motion:reduce){.top-sino.novo::after{animation:none}}
 </style>
 </head>
 <body>
@@ -1230,7 +1268,7 @@ function topbarHTML(titulo){
     <header class="topbar">
       <button type="button" class="top-menu" id="sideAbre" aria-label="Abrir menu" aria-controls="side" aria-expanded="false">${ic("menu")}</button>
       <img src="../favicon/selo-brutt.webp" alt="" class="top-logo"><div class="top-t"><small>${esc(grupoDe(r) || "Painel")}</small><b>${esc(nome)}</b></div>
-      <div class="top-r"><a class="top-link" href="/" target="_blank" rel="noopener" title="Abrir a loja em outra aba">${ic("ext")}<span>Ver loja</span></a></div>
+      <div class="top-r"><a class="top-link" href="/" target="_blank" rel="noopener" title="Abrir a loja em outra aba">${ic("ext")}<span>Ver loja</span></a><button type="button" class="top-sino" id="sinoBtn" aria-label="Avisos de pedidos" aria-haspopup="dialog" aria-expanded="false" aria-controls="sinoPainel">${ic("bell")}<span class="sino-n" hidden></span></button></div>
     </header>`;
 }
 function menuLateral(abrir){
@@ -1251,11 +1289,20 @@ function bindTopbar(){
   if($("#sideAbre")) $("#sideAbre").onclick = () => menuLateral(true);
   if($("#sideX")) $("#sideX").onclick = () => menuLateral(false);
   if($("#sideScrim")) $("#sideScrim").onclick = () => menuLateral(false);
-  contadoresNav().then(v => {
-    if(!v) return;
-    const pon = (k, n, cls) => { const el = document.querySelector(`[data-badge="${k}"]`); if(!el) return; el.hidden = !n; el.textContent = n > 99 ? "99+" : n; el.className = "nav-b " + cls; };
-    pon("pedidos", v.pedidos, v.novos ? "novo" : "acao"); pon("estoque", v.estoque, "alerta");
-  });
+  if($("#sinoBtn")) $("#sinoBtn").onclick = e => { e.stopPropagation(); sinoAbrir(!sinoAberto()); };
+  contadoresNav().then(pintaContadores);
+}
+/* números do menu (Pedidos online, Estoque baixo) e do sininho, num lugar só */
+function pintaContadores(v){
+  if(!v) return;
+  const pon = (k, n, cls) => { const el = document.querySelector(`[data-badge="${k}"]`); if(!el) return; el.hidden = !n; el.textContent = n > 99 ? "99+" : n; el.className = "nav-b " + cls; };
+  pon("pedidos", v.pedidos, v.novos ? "novo" : "acao"); pon("estoque", v.estoque, "alerta");
+  const b = $("#sinoBtn"); if(!b) return;
+  const n = (v.pedidos || 0) + (v.pix || 0), el = b.querySelector(".sino-n");   /* em aberto = pagos a concluir + Pix gerado aguardando */
+  el.hidden = !n; el.textContent = n > 99 ? "99+" : n;
+  b.classList.toggle("novo", !!v.novos); b.classList.toggle("pix", !v.novos && !!v.pix);
+  b.setAttribute("aria-label", n ? `Avisos: ${v.pedidos} pedido(s) pago(s) a concluir${v.pix ? `, ${v.pix} Pix aguardando pagamento` : ""}` : "Avisos de pedidos");
+  if(sinoAberto()) sinoLista();
 }
 /* contadores da navegação (pedidos pagos a concluir e estoque baixo): 2 contagens leves, guardadas por 60 s */
 let navCont = { t:0, v:null, p:null };
@@ -1301,14 +1348,13 @@ function ligaVigia(){
   vigiaTimer = setInterval(() => {
     if(!state.staff || document.hidden) return;
     navCont.t = 0;
-    contadoresNav().then(v => { if(!v) return; const el = document.querySelector('[data-badge="pedidos"]'); if(!el) return;
-      el.hidden = !v.pedidos; el.textContent = v.pedidos > 99 ? "99+" : v.pedidos; el.className = "nav-b " + (v.novos ? "novo" : "acao"); });
+    contadoresNav().then(pintaContadores);
   }, 30000);
 }
 async function marcarVisto(id){
   const { error } = await sb.rpc("pedido_marcar_visto", { p_id: id });
   if(error){ toast("Não deu para marcar como visto: " + error.message); return false; }
-  navCont.t = 0; contadoresNav().then(v => { if(!v) return; const el = document.querySelector('[data-badge="pedidos"]'); if(el){ el.hidden = !v.pedidos; el.textContent = v.pedidos; el.className = "nav-b " + (v.novos ? "novo" : "acao"); } });
+  navCont.t = 0; contadoresNav().then(pintaContadores);
   return true;
 }
 /* ---------------- notificações neste aparelho (Web Push) ----------------
@@ -1379,8 +1425,8 @@ async function desenhaNotif(){
     ntfRenovado = true; ntfReg().then(r => r && r.pushManager.getSubscription()).then(s => s && ntfSalvar(s)).catch(() => {});
   }
   const txt = {
-    ativo:     ["ok",  "Notificações ligadas neste aparelho", "Você recebe “Pix gerado” e “Pedido PAGO” mesmo com o painel fechado."],
-    inativo:   ["off", "Receba aviso de pedido neste aparelho", "Pix gerado e pedido pago chegam como notificação, igual app, mesmo com o painel fechado."],
+    ativo:     ["ok",  "Avisos ligados neste aparelho", "Você recebe “Pix gerado” e “Pedido PAGO” mesmo com o painel fechado. No PC, o Chrome/Edge precisa estar aberto (pode ficar minimizado)."],
+    inativo:   ["off", "Receber os avisos neste aparelho", "“Pix gerado” e “Pedido PAGO” chegam como notificação, mesmo com o painel fechado. No PC (Windows ou Mac) aparecem no canto da tela, como as do WhatsApp."],
     bloqueado: ["bad", "Notificações bloqueadas neste navegador", "Libere em: cadeado/ⓘ ao lado do endereço → Notificações → Permitir. Depois toque em “Ativar”."],
     ios:       ["off", "No iPhone: instale o painel para receber avisos", "Toque em Compartilhar (□↑) → “Adicionar à Tela de Início”. Abra o “Brutt Painel” pelo ícone e ative aqui."],
     sem:       ["bad", "Este navegador não recebe notificações", "Use o Chrome (Android/PC), Edge, Firefox ou o Safari com o painel instalado na Tela de Início."],
@@ -1393,6 +1439,49 @@ async function desenhaNotif(){
   acao("ntfAtv", async () => { await ntfAtivar(); await ntfTestar().catch(() => {}); }, "Pronto! Mandei uma notificação de teste.");
   acao("ntfTeste", ntfTestar, "Notificação de teste enviada. Deve chegar em segundos.");
   acao("ntfDes", ntfDesativar, "Notificações desligadas neste aparelho.");
+}
+/* ---------------- sininho (canto superior direito) ----------------
+   Os mesmos avisos que chegam no celular ("✅ Pedido PAGO" e "⚠️ Pix gerado"), dos pedidos das últimas 72 h, e embaixo o
+   liga/desliga das notificações DESTE aparelho (celular, PC com Windows/Mac: chegam como aviso do sistema). */
+function sinoAberto(){ const p = $("#sinoPainel"); return !!p && !p.hidden; }
+function sinoAbrir(abrir){
+  let p = $("#sinoPainel");
+  if(!p){
+    p = document.createElement("div"); p.id = "sinoPainel"; p.className = "sino-painel"; p.setAttribute("role", "dialog"); p.setAttribute("aria-label", "Avisos de pedidos"); p.hidden = true;
+    p.innerHTML = `<div class="sino-h"><b>Avisos</b><button type="button" class="sino-x" aria-label="Fechar">${ic("x")}</button></div>
+      <div class="sino-lista" id="sinoLista"><div class="loading">Carregando…</div></div>
+      <a class="sino-todos" href="#/pedidos">Ver todos os pedidos ${ic("chev")}</a>
+      <div class="sino-aparelho"><div id="ntfBox"></div></div>`;
+    document.body.appendChild(p);
+    p.querySelector(".sino-x").onclick = () => sinoAbrir(false);
+    p.querySelector(".sino-todos").onclick = e => { e.preventDefault(); sinoAbrir(false); go("pedidos"); };
+    p.addEventListener("click", e => e.stopPropagation());
+    document.addEventListener("click", () => { if(sinoAberto()) sinoAbrir(false); });
+    document.addEventListener("keydown", e => { if(e.key === "Escape" && sinoAberto()) { sinoAbrir(false); const b = $("#sinoBtn"); if(b) b.focus(); } });
+    window.addEventListener("hashchange", () => { if(sinoAberto()) sinoAbrir(false); });
+  }
+  p.hidden = !abrir;
+  const b = $("#sinoBtn"); if(b) b.setAttribute("aria-expanded", String(!!abrir));
+  if(abrir){ sinoLista(); desenhaNotif(); }
+}
+async function sinoLista(){
+  const box = $("#sinoLista"); if(!box) return;
+  const desde = new Date(Date.now() - 72 * 3600e3).toISOString(), agora = new Date();
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,cliente_nome,total,created_at,pago_em,visto_em,pix_expira_em,mp_payment_id,concluido_em,saiu_em")
+    .gte("created_at", desde).order("created_at", { ascending:false }).limit(20);
+  if(!$("#sinoLista")) return;
+  if(error){ box.innerHTML = `<div class="sino-vazio">Não deu para carregar os avisos agora.</div>`; return; }
+  const itens = (data || []).map(p => {
+    const nome = esc(String(p.cliente_nome || "Cliente").split(" ")[0]), val = brl(p.total), num = esc(p.numero);
+    if(p.status === "pago") return { cls: p.visto_em ? "pago" : "pago novo", ic: "✅", t: `Pedido PAGO #${num}`, s: `${nome} · ${val} · ${p.saiu_em ? "saiu para entrega" : "a concluir"}`, h: p.pago_em || p.created_at };
+    if(p.status === "aguardando_pagamento" && p.mp_payment_id && p.pix_expira_em && new Date(p.pix_expira_em) > agora)
+      return { cls: "pix", ic: "⚠️", t: `Pix gerado #${num}`, s: `${nome} · ${val} · aguardando pagamento`, h: p.created_at };
+    if(p.status === "concluido") return { cls: "feito", ic: "✔", t: `Concluído #${num}`, s: `${nome} · ${val}`, h: p.concluido_em || p.created_at };
+    return null;
+  }).filter(Boolean);
+  box.innerHTML = itens.length ? itens.map(x => `<button type="button" class="sino-it ${x.cls}" data-sino-ir><span class="sino-e" aria-hidden="true">${x.ic}</span><span class="sino-tx"><b>${x.t}</b><small>${x.s}</small></span><time>${esc(haQuanto(x.h))}</time></button>`).join("")
+    : `<div class="sino-vazio">Nenhum pedido nas últimas 72 horas.</div>`;
+  box.querySelectorAll("[data-sino-ir]").forEach(b => b.onclick = () => { sinoAbrir(false); go("pedidos"); });
 }
 /* mesmo critério da tela "Estoque baixo" (ativos com menos de LOW_STOCK_LIMIT, sem destilados/vinho/Red Bull) */
 function filtroEstoqueBaixo(q){
@@ -3386,7 +3475,6 @@ async function renderPedidos(){
     <div class="pg">
       <h2 class="pg-t">Pedidos online</h2>
       <p class="pg-d" style="margin-bottom:16px">Pedidos pagos pelo site (Mercado Pago). Pedido <b style="color:var(--al-pago)">pago pisca em verde ✅</b> e <b style="color:var(--al-pix)">Pix gerado (ainda não pago) em vermelho ⚠️</b>, até alguém tocar nele. Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp. Mostra os 60 mais recentes.</p>
-      <div id="ntfBox"></div>
       <div class="ped-filtros" id="pedFiltros" role="group" aria-label="Filtrar pedidos" hidden></div>
       <div id="pedLista"><div class="loading">Carregando…</div></div>
     </div>`;
@@ -3481,7 +3569,6 @@ async function renderVisao(){
     <div class="pg">
       <div class="pg-h"><div><h2 class="pg-t">Visão geral</h2><p class="pg-d">O que precisa de atenção agora. Números do banco da loja no momento em que a tela abriu.</p></div>
         <button class="btn-ghost btn-sm" id="ovAtualiza">${ic("sync")} Atualizar</button></div>
-      <div id="ntfBox"></div>
       <div class="ov-grid" id="ovKpis">${["Pedidos a concluir","Estoque baixo","Ativos sem estoque","Sincronização Nex","Loja agora"].map(kpiSk).join("")}</div>
       <div class="ov-cols">
         <section class="ov-box"><h3>O que resolver agora</h3><div class="ov-todo" id="ovTodo"><div class="loading">Verificando…</div></div></section>
