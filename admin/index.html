@@ -1150,6 +1150,37 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .sino-aparelho .ntf-tx b{font-size:13px}
 @media (max-width:560px){.sino-painel{right:8px;left:8px;width:auto;max-height:calc(100dvh - var(--top-h) - 24px)}}
 @media (prefers-reduced-motion:reduce){.top-sino.novo::after{animation:none}}
+
+/* ---------- margem e lucro (Visão geral) ---------- */
+.ov-kpi.margem .v{color:var(--salvia-cl);font-size:30px}
+.ov-kpi.alerta.margem .v{color:var(--terracota-cl)}
+.ov-lucro{margin:0 0 16px}
+.ov-lucro h3 small{font-weight:500;font-size:12px;color:var(--muted-2);margin-left:6px}
+.lc-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:stretch}
+.lc-conta{display:flex;flex-direction:column;gap:2px}
+.lc-l{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.lc-l span{min-width:0;color:var(--muted)}
+.lc-l small{font-size:12px;color:var(--muted-2)}
+.lc-l b{font:600 15px var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+.lc-l.lc-sub b{color:var(--ouro-cl)}
+.lc-fat{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 0 8px;border-bottom:1px solid var(--line-2);font-weight:600;color:var(--ink)}
+.lc-in{display:inline-flex;align-items:center;gap:6px;flex:none}
+.lc-in i{font:500 13px var(--mono);font-style:normal;color:var(--muted-2)}
+.lc-in input{width:140px;min-height:40px;text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lc-res{display:flex;flex-direction:column;gap:6px;justify-content:center;padding:16px;border-radius:14px;background:rgba(255,255,255,.6);border:1px solid var(--line)}
+.lc-res.pos{background:rgba(40,107,44,.07);border-color:rgba(40,107,44,.3)}
+.lc-res.neg{background:rgba(179,38,30,.06);border-color:rgba(179,38,30,.3)}
+.lc-rot{font-size:13px;font-weight:600;color:var(--muted)}
+.lc-v{font:700 34px/1.1 var(--mono);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.lc-res.pos .lc-v{color:var(--ok)}.lc-res.neg .lc-v{color:var(--danger)}
+.lc-d{font-size:12px;color:var(--muted)}
+.lc-eq{margin-top:8px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.lc-eq span{font-size:12px;color:var(--muted)}.lc-eq b{font:600 16px var(--mono);color:var(--ouro-cl)}.lc-eq small{font-size:12px;color:var(--muted-2)}
+.lc-nota{font-size:12px;color:var(--muted);margin:12px 0 0;line-height:1.5}
+.lc-ed{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;margin:0 0 8px}
+.lc-ed .lc-in input{width:120px}
+@media (max-width:760px){.lc-grid{grid-template-columns:1fr}.lc-v{font-size:28px}.lc-in input{width:120px}.lc-l{font-size:13px}}
+@media (max-width:380px){.lc-ed{grid-template-columns:1fr auto}.lc-ed .lc-n{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -3563,13 +3594,91 @@ async function renderPedidos(){
 }
 
 /* ---------------- visão geral: o que precisa de atenção agora (só dados reais, consultas leves) ---------------- */
+/* ---------------- margem e projeção de lucro (Visão geral) ----------------
+   Margem = (preço de venda − custo) / preço, dos produtos ativos com custo cadastrado. Quando há vendas na planilha
+   "Mais vendidos" (sales_count), cada produto pesa pelo quanto vende (margem real do que sai), senão é a média simples.
+   Projeção do mês: faturamento bruto × margem = lucro bruto; − custos fixos − dia a dia = lucro líquido.
+   Ponto de equilíbrio = (custos fixos + dia a dia) / margem. Custos ficam na tabela financeiro (só dono/admin). */
+const pctBR = v => (Math.round(v * 10) / 10).toFixed(1).replace(".", ",") + "%";
+const brl0 = v => "R$ " + Math.round(Number(v) || 0).toLocaleString("pt-BR");
+const brlM = v => (Number(v) < 0 ? "− " : "") + "R$ " + Math.abs(Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits:2, maximumFractionDigits:2 });
+function margemCatalogo(lista){
+  let ativos = lista.length, comCusto = 0, rec = 0, luc = 0, recP = 0, lucP = 0;
+  for(const p of lista){
+    const venda = Number(p.promo_price) > 0 ? Number(p.promo_price) : Number(p.price), custo = Number(p.cost_price);
+    if(!(venda > 0) || !(custo > 0)) continue;
+    comCusto++; rec += venda; luc += venda - custo;
+    const q = Math.max(0, Number(p.sales_count) || 0); recP += venda * q; lucP += (venda - custo) * q;
+  }
+  const ponderada = recP > 0;
+  return { ativos, comCusto, ponderada, pct: ponderada ? lucP / recP * 100 : rec > 0 ? luc / rec * 100 : null };
+}
+function desenhaLucro(fin, mg, erro){
+  const box = $("#ovLucro"); if(!box) return;
+  if(erro){ box.innerHTML = `<h3>Lucro do mês</h3><p class="lc-nota">Só o dono e os administradores veem os números de lucro.</p>`; return; }
+  const f = fin || { custos: [], dia_a_dia: 0, faturamento: null };
+  const custos = Array.isArray(f.custos) ? f.custos : [];
+  const fixos = custos.reduce((t, c) => t + (Number(c.valor) || 0), 0), dia = Number(f.dia_a_dia) || 0, fat = Number(f.faturamento) || 0;
+  const m = mg.pct == null ? null : mg.pct / 100;
+  const bruto = m == null ? null : fat * m, cmv = m == null ? null : fat - bruto, liquido = bruto == null ? null : bruto - fixos - dia;
+  const equilibrio = m ? (fixos + dia) / m : null;
+  const linha = (rot, v, cls = "") => `<div class="lc-l ${cls}"><span>${rot}</span><b>${v}</b></div>`;
+  box.innerHTML = `<div class="ov-box-h"><h3>Lucro do mês <small>projeção</small></h3><button class="btn-ghost btn-sm" id="lcEditar">${ic("sheet")} Custos</button></div>
+    <div class="lc-grid">
+      <div class="lc-conta">
+        <label class="lc-fat"><span>Faturamento bruto do mês</span><span class="lc-in"><i>R$</i><input id="lcFat" type="text" inputmode="decimal" placeholder="0,00" value="${fat ? String(fat.toFixed(2)).replace(".", ",") : ""}"></span></label>
+        ${linha("− Custo das mercadorias" + (m == null ? "" : ` <small>(${pctBR(100 - mg.pct)} do faturamento)</small>`), cmv == null ? "—" : brlM(cmv))}
+        ${linha("= Lucro bruto" + (m == null ? "" : ` <small>(margem ${pctBR(mg.pct)})</small>`), bruto == null ? "—" : brlM(bruto), "lc-sub")}
+        ${linha(`− Custos fixos <small>(${custos.map(c => esc(c.nome)).join(", ") || "nenhum"})</small>`, brlM(fixos))}
+        <label class="lc-l lc-dia"><span>− Dia a dia <small>(comida, combustível das entregas…)</small></span><span class="lc-in"><i>R$</i><input id="lcDia" type="text" inputmode="decimal" placeholder="0,00" value="${dia ? String(dia.toFixed(2)).replace(".", ",") : ""}"></span></label>
+      </div>
+      <div class="lc-res ${liquido == null || !fat ? "" : liquido >= 0 ? "pos" : "neg"}">
+        <span class="lc-rot">Lucro líquido estimado</span>
+        <b class="lc-v">${!fat ? "—" : liquido == null ? "—" : brlM(liquido)}</b>
+        <span class="lc-d">${!fat ? "Digite o faturamento do mês para ver o lucro." : fat && liquido != null ? `${pctBR(liquido / fat * 100)} do faturamento` : ""}</span>
+        ${equilibrio ? `<div class="lc-eq"><span>Ponto de equilíbrio</span><b>${brl0(equilibrio)}/mês</b><small>≈ ${brl0(equilibrio / 26)} por dia (26 dias) só para pagar os custos</small></div>` : ""}
+      </div>
+    </div>
+    ${f.faturamento_obs ? `<p class="lc-nota">Faturamento: ${esc(f.faturamento_obs)}</p>` : `<p class="lc-nota">Use a média dos últimos 3 meses do Nex. Os valores ficam salvos para toda a equipe de gestão.</p>`}`;
+  const num = v => { const t = String(v || "").replace(/[^\d,.-]/g, ""); const n = Number(t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t); return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null; };
+  const salvar = async (campo, el) => {
+    const v = num(el.value); if(v == null && el.value.trim()){ toast("Valor inválido."); return; }
+    const novo = { ...f, id: 1, custos, [campo]: v ?? (campo === "dia_a_dia" ? 0 : null), atualizado_em: new Date().toISOString(), atualizado_por: state.staff?.user_id || null };
+    if(campo === "faturamento") novo.faturamento_obs = v ? `digitado em ${new Date().toLocaleDateString("pt-BR")}` : null;
+    const { error } = await sb.from("financeiro").upsert(novo);
+    if(error){ toast("Não deu para salvar: " + error.message); return; }
+    desenhaLucro(novo, mg);
+  };
+  $("#lcFat").onchange = e => salvar("faturamento", e.target);
+  $("#lcDia").onchange = e => salvar("dia_a_dia", e.target);
+  [$("#lcFat"), $("#lcDia")].forEach(i => i.onkeydown = e => { if(e.key === "Enter") e.target.blur(); });
+  $("#lcEditar").onclick = () => editarCustos(f, custos, mg);
+}
+function editarCustos(f, custos, mg){
+  const lin = (c, i) => `<div class="lc-ed" data-i="${i}"><input class="lc-n" type="text" value="${esc(c.nome)}" placeholder="Nome (ex.: Aluguel)" aria-label="Nome do custo"><span class="lc-in"><i>R$</i><input class="lc-vv" type="text" inputmode="decimal" value="${c.valor != null ? String(Number(c.valor).toFixed(2)).replace(".", ",") : ""}" placeholder="0,00" aria-label="Valor por mês"></span><button type="button" class="btn-danger btn-sm lc-del" aria-label="Remover">${ic("x")}</button></div>`;
+  openDrawer(`<div class="drawer-h"><h2>Custos fixos do mês</h2><button class="x" data-close aria-label="Fechar">${ic("x")}</button></div><div class="section"><p class="lc-nota" style="margin:0 0 12px">Valores que a loja paga todo mês, com ou sem venda. Entram na projeção do lucro e no ponto de equilíbrio.</p>
+      <div id="lcLista">${custos.map(lin).join("")}</div>
+      <button type="button" class="btn-ghost btn-sm" id="lcMais">${ic("plus")} Adicionar custo</button></div>
+    <div class="save-row"><button class="btn-gold" id="lcSalvar">Salvar</button></div>`);
+  $("#lcMais").onclick = () => { $("#lcLista").insertAdjacentHTML("beforeend", lin({ nome:"", valor:null }, $("#lcLista").children.length)); ligaDel(); };
+  const ligaDel = () => document.querySelectorAll(".lc-del").forEach(b => b.onclick = () => b.closest(".lc-ed").remove()); ligaDel();
+  $("#lcSalvar").onclick = async () => {
+    const lista = [...document.querySelectorAll(".lc-ed")].map(r => ({ nome: r.querySelector(".lc-n").value.trim().slice(0, 40), valor: Number(String(r.querySelector(".lc-vv").value).replace(/\./g, "").replace(",", ".")) }))
+      .filter(c => c.nome && Number.isFinite(c.valor) && c.valor >= 0).map(c => ({ nome: c.nome, valor: Math.round(c.valor * 100) / 100 }));
+    const novo = { ...f, id: 1, custos: lista, atualizado_em: new Date().toISOString(), atualizado_por: state.staff?.user_id || null };
+    const { error } = await sb.from("financeiro").upsert(novo);
+    if(error){ toast("Não deu para salvar: " + error.message); return; }
+    closeDrawer(); toast("Custos salvos."); desenhaLucro(novo, mg);
+  };
+}
 async function renderVisao(){
   const kpiSk = k => `<div class="ov-kpi sk"><div class="k">${k}</div><div class="v"></div><div class="d">&nbsp;</div></div>`;
   app.innerHTML = `${topbarHTML("Visão geral")}
     <div class="pg">
       <div class="pg-h"><div><h2 class="pg-t">Visão geral</h2><p class="pg-d">O que precisa de atenção agora. Números do banco da loja no momento em que a tela abriu.</p></div>
         <button class="btn-ghost btn-sm" id="ovAtualiza">${ic("sync")} Atualizar</button></div>
-      <div class="ov-grid" id="ovKpis">${["Pedidos a concluir","Estoque baixo","Ativos sem estoque","Sincronização Nex","Loja agora"].map(kpiSk).join("")}</div>
+      <div class="ov-grid" id="ovKpis">${["Pedidos a concluir","Estoque baixo","Ativos sem estoque","Margem de lucro","Loja agora"].map(kpiSk).join("")}</div>
+      <section class="ov-box ov-lucro" id="ovLucro" aria-live="polite"><div class="loading">Calculando o lucro…</div></section>
       <div class="ov-cols">
         <section class="ov-box"><h3>O que resolver agora</h3><div class="ov-todo" id="ovTodo"><div class="loading">Verificando…</div></div></section>
         <section class="ov-box"><div class="ov-box-h"><h3>Últimos pedidos online</h3><button class="btn-ghost btn-sm" data-ir="pedidos">Ver todos</button></div><div class="ov-ped" id="ovPed"><div class="loading">Carregando…</div></div></section>
@@ -3588,7 +3697,7 @@ async function renderVisao(){
   $("#ovAtualiza").onclick = () => { navCont.t = 0; renderVisao(); };
 
   const cont = q => q.then(r => r.error ? null : (r.count || 0)).catch(() => null);
-  const [nPago, nAguard, nBaixo, nZero, nex, hor, ult, nNovo] = await Promise.all([
+  const [nPago, nAguard, nBaixo, nZero, nex, hor, ult, nNovo, prodsMg, fin] = await Promise.all([
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago")),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "aguardando_pagamento")),
     cont(filtroEstoqueBaixo(sb.from("products").select("id", { count:"exact", head:true }))),
@@ -3597,8 +3706,11 @@ async function renderVisao(){
     sb.from("loja_horarios").select("*"),
     sb.from("pedidos").select("id,numero,status,mp_status,cliente_nome,total,created_at").order("created_at", { ascending:false }).limit(5),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago").is("visto_em", null)),
+    sb.from("products").select("price,promo_price,cost_price,sales_count").eq("is_active", true).limit(5000),
+    sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),
   ]);
   if(rotaAtual() !== "visao" || !$("#ovKpis")) return;
+  const mg = margemCatalogo(prodsMg.error ? [] : prodsMg.data);
   if(nPago != null && nBaixo != null && nNovo != null){ navCont = { t:Date.now(), v:{ pedidos:nPago, estoque:nBaixo, novos:nNovo }, p:null }; vigiaNovos(nNovo); }
 
   /* loja (mesma conta da tela de horários) */
@@ -3618,11 +3730,12 @@ async function renderVisao(){
     kpi("pedidos", "bag", "Pedidos a concluir", num(nPago), nPago == null ? "não disponível" : nNovo ? `${nNovo} novo${nNovo > 1 ? "s" : ""}: abra para parar o alerta` : `pagos, esperando conclusão${nAguard ? ` · ${nAguard} aguardando pagamento` : ""}`, nNovo ? "novo" : nPago ? "acao" : "") +
     kpi("estoque-baixo", "alert", "Estoque baixo", num(nBaixo), nBaixo == null ? "não disponível" : `ativos com menos de ${LOW_STOCK_LIMIT} unidades`, nBaixo ? "alerta" : "") +
     kpi("estoque-baixo", "pkg", "Ativos sem estoque", num(nZero), nZero == null ? "não disponível" : "aparecem como esgotados no site", nZero ? "alerta" : "") +
-    kpi("nex", "sync", "Sincronização Nex", !u ? "Sem registro" : !u.ok ? "Última rodada falhou" : nexVelho ? "Parou de sincronizar?" : "Em dia",
-        !u ? (nex.error ? "não disponível" : "nenhuma rodada ainda") : `${haQuanto(u.ran_at)} · ${u.modo === "teste" ? "simulação" : (u.estoque_alterado ?? 0) + " estoque(s), " + (u.preco_alterado ?? 0) + " preço(s)"}`, nexRuim ? "ruim" : u ? "bom" : "", true) +
+    kpi("vendidos", "trend", "Margem de lucro", mg.pct == null ? "—" : pctBR(mg.pct),
+        mg.pct == null ? "cadastre o custo dos produtos" : `${mg.ponderada ? "pesada pelo que mais vende" : "média do catálogo"} · ${mg.comCusto} de ${mg.ativos} com custo`, mg.pct == null ? "" : mg.pct >= 35 ? "bom margem" : "alerta margem") +
     kpi("horarios", "store", "Loja agora", !loja ? "—" : loja.aberto ? "Aberta" : "Fechada",
         !loja ? "não disponível" : loja.aberto ? "até " + loja.fim : (loja.nunca ? "nenhum dia aberto" : "abre " + loja.quando + " às " + loja.hora), !loja ? "" : loja.aberto ? "bom" : "alerta", true);
 
+  desenhaLucro(fin && !fin.error ? fin.data : null, mg, !!(fin && fin.error));
   /* o que resolver agora: só itens que existem de verdade */
   const it = (rota, icone, cls, titulo, sub) => `<button class="ov-item ${cls}" data-ir="${rota}"><span class="ic">${ic(icone)}</span><span class="tx"><b>${titulo}</b><small>${sub}</small></span><span class="go">${ic("chev")}</span></button>`;
   const todo = [];
