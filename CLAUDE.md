@@ -64,7 +64,7 @@ Regras:
 - **Paleta:** escuro + dourado. Verde só para ações de confirmação/sucesso, sempre via `--ok*`. **Nunca** cole hex de verde solto.
 - **WhatsApp:** usar a cor oficial `#25D366` (ou branco sobre fundo verde). É exceção de marca, não token.
 - **Opções de entrega:** nenhuma vem marcada (`ship=""`). Ativa, "Entrega pela loja" fica dourada; "Prefiro eu mesmo solicitar a entrega" fica azul-claro (`--frete:#9fc3e6`, definido só em `.entrega`), para o cliente distinguir na hora.
-- **Taxa de entrega** (`ENTREGA_LOJA` no `index.html`, igual em `supabase/functions/checkout` e `brutt-ia`): R$ 5,00 até 2 km de rota; + R$ 1,50 por km fracionado; só até 2,5 km; teto R$ 8,00. Mudou num lugar, mude nos três.
+- **Taxa de entrega** (`ENTREGA_LOJA` no `index.html`, igual em `supabase/functions/checkout` e `brutt-ia`; ponto da loja = o do Google Maps: -22.8814745, -43.6137391, Plus Code 499P+CG): R$ 5,00 até 2 km de rota; + R$ 1,50 por km fracionado; só até 2,5 km; teto R$ 8,00. Mudou num lugar, mude nos três.
 - **Brutt IA:** paleta própria roxa/azul em `.ia{--ia-a…--ia-d}` (identidade do assistente). Não misturar com o dourado.
 - **Escala de fonte** (px inteiros, sem .5): 11 · 12 · 13 · 14 · 15 · 16 · 18 · 20 · 22 · 24 · 26 · 28 · 30 · 32 · 34. Títulos display usam `var(--head)` em CAIXA ALTA.
 - **Famílias:** só via `var(--head)`, `var(--body)`, `var(--mono)`. Títulos = **Anton** e texto = **Inter** (Google Fonts, no `<head>`); números/códigos = **DejaVu Sans Mono**, servida de `vendor/fonts/` (`@font-face` no fim do `#fluidez`, só caracteres do português, licença em `vendor/fonts/DEJAVU-LICENSE.txt`). O admin usa as mesmas Inter e DejaVu Sans Mono; só o menu lateral dele fica em Geist.

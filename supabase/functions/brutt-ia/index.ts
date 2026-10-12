@@ -10,7 +10,7 @@
 // ============================================================
 
 // ---------- MESMAS REGRAS DO SITE (ENTREGA_LOJA / HORARIOS / MIN) ----------
-const LOJA = { lat: -22.881489, lng: -43.613750 };
+const LOJA = { lat: -22.8814745, lng: -43.6137391 };
 // mesma tabela do site e do checkout: R$ 5,00 até 2 km; + R$ 1,50 por km fracionado; só até 2,5 km; teto R$ 8,00
 const RAIO_MAX_KM = 2.5, TAXA_BASE = 5.00, BASE_ATE_KM = 2, POR_KM_EXTRA = 1.50, TAXA_MAXIMA = 8.00;
 const RAIO_TXT = String(RAIO_MAX_KM).replace(".", ",");

@@ -49,7 +49,7 @@ export const LOJA = { nome: "Tabacaria Brutt", endereco: "Rua 18, 145 - Campo Gr
 export const linkAcomp = (ped: any) => `${LOJA.site}/?pedido=${ped.id}`;
 const evolutionOk = () => !!(env("EVOLUTION_API_URL") && env("EVOLUTION_API_KEY") && env("EVOLUTION_INSTANCE"));
 // R$ 5,00 até 2 km de rota; acima, + R$ 1,50 por km (fração de km conta como km inteiro); só até 2,5 km (Conjunto Campinho e arredores); teto R$ 8,00.
-export const ENTREGA_LOJA = { lat: -22.881489, lng: -43.61375, raioMaxKm: 2.5, taxaBase: 5, baseAteKm: 2, porKmExtra: 1.5, taxaMaxima: 8 };
+export const ENTREGA_LOJA = { lat: -22.8814745, lng: -43.6137391, raioMaxKm: 2.5, taxaBase: 5, baseAteKm: 2, porKmExtra: 1.5, taxaMaxima: 8 };
 export const PEDIDO_MINIMO = 20;
 export const PIX_MINUTOS = 30;
 const INTERVALO_MSG_MS = 3000;
