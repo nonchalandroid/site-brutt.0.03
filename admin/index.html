@@ -13,13 +13,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@600&display=swap" rel="stylesheet">
-<meta name="theme-color" content="#100a07">
+<meta name="theme-color" content="#f6f1e9">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="../favicon/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Brutt Painel">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <!-- bibliotecas servidas daqui mesmo (versão fixa, sem CDN): ninguém de fora troca o código que roda no painel -->
 <script src="/vendor/supabase-js-2.117.2.js"></script>
 <script src="/vendor/html5-qrcode-2.3.8.min.js"></script>
@@ -981,7 +981,7 @@ html,body{padding-top:0;padding-bottom:0}
 @media (max-width:1023px){
   :root{--top-h:54px}
   .topbar{gap:10px}
-  .top-logo{display:block;width:30px;height:30px;border-radius:8px;flex:none}
+  .top-logo{display:block;width:34px;height:auto;flex:none}
   .top-t small{display:none}
   .top-t b{font-size:16px}
   .top-menu{width:40px;min-height:40px}
@@ -999,9 +999,122 @@ html,body{padding-top:0;padding-bottom:0}
 /* indicador que sobra sozinho na última linha ocupa a largura toda (sem buraco ao lado) */
 @media (min-width:560px) and (max-width:1023px){#ovKpis{grid-template-columns:repeat(6,minmax(0,1fr))}#ovKpis>*{grid-column:span 2}#ovKpis>:nth-child(n+4){grid-column:span 3}}
 @media (max-width:559px){#ovKpis>:last-child:nth-child(odd){grid-column:1/-1}}
+
+/* =====================================================================
+   TEMA VIDRO CLARO (aprovado em 12/10/2026, prévia "Painel Brutt Web3")
+   Fundo off-white com manchas de luz marrom/caramelo/dourado que derivam devagar (mesma técnica
+   dos .ia-blobs da Brutt IA) e cartões de vidro. Grade de 8 px. Esta camada vem por último e
+   redefine os tokens: os papéis da paleta continuam (ouro = ação/ativo, petróleo = secundário,
+   verde = pago, vermelho = Pix…), só que em tons escuros, legíveis sobre o claro.
+   Desempenho no celular: desfoque (backdrop-filter) só nos blocos grandes e fixos; itens de lista
+   repetidos (produtos, pedidos, clientes) usam vidro sem desfoque.
+   ===================================================================== */
+:root{
+  color-scheme:light;
+  --bg:#f6f1e9; --bg-2:#efe6d8;
+  --side:rgba(250,246,239,.94); --surface:rgba(255,252,247,.58); --surface-2:rgba(255,250,243,.82); --field:rgba(255,255,255,.78);
+  --line:rgba(74,44,26,.14); --line-2:rgba(74,44,26,.28);
+  --ink:#2b1a10; --muted:#5f4a3a; --muted-2:#7a6452;
+  --marrom:#4a2c1a; --cafe:#7a4a2a;
+  --accent:#8a5f0c; --accent-2:#7a4a2a; --accent-ink:#fffaf0; --accent-soft:rgba(184,134,31,.12);
+  --grad-ouro:linear-gradient(135deg,#efc25e 0%,#e3ac3d 45%,#c08a52 100%);
+  /* papéis da paleta em tom de texto para fundo claro */
+  --creme:#2b1a10; --areia:#5f4a3a; --apagado:#7a6452;
+  --ouro:#e3ac3d; --ouro-cl:#8a5f0c; --ouro-es:#f3e3bd;
+  --bronze:#b07a3a; --bronze-cl:#7a4a2a; --bronze-es:#efe0cc;
+  --bordo:#9b3326; --bordo-cl:#a3372b; --bordo-es:#f6dcd7;
+  --petroleo:#1f6f7a; --petroleo-cl:#17606a; --petroleo-es:#d6ecee;
+  --indigo:#3f4fb8; --indigo-cl:#3a48a8; --indigo-es:#e1e4fa;
+  --ameixa:#7a3d7b; --ameixa-cl:#723872; --ameixa-es:#f0dff0;
+  --salvia:#4e7a35; --salvia-cl:#3d6a28; --salvia-es:#e1ecd8;
+  --terracota:#b4502a; --terracota-cl:#a8471f; --terracota-es:#f6e0d5;
+  --ok:#286b2c; --ok-soft:rgba(40,107,44,.10);
+  --warn:#a8471f; --warn-soft:rgba(180,80,42,.10);
+  --danger:#b3261e; --danger-soft:rgba(179,38,30,.09);
+  --info:#17606a; --info-soft:rgba(31,111,122,.10);
+  --al-pago:#17773d; --al-pago-soft:rgba(23,119,61,.12); --al-pago-ink:#fff;
+  --al-pix:#c4321f; --al-pix-soft:rgba(196,50,31,.10); --al-pix-ink:#fff;
+  --shadow:inset 0 1px 0 rgba(255,255,255,.75),0 8px 32px -16px rgba(74,44,26,.28);
+  --vidro-blur:blur(20px) saturate(1.3);
+}
+html,body{background:var(--bg);color:var(--ink)}
+/* fundo: manchas desfocadas (só transform anima) */
+.fundo{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:linear-gradient(160deg,var(--bg) 0%,var(--bg-2) 100%)}
+.fundo i{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;will-change:transform;animation:fundoDeriva 18s ease-in-out infinite alternate}
+.fundo i:nth-child(1){width:520px;height:420px;left:-120px;top:-120px;background:#c08a52}
+.fundo i:nth-child(2){width:460px;height:380px;right:-140px;top:12%;background:#e3ac3d;opacity:.34;animation-duration:22s;animation-delay:-6s}
+.fundo i:nth-child(3){width:560px;height:440px;left:30%;bottom:-220px;background:#7a4a2a;opacity:.26;animation-duration:26s;animation-delay:-11s}
+.fundo i:nth-child(4){width:300px;height:260px;left:55%;top:30%;background:#f2cf7e;opacity:.32;animation-duration:20s;animation-delay:-3s}
+@keyframes fundoDeriva{from{transform:translate3d(-30px,0,0) scale(1)}to{transform:translate3d(60px,40px,0) scale(1.08)}}
+@media (max-width:760px){.fundo i{filter:blur(60px)}.fundo i:nth-child(1){width:340px;height:300px}.fundo i:nth-child(2){width:300px;height:260px}.fundo i:nth-child(3){width:380px;height:320px}.fundo i:nth-child(4){display:none}}
+@media (prefers-reduced-motion:reduce){.fundo i{animation:none}}
+#app{position:relative;z-index:1}
+/* vidro com desfoque: blocos grandes e fixos */
+.card,.section,.ov-box,.ov-kpi,.ntf,.eq-pp,.login-card,.toast,.bulkbar,.ft-foot,.empty{
+  background:var(--surface);border-color:var(--line);box-shadow:var(--shadow);
+  -webkit-backdrop-filter:var(--vidro-blur);backdrop-filter:var(--vidro-blur)}
+.toast,.bulkbar,.ft-foot{background:var(--surface-2)}
+/* vidro sem desfoque: itens repetidos de lista */
+.gr,.ped-card,.cli-card,.eq-card,.prow,.stcard,.sm-it,.tx,details.nx-box{background:rgba(255,252,247,.64);border-color:var(--line)}
+.gr:hover,.ped-card:hover,.cli-card:hover,.eq-card:hover{border-color:var(--line-2)}
+button.stcard:hover,.prow:hover,.dropzone:hover,details.nx-box summary:hover,.ft-drop:hover,.ft-drop.over,.ov-kpi:hover{background:rgba(255,255,255,.72)}
+.empty{background:rgba(255,252,247,.45)}
+/* menu lateral e gavetas: vidro mais opaco (leitura) */
+.side{background:rgba(250,246,239,.78);border-right-color:var(--line);-webkit-backdrop-filter:var(--vidro-blur);backdrop-filter:var(--vidro-blur)}
+.drawer{background:var(--side);border-left-color:var(--line);-webkit-backdrop-filter:var(--vidro-blur);backdrop-filter:var(--vidro-blur)}
+.drawer-h{background:rgba(250,246,239,.96);border-bottom-color:var(--line)}
+.side-scrim,.veil{background:rgba(43,26,16,.32)}
+.topbar{background:rgba(246,241,233,.74);border-bottom-color:var(--line)}
+.nav-i{color:var(--muted)}
+.nav-i:hover{color:var(--ink);background:rgba(255,255,255,.5)}
+.nav-i.on{background:rgba(255,252,247,.85);color:var(--marrom);box-shadow:inset 3px 0 0 var(--ouro),0 1px 0 rgba(255,255,255,.8)}
+.nav-i.on,.nav-i.on .lbl{color:var(--marrom)}
+.side-brand b,.login-logo b{color:var(--marrom)}
+/* títulos em café; valores em ouro escuro */
+.pg-t,.pg h2.pg-t,.top-t b,.ov-box h3,.drawer-h h2,.cat-head h2,.gr-top b,.login-card h1,.ft-intro h2,.ov-box-h h3,.section h3,.sm-log-h h3{color:var(--marrom)}
+/* botões */
+.btn-gold{background:var(--grad-ouro);color:#2a1704;box-shadow:0 8px 24px -10px rgba(184,134,31,.6)}
+.btn-gold:hover:not(:disabled){background:var(--grad-ouro);filter:brightness(1.05)}
+.btn-ghost{background:rgba(255,255,255,.55);color:var(--ink);border-color:var(--line-2)}
+.btn-ghost:hover:not(:disabled){background:rgba(255,255,255,.85);border-color:var(--petroleo);color:var(--petroleo-cl)}
+.btn-sec{background:var(--petroleo);color:#fff}
+.btn-sec:hover:not(:disabled){background:#17606a}
+.btn-indigo{background:var(--indigo);color:#fff}
+.btn-salvia{background:var(--salvia);color:#fff}
+.btn-salvia:hover:not(:disabled){background:#3d6a28}
+.btn-danger{color:var(--danger);border-color:rgba(179,38,30,.45);background:rgba(255,255,255,.4)}
+.btn-danger:hover:not(:disabled){background:var(--danger-soft)}
+.btn-google{border:1px solid var(--line-2)}
+.top-menu{background:rgba(255,255,255,.55);border-color:var(--line-2);color:var(--ink)}
+.top-link{background:rgba(255,255,255,.55);border-color:var(--line-2);color:var(--muted)}
+/* campos */
+input,select,textarea{background-color:var(--field);color:var(--ink);border-color:var(--line-2)}
+input::placeholder,textarea::placeholder{color:#8f7a66}
+input:focus,select:focus,textarea:focus{border-color:var(--petroleo);box-shadow:0 0 0 3px rgba(31,111,122,.16)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f4a3a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:16px}
+/* selos e etiquetas sobre fotos continuam escuros (ficam em cima da imagem) */
+.gr-ph .cam,.ft-sz{background:rgba(43,26,16,.78);color:#f6ead6}
+/* KPIs e alertas */
+.ov-kpi .v{color:var(--ink)}
+.ped-novo{background:var(--al-pago);color:#fff}
+.nav-b{background:var(--bordo);color:#fff;border-color:var(--bordo)}
+.nav-b.novo{background:var(--al-pago);color:#fff;border-color:var(--al-pago)}
+.nav-b.alerta{background:var(--terracota-es);color:var(--terracota-cl);border-color:rgba(180,80,42,.35)}
+.ped-pix{background:var(--al-pix);color:#fff}
+.mv-tabs button.active{background:rgba(255,255,255,.85);box-shadow:0 1px 3px rgba(74,44,26,.18)}
+.sync-table tbody tr:hover td,.nx-hist tbody tr:hover td,.dash-table tbody tr:hover td{background:rgba(255,255,255,.5)}
+/* grade de 8 px: respiros iguais */
+.pg{padding-top:24px}
+.ov-grid,.cli-lista,.eq-lista{gap:16px}
+.ov-box,.section,.card{border-radius:16px}
+.ov-kpi{border-radius:16px}
+/* selo oficial com fundo transparente (favicon/selo-brutt.webp, o mesmo da loja) */
+.brand-logo{width:40px;height:auto;border-radius:0;filter:drop-shadow(0 3px 8px rgba(74,44,26,.22))}
+.login-logo .brand-logo{width:56px}
 </style>
 </head>
 <body>
+<div class="fundo" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <div id="app"></div>
 <div class="veil" id="veil"></div>
 <div class="toast" id="toast"></div>
@@ -1106,7 +1219,7 @@ function topbarHTML(titulo){
   const ini = quem.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
   return `
     <aside class="side" id="side" aria-label="Menu do painel">
-      <button type="button" class="side-brand" data-inicio aria-label="Ir para a visão geral"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><span><b>Brutt</b><small>Painel da loja</small></span></button>
+      <button type="button" class="side-brand" data-inicio aria-label="Ir para a visão geral"><img src="../favicon/selo-brutt.webp" alt="" class="brand-logo"><span><b>Brutt</b><small>Painel da loja</small></span></button>
       <button type="button" class="side-x" id="sideX" aria-label="Fechar menu">${ic("x")}</button>
       ${abasHTML()}
       <div class="side-foot"><span class="avatar" aria-hidden="true">${esc(ini)}</span><span class="who-n"><b>${esc(quem)}</b><small>${esc(PAPEL[state.staff?.role] || "Equipe")}</small></span>
@@ -1115,7 +1228,7 @@ function topbarHTML(titulo){
     <div class="side-scrim" id="sideScrim"></div>
     <header class="topbar">
       <button type="button" class="top-menu" id="sideAbre" aria-label="Abrir menu" aria-controls="side" aria-expanded="false">${ic("menu")}</button>
-      <img src="../favicon/apple-touch-icon.png" alt="" class="top-logo"><div class="top-t"><small>${esc(grupoDe(r) || "Painel")}</small><b>${esc(nome)}</b></div>
+      <img src="../favicon/selo-brutt.webp" alt="" class="top-logo"><div class="top-t"><small>${esc(grupoDe(r) || "Painel")}</small><b>${esc(nome)}</b></div>
       <div class="top-r"><a class="top-link" href="/" target="_blank" rel="noopener" title="Abrir a loja em outra aba">${ic("ext")}<span>Ver loja</span></a></div>
     </header>`;
 }
@@ -1327,7 +1440,7 @@ function renderLogin(){
   app.innerHTML = `
     <div class="center-screen">
       <div class="card login-card">
-        <div class="login-logo"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><span><b>Brutt</b><small>Painel da loja</small></span></div>
+        <div class="login-logo"><img src="../favicon/selo-brutt.webp" alt="" class="brand-logo"><span><b>Brutt</b><small>Painel da loja</small></span></div>
         <h1>Entrar</h1>
         <p class="sub">Painel interno da equipe. Use sua conta.</p>
         <div class="field"><label>E-mail</label><input type="email" id="loEmail" autocomplete="username"></div>
@@ -1355,7 +1468,7 @@ function renderAccessDenied(){
   app.innerHTML = `
     <div class="center-screen">
       <div class="card login-card">
-        <div class="login-logo"><img src="../favicon/apple-touch-icon.png" alt="" class="brand-logo"><span><b>Brutt</b><small>Painel da loja</small></span></div>
+        <div class="login-logo"><img src="../favicon/selo-brutt.webp" alt="" class="brand-logo"><span><b>Brutt</b><small>Painel da loja</small></span></div>
         <h1>Sem acesso</h1>
         <p class="sub">Sua conta está autenticada, mas ainda não foi liberada para o painel. Peça para um administrador te adicionar na equipe.</p>
         <button class="btn-ghost full" id="loOut">Sair</button>
