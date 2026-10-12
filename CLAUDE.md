@@ -35,7 +35,7 @@ Leia antes de alterar qualquer arquivo.
     ├── functions/gerar-ficha-sommelier/  # Sommelier IA (ficha, perfil, categoria) + testes
     ├── functions/equipe/  # criar login da equipe e trocar senha (tela Equipe do admin) + testes
     ├── functions/sync-nex/  # estoque e preço Nex → site a cada 15 min (pg_cron) + botão no painel
-    ├── functions/avaliacoes/  # avaliações do Google (Places API, segredo GOOGLE_PLACES_KEY) → carrossel #avaliacoes da loja; cache 12 h em avaliacoes_cache
+    ├── functions/avaliacoes/  # (publicada, SEM USO) busca avaliações na Places API do Google; precisa de GOOGLE_PLACES_KEY com cobrança ativada. Hoje o carrossel #avaliacoes lê a lista AVALIACOES em js/avaliacoes.js (copiada do perfil do Google)
     ├── CHECKOUT.md       # como ativar/operar o pagamento online
     └── EVOLUTION.md      # instalar a Evolution API (WhatsApp automático) no VPS
 ```

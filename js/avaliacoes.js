@@ -1,10 +1,19 @@
 /* ───────── Avaliações do Google (carrossel no rodapé, depois do Como chegar) ─────────
-   Lê a função avaliacoes (Supabase), que busca no Google e guarda por 12 h. Sem dados (sem chave, erro),
-   a seção #avaliacoes continua escondida. Cartões em trilho horizontal com encaixe; passa sozinho a cada
-   6 s e para com mouse, toque ou foco; setas e "Ler mais". Tudo que vem do Google passa por esc(). */
+   As avaliações são copiadas do perfil da loja no Google e ficam em AVALIACOES abaixo (a Places API do Google
+   exige cobrança ativada). Lista vazia = seção #avaliacoes escondida. Cartões em trilho horizontal com encaixe;
+   passa sozinho a cada 6 s e para com mouse, toque ou foco; setas e "Ler mais". Tudo passa por esc().
+   Para atualizar: troque nota/total e a lista (nota de 1 a 5; quando = texto livre, ex. "há 2 semanas"). */
+var AVALIACOES={
+  nota:0,            /* nota média do perfil, ex. 4.9 */
+  total:0,           /* quantas avaliações o perfil tem */
+  link:"https://www.google.com/maps?cid=11357660395463088733",   /* "Ver todas no Google": perfil da loja (cid do mapa incorporado) */
+  avaliacoes:[
+    /* {nome:"Ana S.",nota:5,quando:"há 2 semanas",texto:"Atendimento excelente…"}, */
+  ]
+};
 (function(){
-  var sec=document.getElementById("avaliacoes"),rail=document.getElementById("avRail"),S=window.__SUPA;
-  if(!sec||!rail||!S)return;
+  var sec=document.getElementById("avaliacoes"),rail=document.getElementById("avRail");
+  if(!sec||!rail)return;
   var calma=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
   function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
   function icone(n){try{return ic(n)}catch(e){return""}}
@@ -49,11 +58,7 @@
     var m=e.target.closest(".av-mais");if(m){var c=m.closest(".av-card");var aberto=c.classList.toggle("aberto");m.textContent=aberto?"Ler menos":"Ler mais";pausa=Date.now()+15000}
   });
 
-  function busca(){
-    fetch(S.url+"/functions/v1/avaliacoes",{headers:{apikey:S.key,Authorization:"Bearer "+S.key}})
-      .then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&d.ok)desenha(d)}).catch(function(){});
-  }
-  /* depois da carga: não disputa banda com o catálogo */
-  function depois(){(window.requestIdleCallback||function(f){setTimeout(f,1200)})(busca,{timeout:4000})}
+  /* depois da carga: não disputa com o catálogo */
+  function depois(){(window.requestIdleCallback||function(f){setTimeout(f,800)})(function(){desenha(AVALIACOES)},{timeout:3000})}
   if(document.readyState==="complete")depois();else addEventListener("load",depois,{once:true});
 })();
