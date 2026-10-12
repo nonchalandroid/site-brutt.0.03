@@ -46,11 +46,9 @@ var AVALIACOES={
   function icone(n){try{return ic(n)}catch(e){return""}}
   function estrelas(nota){var h="";for(var i=1;i<=5;i++)h+=icone(nota>=i-.25?"star":nota>=i-.75?"starHalf":"starVazia");
     return'<span class="av-est" role="img" aria-label="'+String(nota).replace(".",",")+' de 5 estrelas">'+h+"</span>"}
-  function inicial(n){return esc((String(n).trim()[0]||"?").toUpperCase())}
   function cartao(v){
-    var foto=v.foto?'<img src="'+esc(v.foto)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" width="40" height="40">':"";
     var nome=v.perfil?'<a href="'+esc(v.perfil)+'" target="_blank" rel="noopener nofollow">'+esc(v.nome)+"</a>":esc(v.nome);
-    return'<article class="av-card"><div class="av-cab"><span class="av-foto" data-i="'+inicial(v.nome)+'">'+foto+"</span>"
+    return'<article class="av-card"><div class="av-cab">'
       +'<div><b>'+nome+"</b>"+estrelas(v.nota)+(v.quando?"<small>"+esc(v.quando)+"</small>":"")+"</div></div>"
       +(v.texto?'<p class="av-txt">'+esc(v.texto)+"</p>":'<p class="av-txt av-sem">Avaliou com '+v.nota+" estrela"+(v.nota>1?"s":"")+".</p>")
       +'<button type="button" class="av-mais" hidden>Ler mais</button></article>';
@@ -65,7 +63,6 @@ var AVALIACOES={
     sec.hidden=false;
     /* "Ler mais" só onde o texto foi cortado */
     requestAnimationFrame(function(){rail.querySelectorAll(".av-card").forEach(function(c){var p=c.querySelector(".av-txt");if(p&&p.scrollHeight>p.clientHeight+2)c.querySelector(".av-mais").hidden=false})});
-    rail.querySelectorAll(".av-foto img").forEach(function(im){im.addEventListener("error",function(){im.remove()},{once:true})});
     roda();
   }
 
