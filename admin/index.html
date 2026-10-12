@@ -1112,6 +1112,98 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 /* selo oficial com fundo transparente (favicon/selo-brutt.webp, o mesmo da loja) */
 .brand-logo{width:40px;height:auto;border-radius:0;filter:drop-shadow(0 3px 8px rgba(74,44,26,.22))}
 .login-logo .brand-logo{width:56px}
+
+/* ---------- sininho de avisos (topo, à direita) ---------- */
+.top-r{gap:8px}
+.top-sino{position:relative;width:40px;min-height:40px;height:40px;padding:0;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.55);border:1px solid var(--line-2);color:var(--ink)}
+.top-sino .i{width:20px;height:20px}
+.top-sino:hover{background:rgba(255,255,255,.85)}
+.top-sino[aria-expanded="true"]{background:#fff;border-color:var(--petroleo)}
+.sino-n{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;display:grid;place-items:center;font:700 11px/1 var(--mono);color:#2a1704;background:var(--grad-ouro);border:2px solid var(--bg);font-variant-numeric:tabular-nums}
+.top-sino.novo .sino-n{background:var(--al-pago);color:#fff}
+.top-sino.pix .sino-n{background:var(--al-pix);color:#fff}
+.top-sino.novo::after{content:"";position:absolute;inset:-1px;border-radius:inherit;border:2px solid var(--al-pago);pointer-events:none;animation:piscaNovo 1s ease-in-out infinite}
+.sino-painel{position:fixed;z-index:40;top:calc(var(--top-h) + env(safe-area-inset-top,0px) + 8px);right:16px;width:min(400px,calc(100vw - 32px));max-height:min(72vh,640px);display:flex;flex-direction:column;
+  border-radius:16px;background:rgba(250,246,239,.97);border:1px solid var(--line-2);box-shadow:0 24px 48px -16px rgba(43,26,16,.35);overflow:hidden}
+.sino-h{display:flex;align-items:center;justify-content:space-between;padding:12px 12px 8px 16px}
+.sino-h b{font-size:16px;color:var(--marrom)}
+.sino-x{width:36px;min-height:36px;height:36px;padding:0;display:grid;place-items:center;background:none;color:var(--muted)}
+.sino-lista{overflow-y:auto;overscroll-behavior:contain;padding:0 8px 8px;display:flex;flex-direction:column;gap:4px}
+.sino-it{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;text-align:left;padding:10px 8px;border-radius:12px;background:transparent;border:1px solid transparent;color:var(--ink);font-weight:400;min-height:0}
+.sino-it:hover{background:rgba(255,255,255,.8);border-color:var(--line)}
+.sino-e{font-size:16px;text-align:center}
+.sino-tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sino-tx b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sino-tx small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sino-it time{font:500 11px var(--mono);color:var(--muted-2);white-space:nowrap}
+.sino-it.novo{background:rgba(23,119,61,.06);border-color:rgba(23,119,61,.35)}
+.sino-it.novo b{color:#11612f}
+.sino-it.novo time,.sino-it.novo small{color:var(--muted)}
+.sino-it.pix b{color:var(--al-pix)}
+.sino-it.feito{opacity:.7}
+.sino-vazio{padding:24px 8px;text-align:center;font-size:13px;color:var(--muted)}
+.sino-todos{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;font-size:13px;font-weight:600;color:var(--petroleo-cl);text-decoration:none;border-top:1px solid var(--line)}
+.sino-todos .i{width:14px;height:14px}
+.sino-aparelho{padding:12px;border-top:1px solid var(--line);background:rgba(255,255,255,.45)}
+.sino-aparelho .ntf{margin:0;padding:0;background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;gap:10px}
+.sino-aparelho .ntf-ic{width:32px;height:32px}
+.sino-aparelho .ntf-tx b{font-size:13px}
+@media (max-width:560px){.sino-painel{right:8px;left:8px;width:auto;max-height:calc(100dvh - var(--top-h) - 24px)}}
+@media (prefers-reduced-motion:reduce){.top-sino.novo::after{animation:none}}
+
+/* ---------- margem e lucro (Visão geral) ---------- */
+.ov-kpi.margem .v{color:var(--salvia-cl);font-size:30px}
+.ov-kpi.alerta.margem .v{color:var(--terracota-cl)}
+.ov-lucro{margin:0 0 16px}
+.ov-lucro h3 small{font-weight:500;font-size:12px;color:var(--muted-2);margin-left:6px}
+.lc-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:stretch}
+.lc-conta{display:flex;flex-direction:column;gap:2px}
+.lc-l{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.lc-l span{min-width:0;color:var(--muted)}
+.lc-l small{font-size:12px;color:var(--muted-2)}
+.lc-l b{font:600 15px var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+.lc-l.lc-sub b{color:var(--ouro-cl)}
+.lc-fat{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 0 8px;border-bottom:1px solid var(--line-2);font-weight:600;color:var(--ink)}
+.lc-in{display:inline-flex;align-items:center;gap:6px;flex:none}
+.lc-in i{font:500 13px var(--mono);font-style:normal;color:var(--muted-2)}
+.lc-in input{width:140px;min-height:40px;text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lc-res{display:flex;flex-direction:column;gap:6px;justify-content:center;padding:16px;border-radius:14px;background:rgba(255,255,255,.6);border:1px solid var(--line)}
+.lc-res.pos{background:rgba(40,107,44,.07);border-color:rgba(40,107,44,.3)}
+.lc-res.neg{background:rgba(179,38,30,.06);border-color:rgba(179,38,30,.3)}
+.lc-rot{font-size:13px;font-weight:600;color:var(--muted)}
+.lc-v{font:700 34px/1.1 var(--mono);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.lc-res.pos .lc-v{color:var(--ok)}.lc-res.neg .lc-v{color:var(--danger)}
+.lc-d{font-size:12px;color:var(--muted)}
+.lc-eq{margin-top:8px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.lc-eq span{font-size:12px;color:var(--muted)}.lc-eq b{font:600 16px var(--mono);color:var(--ouro-cl)}.lc-eq small{font-size:12px;color:var(--muted-2)}
+.lc-nota{font-size:12px;color:var(--muted);margin:12px 0 0;line-height:1.5}
+.lc-ed{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;margin:0 0 8px}
+.lc-ed .lc-in input{width:120px}
+@media (max-width:760px){.lc-grid{grid-template-columns:1fr}.lc-v{font-size:28px}.lc-in input{width:120px}.lc-l{font-size:13px}}
+@media (max-width:380px){.lc-ed{grid-template-columns:1fr auto}.lc-ed .lc-n{grid-column:1/-1}}
+
+/* ---------- conferência de produtos ---------- */
+.cf-esc{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);margin:0 0 12px;cursor:pointer}
+.cf-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:8px;margin:0 0 16px}
+.cf-it{display:flex;align-items:center;gap:12px;text-align:left;padding:12px 14px;border-radius:14px;background:rgba(255,252,247,.64);border:1px solid var(--line);color:var(--ink);font-weight:500;font-size:13px;min-height:56px}
+.cf-it b{font:700 22px/1 var(--mono);min-width:36px;font-variant-numeric:tabular-nums}
+.cf-it.ruim b{color:var(--danger)}.cf-it.alerta b{color:var(--terracota-cl)}.cf-it.info b{color:var(--petroleo-cl)}
+.cf-it.zero{opacity:.55}.cf-it.zero b{color:var(--ok)}
+.cf-it:hover{border-color:var(--line-2);background:rgba(255,255,255,.8)}
+.cf-it.on{border-color:var(--ouro);box-shadow:inset 0 0 0 1px var(--ouro);background:rgba(255,255,255,.9)}
+.cf-res{font:500 12px var(--mono);color:var(--muted-2)}
+.cf-dica{font-size:13px;color:var(--muted);margin:-4px 0 12px}
+.cf-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.cf-row.inativo .cf-nm b{color:var(--muted)}
+.cf-nm{min-width:0;display:flex;flex-direction:column;gap:2px}
+.cf-nm b{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-nm small{font-size:12px;color:var(--muted-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-nm code{font:500 12px var(--mono);color:var(--bronze-cl)}
+.cf-nums{display:grid;grid-template-columns:repeat(4,minmax(64px,auto));gap:12px;font:600 13px var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cf-nums span{display:flex;flex-direction:column;gap:2px;text-align:right}
+.cf-nums i{font:500 11px var(--font);font-style:normal;color:var(--muted-2)}
+.cf-nums em{font-style:normal}.cf-nums em.neg{color:var(--danger)}.cf-nums em.baixa{color:var(--terracota-cl)}.cf-nums em.ok{color:var(--ok)}
+@media (max-width:760px){.cf-row{grid-template-columns:minmax(0,1fr) auto}.cf-nums{grid-column:1/-1;grid-row:2;grid-template-columns:repeat(4,minmax(0,1fr))}.cf-nums span{text-align:left}.cf-row .btn-sm{grid-column:2;grid-row:1}.cf-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -1204,7 +1296,7 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 /* navegação lateral agrupada. Só destinos que existem em ROUTES. Tela nova = ROUTES + item aqui. */
 const NAV = [
   ["Operação", [["visao","Visão geral","dash"],["home","Produtos","pkg"],["pedidos","Pedidos online","bag","pedidos"],["clientes","Clientes","users"],["estoque-baixo","Estoque baixo","alert","estoque"]]],
-  ["Gestão",   [["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"],["equipe","Equipe","shield"]]],
+  ["Gestão",   [["conferencia","Conferência de produtos","check"],["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"],["equipe","Equipe","shield"]]],
   ["Planilhas",[["planilha","Planilha de compra","sheet"],["vendidos","Mais vendidos","trend"]]],
 ];
 const ABAS = NAV.flatMap(([, itens]) => itens.map(([r, t]) => [r, t]));
@@ -1230,7 +1322,7 @@ function topbarHTML(titulo){
     <header class="topbar">
       <button type="button" class="top-menu" id="sideAbre" aria-label="Abrir menu" aria-controls="side" aria-expanded="false">${ic("menu")}</button>
       <img src="../favicon/selo-brutt.webp" alt="" class="top-logo"><div class="top-t"><small>${esc(grupoDe(r) || "Painel")}</small><b>${esc(nome)}</b></div>
-      <div class="top-r"><a class="top-link" href="/" target="_blank" rel="noopener" title="Abrir a loja em outra aba">${ic("ext")}<span>Ver loja</span></a></div>
+      <div class="top-r"><a class="top-link" href="/" target="_blank" rel="noopener" title="Abrir a loja em outra aba">${ic("ext")}<span>Ver loja</span></a><button type="button" class="top-sino" id="sinoBtn" aria-label="Avisos de pedidos" aria-haspopup="dialog" aria-expanded="false" aria-controls="sinoPainel">${ic("bell")}<span class="sino-n" hidden></span></button></div>
     </header>`;
 }
 function menuLateral(abrir){
@@ -1251,11 +1343,20 @@ function bindTopbar(){
   if($("#sideAbre")) $("#sideAbre").onclick = () => menuLateral(true);
   if($("#sideX")) $("#sideX").onclick = () => menuLateral(false);
   if($("#sideScrim")) $("#sideScrim").onclick = () => menuLateral(false);
-  contadoresNav().then(v => {
-    if(!v) return;
-    const pon = (k, n, cls) => { const el = document.querySelector(`[data-badge="${k}"]`); if(!el) return; el.hidden = !n; el.textContent = n > 99 ? "99+" : n; el.className = "nav-b " + cls; };
-    pon("pedidos", v.pedidos, v.novos ? "novo" : "acao"); pon("estoque", v.estoque, "alerta");
-  });
+  if($("#sinoBtn")) $("#sinoBtn").onclick = e => { e.stopPropagation(); sinoAbrir(!sinoAberto()); };
+  contadoresNav().then(pintaContadores);
+}
+/* números do menu (Pedidos online, Estoque baixo) e do sininho, num lugar só */
+function pintaContadores(v){
+  if(!v) return;
+  const pon = (k, n, cls) => { const el = document.querySelector(`[data-badge="${k}"]`); if(!el) return; el.hidden = !n; el.textContent = n > 99 ? "99+" : n; el.className = "nav-b " + cls; };
+  pon("pedidos", v.pedidos, v.novos ? "novo" : "acao"); pon("estoque", v.estoque, "alerta");
+  const b = $("#sinoBtn"); if(!b) return;
+  const n = (v.pedidos || 0) + (v.pix || 0), el = b.querySelector(".sino-n");   /* em aberto = pagos a concluir + Pix gerado aguardando */
+  el.hidden = !n; el.textContent = n > 99 ? "99+" : n;
+  b.classList.toggle("novo", !!v.novos); b.classList.toggle("pix", !v.novos && !!v.pix);
+  b.setAttribute("aria-label", n ? `Avisos: ${v.pedidos} pedido(s) pago(s) a concluir${v.pix ? `, ${v.pix} Pix aguardando pagamento` : ""}` : "Avisos de pedidos");
+  if(sinoAberto()) sinoLista();
 }
 /* contadores da navegação (pedidos pagos a concluir e estoque baixo): 2 contagens leves, guardadas por 60 s */
 let navCont = { t:0, v:null, p:null };
@@ -1301,14 +1402,13 @@ function ligaVigia(){
   vigiaTimer = setInterval(() => {
     if(!state.staff || document.hidden) return;
     navCont.t = 0;
-    contadoresNav().then(v => { if(!v) return; const el = document.querySelector('[data-badge="pedidos"]'); if(!el) return;
-      el.hidden = !v.pedidos; el.textContent = v.pedidos > 99 ? "99+" : v.pedidos; el.className = "nav-b " + (v.novos ? "novo" : "acao"); });
+    contadoresNav().then(pintaContadores);
   }, 30000);
 }
 async function marcarVisto(id){
   const { error } = await sb.rpc("pedido_marcar_visto", { p_id: id });
   if(error){ toast("Não deu para marcar como visto: " + error.message); return false; }
-  navCont.t = 0; contadoresNav().then(v => { if(!v) return; const el = document.querySelector('[data-badge="pedidos"]'); if(el){ el.hidden = !v.pedidos; el.textContent = v.pedidos; el.className = "nav-b " + (v.novos ? "novo" : "acao"); } });
+  navCont.t = 0; contadoresNav().then(pintaContadores);
   return true;
 }
 /* ---------------- notificações neste aparelho (Web Push) ----------------
@@ -1379,8 +1479,8 @@ async function desenhaNotif(){
     ntfRenovado = true; ntfReg().then(r => r && r.pushManager.getSubscription()).then(s => s && ntfSalvar(s)).catch(() => {});
   }
   const txt = {
-    ativo:     ["ok",  "Notificações ligadas neste aparelho", "Você recebe “Pix gerado” e “Pedido PAGO” mesmo com o painel fechado."],
-    inativo:   ["off", "Receba aviso de pedido neste aparelho", "Pix gerado e pedido pago chegam como notificação, igual app, mesmo com o painel fechado."],
+    ativo:     ["ok",  "Avisos ligados neste aparelho", "Você recebe “Pix gerado” e “Pedido PAGO” mesmo com o painel fechado. No PC, o Chrome/Edge precisa estar aberto (pode ficar minimizado)."],
+    inativo:   ["off", "Receber os avisos neste aparelho", "“Pix gerado” e “Pedido PAGO” chegam como notificação, mesmo com o painel fechado. No PC (Windows ou Mac) aparecem no canto da tela, como as do WhatsApp."],
     bloqueado: ["bad", "Notificações bloqueadas neste navegador", "Libere em: cadeado/ⓘ ao lado do endereço → Notificações → Permitir. Depois toque em “Ativar”."],
     ios:       ["off", "No iPhone: instale o painel para receber avisos", "Toque em Compartilhar (□↑) → “Adicionar à Tela de Início”. Abra o “Brutt Painel” pelo ícone e ative aqui."],
     sem:       ["bad", "Este navegador não recebe notificações", "Use o Chrome (Android/PC), Edge, Firefox ou o Safari com o painel instalado na Tela de Início."],
@@ -1393,6 +1493,49 @@ async function desenhaNotif(){
   acao("ntfAtv", async () => { await ntfAtivar(); await ntfTestar().catch(() => {}); }, "Pronto! Mandei uma notificação de teste.");
   acao("ntfTeste", ntfTestar, "Notificação de teste enviada. Deve chegar em segundos.");
   acao("ntfDes", ntfDesativar, "Notificações desligadas neste aparelho.");
+}
+/* ---------------- sininho (canto superior direito) ----------------
+   Os mesmos avisos que chegam no celular ("✅ Pedido PAGO" e "⚠️ Pix gerado"), dos pedidos das últimas 72 h, e embaixo o
+   liga/desliga das notificações DESTE aparelho (celular, PC com Windows/Mac: chegam como aviso do sistema). */
+function sinoAberto(){ const p = $("#sinoPainel"); return !!p && !p.hidden; }
+function sinoAbrir(abrir){
+  let p = $("#sinoPainel");
+  if(!p){
+    p = document.createElement("div"); p.id = "sinoPainel"; p.className = "sino-painel"; p.setAttribute("role", "dialog"); p.setAttribute("aria-label", "Avisos de pedidos"); p.hidden = true;
+    p.innerHTML = `<div class="sino-h"><b>Avisos</b><button type="button" class="sino-x" aria-label="Fechar">${ic("x")}</button></div>
+      <div class="sino-lista" id="sinoLista"><div class="loading">Carregando…</div></div>
+      <a class="sino-todos" href="#/pedidos">Ver todos os pedidos ${ic("chev")}</a>
+      <div class="sino-aparelho"><div id="ntfBox"></div></div>`;
+    document.body.appendChild(p);
+    p.querySelector(".sino-x").onclick = () => sinoAbrir(false);
+    p.querySelector(".sino-todos").onclick = e => { e.preventDefault(); sinoAbrir(false); go("pedidos"); };
+    p.addEventListener("click", e => e.stopPropagation());
+    document.addEventListener("click", () => { if(sinoAberto()) sinoAbrir(false); });
+    document.addEventListener("keydown", e => { if(e.key === "Escape" && sinoAberto()) { sinoAbrir(false); const b = $("#sinoBtn"); if(b) b.focus(); } });
+    window.addEventListener("hashchange", () => { if(sinoAberto()) sinoAbrir(false); });
+  }
+  p.hidden = !abrir;
+  const b = $("#sinoBtn"); if(b) b.setAttribute("aria-expanded", String(!!abrir));
+  if(abrir){ sinoLista(); desenhaNotif(); }
+}
+async function sinoLista(){
+  const box = $("#sinoLista"); if(!box) return;
+  const desde = new Date(Date.now() - 72 * 3600e3).toISOString(), agora = new Date();
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,cliente_nome,total,created_at,pago_em,visto_em,pix_expira_em,mp_payment_id,concluido_em,saiu_em")
+    .gte("created_at", desde).order("created_at", { ascending:false }).limit(20);
+  if(!$("#sinoLista")) return;
+  if(error){ box.innerHTML = `<div class="sino-vazio">Não deu para carregar os avisos agora.</div>`; return; }
+  const itens = (data || []).map(p => {
+    const nome = esc(String(p.cliente_nome || "Cliente").split(" ")[0]), val = brl(p.total), num = esc(p.numero);
+    if(p.status === "pago") return { cls: p.visto_em ? "pago" : "pago novo", ic: "✅", t: `Pedido PAGO #${num}`, s: `${nome} · ${val} · ${p.saiu_em ? "saiu para entrega" : "a concluir"}`, h: p.pago_em || p.created_at };
+    if(p.status === "aguardando_pagamento" && p.mp_payment_id && p.pix_expira_em && new Date(p.pix_expira_em) > agora)
+      return { cls: "pix", ic: "⚠️", t: `Pix gerado #${num}`, s: `${nome} · ${val} · aguardando pagamento`, h: p.created_at };
+    if(p.status === "concluido") return { cls: "feito", ic: "✔", t: `Concluído #${num}`, s: `${nome} · ${val}`, h: p.concluido_em || p.created_at };
+    return null;
+  }).filter(Boolean);
+  box.innerHTML = itens.length ? itens.map(x => `<button type="button" class="sino-it ${x.cls}" data-sino-ir><span class="sino-e" aria-hidden="true">${x.ic}</span><span class="sino-tx"><b>${x.t}</b><small>${x.s}</small></span><time>${esc(haQuanto(x.h))}</time></button>`).join("")
+    : `<div class="sino-vazio">Nenhum pedido nas últimas 72 horas.</div>`;
+  box.querySelectorAll("[data-sino-ir]").forEach(b => b.onclick = () => { sinoAbrir(false); go("pedidos"); });
 }
 /* mesmo critério da tela "Estoque baixo" (ativos com menos de LOW_STOCK_LIMIT, sem destilados/vinho/Red Bull) */
 function filtroEstoqueBaixo(q){
@@ -3386,7 +3529,6 @@ async function renderPedidos(){
     <div class="pg">
       <h2 class="pg-t">Pedidos online</h2>
       <p class="pg-d" style="margin-bottom:16px">Pedidos pagos pelo site (Mercado Pago). Pedido <b style="color:var(--al-pago)">pago pisca em verde ✅</b> e <b style="color:var(--al-pix)">Pix gerado (ainda não pago) em vermelho ⚠️</b>, até alguém tocar nele. Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp. Mostra os 60 mais recentes.</p>
-      <div id="ntfBox"></div>
       <div class="ped-filtros" id="pedFiltros" role="group" aria-label="Filtrar pedidos" hidden></div>
       <div id="pedLista"><div class="loading">Carregando…</div></div>
     </div>`;
@@ -3475,14 +3617,149 @@ async function renderPedidos(){
 }
 
 /* ---------------- visão geral: o que precisa de atenção agora (só dados reais, consultas leves) ---------------- */
+/* ---------------- conferência de produtos (#/conferencia) ----------------
+   Tudo que deixa a margem, o lucro ou a vitrine errados, contado num lugar só. Cada problema vira um botão com o número;
+   tocar lista os produtos e "Abrir" leva para a ficha (openProduct) para corrigir. Só lê (não grava nada). */
+const CONF_REGRAS = [
+  ["sem-custo",   "Sem custo",                 "alerta", "Sem custo a margem e o lucro ficam errados.",            p => !(Number(p.cost_price) > 0)],
+  ["sem-preco",   "Sem preço",                 "ruim",   "Não dá para vender sem preço.",                          p => !(Number(p.price) > 0)],
+  ["margem-neg",  "Custo maior que o preço",   "ruim",   "Vende no prejuízo (ou o custo está errado).",            p => { const v = vendaDe(p), c = Number(p.cost_price); return c > 0 && v > 0 && c >= v; }],
+  ["margem-baixa","Margem baixa (menos de 20%)","alerta","Confira o preço ou o custo.",                            p => { const v = vendaDe(p), c = Number(p.cost_price); return c > 0 && v > c && (v - c) / v < .2; }],
+  ["promo",       "Promoção maior que o preço","alerta", "A promoção tem que ser menor que o preço normal.",       p => Number(p.promo_price) > 0 && Number(p.price) > 0 && Number(p.promo_price) >= Number(p.price)],
+  ["estoque-neg", "Estoque negativo",          "ruim",   "Confira no Nex: estoque abaixo de zero.",                p => Number(p.stock) < 0],
+  ["inativo-est", "Fora do site mas com estoque","info", "Tem na loja e não aparece para o cliente.",              p => !p.is_active && Number(p.stock) > 0],
+  ["sem-foto",    "Sem foto",                  "info",   "Produto sem foto vende menos.",                          (p, x) => !x.fotos.has(p.id)],
+  ["sem-categoria","Sem categoria",            "info",   "Não aparece em nenhuma seção da loja.",                  p => !p.category_id],
+  ["sem-ean",     "Sem código de barras (EAN)","info",   "Sem EAN o Nex liga só pelo nome (pode errar).",          p => !String(p.ean || "").trim()],
+  ["sem-desc",    "Sem descrição",             "info",   "Descrição curta ou vazia (o Sommelier em massa resolve).", p => String(p.description || "").trim().length < 20],
+  ["duplicado",   "Nome repetido",             "info",   "Mais de um produto com o mesmo nome.",                   (p, x) => (x.nomes.get(normNome(p.name)) || 0) > 1],
+];
+const vendaDe = p => Number(p.promo_price) > 0 ? Number(p.promo_price) : Number(p.price);
+const normNome = n => String(n || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+let confEstado = { regra: null, inativos: false };
+async function renderConferencia(){
+  app.innerHTML = `${topbarHTML("Conferência de produtos")}
+    <div class="pg">
+      <div class="pg-h"><div><h2 class="pg-t">Conferência de produtos</h2><p class="pg-d">Produtos com algo faltando ou errado: custo, preço, margem, foto, categoria, código de barras. Toque num item para ver a lista e corrigir.</p></div>
+        <button class="btn-ghost btn-sm" id="cfAtualiza">${ic("sync")} Atualizar</button></div>
+      <label class="cf-esc"><input type="checkbox" id="cfInativos" ${confEstado.inativos ? "checked" : ""}> Incluir produtos fora do site (inativos)</label>
+      <div class="cf-grade" id="cfGrade"><div class="loading">Conferindo o catálogo…</div></div>
+      <section class="ov-box cf-lista-box" id="cfListaBox" hidden><div class="ov-box-h"><h3 id="cfTit"></h3><span class="cf-res" id="cfRes"></span></div><p class="cf-dica" id="cfDica"></p><div id="cfLista"></div></section>
+    </div>`;
+  bindTopbar();
+  $("#cfAtualiza").onclick = () => renderConferencia();
+  $("#cfInativos").onchange = e => { confEstado.inativos = e.target.checked; renderConferencia(); };
+  const [pr, im] = await Promise.all([
+    sb.from("products").select("id,name,brand,ean,sku,category_id,description,price,promo_price,cost_price,stock,is_active").order("name").limit(5000),
+    sb.from("product_images").select("product_id").limit(10000),
+  ]);
+  if(rotaAtual() !== "conferencia" || !$("#cfGrade")) return;
+  if(pr.error){ $("#cfGrade").innerHTML = `<div class="empty">Não deu para ler os produtos: ${esc(pr.error.message)}</div>`; return; }
+  const todos = pr.data || [], base = confEstado.inativos ? todos : todos.filter(p => p.is_active);
+  const x = { fotos: new Set((im.data || []).map(i => i.product_id)), nomes: new Map() };
+  base.forEach(p => { const k = normNome(p.name); x.nomes.set(k, (x.nomes.get(k) || 0) + 1); });
+  const grupos = CONF_REGRAS.map(([id, rot, sev, dica, fn]) => ({ id, rot, sev, dica, itens: (id === "inativo-est" ? todos : base).filter(p => fn(p, x)) }));
+  $("#cfGrade").innerHTML = grupos.map(g => `<button type="button" class="cf-it ${g.sev}${g.itens.length ? "" : " zero"}${confEstado.regra === g.id ? " on" : ""}" data-cf="${g.id}" aria-pressed="${confEstado.regra === g.id}">
+      <b>${g.itens.length}</b><span>${esc(g.rot)}</span></button>`).join("");
+  const mostra = id => {
+    confEstado.regra = id; const g = grupos.find(y => y.id === id); if(!g) return;
+    $("#cfGrade").querySelectorAll("[data-cf]").forEach(b => { const on = b.dataset.cf === id; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+    $("#cfListaBox").hidden = false; $("#cfTit").textContent = g.rot; $("#cfRes").textContent = `${g.itens.length} produto${g.itens.length === 1 ? "" : "s"}`; $("#cfDica").textContent = g.dica;
+    $("#cfLista").innerHTML = g.itens.length ? g.itens.slice(0, 400).map(p => { const v = vendaDe(p), c = Number(p.cost_price), mg = c > 0 && v > 0 ? (v - c) / v * 100 : null;
+      return `<div class="cf-row${p.is_active ? "" : " inativo"}"><div class="cf-nm"><b>${esc(p.name)}</b><small>${p.brand ? esc(p.brand) + " · " : ""}${p.ean ? `<code>${esc(p.ean)}</code>` : "sem EAN"}${p.is_active ? "" : " · fora do site"}</small></div>
+        <div class="cf-nums"><span><i>Preço</i>${v > 0 ? brlM(v) : "—"}</span><span><i>Custo</i>${c > 0 ? brlM(c) : "—"}</span><span><i>Margem</i><em class="${mg == null ? "" : mg < 0 ? "neg" : mg < 20 ? "baixa" : "ok"}">${mg == null ? "—" : pctBR(mg)}</em></span><span><i>Estoque</i>${Number(p.stock) || 0}</span></div>
+        <button type="button" class="btn-ghost btn-sm" data-cf-abrir="${esc(p.id)}">Abrir</button></div>`; }).join("") + (g.itens.length > 400 ? `<p class="cf-dica">Mostrando 400 de ${g.itens.length}.</p>` : "")
+      : `<div class="empty">Nada aqui. Tudo certo!</div>`;
+    $("#cfLista").querySelectorAll("[data-cf-abrir]").forEach(b => b.onclick = () => openProduct(b.dataset.cfAbrir));
+  };
+  $("#cfGrade").querySelectorAll("[data-cf]").forEach(b => b.onclick = () => { mostra(b.dataset.cf); if(innerWidth < 1024) $("#cfListaBox").scrollIntoView({ behavior:"smooth", block:"start" }); });
+  mostra(confEstado.regra || (grupos.find(g => g.itens.length && g.sev !== "info") || grupos.find(g => g.itens.length) || grupos[0]).id);
+}
+/* ---------------- margem e projeção de lucro (Visão geral) ----------------
+   Margem = (preço de venda − custo) / preço, dos produtos ativos com custo cadastrado. Quando há vendas na planilha
+   "Mais vendidos" (sales_count), cada produto pesa pelo quanto vende (margem real do que sai), senão é a média simples.
+   Projeção do mês: faturamento bruto × margem = lucro bruto; − custos fixos − dia a dia = lucro líquido.
+   Ponto de equilíbrio = (custos fixos + dia a dia) / margem. Custos ficam na tabela financeiro (só dono/admin). */
+const pctBR = v => (Math.round(v * 10) / 10).toFixed(1).replace(".", ",") + "%";
+const brl0 = v => "R$ " + Math.round(Number(v) || 0).toLocaleString("pt-BR");
+const brlM = v => (Number(v) < 0 ? "− " : "") + "R$ " + Math.abs(Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits:2, maximumFractionDigits:2 });
+function margemCatalogo(lista){
+  let ativos = lista.length, comCusto = 0, rec = 0, luc = 0, recP = 0, lucP = 0;
+  for(const p of lista){
+    const venda = Number(p.promo_price) > 0 ? Number(p.promo_price) : Number(p.price), custo = Number(p.cost_price);
+    if(!(venda > 0) || !(custo > 0)) continue;
+    comCusto++; rec += venda; luc += venda - custo;
+    const q = Math.max(0, Number(p.sales_count) || 0); recP += venda * q; lucP += (venda - custo) * q;
+  }
+  const ponderada = recP > 0;
+  return { ativos, comCusto, ponderada, pct: ponderada ? lucP / recP * 100 : rec > 0 ? luc / rec * 100 : null };
+}
+function desenhaLucro(fin, mg, erro){
+  const box = $("#ovLucro"); if(!box) return;
+  if(erro){ box.innerHTML = `<h3>Lucro do mês</h3><p class="lc-nota">Só o dono e os administradores veem os números de lucro.</p>`; return; }
+  const f = fin || { custos: [], dia_a_dia: 0, faturamento: null };
+  const custos = Array.isArray(f.custos) ? f.custos : [];
+  const fixos = custos.reduce((t, c) => t + (Number(c.valor) || 0), 0), dia = Number(f.dia_a_dia) || 0, fat = Number(f.faturamento) || 0;
+  const m = mg.pct == null ? null : mg.pct / 100;
+  const bruto = m == null ? null : fat * m, cmv = m == null ? null : fat - bruto, liquido = bruto == null ? null : bruto - fixos - dia;
+  const equilibrio = m ? (fixos + dia) / m : null;
+  const linha = (rot, v, cls = "") => `<div class="lc-l ${cls}"><span>${rot}</span><b>${v}</b></div>`;
+  box.innerHTML = `<div class="ov-box-h"><h3>Lucro do mês <small>projeção</small></h3><button class="btn-ghost btn-sm" id="lcEditar">${ic("sheet")} Custos</button></div>
+    <div class="lc-grid">
+      <div class="lc-conta">
+        <label class="lc-fat"><span>Faturamento bruto do mês</span><span class="lc-in"><i>R$</i><input id="lcFat" type="text" inputmode="decimal" placeholder="0,00" value="${fat ? String(fat.toFixed(2)).replace(".", ",") : ""}"></span></label>
+        ${linha("− Custo das mercadorias" + (m == null ? "" : ` <small>(${pctBR(100 - mg.pct)} do faturamento)</small>`), cmv == null ? "—" : brlM(cmv))}
+        ${linha("= Lucro bruto" + (m == null ? "" : ` <small>(margem ${pctBR(mg.pct)})</small>`), bruto == null ? "—" : brlM(bruto), "lc-sub")}
+        ${linha(`− Custos fixos <small>(${custos.map(c => esc(c.nome)).join(", ") || "nenhum"})</small>`, brlM(fixos))}
+        <label class="lc-l lc-dia"><span>− Dia a dia <small>(comida, combustível das entregas…)</small></span><span class="lc-in"><i>R$</i><input id="lcDia" type="text" inputmode="decimal" placeholder="0,00" value="${dia ? String(dia.toFixed(2)).replace(".", ",") : ""}"></span></label>
+      </div>
+      <div class="lc-res ${liquido == null || !fat ? "" : liquido >= 0 ? "pos" : "neg"}">
+        <span class="lc-rot">Lucro líquido estimado</span>
+        <b class="lc-v">${!fat ? "—" : liquido == null ? "—" : brlM(liquido)}</b>
+        <span class="lc-d">${!fat ? "Digite o faturamento do mês para ver o lucro." : fat && liquido != null ? `${pctBR(liquido / fat * 100)} do faturamento` : ""}</span>
+        ${equilibrio ? `<div class="lc-eq"><span>Ponto de equilíbrio</span><b>${brl0(equilibrio)}/mês</b><small>≈ ${brl0(equilibrio / 26)} por dia (26 dias) só para pagar os custos</small></div>` : ""}
+      </div>
+    </div>
+    ${f.faturamento_obs ? `<p class="lc-nota">Faturamento: ${esc(f.faturamento_obs)}</p>` : `<p class="lc-nota">Use a média dos últimos 3 meses do Nex. Os valores ficam salvos para toda a equipe de gestão.</p>`}`;
+  const num = v => { const t = String(v || "").replace(/[^\d,.-]/g, ""); const n = Number(t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t); return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null; };
+  const salvar = async (campo, el) => {
+    const v = num(el.value); if(v == null && el.value.trim()){ toast("Valor inválido."); return; }
+    const novo = { ...f, id: 1, custos, [campo]: v ?? (campo === "dia_a_dia" ? 0 : null), atualizado_em: new Date().toISOString(), atualizado_por: state.staff?.user_id || null };
+    if(campo === "faturamento") novo.faturamento_obs = v ? `digitado em ${new Date().toLocaleDateString("pt-BR")}` : null;
+    const { error } = await sb.from("financeiro").upsert(novo);
+    if(error){ toast("Não deu para salvar: " + error.message); return; }
+    desenhaLucro(novo, mg);
+  };
+  $("#lcFat").onchange = e => salvar("faturamento", e.target);
+  $("#lcDia").onchange = e => salvar("dia_a_dia", e.target);
+  [$("#lcFat"), $("#lcDia")].forEach(i => i.onkeydown = e => { if(e.key === "Enter") e.target.blur(); });
+  $("#lcEditar").onclick = () => editarCustos(f, custos, mg);
+}
+function editarCustos(f, custos, mg){
+  const lin = (c, i) => `<div class="lc-ed" data-i="${i}"><input class="lc-n" type="text" value="${esc(c.nome)}" placeholder="Nome (ex.: Aluguel)" aria-label="Nome do custo"><span class="lc-in"><i>R$</i><input class="lc-vv" type="text" inputmode="decimal" value="${c.valor != null ? String(Number(c.valor).toFixed(2)).replace(".", ",") : ""}" placeholder="0,00" aria-label="Valor por mês"></span><button type="button" class="btn-danger btn-sm lc-del" aria-label="Remover">${ic("x")}</button></div>`;
+  openDrawer(`<div class="drawer-h"><h2>Custos fixos do mês</h2><button class="x" data-close aria-label="Fechar">${ic("x")}</button></div><div class="section"><p class="lc-nota" style="margin:0 0 12px">Valores que a loja paga todo mês, com ou sem venda. Entram na projeção do lucro e no ponto de equilíbrio.</p>
+      <div id="lcLista">${custos.map(lin).join("")}</div>
+      <button type="button" class="btn-ghost btn-sm" id="lcMais">${ic("plus")} Adicionar custo</button></div>
+    <div class="save-row"><button class="btn-gold" id="lcSalvar">Salvar</button></div>`);
+  $("#lcMais").onclick = () => { $("#lcLista").insertAdjacentHTML("beforeend", lin({ nome:"", valor:null }, $("#lcLista").children.length)); ligaDel(); };
+  const ligaDel = () => document.querySelectorAll(".lc-del").forEach(b => b.onclick = () => b.closest(".lc-ed").remove()); ligaDel();
+  $("#lcSalvar").onclick = async () => {
+    const lista = [...document.querySelectorAll(".lc-ed")].map(r => ({ nome: r.querySelector(".lc-n").value.trim().slice(0, 40), valor: Number(String(r.querySelector(".lc-vv").value).replace(/\./g, "").replace(",", ".")) }))
+      .filter(c => c.nome && Number.isFinite(c.valor) && c.valor >= 0).map(c => ({ nome: c.nome, valor: Math.round(c.valor * 100) / 100 }));
+    const novo = { ...f, id: 1, custos: lista, atualizado_em: new Date().toISOString(), atualizado_por: state.staff?.user_id || null };
+    const { error } = await sb.from("financeiro").upsert(novo);
+    if(error){ toast("Não deu para salvar: " + error.message); return; }
+    closeDrawer(); toast("Custos salvos."); desenhaLucro(novo, mg);
+  };
+}
 async function renderVisao(){
   const kpiSk = k => `<div class="ov-kpi sk"><div class="k">${k}</div><div class="v"></div><div class="d">&nbsp;</div></div>`;
   app.innerHTML = `${topbarHTML("Visão geral")}
     <div class="pg">
       <div class="pg-h"><div><h2 class="pg-t">Visão geral</h2><p class="pg-d">O que precisa de atenção agora. Números do banco da loja no momento em que a tela abriu.</p></div>
         <button class="btn-ghost btn-sm" id="ovAtualiza">${ic("sync")} Atualizar</button></div>
-      <div id="ntfBox"></div>
-      <div class="ov-grid" id="ovKpis">${["Pedidos a concluir","Estoque baixo","Ativos sem estoque","Sincronização Nex","Loja agora"].map(kpiSk).join("")}</div>
+      <div class="ov-grid" id="ovKpis">${["Pedidos a concluir","Estoque baixo","Ativos sem estoque","Margem de lucro","Loja agora"].map(kpiSk).join("")}</div>
+      <section class="ov-box ov-lucro" id="ovLucro" aria-live="polite"><div class="loading">Calculando o lucro…</div></section>
       <div class="ov-cols">
         <section class="ov-box"><h3>O que resolver agora</h3><div class="ov-todo" id="ovTodo"><div class="loading">Verificando…</div></div></section>
         <section class="ov-box"><div class="ov-box-h"><h3>Últimos pedidos online</h3><button class="btn-ghost btn-sm" data-ir="pedidos">Ver todos</button></div><div class="ov-ped" id="ovPed"><div class="loading">Carregando…</div></div></section>
@@ -3501,7 +3778,7 @@ async function renderVisao(){
   $("#ovAtualiza").onclick = () => { navCont.t = 0; renderVisao(); };
 
   const cont = q => q.then(r => r.error ? null : (r.count || 0)).catch(() => null);
-  const [nPago, nAguard, nBaixo, nZero, nex, hor, ult, nNovo] = await Promise.all([
+  const [nPago, nAguard, nBaixo, nZero, nex, hor, ult, nNovo, prodsMg, fin] = await Promise.all([
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago")),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "aguardando_pagamento")),
     cont(filtroEstoqueBaixo(sb.from("products").select("id", { count:"exact", head:true }))),
@@ -3510,8 +3787,11 @@ async function renderVisao(){
     sb.from("loja_horarios").select("*"),
     sb.from("pedidos").select("id,numero,status,mp_status,cliente_nome,total,created_at").order("created_at", { ascending:false }).limit(5),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago").is("visto_em", null)),
+    sb.from("products").select("price,promo_price,cost_price,sales_count").eq("is_active", true).limit(5000),
+    sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),
   ]);
   if(rotaAtual() !== "visao" || !$("#ovKpis")) return;
+  const mg = margemCatalogo(prodsMg.error ? [] : prodsMg.data);
   if(nPago != null && nBaixo != null && nNovo != null){ navCont = { t:Date.now(), v:{ pedidos:nPago, estoque:nBaixo, novos:nNovo }, p:null }; vigiaNovos(nNovo); }
 
   /* loja (mesma conta da tela de horários) */
@@ -3531,11 +3811,12 @@ async function renderVisao(){
     kpi("pedidos", "bag", "Pedidos a concluir", num(nPago), nPago == null ? "não disponível" : nNovo ? `${nNovo} novo${nNovo > 1 ? "s" : ""}: abra para parar o alerta` : `pagos, esperando conclusão${nAguard ? ` · ${nAguard} aguardando pagamento` : ""}`, nNovo ? "novo" : nPago ? "acao" : "") +
     kpi("estoque-baixo", "alert", "Estoque baixo", num(nBaixo), nBaixo == null ? "não disponível" : `ativos com menos de ${LOW_STOCK_LIMIT} unidades`, nBaixo ? "alerta" : "") +
     kpi("estoque-baixo", "pkg", "Ativos sem estoque", num(nZero), nZero == null ? "não disponível" : "aparecem como esgotados no site", nZero ? "alerta" : "") +
-    kpi("nex", "sync", "Sincronização Nex", !u ? "Sem registro" : !u.ok ? "Última rodada falhou" : nexVelho ? "Parou de sincronizar?" : "Em dia",
-        !u ? (nex.error ? "não disponível" : "nenhuma rodada ainda") : `${haQuanto(u.ran_at)} · ${u.modo === "teste" ? "simulação" : (u.estoque_alterado ?? 0) + " estoque(s), " + (u.preco_alterado ?? 0) + " preço(s)"}`, nexRuim ? "ruim" : u ? "bom" : "", true) +
+    kpi("conferencia", "trend", "Margem de lucro", mg.pct == null ? "—" : pctBR(mg.pct),
+        mg.pct == null ? "cadastre o custo dos produtos" : `${mg.ponderada ? "pesada pelo que mais vende" : "média do catálogo"} · ${mg.comCusto} de ${mg.ativos} com custo`, mg.pct == null ? "" : mg.pct >= 35 ? "bom margem" : "alerta margem") +
     kpi("horarios", "store", "Loja agora", !loja ? "—" : loja.aberto ? "Aberta" : "Fechada",
         !loja ? "não disponível" : loja.aberto ? "até " + loja.fim : (loja.nunca ? "nenhum dia aberto" : "abre " + loja.quando + " às " + loja.hora), !loja ? "" : loja.aberto ? "bom" : "alerta", true);
 
+  desenhaLucro(fin && !fin.error ? fin.data : null, mg, !!(fin && fin.error));
   /* o que resolver agora: só itens que existem de verdade */
   const it = (rota, icone, cls, titulo, sub) => `<button class="ov-item ${cls}" data-ir="${rota}"><span class="ic">${ic(icone)}</span><span class="tx"><b>${titulo}</b><small>${sub}</small></span><span class="go">${ic("chev")}</span></button>`;
   const todo = [];
@@ -4072,6 +4353,7 @@ Object.assign(ROUTES, {
   "pedidos": renderPedidos,
   "clientes": renderClientes,
   "sommelier": renderSommelier,
+  "conferencia": renderConferencia,
   "equipe": renderEquipe,
 });
 

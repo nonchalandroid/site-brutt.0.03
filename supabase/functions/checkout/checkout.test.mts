@@ -301,7 +301,7 @@ await t("status traz a linha do tempo sem endereço, telefone nem dados de pagam
   const j = await getStatus(c.j.pedido_id);
   assert.equal(j.acomp.status, "pago"); assert.equal(j.acomp.tipo, "cliente"); assert.equal(j.acomp.nome, "Ana");
   assert.ok(j.acomp.criado && j.acomp.pago); assert.equal(j.acomp.saiu, null);
-  assert.deepEqual(j.acomp.itens, [{ qtd: 1, nome: "Essência Ziggy Menta" }]);
+  assert.deepEqual(j.acomp.itens, [{ qtd: 1, nome: "Essência Ziggy Menta", subtotal: 25 }]);
   const txt = JSON.stringify(j.acomp);
   assert.ok(!/21966665555|Silva|mp_payment|endereco/.test(txt), "nada sensível no acompanhamento");
 });

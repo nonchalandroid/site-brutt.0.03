@@ -31,15 +31,26 @@ function item(id){return lista().filter(function(x){return x.id===id})[0]||null}
 function marcaAvisou(id){if(!item(id))guarda(id,ultimo[id]&&ultimo[id].numero);var l=lista();l.forEach(function(x){if(x.id===id)x.avisou=true});grava(l)}
 function pago(a){return!!a&&(a.status==="pago"||a.status==="concluido")}
 function falta(id,a){var it=item(id);return!equipe[id]&&pago(a)&&a.status!=="concluido"&&!a.saiu&&!(it&&it.avisou)}   /* depois que saiu para entrega a loja já tem o pedido */
-/* Mensagem do pedido para a loja: a completa guardada no pagamento (itens, endereço, total) ou, se este aparelho não
-   tem (pedido aberto pelo link em outro celular), montada com o que a tela de acompanhamento sabe. */
+/* Mensagem do pedido para o WhatsApp da loja (SEMPRE o pedido completo, em qualquer etapa: a equipe sabe tudo sem abrir o
+   painel). A completa é guardada neste aparelho quando o Pix é gerado (itens, valores, endereço com mapa, total), no mesmo
+   formato do pedido pelo WhatsApp; a linha do pagamento entra aqui com a situação atual do Pix. Se este aparelho não tem a
+   mensagem (pedido aberto pelo link em outro celular), ela é montada com o que a tela de acompanhamento sabe. */
+function pagLinha(st){
+  if(window.MPX&&MPX.pagamentoLinha)return MPX.pagamentoLinha(st);
+  var s={pago:"✅ PAGO",concluido:"✅ PAGO",aguardando_pagamento:"⏳ Pix gerado, aguardando pagamento",expirado:"⌛ Pix vencido (não foi pago)",recusado:"❌ pagamento recusado",cancelado:"cancelado"}[st]||"⏳ aguardando pagamento";
+  return "💳 *Pagamento:* Pix (Mercado Pago) — "+s;
+}
 function msgPedido(id,a){
-  var it=item(id);if(it&&it.msg)return it.msg;
-  var L=["✅ *PEDIDO PAGO NO SITE #"+a.numero+"*"+(a.reserva?" (reserva: loja fechada)":""),"👤 "+(a.nome||"Cliente"),"","🛒 *Itens:*"];
-  (a.itens||[]).forEach(function(i){L.push("• "+i.qtd+"x "+i.nome)});L.push("");
-  if(a.tipo==="entrega"){L.push("🚚 Entrega pela loja"+(a.bairro?" — "+a.bairro:"")+" (endereço completo no painel)");L.push("Taxa de entrega: "+_R(a.taxa_entrega))}
-  else L.push("🛵 Vou solicitar a entrega por conta própria (Uber Flash ou 99).");
-  L.push("💰 *Total pago no Pix: "+_R(a.total)+"*");L.push("Pagamento confirmado pelo Mercado Pago no site.");
+  var it=item(id);
+  if(it&&it.msg)return it.msg.replace("{PAGAMENTO}",pagLinha(a.status));
+  var L=[(a.reserva?"📌 RESERVA DE PEDIDO #":"📦 NOVO PEDIDO #")+a.numero,"👤 CLIENTE: *"+(a.nome||"Cliente")+"*"];
+  if(a.reserva)L.push("⏰ *Loja fechada quando o cliente pediu.* Ele aguarda contato da equipe assim que abrirmos.");
+  L.push("----------","🛒 ITENS DO PEDIDO");
+  (a.itens||[]).forEach(function(i){L.push("• "+i.qtd+"x "+i.nome+(i.subtotal!=null?" — "+_R(i.subtotal):""))});
+  L.push("----------","💰 *Total:* "+_R(a.total));
+  if(a.tipo==="entrega")L.push("🚚 *Recebimento:* Entrega pela loja"+(a.bairro?" — "+a.bairro:"")+". Taxa de entrega: "+_R(a.taxa_entrega)+" (já incluída no total). Endereço completo no painel.");
+  else L.push("🚚 *Recebimento:* Vou solicitar a entrega por conta própria (Uber Flash ou 99) — frete da loja R$ 0,00. Eu sou o destinatário, a Tabacaria Brutt é o ponto de coleta.");
+  L.push(pagLinha(a.status));
   return L.join("\n");
 }
 var tentouFechar={};
@@ -115,7 +126,7 @@ function copiar(t){
 }
 function html(a,id){
   var tp=topo(a),L=etapas(a),fim=final(a)||(a.status==="aguardando_pagamento"&&a.expira&&new Date(a.expira)<new Date());
-  var msgLoja=falta(id,a)?msgPedido(id,a):"Oi! Sobre o meu pedido #"+a.numero+" no site.";   /* ainda não enviou: "Falar com a loja" também leva o pedido completo */
+  var msgLoja=msgPedido(id,a);   /* "Falar com a loja" leva SEMPRE o pedido completo, em qualquer etapa (sem o robô do WhatsApp, a loja precisa ver tudo na mensagem) */
   return '<div class="ac-h"><span class="ac-num">Pedido <b>#'+_esc(String(a.numero).replace(/-/g,"‑"))+'</b></span><button type="button" class="ac-x" data-acomp-fechar aria-label="Fechar">×</button></div>'
    +'<div class="ac-hero ac-'+tp[3]+'"><span class="ac-ic">'+svg(tp[0])+'</span><div><h2 id="acT">'+_esc(tp[1])+'</h2><p>'+_esc(tp[2])+'</p></div></div>'
    +concluirHTML(id,a)
