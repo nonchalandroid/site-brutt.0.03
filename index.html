@@ -397,10 +397,10 @@ body.ia-on footer{padding-bottom:calc(var(--ia-h) + var(--mb-h) + 48px)}
 /* enquanto a página ou um trilho rola, as animações decorativas que repintam param (voltam ao soltar o dedo) */
 html.rolando .arrows button::after,html.rolando .ia-bar::before,html.rolando .ia-bar::after,html.rolando .ia-orb::before,html.rolando .ia-orb::after,html.rolando .ia-blobs i{animation-play-state:paused}
 /* o brilho dourado da logo nunca para, nem durante a rolagem */
-/* brasas atrás da busca: canvas absoluto do tamanho da .bar (js/brasas.js) */
+/* fundo "crypto em chamas" atrás da busca: canvas absoluto do tamanho da .bar (js/topo-fogo.js) */
 header .bar{position:relative;z-index:1}
-#brasas{position:absolute;left:0;top:0;width:100%;height:0;display:block;pointer-events:none;opacity:0;transition:opacity .8s ease}
-#brasas.on{opacity:1}
+#topoFx{position:absolute;left:0;top:0;width:100%;height:0;display:block;pointer-events:none;opacity:0;transition:opacity .8s ease}
+#topoFx.on{opacity:1}
 /* celular: a borda da Brutt IA fica com as cores, mas sem girar (o giro com blur custa um repaint por quadro) */
 @media (hover:none){.ia-bar::before,.ia-bar::after,.ia-orb::before,.ia-orb::after,.ia-blobs i{animation:none}}
 @media(prefers-reduced-motion:reduce){.arrows button::after{animation:none;opacity:.6}}
@@ -467,7 +467,7 @@ nav ul{width:max-content;max-width:none;margin-inline:auto}
     </div>
     <div class="hdd" id="hDd" hidden><ul id="hList"></ul><p class="hnote">Horário de Brasília.</p></div>
   </div>
-  <canvas id="brasas" aria-hidden="true"></canvas>
+  <canvas id="topoFx" aria-hidden="true"></canvas>
   <div class="bar">
     <a class="logo" href="#top" aria-label="Tabacaria Brutt"><span class="logo-wrap"><img data-logo width="360" height="332" alt="Tabacaria Brutt"></span></a>
     <label class="search"><span aria-hidden="true" data-ic="search"></span><input id="q" type="search" placeholder="Buscar" aria-label="Buscar produto, sabor ou marca" autocomplete="off"></label>
@@ -703,7 +703,7 @@ function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox
 
 <script src="/vendor/lenis.min.js" defer></script>
 <script src="/js/fluidez.js?v=20261012b" defer></script>
-<script src="/js/brasas.js?v=20261012a" defer></script>
+<script src="/js/topo-fogo.js?v=20261012a" defer></script>
 <script src="/js/checkout-mp.js?v=20261012m" defer></script>
 <script src="/js/acompanhar.js?v=20261012m" defer></script>
 <script src="/js/sons.js?v=20261012a" defer></script>
