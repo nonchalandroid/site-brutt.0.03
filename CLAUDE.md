@@ -203,3 +203,15 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 7. Segurança: nada de token/segredo no front. Só a **Public Key** do Mercado Pago (`window.__MP`) e a chave **anon** do Supabase podem ficar no HTML.
 
 **Pix online ligado para todos** (desde 11/10/2026): `MP_PRODUCAO` em `index.html` tem a Public Key de produção. Para voltar ao pedido pelo WhatsApp, deixe `MP_PRODUCAO=""` (ver `supabase/CHECKOUT.md`).
+
+## 8. Segurança (auditoria de 12/10/2026)
+
+- **Escapar sempre:** todo dado do banco ou do cliente que vai para `innerHTML` passa por `esc()` (loja e painel escapam `& < > " '`), inclusive nomes de categoria, URLs de imagem e números. Link vindo de fora só se começar com `https://`.
+- **Filtros `.or()` do PostgREST no painel:** valor digitado ou de planilha passa por `pgv()` (tira vírgula, parênteses e aspas).
+- **Bibliotecas do painel em `vendor/`, versão fixa, sem CDN:** `supabase-js-2.117.2.js`, `xlsx-0.18.5.full.min.js`, `html5-qrcode-2.3.8.min.js`. Atualizar = baixar a versão nova (npm pack confere o hash do registro) e trocar o nome do arquivo.
+- **CSP do painel** (`<meta http-equiv="Content-Security-Policy">` no `admin/index.html`): só scripts do próprio site, conexões só com o Supabase do projeto, fontes do Google. Serviço externo novo no painel = acrescentar o domínio no `connect-src`/`img-src`, senão o navegador bloqueia. **Anti-clickjacking:** o painel não aparece dentro de iframe de outro site (`#antiFrame`). A loja tem CSP mínima (`object-src 'none'; base-uri 'self'`) para não quebrar o Payment Brick do Mercado Pago.
+- **Função `checkout` (pública):** preço, estoque e total sempre do banco; pagamento só vira "pago" depois de consultar o MP (valor e moeda conferidos). Freio de pedidos: 12 por IP a cada 10 min, 4 pedidos em aberto por WhatsApp por hora, 15 por dia (`LIMITE`). Nome do cliente sem links (`nomeLimpo`: ele volta nas mensagens do WhatsApp da loja). O estoque é conferido de novo no `pagar`. Aviso no celular só para aparelho de quem está **ativo** na equipe.
+- **Equipe:** e-mail que já tinha conta e **nunca foi confirmado** recebe a senha definida no painel (impede alguém de criar a conta antes pelo cadastro público e entrar como equipe).
+- **`sync-nex` manual e Sommelier:** só dono/administrador ativos (atendente não roda sincronização nem gasta cota do Gemini). Erros internos não voltam para quem chamou (só no log).
+- **Banco:** toda tabela no `public` com RLS ligada; tabela nova de teste também. `proximo_numero_pedido` é pública de propósito (a loja reserva o número no fluxo do WhatsApp).
+- **Painel do Supabase (manual, pelo dono):** Authentication → Sign In / Providers → desligar "Allow new users to sign up" (a equipe é criada só pela tela Equipe) e ligar "Leaked password protection" se o plano permitir.

@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Brutt · Admin</title>
 <meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://vedlxtljilsanykmddtj.supabase.co; media-src 'self' blob: data:; connect-src 'self' https://vedlxtljilsanykmddtj.supabase.co wss://vedlxtljilsanykmddtj.supabase.co; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<!-- anti-clickjacking: o GitHub Pages não manda X-Frame-Options; se o painel for aberto dentro de um iframe de outro site, ele não aparece -->
+<style id="antiFrame">html{display:none!important}</style>
+<script>if(self===top){document.getElementById("antiFrame").remove()}else{top.location=self.location}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@600&display=swap" rel="stylesheet">
@@ -15,9 +20,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Brutt Painel">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<!-- bibliotecas servidas daqui mesmo (versão fixa, sem CDN): ninguém de fora troca o código que roda no painel -->
+<script src="/vendor/supabase-js-2.117.2.js"></script>
+<script src="/vendor/xlsx-0.18.5.full.min.js"></script>
+<script src="/vendor/html5-qrcode-2.3.8.min.js"></script>
 <style>
 /* =====================================================================
    BRUTT · PAINEL — design system
@@ -1014,6 +1020,8 @@ function toast(msg){
   setTimeout(()=>t.classList.remove("on"), 2200);
 }
 function esc(s){ return (s??"").toString().replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+/* valor digitado ou vindo de planilha dentro de um filtro .or() do PostgREST: vírgula, parênteses e aspas mudariam o filtro */
+function pgv(s){ return (s??"").toString().replace(/[,()"\\]/g, " ").trim(); }
 function brl(v){ return (v==null) ? "—" : "R$ " + Number(v).toFixed(2).replace(".", ","); }
 
 
@@ -1487,7 +1495,7 @@ async function renderProductRows(rows, container, emptyMsg){
 
   container.innerHTML = rows.map(p => `
     <div class="prow" data-id="${p.id}">
-      <div class="thumb">${imgByProduct[p.id] ? `<img src="${imgByProduct[p.id]}" alt="">` : esc(p.icon||"📦")}</div>
+      <div class="thumb">${imgByProduct[p.id] ? `<img src="${esc(imgByProduct[p.id])}" alt="">` : esc(p.icon||"📦")}</div>
       <div class="info">
         <div class="n">${esc(p.name)}${!p.is_active ? '<span class="badge off">inativo</span>' : ''}</div>
         ${p.brand ? `<div class="brand">${esc(p.brand)}</div>` : ""}
@@ -1519,7 +1527,7 @@ async function runSearch(qRaw, fromScan){
   if(rows.length === 0){
     const { data } = await sb.from("products")
       .select("*")
-      .or(`name.ilike.%${q}%,sku.ilike.%${q}%,ean.ilike.%${q}%`)
+      .or(`name.ilike.%${pgv(q)}%,sku.ilike.%${pgv(q)}%,ean.ilike.%${pgv(q)}%`)
       .order("name").limit(40);
     rows = data || [];
   }
@@ -1626,7 +1634,7 @@ function somPreview(box, d, atual, opts){
       <div id="smEixos">${SOM_EIXOS.map(([k,emo,lbl])=>`<div class="som-eixo"><span>${emo} ${lbl}</span><input type="range" min="0" max="10" step="1" value="${fp[k]||0}" data-eixo="${k}" aria-label="${lbl}"><b data-val>${fp[k]||0}</b></div>`).join("")}</div>` : ""}
     ${wh ? `<label class="som-blk"><input type="checkbox" id="smChkW" checked> <b>Detalhes do whisky</b>${atual.whisky_details?" <em>(troca os atuais)</em>":""}</label>
       <div id="smWhisky" class="som-wgrid">${SOM_WHISKY.map(([k,lbl])=>`<div class="field"><label>${lbl}</label><input data-wk="${k}" value="${esc((d.whisky_details||{})[k]||"")}"></div>`).join("")}</div>` : ""}
-    ${(d.fontes||[]).length ? `<div class="som-fontes">Fontes: ${d.fontes.map(f=>`<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.titulo)}</a>`).join(" · ")}</div>` : ""}
+    ${(d.fontes||[]).length ? `<div class="som-fontes">Fontes: ${d.fontes.filter(f=>/^https:\/\//i.test(f.url||"")).map(f=>`<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.titulo)}</a>`).join(" · ")}</div>` : ""}
     <div class="save-row som-btns"><button type="button" class="btn-gold" id="smUsar">${esc(opts.rotuloUsar)}</button><button type="button" class="btn-ghost" id="smDescartar">Descartar</button></div>
   </div>`;
   const q = s => box.querySelector(s), specsBox = q("#smSpecs");
@@ -1703,7 +1711,7 @@ async function openProduct(id){
     <div class="section">
       <h3>Foto</h3>
       <div class="photo-box">
-        <div class="ph">${img ? `<img src="${img.url}" alt="">` : esc(p.icon||"📦")}</div>
+        <div class="ph">${img ? `<img src="${esc(img.url)}" alt="">` : esc(p.icon||"📦")}</div>
         <div>
           <button class="btn-ghost btn-sm" id="photoBtn">Trocar foto</button>
           ${img ? `<button class="btn-ghost btn-sm" id="reajustarBtn">🔧 Reajustar</button>` : ""}
@@ -1728,7 +1736,7 @@ async function openProduct(id){
       <div class="hist" id="histBox">
         ${(hist && hist.length) ? hist.map(h => `
           <div class="hist-row">
-            <span>${h.type} · ${h.quantity} <span class="t">(${h.stock_before}→${h.stock_after})</span></span>
+            <span>${esc(h.type)} · ${esc(h.quantity)} <span class="t">(${esc(h.stock_before)}→${esc(h.stock_after)})</span></span>
             <span class="t">${new Date(h.created_at).toLocaleDateString('pt-BR')}</span>
           </div>`).join("") : '<div class="t" style="padding:8px 0">Sem movimentações registradas ainda.</div>'}
       </div>
@@ -2182,7 +2190,7 @@ async function handleSyncFile(file){
   for(const linha of linhas){
     let matches = [];
     if(linha.codigo){
-      const { data } = await sb.from("products").select("id,name,sku,ean,stock,cost_price,price").or(`sku.eq.${linha.codigo},ean.eq.${linha.codigo}`).limit(3);
+      const { data } = await sb.from("products").select("id,name,sku,ean,stock,cost_price,price").or(`sku.eq.${pgv(linha.codigo)},ean.eq.${pgv(linha.codigo)}`).limit(3);
       if(data && data.length) matches = data.map(d => ({...d, score: 1}));
     }
     if(matches.length === 0){
@@ -2332,7 +2340,7 @@ async function handleBestsellersFile(file){
   for(const linha of linhas){
     let matches = [];
     if(linha.codigo){
-      const { data } = await sb.from("products").select("id,name,sku,ean,stock,cost_price,price,sales_count").or(`sku.eq.${linha.codigo},ean.eq.${linha.codigo}`).limit(3);
+      const { data } = await sb.from("products").select("id,name,sku,ean,stock,cost_price,price,sales_count").or(`sku.eq.${pgv(linha.codigo)},ean.eq.${pgv(linha.codigo)}`).limit(3);
       if(data && data.length) matches = data.map(d => ({...d, score: 1}));
     }
     if(matches.length === 0){
@@ -2534,7 +2542,7 @@ async function renderGestaoRapida(){
     const { data } = await sb.from("products").select("*").or(`ean.eq.${busca},sku.eq.${busca}`).limit(50);
     rows = data;
   } else if(busca){
-    let q2 = sb.from("products").select("*").or(`name.ilike.%${busca}%,sku.ilike.%${busca}%,ean.ilike.%${busca}%`).order("name").limit(600);
+    let q2 = sb.from("products").select("*").or(`name.ilike.%${pgv(busca)}%,sku.ilike.%${pgv(busca)}%,ean.ilike.%${pgv(busca)}%`).order("name").limit(600);
     if(childIds) q2 = q2.in("category_id", childIds.length?childIds:["00000000-0000-0000-0000-000000000000"]);
     const { data } = await q2;
     rows = data;

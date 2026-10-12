@@ -80,14 +80,36 @@ export function normalizaWhats(s: unknown): string | null {
   return /^55\d{10,11}$/.test(d) ? d : null;
 }
 const texto = (s: unknown, max: number) => String(s ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+/** Nome do cliente: só letras, espaço, apóstrofo e hífen. Sem links nem domínios: o nome volta nas mensagens
+ *  que o WhatsApp da loja manda (ex.: "Pix expirado — Oi, <nome>"), e um link ali seria golpe saindo do número oficial. */
+export const nomeLimpo = (s: unknown) => texto(String(s ?? "").replace(/(https?:\/\/|www\.)\S*/gi, " ").replace(/\S+\.[a-z]{2,}\S*/gi, " ").replace(/[^\p{L}\p{M}\s'-]/gu, " "), 60);
+
+/** Freio contra pedido em massa (cada pedido gera Pix no Mercado Pago, aviso no celular da equipe e mensagem de WhatsApp):
+ *  por aparelho/IP (memória da função) e por número de WhatsApp (no banco, vale entre instâncias). */
+const LIMITE = { ipJanelaMs: 10 * 60e3, ipMax: 12, whatsAbertosHora: 4, whatsDia: 15 };
+const porIp = new Map<string, { n: number; t: number }>();
+export function _limites(x: Partial<typeof LIMITE>) { Object.assign(LIMITE, x); porIp.clear(); }   // só para os testes
+export function ipDe(req: Request) { return (req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || (req.headers.get("x-forwarded-for") || "?").split(",")[0]).trim(); }
+export function freioIp(ip: string, agora = Date.now()) {
+  const a = porIp.get(ip);
+  if (!a || agora - a.t > LIMITE.ipJanelaMs) { if (porIp.size > 5000) porIp.clear(); porIp.set(ip, { n: 1, t: agora }); return false; }
+  return ++a.n > LIMITE.ipMax;
+}
+async function freioWhats(whats: string) {
+  const desde = new Date(Date.now() - 24 * 3600e3).toISOString(), hora = Date.now() - 3600e3;
+  const ped: any[] = await sbGet(`pedidos?select=status,created_at&cliente_whats=eq.${whats}&created_at=gte.${encodeURIComponent(desde)}&limit=50`).catch(() => []);
+  const abertos = ped.filter(p => new Date(p.created_at).getTime() >= hora && ["aguardando_pagamento", "expirado", "recusado"].includes(p.status)).length;
+  return abertos >= LIMITE.whatsAbertosHora || ped.length >= LIMITE.whatsDia;
+}
 
 // ───────────────────────────── criar pedido ─────────────────────────────
 type ItemIn = { id: string; q: number };
-export async function criarPedido(body: any) {
-  const nome = texto(body?.nome, 60);
+export async function criarPedido(body: any, ip = "") {
+  const nome = nomeLimpo(body?.nome);
   if (!nome) return { erro: "Digite seu nome.", status: 400 };
   const whats = normalizaWhats(body?.whats);
   if (!whats) return { erro: "Digite um WhatsApp válido com DDD.", status: 400 };
+  if ((ip && freioIp(ip)) || await freioWhats(whats)) return { erro: "Muitos pedidos seguidos. Finalize o que já está aberto ou fale com a gente no WhatsApp.", status: 429 };
   const brutos: ItemIn[] = Array.isArray(body?.itens) ? body.itens : [];
   const qtd = new Map<string, number>();
   for (const it of brutos.slice(0, 80)) {
@@ -149,6 +171,16 @@ export function dataMP(d: Date) {
 }
 const METODO: Record<string, string> = { pix: "pix", debito: "debito", credito: "credito" };
 
+async function semEstoque(itens: any[]): Promise<string | null> {
+  const lista = (Array.isArray(itens) ? itens : []).filter(i => /^[\w.-]+$/.test(String(i?.id ?? "")));
+  if (!lista.length) return null;
+  const ids = lista.map(i => `"${i.id}"`).join(",");
+  const prods: any[] = await sbGet(`products?select=site_product_id,name,stock,is_active&site_product_id=in.(${encodeURIComponent(ids)})`).catch(() => null);
+  if (!prods) return null;   // banco fora do ar: não trava o pagamento por isso
+  const porId = new Map(prods.map(p => [p.site_product_id, p]));
+  for (const i of lista) { const p = porId.get(i.id); if (!p || p.is_active === false || Number(p.stock) < Number(i.qtd)) return String(p?.name || i.nome || "um produto"); }
+  return null;
+}
 const emailInterno = (numero: string) => `pix+${String(numero).toLowerCase()}@tabacariabrutt.com.br`;
 export async function pagar(body: any, urlFuncao: string) {
   const id = String(body?.pedido_id ?? "");
@@ -163,6 +195,9 @@ export async function pagar(body: any, urlFuncao: string) {
   if (!["aguardando_pagamento", "recusado", "expirado"].includes(ped.status)) return { erro: "Este pedido não aceita mais pagamento.", status: 409 };
   if (Date.now() - new Date(ped.created_at).getTime() > 24 * 3600e3) return { erro: "Pedido antigo. Monte o carrinho de novo.", status: 409 };
   if (ped.tentativas >= 8) return { erro: "Muitas tentativas. Fale com a gente no WhatsApp.", status: 429 };
+  // o estoque pode ter acabado entre o carrinho e o pagamento (o pedido vale 24 h): confere de novo antes de cobrar
+  const falta = await semEstoque(ped.itens);
+  if (falta) return { erro: `Acabou o estoque de “${falta}”. Monte o carrinho de novo.`, status: 409 };
 
   const f = body?.formData || {};
   const email = texto(f?.payer?.email, 120);
@@ -483,7 +518,9 @@ export async function avisarEquipe(ped: any, tipo: "pago" | "pix") {
     if (!ped?.id) return 0;
     try { await sbInsert("wa_notificacoes", { pedido_id: ped.id, tipo: "push_" + tipo, destino: "equipe" }, "return=minimal"); }
     catch (e: any) { if (e?.status === 409) return 0; throw e; }
-    const subs = await sbGet("push_assinaturas?ativo=eq.true&select=id,endpoint,p256dh,auth,falhas");
+    // só aparelhos de quem ainda está na equipe (quem foi desativado para de receber na hora)
+    const ativos = new Set(((await sbGet("staff?active=eq.true&select=user_id")) || []).map((x: any) => x.user_id));
+    const subs = ((await sbGet("push_assinaturas?ativo=eq.true&select=id,endpoint,p256dh,auth,falhas,user_id")) || []).filter((x: any) => ativos.has(x.user_id));
     const ok = subs?.length ? await mandarPara(subs, avisoEquipe(ped, tipo)) : 0;
     await sbPatch(`wa_notificacoes?pedido_id=eq.${ped.id}&tipo=eq.push_${tipo}`, { ok: ok > 0, erro: subs?.length ? null : "nenhum aparelho inscrito" }).catch(() => {});
     return ok;
@@ -514,7 +551,7 @@ export async function handler(req: Request): Promise<Response> {
     if (req.method !== "POST") return json({ erro: "método não permitido" }, 405);
     if (!env("MP_ACCESS_TOKEN") && (acao === "criar" || acao === "pagar")) return json({ erro: "Pagamento online ainda não configurado." }, 503);
     const body = await req.json().catch(() => null);
-    if (acao === "criar") return resp(await criarPedido(body));
+    if (acao === "criar") return resp(await criarPedido(body, ipDe(req)));
     if (acao === "pagar") {
       const base = env("CHECKOUT_PUBLIC_URL") || `${SB()}/functions/v1/checkout`;
       return resp(await pagar(body, base));

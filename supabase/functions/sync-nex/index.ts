@@ -101,7 +101,7 @@ async function autorizado(req: Request, cfg: Record<string, string>): Promise<st
   if (token) {
     try {
       const r = await fetch(`${SB()}/auth/v1/user`, { headers: { apikey: SK(), Authorization: "Bearer " + token } });
-      if (r.ok) { const u = await r.json(); if (u?.id && (await sbGet(`staff?select=user_id&user_id=eq.${u.id}`)).length) return "admin"; }
+      if (r.ok) { const u = await r.json(); if (u?.id && (await sbGet(`staff?select=user_id&user_id=eq.${u.id}&active=eq.true&role=in.(owner,admin)`)).length) return "admin";   // só dono/administrador ativos }
     } catch { /* nega */ }
   }
   return null;
@@ -115,7 +115,8 @@ export async function handler(req: Request): Promise<Response> {
   const quem = await autorizado(req, cfg); if (!quem) return json({ erro: "sem permissão" }, 403);
   const modo = url.searchParams.get("modo") === "real" ? "real" : "teste";
   const origem = quem === "agenda" ? (url.searchParams.get("origem") === "manual" ? "manual" : "agenda") : "admin";
-  const lista = (url.searchParams.get("lista") || cfg.nex_lista || "estoque") === "todos" ? "todos" : "estoque";
+  // ?lista= só vale para a agenda/testes do servidor; quem chama pelo painel usa sempre a configuração (nex_lista)
+  const lista = ((quem === "agenda" && url.searchParams.get("lista")) || cfg.nex_lista || "estoque") === "todos" ? "todos" : "estoque";
   const log: any = { origem, modo, ok: true };
   try {
     if (url.searchParams.get("explorar")) {

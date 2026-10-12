@@ -66,8 +66,14 @@ export async function criar(req: Request, body: any) {
   if (userId) {
     const m = await membro(userId);
     if (m) return { erro: m.active ? "Essa pessoa já está na equipe." : "Essa pessoa já está na lista, desativada. Use “Reativar” na lista.", status: 409 };
-    // login antigo (ex.: convite do Supabase nunca aceito): só confirma o e-mail (a senha dele não muda; sem senha → "Definir nova senha")
-    const c = await pede(`/auth/v1/admin/users/${userId}`, { method: "PUT", body: JSON.stringify({ email_confirm: true }) });
+    // Login que já existia. Se o e-mail NUNCA foi confirmado, qualquer um pode ter criado essa conta pelo cadastro público
+    // (a chave anon está no site) com a senha DELE: então a senha é trocada pela que o painel definiu, senão ele entraria como equipe.
+    // Se já era confirmado (a pessoa usa esse login), só garante a confirmação e mantém a senha.
+    const u = await pede(`/auth/v1/admin/users/${userId}`);
+    const confirmado = !!(u.ok && (u.corpo?.email_confirmed_at || u.corpo?.confirmed_at));
+    if (!confirmado) { const v = validaSenha(senha); if (v) return { erro: v, status: 400 }; }
+    const c = await pede(`/auth/v1/admin/users/${userId}`, { method: "PUT", body: JSON.stringify(confirmado ? { email_confirm: true } : { email_confirm: true, password: senha }) });
+    jaTinha = confirmado;
     if (!c.ok) { console.error("equipe confirmar", c.status, JSON.stringify(c.corpo).slice(0, 300)); return { erro: "Não deu para liberar o login dessa pessoa agora. Tente de novo.", status: 502 }; }
   } else {
     const s = validaSenha(senha); if (s) return { erro: s, status: 400 };

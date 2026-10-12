@@ -10,7 +10,8 @@ const tokens: Record<string, string> = { "tk-dono": DONO, "tk-adm": ADM, "tk-atd
 let users: { id: string; email: string; password: string }[], staff: any[], chamadas: string[];
 function zera() {
   users = [{ id: DONO, email: "dono@x.com", password: "x" }, { id: ADM, email: "adm@x.com", password: "x" }, { id: ATD, email: "atd@x.com", password: "x" },
-    { id: "00000000-0000-4000-8000-000000000009", email: "antigo@x.com", password: "velha123" }];
+    { id: "00000000-0000-4000-8000-000000000009", email: "antigo@x.com", password: "velha123", confirmado: true },
+    { id: "00000000-0000-4000-8000-000000000010", email: "intruso@x.com", password: "doatacante" }];
   staff = [{ user_id: DONO, name: "Dono", role: "owner", active: true }, { user_id: ADM, name: "Adm", role: "admin", active: true }, { user_id: ATD, name: "Atd", role: "atendente", active: true }];
   chamadas = [];
 }
@@ -33,6 +34,7 @@ const resp = (b: unknown, status = 200) => new Response(JSON.stringify(b), { sta
     const id = `00000000-0000-4000-8000-0000000001${String(users.length).padStart(2, "0")}`; users.push({ id, email: corpo.email, password: corpo.password }); return resp({ id });
   }
   const m = u.pathname.match(/^\/auth\/v1\/admin\/users\/(.+)$/);
+  if (m && (init.method || "GET") === "GET") { assert.equal(auth, "srv"); const x = users.find(y => y.id === m[1]); return x ? resp({ id: x.id, email_confirmed_at: x.confirmado ? "2026-01-01" : null }) : resp({}, 404); }
   if (m && init.method === "PUT") { assert.equal(auth, "srv"); const x = users.find(y => y.id === m[1]); if (!x) return resp({}, 404); if ("password" in corpo) x.password = corpo.password; if (corpo.email_confirm) x.confirmado = true; return resp({ id: x.id }); }
   if (u.pathname === "/rest/v1/staff" && init.method === "POST") {
     assert.equal(auth, "srv"); assert.match(init.headers.Prefer, /merge-duplicates/);
@@ -73,20 +75,26 @@ await t("administrador cria atendente, mas NÃO cria administrador", async () =>
 });
 await t("atendente não adiciona ninguém", async () => {
   const r = await chama("criar", "tk-atd", { email: "a3@loja.com", nome: "A3", papel: "atendente", senha: "brutt2026" });
-  assert.equal(r.status, 403); assert.equal(users.length, 4);
+  assert.equal(r.status, 403); assert.equal(users.length, 5);
 });
 await t("validações: e-mail, nome, papel, senha fraca", async () => {
   assert.match((await chama("criar", "tk-dono", { email: "x@", nome: "X", papel: "atendente", senha: "brutt2026" })).j.erro, /E-mail/);
   assert.match((await chama("criar", "tk-dono", { email: "x@y.com", nome: "X", papel: "atendente", senha: "brutt2026" })).j.erro, /nome/);
   assert.match((await chama("criar", "tk-dono", { email: "x@y.com", nome: "Xx", papel: "owner", senha: "brutt2026" })).j.erro, /papel/);
   assert.match((await chama("criar", "tk-dono", { email: "x@y.com", nome: "Xx", papel: "atendente", senha: "123" })).j.erro, /8 caracteres/);
-  assert.equal(users.length, 4);
+  assert.equal(users.length, 5);
 });
 await t("e-mail que já tem login: entra na equipe, e-mail confirmado (senha dele não muda)", async () => {
   const r = await chama("criar", "tk-dono", { email: "antigo@x.com", nome: "Antigo", papel: "atendente", senha: "outra2026" });
   assert.equal(r.status, 200); assert.equal(r.j.ja_tinha_login, true);
   const u = users.find(x => x.email === "antigo@x.com")!;
   assert.equal(u.password, "velha123"); assert.equal(u.confirmado, true); assert.ok(!chamadas.some(c => c.startsWith("POST /auth/v1/admin")));
+});
+await t("conta criada pelo cadastro público e nunca confirmada: a senha vira a do painel (sem tomada de conta)", async () => {
+  const r = await chama("criar", "tk-dono", { email: "intruso@x.com", nome: "Novo", papel: "atendente", senha: "painel2026" });
+  assert.equal(r.status, 200); assert.equal(r.j.ja_tinha_login, false);
+  const u = users.find(x => x.email === "intruso@x.com")!;
+  assert.equal(u.password, "painel2026"); assert.equal(u.confirmado, true);
 });
 await t("já na equipe → 409 (ativo) / pede para reativar (desativado)", async () => {
   assert.equal((await chama("criar", "tk-dono", { email: "atd@x.com", nome: "Atd", papel: "atendente", senha: "brutt2026" })).status, 409);

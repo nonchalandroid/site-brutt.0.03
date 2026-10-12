@@ -21,7 +21,9 @@ self.addEventListener("push", e => {
 
 self.addEventListener("notificationclick", e => {
   e.notification.close();
-  const url = new URL((e.notification.data && e.notification.data.url) || "/admin/#/pedidos", self.location.origin).href;
+  let u = new URL((e.notification.data && e.notification.data.url) || "/admin/#/pedidos", self.location.origin);
+  if (u.origin !== self.location.origin) u = new URL("/admin/#/pedidos", self.location.origin);   // aviso nunca abre site de fora
+  const url = u.href;
   e.waitUntil((async () => {
     const abas = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     for (const c of abas) {

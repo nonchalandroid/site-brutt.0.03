@@ -2,7 +2,7 @@
 // Analisa QUALQUER produto da Tabacaria Brutt e devolve uma sugestão de descrição + ficha (+ perfil de sabor nas
 // essências, + detalhes nos whiskies, + categoria sugerida quando o /admin manda a lista de categorias).
 // NUNCA grava nada: quem grava é o /admin (editor de um produto ou "Sommelier em massa").
-// - só a equipe (tabela staff / is_staff()) pode usar;
+// - só dono/administrador (is_gestor()) pode usar (gasta a cota do Gemini; atendente não);
 // - etapa 1: pesquisa na internet (Google Search via Gemini) e monta um dossiê denso; etapa 2: transforma o dossiê na ficha.
 
 const CORS = {
@@ -251,10 +251,10 @@ export async function handler(req: Request): Promise<Response> {
     if (!apiKey) return json({ erro: "A chave do Gemini não está configurada no Supabase (GEMINI_API_KEY)." }, 500);
 
     const auth = req.headers.get("Authorization") || "";
-    const rs = await fetch(`${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/is_staff`, { method: "POST",
+    const rs = await fetch(`${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/is_gestor`, { method: "POST",
       headers: { apikey: Deno.env.get("SUPABASE_ANON_KEY")!, Authorization: auth, "Content-Type": "application/json" }, body: "{}" });
     const ehEquipe = rs.ok ? await rs.json().catch(() => null) : null;
-    if (ehEquipe !== true) return json({ erro: "Só a equipe da loja pode usar o Sommelier. Entre no /admin com seu login." }, 403);
+    if (ehEquipe !== true) return json({ erro: "Só o dono e os administradores podem usar o Sommelier." }, 403);
 
     const inp = await req.json();
     if (!inp?.name || !String(inp.name).trim()) return json({ erro: "Falta o nome do produto." }, 400);
@@ -292,7 +292,8 @@ export async function handler(req: Request): Promise<Response> {
     return json({ ...limpo, tipo, pesquisou, fontes, modelo: g.modelo });
   } catch (e) {
     console.error(e);
-    return json({ erro: "Algo deu errado no Sommelier: " + (e instanceof Error ? e.message : String(e)) }, 500);
+    console.error("sommelier", e);
+    return json({ erro: "Algo deu errado no Sommelier. Tente de novo em instantes." }, 500);   // detalhe só no log (não vaza para quem chamou)
   }
 }
 

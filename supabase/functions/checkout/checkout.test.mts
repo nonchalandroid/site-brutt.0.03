@@ -82,6 +82,7 @@ const res = (o: any, status = 200) => new Response(o == null ? "" : JSON.stringi
 };
 
 const C = await import("./index.ts");
+C._limites({ ipMax: 1e6, whatsAbertosHora: 1e6, whatsDia: 1e6 });   // os testes reusam o mesmo número; o freio tem teste próprio no fim
 const F = "https://sb.test/functions/v1/checkout";
 const call = async (acao: string, body?: any, headers: Record<string, string> = {}) => {
   const r = await C.handler(new Request(`${F}?acao=${acao}`, { method: body === undefined ? "GET" : "POST", headers: { "Content-Type": "application/json", ...headers }, body: body === undefined ? undefined : JSON.stringify(body) }));
@@ -238,7 +239,7 @@ const te = new TextEncoder();
 async function aparelho(caminho: string) {
   const par = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
   const pub = new Uint8Array(await crypto.subtle.exportKey("raw", par.publicKey)), auth = crypto.getRandomValues(new Uint8Array(16));
-  db.push_assinaturas.push({ id: crypto.randomUUID(), endpoint: "https://push.test" + caminho, p256dh: P.b64u(pub), auth: P.b64u(auth), ativo: true, falhas: 0 });
+  db.push_assinaturas.push({ id: crypto.randomUUID(), endpoint: "https://push.test" + caminho, p256dh: P.b64u(pub), auth: P.b64u(auth), ativo: true, falhas: 0, user_id: "u-staff" });
   return { par, pub, auth };
 }
 async function abre(ua: any, corpo: Uint8Array) {   // RFC 8291 do lado do navegador
@@ -351,5 +352,29 @@ await t("sem o robô do WhatsApp: a equipe recebe o link com a mensagem pronta",
   const fim = await call("concluir", { pedido_id: c.j.pedido_id }, equipe);
   assert.equal(fim.j.whats.auto, false); assert.ok(fim.j.whats.link.startsWith("https://wa.me/5521933330000?text="));
   ENV.EVOLUTION_API_URL = url;
+});
+await t("segurança: nome sem links, freio de pedidos em massa, estoque conferido de novo no pagar, aviso só p/ equipe ativa", async () => {
+  assert.equal(C.nomeLimpo("https://golpe.example/pix Maria"), "Maria");
+  assert.equal(C.nomeLimpo("golpe.com.br João"), "João");
+  assert.equal(C.nomeLimpo("Ana D'Ávila-Souza"), "Ana D'Ávila-Souza");
+  assert.equal(C.nomeLimpo("<script>x</script>"), "script x script");
+  C._limites({ ipMax: 2, whatsAbertosHora: 1e6, whatsDia: 1e6 });
+  const h = { "x-forwarded-for": "9.9.9.9" }, cli = { ...base, whats: "21955550000", entrega: { tipo: "cliente" } };
+  const r1 = await call("criar", cli, h), r2 = await call("criar", cli, h), r3 = await call("criar", cli, h);
+  assert.equal(r1.status, 200); assert.equal(r2.status, 200); assert.equal(r3.status, 429);
+  assert.equal((await call("criar", cli, { "x-forwarded-for": "8.8.8.8" })).status, 200, "outro aparelho segue");
+  C._limites({ ipMax: 1e6, whatsAbertosHora: 3, whatsDia: 1e6 });
+  assert.equal((await call("criar", cli)).status, 429, "4º pedido aberto do mesmo número na hora");
+  assert.equal((await call("criar", { ...cli, whats: "21955551111" })).status, 200);
+  C._limites({ ipMax: 1e6, whatsAbertosHora: 1e6, whatsDia: 1e6 });
+  const c = await call("criar", { ...base, whats: "21955552222", itens: [{ id: "car-1", q: 1 }, { id: "ess-1", q: 1 }], entrega: { tipo: "cliente" } });
+  assert.equal(c.status, 200);
+  const carvao = products.find(p => p.site_product_id === "car-1")!; carvao.stock = 0;
+  const pg = await call("pagar", { pedido_id: c.j.pedido_id, metodo: "pix", formData: { payment_method_id: "pix", payer: { email: "a@b.com" } } });
+  assert.equal(pg.status, 409); assert.match(pg.j.erro, /Carvão/); carvao.stock = 1;
+  db.staff[0].active = false;
+  const antes = pushes.length;
+  assert.equal(await C.avisarEquipe({ id: crypto.randomUUID(), numero: "BR-999999", total: 10, cliente_nome: "X", entrega: { tipo: "cliente" } }, "pago"), 0);
+  assert.equal(pushes.length, antes, "desativado não recebe"); db.staff[0].active = true;
 });
 console.log(`\n${ok} testes passaram`);
