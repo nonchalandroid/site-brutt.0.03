@@ -11,7 +11,7 @@
 //   POST push_chave → chave pública VAPID para o painel inscrever o aparelho (staff)
 //   POST push_teste → manda uma notificação de teste para o aparelho que pediu (staff)
 //
-// Avisos no celular/PC da equipe (Web Push, push.ts): "🟡 Pix gerado" e "🔴 Pedido PAGO", 1 vez por pedido.
+// Avisos no celular/PC da equipe (Web Push, push.ts): "⚠️ Pix gerado" e "✅ Pedido PAGO", 1 vez por pedido.
 // O par de chaves VAPID é gerado aqui na 1ª vez e guardado em push_config (só o servidor lê).
 //
 // Segredos (variáveis de ambiente da função — nunca no site):
@@ -462,8 +462,8 @@ export async function chavesPush() {
 export function avisoEquipe(ped: any, tipo: "pago" | "pix" | "teste") {
   const nome = String(ped?.cliente_nome || "").trim().slice(0, 40), ent = ped?.entrega?.tipo === "entrega" ? "entrega pela loja" : "cliente chama o motoboy";
   if (tipo === "teste") return { title: "✅ Notificações ligadas", body: "Este aparelho vai receber os avisos de Pix gerado e de pedido pago.", tag: "teste", url: "/admin/#/pedidos", tipo };
-  if (tipo === "pago") return { title: `🔴 Pedido PAGO #${ped.numero}`, body: `${nome} · ${brl(ped.total)} · ${ent}. Toque para abrir.`, tag: "ped-" + ped.numero, url: "/admin/#/pedidos", tipo, fixo: true };
-  return { title: `🟡 Pix gerado #${ped.numero}`, body: `${nome} · ${brl(ped.total)} · aguardando o pagamento.`, tag: "ped-" + ped.numero, url: "/admin/#/pedidos", tipo };
+  if (tipo === "pago") return { title: `✅ Pedido PAGO #${ped.numero}`, body: `${nome} · ${brl(ped.total)} · ${ent}. Toque para abrir.`, tag: "ped-" + ped.numero, url: "/admin/#/pedidos", tipo, fixo: true };
+  return { title: `⚠️ Pix gerado #${ped.numero}`, body: `${nome} · ${brl(ped.total)} · aguardando o pagamento.`, tag: "ped-" + ped.numero, url: "/admin/#/pedidos", tipo };
 }
 async function mandarPara(subs: any[], dados: unknown) {
   const vapid = await chavesPush(); let ok = 0;

@@ -661,7 +661,7 @@ details.nx-box[open]{padding-bottom:12px}
   .gr,.ft-card,.ft-sk,.ft-chip.busy,.gr-ph.subindo::after{animation:none}
 }
 
-/* ---------- alerta de pedido novo (pago e ainda não aberto): pisca em vermelho até alguém clicar ---------- */
+/* ---------- alerta de pedido novo (pago e ainda não aberto): pisca (cor no bloco ALERTAS: verde) até alguém clicar ---------- */
 @keyframes piscaNovo{0%,100%{opacity:1}50%{opacity:.15}}
 .nav-b.novo{background:var(--danger);color:#fff;border-color:var(--danger);animation:piscaNovo 1s ease-in-out infinite}
 .ped-card.novo{position:relative;border-color:var(--danger);box-shadow:inset 3px 0 0 var(--danger);cursor:pointer}
@@ -945,6 +945,53 @@ input:focus,select:focus,textarea:focus{border-color:var(--petroleo-cl);box-shad
 .eq-tag.eq-atendente{border-color:rgba(181,212,155,.38);background:var(--salvia-es)}
 .ntf-ok{border-color:rgba(181,212,155,.38)}
 .ntf-bad{border-color:rgba(224,138,124,.45)}
+/* =====================================================================
+   ALERTAS (pedido do dono, 12/10): verde = pedido PAGO (✅), vermelho = Pix gerado, aguardando (⚠️).
+   Os dois piscam (só opacidade) até alguém da equipe tocar no pedido.
+   ===================================================================== */
+:root{--al-pago:#3ddc84; --al-pago-soft:rgba(61,220,132,.16); --al-pago-ink:#04230f;
+  --al-pix:#ff4d3d; --al-pix-soft:rgba(255,77,61,.16); --al-pix-ink:#2b0603}
+.nav-b.novo{background:var(--al-pago);color:var(--al-pago-ink);border-color:var(--al-pago)}
+.ped-card.novo{border-color:var(--al-pago);box-shadow:inset 3px 0 0 var(--al-pago)}
+.ped-card.novo::after{border-color:var(--al-pago);background:var(--al-pago-soft)}
+.ped-novo{background:var(--al-pago);color:var(--al-pago-ink)}
+.ped-novo-dica{color:var(--al-pago)}
+.ov-kpi.novo{border-color:var(--al-pago)}.ov-kpi.novo .v{color:var(--al-pago)}
+.ov-kpi.novo::after{border-color:var(--al-pago)}
+.ov-item.novo{border-color:var(--al-pago)}.ov-item.novo .ic{background:var(--al-pago-soft);color:var(--al-pago)}
+.ped-card.pixnovo{border-color:var(--al-pix)}
+.ped-card.pixnovo::after{border-color:var(--al-pix)}
+.ped-pix{background:var(--al-pix);color:var(--al-pix-ink)}
+
+/* =====================================================================
+   CELULAR E TABLET (até 1023px): mesma arquitetura da loja.
+   Barra do topo compacta (☰ · logo · nome da tela · ver loja), sem repetir o título da tela,
+   e o recuo do entalhe do iPhone aplicado UMA vez só (antes somava html + body + barra).
+   ===================================================================== */
+html,body{padding-top:0;padding-bottom:0}
+#app{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+.top-logo{display:none}
+@media (max-width:1023px){
+  :root{--top-h:54px}
+  .topbar{gap:10px}
+  .top-logo{display:block;width:30px;height:30px;border-radius:8px;flex:none}
+  .top-t small{display:none}
+  .top-t b{font-size:16px}
+  .top-menu{width:40px;min-height:40px}
+  .top-link{min-height:40px;min-width:40px;justify-content:center}
+  .pg{padding-top:14px}
+  .pg-t,.pg h2.pg-t{display:none}
+  .pg-h{margin-bottom:12px}
+  .ped-filtros,.chips{margin-inline:-16px;padding-inline:16px;scroll-padding-inline:16px}
+}
+@media (max-width:560px){
+  .gr{grid-template-columns:56px minmax(0,1fr);grid-template-areas:"ph id" "stk stk" "pr pr" "act act" "dsc dsc";padding:12px}
+  .gr-sel{position:absolute;top:5px;left:5px;z-index:2}
+  .gr-sel input{background:var(--bg);box-shadow:0 0 0 2px var(--bg)}
+}
+/* indicador que sobra sozinho na última linha ocupa a largura toda (sem buraco ao lado) */
+@media (min-width:560px) and (max-width:1023px){#ovKpis{grid-template-columns:repeat(6,minmax(0,1fr))}#ovKpis>*{grid-column:span 2}#ovKpis>:nth-child(n+4){grid-column:span 3}}
+@media (max-width:559px){#ovKpis>:last-child:nth-child(odd){grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -1049,7 +1096,7 @@ function topbarHTML(titulo){
     <div class="side-scrim" id="sideScrim"></div>
     <header class="topbar">
       <button type="button" class="top-menu" id="sideAbre" aria-label="Abrir menu" aria-controls="side" aria-expanded="false">${ic("menu")}</button>
-      <div class="top-t"><small>${esc(grupoDe(r) || "Painel")}</small><b>${esc(nome)}</b></div>
+      <img src="../favicon/apple-touch-icon.png" alt="" class="top-logo"><div class="top-t"><small>${esc(grupoDe(r) || "Painel")}</small><b>${esc(nome)}</b></div>
       <div class="top-r"><a class="top-link" href="/" target="_blank" rel="noopener" title="Abrir a loja em outra aba">${ic("ext")}<span>Ver loja</span></a></div>
     </header>`;
 }
@@ -1093,17 +1140,17 @@ function contadoresNav(){
 }
 
 /* ---------------- alerta de pedido novo ----------------
-   Pedido PAGO que ninguém abriu ainda (visto_em vazio) pisca em vermelho no menu, na visão geral e na lista,
+   Pedido PAGO que ninguém abriu ainda (visto_em vazio) pisca em verde no menu, na visão geral e na lista,
    até alguém da equipe clicar nele ou concluir. A cada 30 s o painel confere se chegou pedido novo:
    toca um aviso curto, mostra o número no título da aba e atualiza a tela de pedidos/visão geral. */
 let novosAntes = null, vigiaTimer = null, tituloBase = document.title;
 let pixAntes = null;
 function vigiaNovos(n, pix){
   pix = pix || 0;
-  document.title = n ? `(${n}) 🔴 Pedido novo · ${tituloBase}` : pix ? `(${pix}) 🟡 Pix gerado · ${tituloBase}` : tituloBase;
+  document.title = n ? `(${n}) ✅ Pedido pago · ${tituloBase}` : pix ? `(${pix}) ⚠️ Pix gerado · ${tituloBase}` : tituloBase;
   const novoPago = novosAntes !== null && n > novosAntes, novoPix = pixAntes !== null && pix > pixAntes;
-  if(novoPago){ toast(n - novosAntes > 1 ? `🔴 ${n - novosAntes} pedidos novos pagos!` : "🔴 Pedido novo pago no site!"); bipe(); }
-  else if(novoPix){ toast("🟡 Um cliente gerou o Pix. Aguardando o pagamento."); bipe(true); }
+  if(novoPago){ toast(n - novosAntes > 1 ? `✅ ${n - novosAntes} pedidos novos pagos!` : "✅ Pedido novo pago no site!"); bipe(); }
+  else if(novoPix){ toast("⚠️ Um cliente gerou o Pix. Aguardando o pagamento."); bipe(true); }
   if(novoPago || novoPix){ const r = rotaAtual(); if(r === "pedidos") renderPedidos(); else if(r === "visao") renderVisao(); }
   novosAntes = n; pixAntes = pix;
 }
@@ -3201,7 +3248,7 @@ async function renderPedidos(){
   app.innerHTML = `${topbarHTML("Pedidos online")}
     <div class="pg">
       <h2 class="pg-t">Pedidos online</h2>
-      <p class="pg-d" style="margin-bottom:16px">Pedidos pagos pelo site (Mercado Pago). Pedido <b style="color:var(--danger)">pago pisca em vermelho</b> e <b style="color:var(--warn)">Pix gerado (ainda não pago) em laranja</b>, até alguém tocar nele. Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp. Mostra os 60 mais recentes.</p>
+      <p class="pg-d" style="margin-bottom:16px">Pedidos pagos pelo site (Mercado Pago). Pedido <b style="color:var(--al-pago)">pago pisca em verde ✅</b> e <b style="color:var(--al-pix)">Pix gerado (ainda não pago) em vermelho ⚠️</b>, até alguém tocar nele. Ao marcar como concluído, o cliente recebe a mensagem no WhatsApp. Mostra os 60 mais recentes.</p>
       <div id="ntfBox"></div>
       <div class="ped-filtros" id="pedFiltros" role="group" aria-label="Filtrar pedidos" hidden></div>
       <div id="pedLista"><div class="loading">Carregando…</div></div>
@@ -3232,7 +3279,7 @@ async function renderPedidos(){
       : st === "cancelado" && /cancelado pela equipe/.test(p.mp_status_detail || "") ? esc(p.mp_status_detail.replace(/^c/, "C")) + "."
       : p.status === "aguardando_pagamento" && !pedCancelavel(p) ? "Pix em aberto: se o cliente não pagar, ele vence em 30 min e o pedido pode ser cancelado." : "";
     return `<article class="ped-card${novo ? " novo" : pixNovo ? " pixnovo" : p.status === "pago" ? " acao" : ["estornado","cancelado","expirado","recusado"].includes(st) ? " apagado" : ""}" data-ped="${esc(p.id)}">
-      <div class="ped-h"><b>${novo ? `<span class="ped-novo">Novo</span>` : pixNovo ? `<span class="ped-pix">Pix gerado</span>` : ""}<code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</b>
+      <div class="ped-h"><b>${novo ? `<span class="ped-novo">✓ Pago</span>` : pixNovo ? `<span class="ped-pix">Pix gerado</span>` : ""}<code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</b>
         <span><span class="st st-${esc(st)}">${PED_ROT[st] || esc(st)}</span>${p.reserva ? ' <span class="st st-reserva">reserva</span>' : ""}</span></div>
       <div class="ped-meta"><span>${fmtQuando(p.created_at)}</span><span>${PED_MET[p.metodo] || "—"}</span><a href="https://wa.me/${esc(p.cliente_whats)}" target="_blank" rel="noopener">WhatsApp ${esc(p.cliente_whats)}</a></div>
       <div class="ped-itens">${(p.itens||[]).map(i => `<span><b>${esc(i.qtd)}×</b>${esc(i.nome)}</span>`).join("")}</div>
