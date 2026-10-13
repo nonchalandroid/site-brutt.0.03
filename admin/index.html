@@ -1293,6 +1293,22 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .eq-tip{background:rgba(255,252,247,.82);-webkit-backdrop-filter:blur(12px) saturate(1.3);backdrop-filter:blur(12px) saturate(1.3);font-family:var(--mono)}
 .eq-tip b{font-family:var(--font)}
 .eq-tip em{white-space:nowrap}.eq-tip span{display:block}
+/* Equilíbrio / Custos pagos: botões nos lados opostos, acima do gráfico (sem texto dentro do gráfico) */
+.eq-chips{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:nowrap}
+@media(max-width:480px){.eq-chip{flex-direction:column;align-items:flex-start;gap:0;padding:5px 12px;border-radius:12px;font-size:11px;line-height:1.25;min-height:44px}.eq-chip b{font-size:13px}.eq-c-pago{align-items:flex-end}.eq-chip i{display:none}}
+.eq-chip{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);background:rgba(255,252,247,.75);
+  color:var(--muted);font:600 13px var(--font);cursor:pointer;transition:transform .2s cubic-bezier(.16,1,.3,1)}
+.eq-chip b{font:700 13px var(--mono);color:var(--ink);white-space:nowrap}
+.eq-chip i{width:14px;height:0;border-top:2px dashed var(--marrom)}
+.eq-c-pago i{width:10px;height:10px;border:2px solid #fffaf0;border-radius:50%;background:var(--ok);box-shadow:0 0 0 1px var(--ok)}
+.eq-c-pago b{color:var(--ok)}
+.eq-chip:active{transform:scale(.96)}
+.eq-chip[aria-pressed=true]{border-color:var(--ouro);background:#fffaf0;box-shadow:inset 0 0 0 1px var(--ouro)}
+.eq-c-pago[aria-pressed=true]{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+svg.v-eq .eq-eq{stroke-width:3;stroke:var(--ouro-cl)}
+.eq-cruza .eq-pt{transform-box:fill-box;transform-origin:center;transition:transform .3s cubic-bezier(.16,1,.3,1)}
+svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
+@media(hover:hover) and (pointer:fine){.eq-chip:hover{border-color:var(--ouro)}}
 @media(prefers-reduced-motion:reduce){.od-r{transition:none}.eq-revela.anima,.eq-onda,.odo-delta{animation:none}.eq-onda{display:none}}
 </style>
 </head>
@@ -3885,6 +3901,8 @@ function graficoEquilibrio(o){
       : fecha ? `No ritmo de <b>${brl0(ritmo)} por dia</b>, os custos de ${esc(mesNome)} ficam pagos por volta de <b>${dataC(diaEq)}</b>${diaEq <= hoje ? " (já passou: daqui pra frente o lucro das vendas é da loja)" : ""}. Até hoje (${dataC(hoje)}) seriam ~<b>${brl0(vend(hoje))}</b> vendidos.`
       : `No ritmo de <b>${brl0(ritmo)} por dia</b>, ${esc(mesNome)} fecha <b>abaixo do equilíbrio</b> (faltam ${brl0(o.equilibrio - o.fat)}). Precisaria vender ${brl0(o.equilibrio / D)} por dia.`}</p>
     <div class="eq-leg" aria-hidden="true"><span><i class="eq-l-v"></i>${temFat ? "Vendas acumuladas (estimativa)" : "Ritmo mínimo de vendas"}</span><span><i class="eq-l-p"></i>Projeção (depois de hoje)</span><span><i class="eq-l-e"></i>Ponto de equilíbrio</span></div>
+    <div class="eq-chips"><button type="button" class="eq-chip eq-c-eq" data-eq-ver="eq" aria-pressed="false"><i aria-hidden="true"></i>Equilíbrio <b>${brl0(o.equilibrio)}</b></button>
+      ${fecha ? `<button type="button" class="eq-chip eq-c-pago" data-eq-ver="pago" aria-pressed="false"><i aria-hidden="true"></i>Custos pagos <b>${dataC(diaEq)}</b></button>` : ""}</div>
     <div class="eq-graf" role="img" aria-label="Gráfico de ${esc(mesNome)}: vendas acumuladas até ${brl0(vend(D))} no dia ${D}; ponto de equilíbrio em ${brl0(o.equilibrio)}${fecha ? `, alcançado em ${dataC(diaEq)}` : ""}; hoje é ${dataC(hoje)}."></div>
     <details class="eq-tab"><summary>Ver em tabela</summary><table><thead><tr><th>Data</th><th>Vendas até o dia</th><th>Resultado do mês até o dia</th></tr></thead><tbody>
       ${[...new Set([1, 5, 10, hoje, 15, 20, 25, D])].sort((a, b) => a - b).map(d => `<tr${d === hoje ? ' class="hj"' : ""}><td>${dataC(d)}${d === hoje ? " · hoje" : ""}</td><td>${brl0(vend(d))}</td><td class="${resultado(d) >= 0 ? "pos" : "neg"}">${resultado(d) >= 0 ? "lucro " : "prejuízo "}${brl0(Math.abs(resultado(d)))}</td></tr>`).join("")}</tbody></table></details>`;
@@ -3917,8 +3935,7 @@ function graficoEquilibrio(o){
         <polyline class="eq-v proj" points="${pts(h0, D)}"/>
       </g>
       <line class="eq-eq" x1="${P.l}" x2="${W - P.r}" y1="${yE}" y2="${yE}"/>
-      <text class="eq-te" x="${P.l + 6}" y="${yE - 7}">equilíbrio ${brl0(o.equilibrio)}</text>
-      ${fecha ? `<g class="eq-cruza"><circle class="eq-pt" cx="${x(dx)}" cy="${yE}" r="5"/><text class="eq-td" x="${x(dx)}" y="${yE + 20}" text-anchor="${dx > D - 6 ? "end" : dx < 4 ? "start" : "middle"}">custos pagos · ${dataC(diaEq)}</text></g>` : ""}
+      ${fecha ? `<g class="eq-cruza"><circle class="eq-pt" cx="${x(dx)}" cy="${yE}" r="5"/></g>` : ""}
       <line class="eq-hoje" x1="${x(h0)}" x2="${x(h0)}" y1="${P.t - 8}" y2="${y(0)}"/>
       <text class="eq-th" x="${x(h0)}" y="${P.t - 12}" text-anchor="${h0 > D - 5 ? "end" : h0 < 5 ? "start" : "middle"}">hoje · ${dataC(h0)} · ${brl0(vend(h0))}</text>
       <g class="eq-sinal" transform="translate(${x(h0)},${y(vend(h0))})"><circle class="eq-onda" r="6"/><circle class="eq-onda o2" r="6"/><circle class="eq-ponto" r="5"/></g>
@@ -3934,11 +3951,21 @@ function graficoEquilibrio(o){
       const cp = cruz.querySelector(".eq-cp"); cp.setAttribute("cx", x(d)); cp.setAttribute("cy", y(v));
       tip.hidden = false;
       tip.innerHTML = `<b>${dataC(d)}${d === hoje ? " · hoje" : d > hoje ? " · projeção" : ""}</b><span>Vendas até o dia <em>${brl0(v)}</em></span><span class="${res >= 0 ? "pos" : "neg"}">${v >= o.equilibrio ? "▲ Custos pagos · lucro" : "▼ Faltam para o equilíbrio"} <em>${v >= o.equilibrio ? brl0(res) : brl0(o.equilibrio - v)}</em></span>`;
-      tip.style.left = Math.min(Math.max(x(d) * (r.width / W), 100), r.width - 100) + "px";
+      const tw = tip.offsetWidth / 2 + 4; tip.style.left = Math.min(Math.max(x(d) * (r.width / W), tw), r.width - tw) + "px";   /* balão nunca sai do quadro */
     };
     const some = () => { cruz.hidden = true; tip.hidden = true; };
     const hit = svg.querySelector(".eq-hit");
     hit.addEventListener("pointermove", mostra); hit.addEventListener("pointerdown", mostra); hit.addEventListener("pointerleave", some);
+    /* botões Equilíbrio / Custos pagos: destacam a linha ou o ponto e abrem o balão no dia em que cruza */
+    box.querySelectorAll("[data-eq-ver]").forEach(b => b.onclick = () => {
+      const qual = b.dataset.eqVer, on = b.getAttribute("aria-pressed") !== "true";
+      box.querySelectorAll("[data-eq-ver]").forEach(o2 => o2.setAttribute("aria-pressed", "false"));
+      svg.classList.remove("v-eq", "v-pago"); some();
+      if(!on) return;
+      b.setAttribute("aria-pressed", "true"); svg.classList.add("v-" + qual);
+      const r = svg.getBoundingClientRect(), d = Math.min(D, Math.max(1, Math.ceil(dEq)));
+      mostra({ clientX: r.left + x(d) * (r.width / W) });
+    });
   };
   desenha();
   if(window.ResizeObserver){ let t = 0, w0 = alvo.clientWidth; const ro = new ResizeObserver(() => { if(!alvo.isConnected){ ro.disconnect(); return; } if(Math.abs(alvo.clientWidth - w0) < 8) return; w0 = alvo.clientWidth; clearTimeout(t); t = setTimeout(desenha, 120); }); ro.observe(alvo); }
