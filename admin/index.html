@@ -1382,6 +1382,8 @@ svg.v-eq .eq-eq{stroke-width:3;stroke:var(--ouro-cl)}
 .eq-cruza .eq-pt{transform-box:fill-box;transform-origin:center;transition:transform .3s cubic-bezier(.16,1,.3,1)}
 svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
 @media(hover:hover) and (pointer:fine){.eq-chip:hover{border-color:var(--ouro)}}
+/* o terminal é para tocar e arrastar: nada de selecionar texto nem menu de copiar/lupa do iPhone (o simulador continua funcionando) */
+.eq-term,.eq-term *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 /* ===== terminal do ponto de equilíbrio (13/10/2026): painel escuro, neon, placar, zoom e simulador =====
    Cores: dourado→amarelo = vendas; ciano = equilíbrio; verde = lucro (▲); rosa = prejuízo (▼). Texto sempre claro. */
 .eq-term{--t-bg:#140d1c;--t-ink:#f5f3ff;--t-mut:#b9b3cc;--t-line:rgba(255,255,255,.10);--t-ouro:#f59e0b;--t-cia:#06b6d4;--t-ok:#34d399;--t-neg:#fb7185;
