@@ -30,15 +30,17 @@ Leia antes de alterar qualquer arquivo.
 ├── assets/               # BUILD ANTIGO (React) que NÃO é usado por nenhuma página — não editar
 └── supabase/
     ├── migrations/       # SQL das tabelas novas (pedidos, mp_eventos, wa_notificacoes, wa_contatos, clientes)
-    ├── functions/checkout/  # pedido + Mercado Pago + webhook + WhatsApp (Evolution API) + testes
+    ├── functions/checkout/  # pedido + Mercado Pago + webhook + testes (o envio automático por WhatsApp via Evolution existe no código mas NÃO é usado)
     ├── functions/brutt-ia/  # vendedor virtual (Gemini) + testes
     ├── functions/gerar-ficha-sommelier/  # Sommelier IA (ficha, perfil, categoria) + testes
     ├── functions/equipe/  # criar login da equipe e trocar senha (tela Equipe do admin) + testes
     ├── functions/sync-nex/  # estoque e preço Nex → site a cada 15 min (pg_cron) + botão no painel
     ├── functions/avaliacoes/  # (publicada, SEM USO) busca avaliações na Places API do Google; precisa de GOOGLE_PLACES_KEY com cobrança ativada. Hoje o carrossel #avaliacoes lê a lista AVALIACOES em js/avaliacoes.js (copiada do perfil do Google)
     ├── CHECKOUT.md       # como ativar/operar o pagamento online
-    └── EVOLUTION.md      # instalar a Evolution API (WhatsApp automático) no VPS
+    └── EVOLUTION.md      # (NÃO USADO) instalar a Evolution API; a loja decidiu não usar (custo do VPS)
 ```
+
+**WhatsApp da loja (decisão de 13/10/2026): sem Evolution API, sem envio automático.** O resumo do pedido chega ao WhatsApp da loja (`WHATS`) só quando o **cliente** toca em "Concluir pedido"/"Falar com a loja" (tela `#acomp`) ou "Avisar a loja no WhatsApp" e aperta enviar: o site não sabe se ele enviou. A equipe fica sabendo dos pedidos pagos pelo painel (Pedidos, piscando) e pelas notificações do sininho (Web Push). Não proponha soluções que dependam da Evolution; mensagens ao cliente pelas etapas também ficam no botão "Avisar o cliente no WhatsApp" do painel (`whats.link`).
 
 ## 2. Tokens de design
 
@@ -179,6 +181,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - **Selos de pagamento seguro** (`MPX.selosHTML()` em `js/checkout-mp.js`): "Conexão segura SSL" (só aparece em https), Mercado Pago (símbolo oficial `#00B1EA`) e Pix, abaixo do botão "Gerar Pix"/"Reservar e pagar" e na tela do Pix.
 - **Pix = símbolo oficial** (simple-icons, CC0) **preenchido em `#32BCAD`** (cor do Banco Central), em `PAY_IC.pix` de `js/checkout-mp.js`. Mesma regra: não redesenhar nem tingir.
 - **Google Maps = símbolo oficial multicolorido** (`svg.gmaps` no botão `#goMapa` do topo, paths do pacote `@iconify-json/logos`). Mesma regra do WhatsApp: não redesenhar nem tingir.
+- **Uber = logotipo oficial** (simple-icons, CC0), branco sobre preto (`.uber-logo`, `UBER_LOGO` em `js/checkout-mp.js`), no "Prefiro eu mesmo solicitar a entrega": abre o Uber com a loja como coleta (`UBER_URL`). **99** = logotipo oficial enviado pela loja (`imagens/marcas/99.webp`, quadrado amarelo, 120 px), sem redesenhar nem tingir. Essa opção não mostra valor nenhum (nem no resumo do Pix): só o pin de copiar o endereço e os botões dos apps; ícone do título = celular (`ic("phone")`), diferente da moto da "Entrega pela loja".
 - Ícones da Brutt IA: `<symbol>` no sprite `.ia-sprite` (`#iaI`, `#iaEye`) usados com `<use href>`.
 
 ## 6. Estilo

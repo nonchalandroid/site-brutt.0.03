@@ -145,8 +145,10 @@ function concluirHTML(id,a){
   if(!pago(a)||(a.saiu||a.status==="concluido")&&!(item(id)&&item(id).avisou))return"";   /* só depois do Pix aprovado; some quando a loja já despachou */
   var it=item(id),href="https://wa.me/"+_whats()+"?text="+encodeURIComponent(msgPedido(id,a));
   if(it&&it.avisou)return'<a class="ac-reenvia" data-acomp-concluir target="_blank" rel="noopener" href="'+href+'">'+waIc()+'<span><b>✓ Enviado à loja</b> · reenviar</span></a>';
-  return'<div class="ac-fim" id="acFim"><b>Último passo</b><span>Toque em <strong>Concluir pedido</strong> para enviar o pedido ao WhatsApp da loja. Assim a gente começa a separar.</span>'
-    +'<a class="ac-concluir" data-acomp-concluir target="_blank" rel="noopener" href="'+href+'">'+waIc()+'<span>Concluir pedido</span></a></div>';
+  /* chamativo: selo "Falta 1 passo" piscando, ondas verdes saindo do botão e seta que cutuca (só transform/opacity) */
+  return'<div class="ac-fim" id="acFim"><b class="ac-passo"><i aria-hidden="true"></i>Falta 1 passo</b><span>Toque em <strong>Concluir pedido</strong> para enviar o pedido ao WhatsApp da loja. Assim a gente começa a separar.</span>'
+    +'<span class="ac-cta"><i class="ac-onda" aria-hidden="true"></i><i class="ac-onda o2" aria-hidden="true"></i>'
+    +'<a class="ac-concluir" data-acomp-concluir target="_blank" rel="noopener" href="'+href+'">'+waIc()+'<span>Concluir pedido</span><b class="ac-seta" aria-hidden="true">›</b></a></span></div>';
 }
 function desenha(id,a){
   ultimo[id]=a;
