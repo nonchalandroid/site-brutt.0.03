@@ -4178,9 +4178,17 @@ function graficoEquilibrio(o){
     const hit = svg.querySelector(".eq-hit");
     hit.addEventListener("pointerdown", e => { ir(e); try { hit.setPointerCapture(e.pointerId); } catch(_){} });
     hit.addEventListener("pointermove", ir);
-    hit.addEventListener("pointerleave", () => { if(!st.foco){ st.sel = "agora"; cruz.style.opacity = "0"; placar("agora"); } });
+    hit.addEventListener("pointerleave", voltaAgora);
   };
 
+  /* tirou o mouse/dedo do gráfico: o placar SEMPRE volta para o total até agora (mesmo com Equilíbrio/Custos pagos
+     destacados). Preso também na caixa do gráfico (não é redesenhada), então não se perde no redesenho de cada minuto. */
+  function voltaAgora(){
+    if(st.sel === "agora") return;
+    st.sel = "agora"; const c = alvo.querySelector(".eq-cruz"); if(c) c.style.opacity = "0"; placar("agora");
+  }
+  alvo.addEventListener("pointerleave", voltaAgora);
+  alvo.addEventListener("pointercancel", voltaAgora);
   /* período (zoom) */
   term.querySelectorAll("[data-eq-zoom]").forEach(bt => bt.onclick = () => {
     st.zoom = bt.dataset.eqZoom; term.querySelectorAll("[data-eq-zoom]").forEach(x2 => x2.setAttribute("aria-pressed", x2 === bt));
