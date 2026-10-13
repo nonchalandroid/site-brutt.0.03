@@ -1257,6 +1257,117 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .eq-tab th,.eq-tab td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
 .eq-tab th:first-child,.eq-tab td:first-child{text-align:left}
 .eq-tab td{font-family:var(--mono);color:var(--ink)}.eq-tab td.pos{color:var(--ok)}.eq-tab td.neg{color:var(--danger)}
+.eq-tab tr.hj td{font-weight:700;background:rgba(227,172,61,.10)}
+/* números "de bolsa" (odo): cada dígito é uma coluna 0–9 que rola (só transform) */
+[data-odo]{position:relative}
+.odo{display:inline-flex;align-items:flex-end;white-space:nowrap}
+.od-s{display:inline-block;height:1.15em;line-height:1.15em}
+[data-odo] .odo,[data-odo] .odo *{font:inherit;color:inherit;letter-spacing:inherit}
+.od{display:inline-block;height:1.15em;line-height:1.15em;overflow:hidden;vertical-align:bottom}
+.od-r{display:flex;flex-direction:column;transition:transform 1.1s cubic-bezier(.16,1,.3,1);will-change:transform}
+.od-r i{display:block;height:1.15em;font-style:normal;text-align:center}
+.odo-delta{position:absolute;right:0;top:-1.2em;font:700 11px var(--mono);font-style:normal;padding:2px 6px;border-radius:999px;white-space:nowrap;
+  animation:odoEntra .35s cubic-bezier(.16,1,.3,1) both;transition:opacity .6s,transform .6s}
+.odo-delta.up{color:#fff;background:var(--ok)}.odo-delta.dn{color:#fff;background:var(--danger)}
+.odo-delta.sai{opacity:0;transform:translateY(-6px)}
+@keyframes odoEntra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.lc-res .odo-delta{top:-1.5em;font-size:12px}
+/* gráfico estilo web3: linha com brilho, área em degradê, grade de pontos, desenho animado, sinal pulsando em hoje */
+.eq-graf{border-radius:14px;padding:4px 0 0;background:linear-gradient(180deg,rgba(255,252,247,.55),rgba(255,250,240,.2));border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+.eq-leg i.eq-l-v{border-top:3px solid #d29a2c;border-radius:2px}.eq-leg i.eq-l-p{border-top:2px dashed #d29a2c}
+.eq-area{fill:url(#eqArea)}
+.eq-glow{fill:none;stroke:#f0b84a;stroke-width:7;opacity:.45;stroke-linecap:round}
+.eq-v{fill:none;stroke:url(#eqLinha);stroke-width:3;stroke-linecap:round}.eq-v.proj{stroke-dasharray:7 6;opacity:.9}.eq-v.min{stroke-dasharray:2 5}
+.eq-futuro{fill:rgba(74,44,26,.035)}
+.eq-revela{transform-box:fill-box;transform-origin:0 50%}
+.eq-revela.anima{animation:eqRevela 1.4s cubic-bezier(.16,1,.3,1) both}
+@keyframes eqRevela{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.eq-th{font:700 11px var(--mono);fill:var(--ink);paint-order:stroke;stroke:#f6f1e9;stroke-width:3px}
+.eq-hoje{stroke:var(--ink);stroke-width:1;stroke-dasharray:3 3;opacity:.55}
+.eq-ponto{fill:#e3ac3d;stroke:#fffaf0;stroke-width:2.5}
+.eq-onda{fill:none;stroke:#e3ac3d;stroke-width:2;transform-box:fill-box;transform-origin:center;animation:eqOnda 2s cubic-bezier(.16,1,.3,1) infinite}
+.eq-onda.o2{animation-delay:1s}
+@keyframes eqOnda{from{transform:scale(1);opacity:.9}to{transform:scale(3.4);opacity:0}}
+.eq-cruza .eq-pt{fill:var(--ok);stroke:#fffaf0;stroke-width:2.5}
+.eq-td{fill:var(--ok)}
+.eq-tip{background:rgba(255,252,247,.82);-webkit-backdrop-filter:blur(12px) saturate(1.3);backdrop-filter:blur(12px) saturate(1.3);font-family:var(--mono)}
+.eq-tip b{font-family:var(--font)}
+.eq-tip em{white-space:nowrap}.eq-tip span{display:block}
+/* Equilíbrio / Custos pagos: botões nos lados opostos, acima do gráfico (sem texto dentro do gráfico) */
+.eq-chips{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:nowrap}
+@media(max-width:480px){.eq-chip{flex-direction:column;align-items:flex-start;gap:0;padding:5px 12px;border-radius:12px;font-size:11px;line-height:1.25;min-height:44px}.eq-chip b{font-size:13px}.eq-c-pago{align-items:flex-end}.eq-chip i{display:none}}
+.eq-chip{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);background:rgba(255,252,247,.75);
+  color:var(--muted);font:600 13px var(--font);cursor:pointer;transition:transform .2s cubic-bezier(.16,1,.3,1)}
+.eq-chip b{font:700 13px var(--mono);color:var(--ink);white-space:nowrap}
+.eq-chip i{width:14px;height:0;border-top:2px dashed var(--marrom)}
+.eq-c-pago i{width:10px;height:10px;border:2px solid #fffaf0;border-radius:50%;background:var(--ok);box-shadow:0 0 0 1px var(--ok)}
+.eq-c-pago b{color:var(--ok)}
+.eq-chip:active{transform:scale(.96)}
+.eq-chip[aria-pressed=true]{border-color:var(--ouro);background:#fffaf0;box-shadow:inset 0 0 0 1px var(--ouro)}
+.eq-c-pago[aria-pressed=true]{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+svg.v-eq .eq-eq{stroke-width:3;stroke:var(--ouro-cl)}
+.eq-cruza .eq-pt{transform-box:fill-box;transform-origin:center;transition:transform .3s cubic-bezier(.16,1,.3,1)}
+svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
+@media(hover:hover) and (pointer:fine){.eq-chip:hover{border-color:var(--ouro)}}
+/* ===== terminal do ponto de equilíbrio (13/10/2026): painel escuro, neon, placar, zoom e simulador =====
+   Cores: dourado→amarelo = vendas; ciano = equilíbrio; verde = lucro (▲); rosa = prejuízo (▼). Texto sempre claro. */
+.eq-term{--t-bg:#140d1c;--t-ink:#f5f3ff;--t-mut:#b9b3cc;--t-line:rgba(255,255,255,.10);--t-ouro:#f59e0b;--t-cia:#06b6d4;--t-ok:#34d399;--t-neg:#fb7185;
+  position:relative;margin-top:10px;padding:14px 14px 12px;border-radius:18px;color:var(--t-ink);overflow:hidden;
+  background:radial-gradient(120% 90% at 0% 0%,rgba(245,158,11,.20),transparent 55%),radial-gradient(90% 80% at 100% 100%,rgba(6,182,212,.18),transparent 60%),var(--t-bg);
+  border:1px solid rgba(245,158,11,.35);box-shadow:0 18px 50px -24px rgba(20,13,28,.75),inset 0 1px 0 rgba(255,255,255,.06)}
+.eq-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.eq-placar{display:flex;flex-direction:column;gap:2px;min-width:0}
+.eq-pd{font:600 12px var(--mono);color:var(--t-mut);letter-spacing:.02em;text-transform:uppercase}
+.eq-pv{font:800 30px/1.1 var(--mono);color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 0 22px rgba(245,158,11,.45)}
+.eq-pr{font:700 13px var(--mono);white-space:nowrap}.eq-pr.up{color:var(--t-ok)}.eq-pr.dn{color:var(--t-neg)}
+.eq-zoom{display:inline-flex;padding:3px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--t-line)}
+.eq-zoom button{min-height:34px;padding:0 12px;border:0;border-radius:999px;background:none;color:var(--t-mut);font:600 12px var(--font);cursor:pointer;white-space:nowrap}
+.eq-zoom button[aria-pressed=true]{background:linear-gradient(135deg,#f59e0b,#fb923c);color:#1a0f02;box-shadow:0 4px 16px -6px rgba(245,158,11,.8)}
+.eq-term .eq-chips{margin:0 0 6px}
+.eq-term .eq-chip{background:rgba(255,255,255,.06);border-color:var(--t-line);color:var(--t-mut)}
+.eq-term .eq-chip b{color:#fff}
+.eq-term .eq-c-eq i{border-top:2px dashed var(--t-cia)}.eq-term .eq-c-eq b{color:var(--t-cia)}
+.eq-term .eq-c-pago i{background:var(--t-ok);border-color:var(--t-bg);box-shadow:0 0 0 1px var(--t-ok)}.eq-term .eq-c-pago b{color:var(--t-ok)}
+.eq-term .eq-c-neg{color:var(--t-neg);border-color:rgba(251,113,133,.4);cursor:default}
+.eq-term .eq-chip[aria-pressed=true]{background:rgba(6,182,212,.14);border-color:var(--t-cia);box-shadow:0 0 18px -4px rgba(6,182,212,.7)}
+.eq-term .eq-c-pago[aria-pressed=true]{background:rgba(52,211,153,.14);border-color:var(--t-ok);box-shadow:0 0 18px -4px rgba(52,211,153,.7)}
+.eq-term .eq-graf{background:none;border:0;box-shadow:none;padding:0;touch-action:pan-y}
+.eq-term .eq-gr{stroke:rgba(255,255,255,.07)}
+.eq-term .eq-ax{fill:var(--t-mut);font:500 11px var(--mono)}
+.eq-term .eq-futuro{fill:rgba(255,255,255,.035)}
+.eq-term .eq-a-pos{fill:url(#eqVerde)}.eq-term .eq-a-neg{fill:url(#eqVerm)}
+.eq-term .eq-glow{stroke:#f59e0b;stroke-width:9;opacity:.55}
+.eq-term .eq-v{stroke:url(#eqLinha);stroke-width:3.5}
+.eq-term .eq-eq{stroke:var(--t-cia);stroke-width:2;stroke-dasharray:7 5;opacity:.95}
+.eq-term svg.v-eq .eq-eq{stroke-width:3.5;filter:drop-shadow(0 0 6px rgba(6,182,212,.9))}
+.eq-term .eq-cruza .eq-pt{fill:var(--t-ok);stroke:var(--t-bg);stroke-width:3}
+.eq-term svg.v-pago .eq-cruza .eq-pt{transform:scale(1.8)}
+.eq-term .eq-hoje{stroke:rgba(255,255,255,.35);stroke-dasharray:3 4;opacity:1}
+.eq-term .eq-ponto{fill:#fde047;stroke:var(--t-bg);stroke-width:2.5}.eq-term .eq-onda{stroke:#fde047}
+.eq-term .eq-cl{stroke:#fff;stroke-width:1;opacity:.5}
+.eq-term .eq-cp{fill:var(--t-neg);stroke:#fff;stroke-width:2.5;transition:cx .12s,cy .12s}.eq-term .eq-cp.lucro{fill:var(--t-ok)}
+.eq-term .eq-cruz{transition:opacity .2s}
+.eq-term .eq-hit{cursor:crosshair}
+/* simulador */
+.eq-sim{margin-top:10px;padding:12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--t-line)}
+.eq-sim label{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font:600 13px var(--font);color:var(--t-mut)}
+.eq-sv{font:800 18px var(--mono);color:#fde047;white-space:nowrap}
+.eq-sim input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;margin:8px 0 4px;background:none;cursor:pointer}
+.eq-sim input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:999px;background:linear-gradient(90deg,#fb7185,#f59e0b 45%,#34d399)}
+.eq-sim input[type=range]::-moz-range-track{height:6px;border-radius:999px;background:linear-gradient(90deg,#fb7185,#f59e0b 45%,#34d399)}
+.eq-sim input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-9px;border-radius:50%;background:#fff;border:4px solid #f59e0b;box-shadow:0 0 0 6px rgba(245,158,11,.25),0 4px 12px rgba(0,0,0,.4)}
+.eq-sim input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:4px solid #f59e0b;box-shadow:0 0 0 6px rgba(245,158,11,.25)}
+.eq-sim input[type=range]:focus-visible{outline:2px solid var(--t-cia);outline-offset:4px;border-radius:8px}
+.eq-sr{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--t-mut)}
+.eq-sr b{color:#fff;font-family:var(--mono);white-space:nowrap}.eq-sr b.up{color:var(--t-ok)}.eq-sr b.dn{color:var(--t-neg)}
+.eq-sreset{min-height:32px;padding:0 12px;border-radius:999px;border:1px solid rgba(253,224,71,.5);background:rgba(253,224,71,.1);color:#fde047;font:600 12px var(--font);cursor:pointer}
+.eq-term.simulando{border-color:rgba(253,224,71,.6)}
+.eq-term.simulando::after{content:"SIMULAÇÃO";position:absolute;top:10px;left:50%;transform:translateX(-50%);font:800 10px var(--mono);letter-spacing:.2em;color:#1a0f02;background:#fde047;padding:3px 8px;border-radius:999px}
+@media(max-width:480px){.eq-pv{font-size:26px}.eq-zoom{width:100%}.eq-zoom button{flex:1;padding:0 6px}.eq-term{padding:12px 10px}
+  .eq-term.simulando::after{top:auto;bottom:auto;left:auto;right:12px;top:12px;transform:none}}
+@media(hover:hover) and (pointer:fine){.eq-zoom button:hover{color:#fff}}
+@media(max-width:480px){.eq-sim label{flex-direction:column;align-items:flex-start;gap:2px}.eq-sv{font-size:20px}}
+@media(prefers-reduced-motion:reduce){.eq-term .eq-cp{transition:none}.od-r{transition:none}.eq-revela.anima,.eq-onda,.odo-delta{animation:none}.eq-onda{display:none}}
 </style>
 </head>
 <body>
@@ -1269,6 +1380,26 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 const SUPA_URL = "https://vedlxtljilsanykmddtj.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZGx4dGxqaWxzYW55a21kZHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NjYzNzUsImV4cCI6MjEwNjE0MjM3NX0.JlUPvGdomBHLlu5ei5dEb1qFR4FZ2nC45JTZUJ-IN6g";
 const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+/* campos de valor (R$, custo, quantidade): ao tocar, zero some (e volta se sair sem digitar) e qualquer outro valor
+   fica todo selecionado, então digitar já substitui. Antes era preciso apagar o "0,00" na mão em todo campo. */
+(function(){
+  const CAMPO = 'input[inputmode="decimal"],input[type="number"]';
+  const zero = v => { const t = String(v || "").replace(/[^\d,.-]/g, ""); return t !== "" && Number(t.replace(/\./g, "").replace(",", ".")) === 0; };
+  let segura = null;
+  document.addEventListener("focusin", e => {
+    const el = e.target; if(!el.matches || !el.matches(CAMPO) || el.readOnly || el.disabled) return;
+    if(zero(el.value)){ el.dataset.zerou = el.value; el.value = ""; return; }
+    segura = el; el.dataset.vfoco = el.value; setTimeout(() => { try { el.select(); } catch(_){} }, 0);   /* foco pelo teclado (Tab) */
+  });
+  /* foco por clique/toque: o clique posiciona o cursor depois do foco, então seleciona de novo no clique */
+  document.addEventListener("click", e => { if(segura && e.target === segura && segura.value === segura.dataset.vfoco){ try { segura.select(); } catch(_){} } segura = null; }, true);
+  document.addEventListener("input", e => { if(e.target === segura) segura = null; }, true);   /* já começou a digitar: não seleciona mais */
+  document.addEventListener("focusout", e => {
+    const el = e.target; if(!el.matches || !el.matches(CAMPO) || el.dataset.zerou == null) return;
+    if(el.value.trim() === "") el.value = el.dataset.zerou;
+    delete el.dataset.zerou;
+  });
+})();
 const BUCKET = "product-images";
 
 const $ = (s, r=document) => r.querySelector(s);
@@ -3766,21 +3897,21 @@ function desenhaLucro(fin, mg, erro){
   const m = mg.pct == null ? null : mg.pct / 100;
   const bruto = m == null ? null : fat * m, cmv = m == null ? null : fat - bruto, liquido = bruto == null ? null : bruto - fixos - dia;
   const equilibrio = m ? (fixos + dia) / m : null;
-  const linha = (rot, v, cls = "") => `<div class="lc-l ${cls}"><span>${rot}</span><b>${v}</b></div>`;
+  const linha = (rot, v, cls = "", k = "") => `<div class="lc-l ${cls}"><span>${rot}</span><b${k ? ` data-odo="${k}"` : ""}>${v}</b></div>`;
   box.innerHTML = `<div class="ov-box-h"><h3>Lucro do mês <small>projeção</small></h3><button class="btn-ghost btn-sm" id="lcEditar">${ic("sheet")} Custos</button></div>
     <div class="lc-grid">
       <div class="lc-conta">
         <label class="lc-fat"><span>Faturamento bruto do mês</span><span class="lc-in"><i>R$</i><input id="lcFat" type="text" inputmode="decimal" placeholder="0,00" value="${fat ? String(fat.toFixed(2)).replace(".", ",") : ""}"></span></label>
-        ${linha("− Custo das mercadorias" + (m == null ? "" : ` <small>(${pctBR(100 - mg.pct)} do faturamento)</small>`), cmv == null ? "—" : brlM(cmv))}
-        ${linha("= Lucro bruto" + (m == null ? "" : ` <small>(margem ${pctBR(mg.pct)})</small>`), bruto == null ? "—" : brlM(bruto), "lc-sub")}
-        ${linha(`− Custos fixos <small>(${custos.map(c => esc(c.nome)).join(", ") || "nenhum"})</small>`, brlM(fixos))}
+        ${linha("− Custo das mercadorias" + (m == null ? "" : ` <small>(${pctBR(100 - mg.pct)} do faturamento)</small>`), cmv == null ? "—" : brlM(cmv), "", "cmv")}
+        ${linha("= Lucro bruto" + (m == null ? "" : ` <small>(margem ${pctBR(mg.pct)})</small>`), bruto == null ? "—" : brlM(bruto), "lc-sub", "bruto")}
+        ${linha(`− Custos fixos <small>(${custos.map(c => esc(c.nome)).join(", ") || "nenhum"})</small>`, brlM(fixos), "", "fixos")}
         <label class="lc-l lc-dia"><span>− Dia a dia <small>(comida, combustível das entregas…)</small></span><span class="lc-in"><i>R$</i><input id="lcDia" type="text" inputmode="decimal" placeholder="0,00" value="${dia ? String(dia.toFixed(2)).replace(".", ",") : ""}"></span></label>
       </div>
       <div class="lc-res ${liquido == null || !fat ? "" : liquido >= 0 ? "pos" : "neg"}">
         <span class="lc-rot">Lucro líquido estimado</span>
-        <b class="lc-v">${!fat ? "—" : liquido == null ? "—" : brlM(liquido)}</b>
+        <b class="lc-v" data-odo="liq">${!fat ? "—" : liquido == null ? "—" : brlM(liquido)}</b>
         <span class="lc-d">${!fat ? "Digite o faturamento do mês para ver o lucro." : fat && liquido != null ? `${pctBR(liquido / fat * 100)} do faturamento` : ""}</span>
-        ${equilibrio ? `<div class="lc-eq"><span>Ponto de equilíbrio</span><b>${brl0(equilibrio)}/mês</b><small>≈ ${brl0(equilibrio / 26)} por dia (26 dias) só para pagar os custos</small></div>` : ""}
+        ${equilibrio ? `<div class="lc-eq"><span>Ponto de equilíbrio</span><b data-odo="eq">${brl0(equilibrio)}/mês</b><small>≈ ${brl0(equilibrio / 26)} por dia (26 dias) só para pagar os custos</small></div>` : ""}
       </div>
     </div>
     <div class="lc-graf" id="lcGraf"></div>
@@ -3798,70 +3929,167 @@ function desenhaLucro(fin, mg, erro){
   $("#lcDia").onchange = e => salvar("dia_a_dia", e.target);
   [$("#lcFat"), $("#lcDia")].forEach(i => i.onkeydown = e => { if(e.key === "Enter") e.target.blur(); });
   $("#lcEditar").onclick = () => editarCustos(f, custos, mg);
+  box.querySelectorAll("[data-odo]").forEach(el => odo(el, el.dataset.odo));   /* números rolando (efeito bolsa) */
   graficoEquilibrio({ fat, m, custo: fixos + dia, equilibrio, margem: mg.pct });
 }
-/* ---------------- gráfico do mês: vendas acumuladas × ponto de equilíbrio ----------------
-   Ponto de equilíbrio = quanto vender no mês para empatar: o lucro bruto das vendas (venda × margem) paga exatamente
-   os custos fixos + dia a dia. Linha dourada = vendas acumuladas no ritmo do faturamento digitado (faturamento ÷ 30
-   por dia); tracejada = o equilíbrio. Onde cruzam = o dia em que os custos do mês estão pagos; dali pra frente é lucro.
-   Sem faturamento digitado, a linha mostra o ritmo mínimo (equilíbrio ÷ 30 por dia). SVG desenhado na largura da
-   caixa (redesenha ao mudar o tamanho), tooltip com cruz ao passar o dedo/mouse, tabela em "Ver em tabela". */
+/* ---------------- números "de bolsa": os dígitos rolam até o valor novo ----------------
+   odo(el, chave): troca o texto de el por colunas de dígitos que rolam (transform) do valor anterior (ou de zero, na
+   1ª vez) até o atual, da direita para a esquerda, e mostra ▲/▼ com a diferença por 2,5 s quando o valor muda
+   (ex.: depois de editar o faturamento). Leitor de tela lê o texto final (aria-label). Sem animação com reduced-motion. */
+const ODO_ANT = {};
+const odoNum = t => { const s = String(t).replace(/[^\d,−-]/g, "").replace(",", "."); const n = parseFloat(s.replace("−", "-")); return Number.isFinite(n) ? (/[−-]/.test(t) ? -Math.abs(n) : n) : null; };
+function odo(el, chave){
+  if(!el) return;
+  const txt = el.textContent.trim(), ant = ODO_ANT[chave]; ODO_ANT[chave] = txt;
+  if(!/\d/.test(txt) || matchMedia("(prefers-reduced-motion: reduce)").matches){ return; }
+  const de = ant && ant.length === txt.length ? ant : txt.replace(/\d/g, "0");
+  el.setAttribute("aria-label", txt);
+  el.innerHTML = `<span class="odo" aria-hidden="true">${[...txt].map((c, i) => /\d/.test(c)
+    ? `<span class="od"><span class="od-r" data-ate="${c}" style="transform:translateY(${-(+(/\d/.test(de[i]) ? de[i] : 0)) * 10}%)">${"0123456789".split("").map(n => `<i>${n}</i>`).join("")}</span></span>`
+    : `<span class="od-s">${c === " " ? "&nbsp;" : esc(c)}</span>`).join("")}</span>`;
+  const rolos = [...el.querySelectorAll(".od-r")];
+  requestAnimationFrame(() => requestAnimationFrame(() => rolos.forEach((r, i) => {
+    r.style.transitionDelay = ((rolos.length - 1 - i) * 45) + "ms"; r.style.transform = `translateY(${-(+r.dataset.ate) * 10}%)`; })));
+  const a = ant ? odoNum(ant) : null, b = odoNum(txt);
+  if(a != null && b != null && Math.abs(b - a) >= 0.01){
+    const up = b > a, d = document.createElement("i"); d.className = "odo-delta " + (up ? "up" : "dn");
+    d.textContent = (up ? "▲ " : "▼ ") + brl0(Math.abs(b - a)); el.appendChild(d);
+    setTimeout(() => d.classList.add("sai"), 2200); setTimeout(() => d.remove(), 3000);
+  }
+}
+/* ---------------- gráfico do mês: "terminal de bolsa" do ponto de equilíbrio ----------------
+   Eixo = os dias do MÊS ATUAL no calendário, com "hoje" marcado. Linha = vendas acumuladas no ritmo do faturamento
+   digitado (÷ dias do mês): cheia até hoje, tracejada depois (projeção). O Nex não manda a venda do dia pela
+   integração, então é estimativa. Ciano tracejado = equilíbrio; área vermelha = ainda pagando os custos, verde = lucro.
+   Interações:
+   - Placar no topo (estilo app de ações): data, vendas até o dia e ▲ lucro / ▼ falta; muda ao arrastar o dedo/mouse.
+   - Período: Mês · Até hoje · Daqui pra frente (zoom no eixo).
+   - Simulador: arrastar "vendas por dia" refaz linha, placar e resumo na hora (não grava nada; "Voltar" desfaz).
+   - Botões Equilíbrio / Custos pagos (lados opostos) destacam a linha ou o ponto. Tabela em "Ver em tabela".
+   Painel escuro com cores neon (validadas p/ daltonismo; lucro/prejuízo também levam ▲▼ e texto). Só transform/opacity
+   animam (linha que se desenha, sinal pulsando em hoje). */
 function graficoEquilibrio(o){
   const box = $("#lcGraf"); if(!box) return;
   if(!o.equilibrio){ box.innerHTML = `<p class="lc-nota">Cadastre o custo dos produtos e os custos fixos para ver o ponto de equilíbrio.</p>`; return; }
-  const D = 30, temFat = o.fat > 0, ritmo = temFat ? o.fat / D : o.equilibrio / D;
-  const vend = d => ritmo * d, dEq = o.equilibrio / ritmo;   /* dia (fracionado) em que cruza o equilíbrio */
-  const fecha = temFat && o.fat >= o.equilibrio, hoje = new Date().getDate();
-  const resultado = d => vend(d) * o.m - o.custo;          /* lucro (ou prejuízo) do mês se parasse de vender no dia d */
-  const pctM = o.margem == null ? "" : pctBR(o.margem);
-  box.innerHTML = `<div class="eq-h"><h4>Ponto de equilíbrio no mês</h4>
-      <p class="eq-exp">É quanto a loja precisa <b>vender no mês para não ter prejuízo</b>: com margem de ${pctM}, cada R$ 100 vendidos deixam ${brlM(o.margem || 0)} de lucro bruto, e esse lucro tem que pagar os custos do mês (${brl0(o.custo)}). Isso acontece quando as vendas chegam a <b>${brl0(o.equilibrio)}</b>. Vendeu menos, fecha no prejuízo; tudo que passar disso é lucro.</p></div>
-    <p class="eq-sit ${!temFat ? "" : fecha ? "pos" : "neg"}">${!temFat ? `Digite o faturamento do mês para ver em que dia os custos ficam pagos. O ritmo mínimo é <b>${brl0(ritmo)} por dia</b>.`
-      : fecha ? `No ritmo de <b>${brl0(ritmo)} por dia</b>, os custos do mês ficam pagos por volta do <b>dia ${Math.ceil(dEq)}</b>. Do dia ${Math.ceil(dEq) + 1} ao 30, o lucro das vendas é da loja.`
-      : `No ritmo de <b>${brl0(ritmo)} por dia</b>, o mês fecha <b>abaixo do equilíbrio</b> (faltam ${brl0(o.equilibrio - o.fat)}). Precisaria vender ${brl0(o.equilibrio / D)} por dia.`}</p>
-    <div class="eq-leg" aria-hidden="true"><span><i class="eq-l-v"></i>${temFat ? "Vendas acumuladas (no ritmo do faturamento)" : "Ritmo mínimo de vendas"}</span><span><i class="eq-l-e"></i>Ponto de equilíbrio</span></div>
-    <div class="eq-graf" role="img" aria-label="Gráfico: vendas acumuladas em 30 dias até ${brl0(vend(D))}; ponto de equilíbrio em ${brl0(o.equilibrio)}${fecha ? `, alcançado no dia ${Math.ceil(dEq)}` : ""}."></div>
-    <details class="eq-tab"><summary>Ver em tabela</summary><table><thead><tr><th>Dia</th><th>Vendas até o dia</th><th>Resultado do mês até o dia</th></tr></thead><tbody>
-      ${[5,10,15,20,25,30].map(d => `<tr><td>${d}</td><td>${brl0(vend(d))}</td><td class="${resultado(d) >= 0 ? "pos" : "neg"}">${resultado(d) >= 0 ? "lucro " : "prejuízo "}${brl0(Math.abs(resultado(d)))}</td></tr>`).join("")}</tbody></table></details>`;
-  const alvo = box.querySelector(".eq-graf");
-  const desenha = () => {
-    const W = Math.max(280, Math.round(alvo.clientWidth || 600)), H = W < 520 ? 210 : 240, P = { l: 58, r: 14, t: 16, b: 30 };
-    const maxY = Math.max(vend(D), o.equilibrio) * 1.08, x = d => P.l + (d / D) * (W - P.l - P.r), y = v => P.t + (1 - v / maxY) * (H - P.t - P.b);
-    const passo = maxY > 40000 ? 10000 : maxY > 20000 ? 5000 : maxY > 8000 ? 2000 : 1000, grade = [];
-    for(let v = 0; v <= maxY; v += passo) grade.push(v);
-    const dx = Math.min(D, Math.max(0, dEq)), yE = y(o.equilibrio);
-    /* área sob a linha: antes do cruzamento (pagando os custos) e depois (lucro), com rótulo de texto em cada uma */
-    const area = (a, b, cls) => b > a ? `<path class="${cls}" d="M${x(a)},${y(0)} L${x(a)},${y(vend(a))} L${x(b)},${y(vend(b))} L${x(b)},${y(0)} Z"/>` : "";
-    const rotA = dx > 6 ? `<text class="eq-ta" x="${x(dx / 2)}" y="${y(0) - 8}" text-anchor="middle">pagando os custos</text>` : "";
-    const rotB = fecha && D - dx > 6 ? `<text class="eq-tb" x="${x((dx + D) / 2)}" y="${y(0) - 8}" text-anchor="middle">lucro</text>` : "";
-    alvo.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
-      ${grade.map(v => `<line class="eq-gr" x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}"/><text class="eq-ax" x="${P.l - 8}" y="${y(v) + 4}" text-anchor="end">${v >= 1000 ? (v / 1000).toLocaleString("pt-BR") + " mil" : v}</text>`).join("")}
-      ${[1,5,10,15,20,25,30].map(d => `<text class="eq-ax" x="${x(d)}" y="${H - 10}" text-anchor="middle">${d}</text>`).join("")}
-      ${area(0, Math.min(dx, D), "eq-aa")}${fecha ? area(dx, D, "eq-ab") : ""}${rotA}${rotB}
-      ${hoje <= D ? `<line class="eq-hoje" x1="${x(hoje)}" x2="${x(hoje)}" y1="${P.t}" y2="${y(0)}"/><text class="eq-ax eq-th" x="${x(hoje)}" y="${P.t + 10}" text-anchor="${hoje > 26 ? "end" : "start"}" dx="${hoje > 26 ? -4 : 4}">hoje</text>` : ""}
-      <line class="eq-eq" x1="${P.l}" x2="${W - P.r}" y1="${yE}" y2="${yE}"/>
-      <text class="eq-te" x="${P.l + 6}" y="${yE - 6}">equilíbrio ${brl0(o.equilibrio)}</text>
-      <path class="eq-v${temFat ? "" : " min"}" d="M${x(0)},${y(0)} L${x(D)},${y(vend(D))}"/>
-      ${fecha ? `<circle class="eq-pt" cx="${x(dx)}" cy="${yE}" r="5"/><text class="eq-td" x="${x(dx)}" y="${yE + 18}" text-anchor="${dx > 24 ? "end" : "middle"}">dia ${Math.ceil(dEq)}</text>` : ""}
-      <g class="eq-cruz" hidden><line class="eq-cl" y1="${P.t}" y2="${y(0)}"/><circle class="eq-cp" r="5"/></g>
-      <rect class="eq-hit" x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}"/>
-    </svg><div class="eq-tip" hidden></div>`;
-    const svg = alvo.querySelector("svg"), cruz = svg.querySelector(".eq-cruz"), tip = alvo.querySelector(".eq-tip");
-    const mostra = ev => {
-      const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * (W / r.width);
-      const d = Math.max(1, Math.min(D, Math.round((px - P.l) / (W - P.l - P.r) * D))), v = vend(d), res = resultado(d);
-      cruz.hidden = false; cruz.querySelector(".eq-cl").setAttribute("x1", x(d)); cruz.querySelector(".eq-cl").setAttribute("x2", x(d));
-      const cp = cruz.querySelector(".eq-cp"); cp.setAttribute("cx", x(d)); cp.setAttribute("cy", y(v));
-      tip.hidden = false;
-      tip.innerHTML = `<b>Dia ${d}</b><span>Vendas até aqui <em>${brl0(v)}</em></span><span class="${res >= 0 ? "pos" : "neg"}">${v >= o.equilibrio ? "Custos pagos · lucro" : "Faltam para o equilíbrio"} <em>${v >= o.equilibrio ? brl0(res) : brl0(o.equilibrio - v)}</em></span>`;
-      const tx = x(d) * (r.width / W);
-      tip.style.left = Math.min(Math.max(tx, 90), r.width - 90) + "px";
-    };
-    const some = () => { cruz.hidden = true; tip.hidden = true; };
-    const hit = svg.querySelector(".eq-hit");
-    hit.addEventListener("pointermove", mostra); hit.addEventListener("pointerdown", mostra); hit.addEventListener("pointerleave", some);
+  const agora = new Date(), ano = agora.getFullYear(), mes = agora.getMonth(), D = new Date(ano, mes + 1, 0).getDate(), hoje = agora.getDate();
+  const MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"], mesNome = agora.toLocaleDateString("pt-BR", { month: "long" });
+  const dataC = d => `${d} ${MESES[mes]}`;
+  const temFat = o.fat > 0, ritmoBase = temFat ? o.fat / D : o.equilibrio / D, ritmoMin = o.equilibrio / D;
+  const st = { ritmo: ritmoBase, zoom: "mes", sel: Math.min(hoje, D), primeira: true, foco: null };
+  const vend = d => st.ritmo * d, dEq = () => o.equilibrio / st.ritmo, resultado = d => vend(d) * o.m - o.custo;
+  const fecha = () => vend(D) >= o.equilibrio;
+  const maxSim = Math.max(ritmoBase, ritmoMin) * 2.2, passoSim = maxSim > 2000 ? 50 : 10;
+  box.innerHTML = `<div class="eq-h"><h4>Ponto de equilíbrio · ${esc(mesNome)} de ${ano}</h4>
+      <p class="eq-exp">É quanto a loja precisa <b>vender no mês para não ter prejuízo</b>: com margem de ${pctBR(o.margem || 0)}, cada R$ 100 vendidos deixam ${brlM(o.margem || 0)} de lucro bruto, e esse lucro tem que pagar os custos do mês (${brl0(o.custo)}). Isso acontece quando as vendas chegam a <b>${brl0(o.equilibrio)}</b>. Vendeu menos, fecha no prejuízo; tudo que passar disso é lucro.</p></div>
+    <div class="eq-term">
+      <div class="eq-top">
+        <div class="eq-placar" aria-live="polite"><span class="eq-pd"></span><b class="eq-pv"></b><span class="eq-pr"></span></div>
+        <div class="eq-zoom" role="group" aria-label="Período do gráfico">${[["mes","Mês"],["ate","Até hoje"],["dep","Daqui pra frente"]].map(([k, t]) => `<button type="button" data-eq-zoom="${k}" aria-pressed="${k === "mes"}">${t}</button>`).join("")}</div>
+      </div>
+      <div class="eq-chips"></div>
+      <div class="eq-graf" role="img"></div>
+      <div class="eq-sim">
+        <label for="eqSim"><span>Simular: vendas por dia</span><b class="eq-sv"></b></label>
+        <input type="range" id="eqSim" min="0" max="${Math.round(maxSim)}" step="${passoSim}" value="${Math.round(ritmoBase)}">
+        <div class="eq-sr"><span class="eq-sres"></span><button type="button" class="eq-sreset" hidden>Voltar ao faturamento digitado</button></div>
+      </div>
+    </div>
+    <details class="eq-tab"><summary>Ver em tabela</summary><div class="eq-tabc"></div></details>`;
+  const term = box.querySelector(".eq-term"), alvo = box.querySelector(".eq-graf"), sim = box.querySelector("#eqSim");
+  const dominio = () => st.zoom === "ate" ? [1, Math.max(2, Math.min(hoje, D))] : st.zoom === "dep" ? [Math.min(Math.max(1, hoje), D - 1), D] : [1, D];
+
+  /* placar do topo: o dia escolhido (hoje, ou onde o dedo/mouse está) */
+  const placar = d => {
+    const v = vend(d), res = resultado(d), pago = v >= o.equilibrio;
+    term.querySelector(".eq-pd").textContent = `${dataC(d)}${d === hoje ? " · hoje" : d > hoje ? " · projeção" : ""}`;
+    term.querySelector(".eq-pv").textContent = brl0(v);
+    const pr = term.querySelector(".eq-pr"); pr.className = "eq-pr " + (pago ? "up" : "dn");
+    pr.textContent = pago ? `▲ lucro ${brl0(res)}` : `▼ faltam ${brl0(o.equilibrio - v)} p/ empatar`;
   };
-  desenha();
+  /* resumo do simulador + botões + tabela (dependem do ritmo) */
+  const textos = () => {
+    const simulando = Math.abs(st.ritmo - ritmoBase) > 0.5, de = dEq(), dia = Math.max(1, Math.ceil(de));
+    term.querySelector(".eq-sv").textContent = `${brl0(st.ritmo)}/dia`;
+    term.querySelector(".eq-sres").innerHTML = fecha()
+      ? `Mês fecha com <b>${brl0(vend(D))}</b> · lucro <b class="up">${brl0(resultado(D))}</b> · custos pagos em <b>${dataC(dia)}</b>`
+      : `Mês fecha com <b>${brl0(vend(D))}</b> · <b class="dn">prejuízo ${brl0(-resultado(D))}</b> · mínimo p/ empatar: <b>${brl0(ritmoMin)}/dia</b>`;
+    term.querySelector(".eq-sreset").hidden = !simulando;
+    term.classList.toggle("simulando", simulando);
+    term.querySelector(".eq-chips").innerHTML = `<button type="button" class="eq-chip eq-c-eq" data-eq-ver="eq" aria-pressed="${st.foco === "eq"}"><i aria-hidden="true"></i>Equilíbrio <b>${brl0(o.equilibrio)}</b></button>
+      ${fecha() ? `<button type="button" class="eq-chip eq-c-pago" data-eq-ver="pago" aria-pressed="${st.foco === "pago"}"><i aria-hidden="true"></i>Custos pagos <b>${dataC(dia)}</b></button>` : `<span class="eq-chip eq-c-neg" aria-hidden="true">▼ não empata</span>`}`;
+    term.querySelectorAll("[data-eq-ver]").forEach(b => b.onclick = () => { st.foco = st.foco === b.dataset.eqVer ? null : b.dataset.eqVer;
+      if(st.foco){ st.sel = Math.min(D, Math.max(1, st.foco === "pago" ? dia : dia)); } textos(); desenha(); placar(st.sel); });
+    box.querySelector(".eq-tabc").innerHTML = `<table><thead><tr><th>Data</th><th>Vendas até o dia</th><th>Resultado do mês até o dia</th></tr></thead><tbody>
+      ${[...new Set([1, 5, 10, hoje, 15, 20, 25, D])].filter(d => d <= D).sort((a, b) => a - b).map(d => `<tr${d === hoje ? ' class="hj"' : ""}><td>${dataC(d)}${d === hoje ? " · hoje" : ""}</td><td>${brl0(vend(d))}</td><td class="${resultado(d) >= 0 ? "pos" : "neg"}">${resultado(d) >= 0 ? "▲ lucro " : "▼ prejuízo "}${brl0(Math.abs(resultado(d)))}</td></tr>`).join("")}</tbody></table>`;
+    alvo.setAttribute("aria-label", `Gráfico de ${mesNome}: vendas acumuladas até ${brl0(vend(D))}; ponto de equilíbrio em ${brl0(o.equilibrio)}${fecha() ? `, alcançado em ${dataC(dia)}` : ", não alcançado"}; hoje é ${dataC(hoje)}.`);
+  };
+
+  const desenha = () => {
+    const [a, b] = dominio(), de = dEq(), dx = Math.min(D, Math.max(1, de));
+    const W = Math.max(280, Math.round(alvo.clientWidth || 600)), H = W < 520 ? 230 : 280, P = { l: 52, r: 14, t: 18, b: 30 };
+    const maxY = Math.max(vend(b), o.equilibrio) * 1.12, x = d => P.l + ((d - a) / Math.max(1, b - a)) * (W - P.l - P.r), y = v => P.t + (1 - v / maxY) * (H - P.t - P.b);
+    const passo = maxY > 80000 ? 20000 : maxY > 40000 ? 10000 : maxY > 20000 ? 5000 : maxY > 8000 ? 2000 : maxY > 3000 ? 1000 : 500, grade = [];
+    for(let v = 0; v <= maxY; v += passo) grade.push(v);
+    const yE = y(o.equilibrio), h0 = Math.min(Math.max(hoje, a), b), y0 = y(0);
+    const n = W < 520 ? 3 : 6, marcas = [...new Set([a, ...Array.from({ length: n - 1 }, (_, i) => Math.round(a + (b - a) * (i + 1) / n)), b])];
+    const seg = (p, q) => `${x(p)},${y(vend(p))} ${x(q)},${y(vend(q))}`;
+    const area = (p, q, cls) => q > p ? `<path class="${cls}" d="M${x(p)},${y0} L${x(p)},${y(vend(p))} L${x(q)},${y(vend(q))} L${x(q)},${y0} Z"/>` : "";
+    const cx = Math.min(b, Math.max(a, dx));
+    alvo.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
+      <defs>
+        <linearGradient id="eqLinha" x1="0" x2="1"><stop offset="0" stop-color="#fb923c"/><stop offset=".5" stop-color="#f59e0b"/><stop offset="1" stop-color="#fde047"/></linearGradient>
+        <linearGradient id="eqVerde" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#34d399" stop-opacity=".42"/><stop offset="1" stop-color="#34d399" stop-opacity=".02"/></linearGradient>
+        <linearGradient id="eqVerm" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fb7185" stop-opacity=".4"/><stop offset="1" stop-color="#fb7185" stop-opacity=".02"/></linearGradient>
+        <pattern id="eqPontos" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="rgba(255,255,255,.09)"/></pattern>
+        <filter id="eqBrilho" x="-5%" y="-40%" width="110%" height="180%"><feGaussianBlur stdDeviation="5"/></filter>
+        <clipPath id="eqRevela"><rect class="eq-revela${st.primeira ? " anima" : ""}" x="${P.l}" y="0" width="${W - P.l - P.r + 10}" height="${H}"/></clipPath>
+        <clipPath id="eqPlot"><rect x="${P.l}" y="0" width="${W - P.l - P.r}" height="${H}"/></clipPath>
+      </defs>
+      <rect x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}" fill="url(#eqPontos)"/>
+      ${grade.map(v => `<line class="eq-gr" x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}"/><text class="eq-ax" x="${P.l - 8}" y="${y(v) + 4}" text-anchor="end">${v >= 1000 ? (v / 1000).toLocaleString("pt-BR") + "k" : v}</text>`).join("")}
+      ${marcas.map((d, i) => `<text class="eq-ax" x="${x(d)}" y="${H - 9}" text-anchor="${i === 0 ? "start" : i === marcas.length - 1 ? "end" : "middle"}">${dataC(d)}</text>`).join("")}
+      ${hoje < b ? `<rect class="eq-futuro" x="${x(Math.max(h0, a))}" y="${P.t}" width="${Math.max(0, x(b) - x(Math.max(h0, a)))}" height="${H - P.t - P.b}"/>` : ""}
+      <g clip-path="url(#eqPlot)"><g clip-path="url(#eqRevela)">
+        ${area(a, Math.min(b, Math.max(a, dx)), "eq-a-neg")}${area(Math.max(a, dx), b, "eq-a-pos")}
+        <polyline class="eq-glow" points="${seg(a, b)}" filter="url(#eqBrilho)"/>
+        ${h0 > a ? `<polyline class="eq-v" points="${seg(a, h0)}"/>` : ""}${b > h0 ? `<polyline class="eq-v proj" points="${seg(Math.max(a, h0), b)}"/>` : ""}
+      </g></g>
+      <line class="eq-eq" x1="${P.l}" x2="${W - P.r}" y1="${yE}" y2="${yE}"/>
+      ${fecha() && dx >= a && dx <= b ? `<g class="eq-cruza"><circle class="eq-pt" cx="${x(cx)}" cy="${yE}" r="6"/></g>` : ""}
+      ${hoje >= a && hoje <= b ? `<line class="eq-hoje" x1="${x(h0)}" x2="${x(h0)}" y1="${P.t}" y2="${y0}"/>
+        <g class="eq-sinal" transform="translate(${x(h0)},${y(vend(h0))})"><circle class="eq-onda" r="6"/><circle class="eq-onda o2" r="6"/><circle class="eq-ponto" r="5"/></g>` : ""}
+      <g class="eq-cruz"><line class="eq-cl" x1="${x(st.sel)}" x2="${x(st.sel)}" y1="${P.t}" y2="${y0}"/><circle class="eq-cp" cx="${x(st.sel)}" cy="${y(vend(st.sel))}" r="6"/></g>
+      <rect class="eq-hit" x="${P.l}" y="0" width="${W - P.l - P.r}" height="${H}"/>
+    </svg>`;
+    st.primeira = false;
+    const svg = alvo.querySelector("svg"); svg.classList.toggle("v-eq", st.foco === "eq"); svg.classList.toggle("v-pago", st.foco === "pago");
+    const cruz = svg.querySelector(".eq-cruz"), cl = cruz.querySelector(".eq-cl"), cp = cruz.querySelector(".eq-cp");
+    cruz.style.opacity = st.sel >= a && st.sel <= b ? "" : "0";
+    /* arrastar o dedo/mouse: a cruz anda sozinha (sem redesenhar) e o placar acompanha */
+    const ir = ev => {
+      const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * (W / r.width);
+      const d = Math.max(a, Math.min(b, Math.round(a + (px - P.l) / (W - P.l - P.r) * (b - a))));
+      if(d === st.sel && cruz.style.opacity === "") return;
+      st.sel = d; cruz.style.opacity = ""; cl.setAttribute("x1", x(d)); cl.setAttribute("x2", x(d)); cp.setAttribute("cx", x(d)); cp.setAttribute("cy", y(vend(d)));
+      cp.classList.toggle("lucro", vend(d) >= o.equilibrio); placar(d);
+    };
+    cp.classList.toggle("lucro", vend(st.sel) >= o.equilibrio);
+    const hit = svg.querySelector(".eq-hit");
+    hit.addEventListener("pointerdown", e => { ir(e); try { hit.setPointerCapture(e.pointerId); } catch(_){} });
+    hit.addEventListener("pointermove", ir);
+    hit.addEventListener("pointerleave", () => { if(!st.foco){ st.sel = Math.min(Math.max(hoje, a), b); ir({ clientX: svg.getBoundingClientRect().left + x(st.sel) * (svg.getBoundingClientRect().width / W) }); } });
+  };
+
+  /* período (zoom) */
+  term.querySelectorAll("[data-eq-zoom]").forEach(bt => bt.onclick = () => {
+    st.zoom = bt.dataset.eqZoom; term.querySelectorAll("[data-eq-zoom]").forEach(x2 => x2.setAttribute("aria-pressed", x2 === bt));
+    const [a, b] = dominio(); st.sel = Math.min(Math.max(hoje, a), b); st.primeira = true; desenha(); placar(st.sel);
+  });
+  /* simulador: refaz tudo enquanto arrasta (leve: SVG pequeno), placar segue no dia escolhido */
+  let raf = 0;
+  sim.addEventListener("input", () => { st.ritmo = Math.max(1, +sim.value); cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { textos(); desenha(); placar(st.sel); }); });
+  term.querySelector(".eq-sreset").onclick = () => { sim.value = Math.round(ritmoBase); st.ritmo = ritmoBase; textos(); desenha(); placar(st.sel); };
+  textos(); desenha(); placar(st.sel);
   if(window.ResizeObserver){ let t = 0, w0 = alvo.clientWidth; const ro = new ResizeObserver(() => { if(!alvo.isConnected){ ro.disconnect(); return; } if(Math.abs(alvo.clientWidth - w0) < 8) return; w0 = alvo.clientWidth; clearTimeout(t); t = setTimeout(desenha, 120); }); ro.observe(alvo); }
 }
 function editarCustos(f, custos, mg){
