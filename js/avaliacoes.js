@@ -64,7 +64,7 @@ var AVALIACOES={
     var res=document.getElementById("avResumo");
     if(res&&d.nota)res.innerHTML='<b>'+Number(d.nota).toFixed(1).replace(".",",")+"</b>"+estrelas(d.nota)+(d.total?"<span>"+d.total.toLocaleString("pt-BR")+" avaliações</span>":"");
     var todas=document.getElementById("avTodas");if(todas){if(d.link)todas.href=d.link;else todas.hidden=true}
-    rail.innerHTML=lista.map(cartao).join("");
+    rail.innerHTML='<div class="av-fita">'+lista.map(cartao).join("")+"</div>";fx=rail.firstChild;rail.style.setProperty("--av-w",rail.clientWidth+"px");
     sec.hidden=false;
     /* "Ler mais" só onde o texto foi cortado */
     rail.querySelectorAll(".av-card").forEach(function(c){var p=c.querySelector(".av-txt");if(p&&p.scrollHeight>p.clientHeight+2)c.querySelector(".av-mais").hidden=false});
@@ -73,40 +73,47 @@ var AVALIACOES={
 
   /* carrossel contínuo sem fim (como o menu do topo): os cartões se repetem em cópias aria-hidden e a
      posição fica sempre na cópia do meio; anda devagar e para só com mouse em cima, dedo encostado,
-     teclado (foco visível) ou "Ler mais" aberto; volta a andar sozinho */
-  var VEL=26,setW=0,pos=0,ultimo=0,pausa=0,mouse=false,toque=false,anima=false,ult=0;
+     teclado (foco visível) ou "Ler mais" aberto; volta a andar sozinho.
+     Anda por uma Web Animation de transform na .av-fita (compositor, liso no iPhone, sem JS por quadro), igual ao
+     menu: uma volta = uma cópia inteira, em loop; quando a pessoa encosta, o quanto andou vai pro scrollLeft. */
+  var VEL=26,setW=0,pos=0,ultimo=0,pausa=0,mouse=false,toque=false,anima=false,deriva=null,fx=null;
+  function anda(){if(deriva||!setW||!fx)return;meio();var d=setW/VEL*1000;
+    deriva=fx.animate([{transform:"translate3d(0,0,0)"},{transform:"translate3d("+(-setW)+"px,0,0)"}],{duration:d,iterations:Infinity})}
+  function solta(){if(!deriva)return;var d=setW/VEL*1000,t=+deriva.currentTime||0,k=Math.round((t%d)/d*setW);
+    deriva.cancel();deriva=null;if(k)vai(rail.scrollLeft+k);meio()}
   function fita(){
-    var orig=[].slice.call(rail.children);if(!orig.length)return;
+    if(!fx)return;solta();rail.style.setProperty("--av-w",rail.clientWidth+"px");
     rail.querySelectorAll(".av-clone").forEach(function(c){c.remove()});
-    var larg=rail.scrollWidth,copias=Math.max(3,Math.ceil(rail.clientWidth/Math.max(1,larg))+2),prim=null;
+    var orig=[].slice.call(fx.children);if(!orig.length)return;
+    var larg=rail.scrollWidth,copias=Math.max(4,Math.ceil(rail.clientWidth/Math.max(1,larg))+3),prim=null;
     for(var c=1;c<copias;c++)orig.forEach(function(el){var k=el.cloneNode(true);k.classList.add("av-clone");k.setAttribute("aria-hidden","true");
-      k.querySelectorAll("a,button").forEach(function(b){b.tabIndex=-1});rail.appendChild(k);if(!prim)prim=k});
+      k.querySelectorAll("a,button").forEach(function(b){b.tabIndex=-1});fx.appendChild(k);if(!prim)prim=k});
     setW=prim.offsetLeft-orig[0].offsetLeft;vai(setW);
-    if(!ult)requestAnimationFrame(quadro);
+    if(!fita.ligada){fita.ligada=true;setInterval(confere,160)}
   }
   function vai(x){pos=x;rail.scrollLeft=x;ultimo=rail.scrollLeft}
   function meio(){if(!setW)return;var x=rail.scrollLeft;if(x<setW*.5)vai(x+setW);else if(x>=setW*1.5)vai(x-setW)}
   function parado(now){var f=document.activeElement;
     return calma||mouse||toque||anima||document.hidden||now<pausa||!!rail.querySelector(".av-card.aberto")||(sec.contains(f)&&f.matches(":focus-visible"))}
-  function quadro(now){requestAnimationFrame(quadro);var dt=Math.min(.05,(now-(ult||now))/1000);ult=now;
-    if(!setW||parado(now)){pos=rail.scrollLeft;return}
-    var r=sec.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight){pos=rail.scrollLeft;return}   /* fora da tela: não gasta */
-    pos+=VEL*dt;rail.scrollLeft=pos;ultimo=rail.scrollLeft;meio()}
-  rail.addEventListener("scroll",function(){if(!anima&&Math.abs(rail.scrollLeft-ultimo)>1)pausa=performance.now()+3000;
+  /* confere 6x por segundo se pode andar; fora da tela também para (não gasta) */
+  function confere(){if(!setW||!naTela||parado(performance.now()))solta();else anda()}
+  rail.addEventListener("scroll",function(){if(deriva&&Math.abs(rail.scrollLeft-ultimo)>1)solta();if(!anima&&Math.abs(rail.scrollLeft-ultimo)>1)pausa=performance.now()+3000;
     clearTimeout(rail._t);rail._t=setTimeout(function(){if(!anima)meio()},160)},{passive:true});
   /* setas: um cartão por clique, animado, mantendo a fita sem fim */
-  function passo(dir){var c=rail.querySelector(".av-card");if(!c||!setW)return;meio();
+  function passo(dir){var c=rail.querySelector(".av-card");if(!c||!setW)return;solta();meio();
     var de=rail.scrollLeft,ate=de+dir*(c.getBoundingClientRect().width+12),t0=performance.now(),dur=calma?1:450;anima=true;
     (function f(now){var k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,3);vai(de+(ate-de)*e);if(k<1)requestAnimationFrame(f);else{anima=false;meio();pausa=performance.now()+2500}})(t0)}
-  sec.addEventListener("pointerenter",function(e){if(e.pointerType==="mouse")mouse=true});
+  sec.addEventListener("pointerenter",function(e){if(e.pointerType==="mouse"){mouse=true;solta()}});
   sec.addEventListener("pointerleave",function(e){if(e.pointerType==="mouse"){mouse=false;pausa=performance.now()+800}});
-  rail.addEventListener("touchstart",function(){toque=true},{passive:true});
+  rail.addEventListener("touchstart",function(){toque=true;solta()},{passive:true});
   rail.addEventListener("touchend",function(){toque=false;pausa=performance.now()+3000},{passive:true});
   rail.addEventListener("touchcancel",function(){toque=false},{passive:true});
   sec.addEventListener("click",function(e){
     var b=e.target.closest("[data-av]");if(b){passo(+b.dataset.av);return}
     var m=e.target.closest(".av-mais");if(m){var c=m.closest(".av-card");var aberto=c.classList.toggle("aberto");m.textContent=aberto?"Ler menos":"Ler mais"}
   });
+  if(!Element.prototype.animate)calma=true;
+  var naTela=true;if(window.IntersectionObserver)new IntersectionObserver(function(e){naTela=e[0].isIntersecting}).observe(sec);
   var tR=0;addEventListener("resize",function(){clearTimeout(tR);tR=setTimeout(fita,200)});
 
   /* depois da carga: não disputa com o catálogo */

@@ -17,7 +17,11 @@ Leia antes de alterar qualquer arquivo.
 │   ├── fluidez.js        # Lenis (scroll suave), navegação ←/→ e gesto no modal de produto
 │   ├── checkout-mp.js    # window.MPX: pagamento Mercado Pago (Payment Brick, Pix), campo WhatsApp, pin da loja
 │   ├── acompanhar.js     # window.ACOMP: tela "Acompanhe seu pedido" (pós-pagamento, estilo iFood) + atalho no topo
-│   └── sons.js           # window.SOM: sons das ações da loja + botão de som no topo (#somBtn)
+│   ├── sons.js           # window.SOM: sons das ações da loja + botão de som no topo (#somBtn)
+│   ├── desempenho.js     # mede se o aparelho aguenta (fx-alto/fx-leve) e pré-carrega fotos das próximas seções
+│   ├── topo-fogo*.js     # fundo animado do topo: controle (topo-fogo.js) + motor + worker (OffscreenCanvas)
+│   ├── menu-carrossel.js # menu do topo como letreiro sem fim (Web Animation)
+│   └── ia-voa.js         # "Esconder" da Brutt IA voa até a bolinha (mesma lógica do voo pro carrinho)
 ├── vendor/lenis.min.js   # Lenis 1.3.26 servido localmente (sem CDN)
 ├── vendor/fonts/         # DejaVu Sans Mono (woff2, recorte Latin) para var(--mono)
 ├── sons/                 # sons de interface (mp3) + LEIA-ME.md com a tabela ação → arquivo
@@ -87,6 +91,7 @@ Regras:
 - **Ameixa** (`--ameixa`): clientes, estornos, grupo "Gestão".
 - **Sálvia** (`--salvia`): bom/pago/concluído, Atendente, grupo "Planilhas", `.btn-salvia` (Ativar notificações, texto escuro).
 - **Terracota** (`--terracota`): aviso (estoque baixo, Pix gerado sem pagar).
+**Texto mais forte (13/10/2026, bloco "TEXTO MAIS FORTE", o último do CSS do admin):** `--ink`/`--muted`/`--muted-2` em marrons escuros e saturados e os tons `-cl` mais fundos; item zerado da Conferência não fica esmaecido. Não volte a clarear o texto.
 Cada KPI da visão geral tem classe `k-<ícone>` (filete e ícone no tom dele); `bom`/`alerta`/`ruim`/`novo` continuam pintando o número. WhatsApp segue `#25D366`. Texto colorido sempre com contraste ≥ 4,5.
 
 Paleta do painel = **variação** da loja (café/espresso + dourado-âmbar), não cópia dos mesmos valores. O dourado (`--accent`) é só para ação principal, item ativo e número que pede ação; alerta usa **cobre** (`--warn`) para não confundir com o dourado.
@@ -146,9 +151,9 @@ Admin: roteador por hash (`ROUTES`, `go("nome")`, `rotaAtual()`); cada tela é `
 
 **Estornado:** pedido `cancelado` com `mp_status = 'refunded'` (o MP devolveu o valor inteiro) aparece como "Estornado · devolvido" (`pedSt()`), com filtro próprio, e sai das estatísticas do cliente. Pedido "Aguardando pagamento" sem Pix ou com Pix vencido pode ser cancelado pela equipe (botão "Cancelar pedido" → RPC `pedido_cancelar_aberto`, que recusa se houver Pix válido em aberto).
 
-**Margem e lucro (Visão geral):** indicador "Margem de lucro" (`margemCatalogo`: (venda − custo)/venda dos ativos com custo, pesada pelo `sales_count` da planilha Mais vendidos; tocar leva à Conferência) e bloco "Lucro do mês · projeção" (`desenhaLucro`): faturamento bruto do mês (digitado; idealmente a média dos últimos 3 meses do Nex) − custo das mercadorias (faturamento × (1 − margem)) = lucro bruto; − custos fixos − dia a dia = lucro líquido; ponto de equilíbrio = (fixos + dia a dia) / margem, por mês e por dia (26 dias). Valores na tabela `financeiro` (1 linha, RLS `is_gestor`; custos de 12/10/2026: funcionário 1.800, aluguel 800, segurança 100, internet 120), editáveis no botão "Custos". A falha da sincronização Nex continua em "O que resolver agora".
+**Margem e lucro (Visão geral):** indicador "Margem de lucro" (`margemCatalogo`: (venda − custo)/venda dos ativos com custo, pesada pelo `sales_count` da planilha Mais vendidos; tocar leva à Conferência) e bloco "Lucro do mês · projeção" (`desenhaLucro`): faturamento bruto do mês (digitado; idealmente a média dos últimos 3 meses do Nex) − custo das mercadorias (faturamento × (1 − margem)) = lucro bruto; − custos fixos − dia a dia = lucro líquido; ponto de equilíbrio = (fixos + dia a dia) / margem, por mês e por dia (26 dias). Valores na tabela `financeiro` (1 linha, RLS `is_gestor`; custos de 12/10/2026: funcionário 1.800, aluguel 800, segurança 100, internet 120), editáveis no botão "Custos". A falha da sincronização Nex continua em "O que resolver agora". Embaixo, **gráfico "Ponto de equilíbrio no mês"** (`graficoEquilibrio`, SVG próprio, 30 dias): linha dourada = vendas acumuladas no ritmo do faturamento digitado (÷ 30 por dia; sem faturamento, tracejada = ritmo mínimo), tracejada marrom = equilíbrio, ponto "dia N" onde os custos ficam pagos, área "pagando os custos" (terracota) e "lucro" (sálvia), marca "hoje", cruz + tooltip ao passar o dedo/mouse e "Ver em tabela". O texto explica em linguagem simples: equilíbrio = quanto vender no mês para não ter prejuízo.
 
-**Conferência de produtos** (`#/conferencia`, grupo Gestão, só dono/admin): conta e lista o que deixa margem, lucro ou vitrine errados (`CONF_REGRAS`): sem custo, sem preço, custo maior que o preço, margem abaixo de 20%, promoção maior que o preço, estoque negativo, fora do site com estoque, sem foto, sem categoria, sem EAN, sem descrição, nome repetido. Só lê; "Abrir" leva à ficha do produto (`openProduct`). Opção de incluir inativos.
+**Conferência de produtos** (`#/conferencia`, grupo Gestão, só dono/admin): conta e lista o que deixa margem, lucro ou vitrine errados (`CONF_REGRAS`): sem custo, sem preço, custo maior que o preço, margem abaixo de 20%, promoção maior que o preço, estoque negativo, fora do site com estoque, sem foto, sem categoria, sem EAN, sem descrição, nome repetido. "Abrir" leva à ficha do produto (`openProduct`); o **custo dá para digitar na própria lista** (`data-cf-custo`, Enter/sair do campo grava e a contagem se refaz). Opção de incluir inativos. **O Nex não manda custo pela integração** (a lista do Nex só tem preço, estoque, código e EAN): custo entra pela planilha de custo exportada do Nex ou digitado aqui/em Produtos; combos do Nex (os copões) nem vêm na planilha.
 
 **Produtos em lote:** caixa "Selecionar todos" (`#bulkTodos`) acima da lista marca todos os produtos filtrados; fica "parcial" quando só alguns estão marcados.
 
@@ -198,6 +203,12 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - **Ícones SVG:** a linha minificada tem `*{scrollbar-gutter:stable}`, que no PC (barra de rolagem clássica) reservava a faixa da barra DENTRO de ícones pequenos e os apagava (a setinha do "Horários" sumia). O `#ajustes` desfaz isso com `svg{scrollbar-gutter:auto}`; não remova.
 - **Botões:** do tamanho do texto (não esticam na largura toda), centralizados na loja e à direita nas gavetas do painel; 44 px de altura no toque / 40–42 px no mouse. Textos curtos: "Voltar", "Saber mais", "Adicionar", "Gerar Pix", "Copiar código", "Salvar".
 - **Topo:** busca com 36 px de altura (menor que os ícones redondos de 42 px; texto 16 px) e texto "Buscar". Botão "Horários" com relógio no PC (some até 480 px, junto com a setinha, para o status não ser cortado).
+- **Desempenho (13/10/2026):** um `<script>` no `<head>` põe `html.fx-alto` (padrão: celular atual roda TODOS os efeitos do PC: vídeo de fumaça, desfoque do título, bordas da IA, fundo do topo a ~60 fps) ou `html.fx-leve` (economia de dados, `deviceMemory`<4, menos de 4 núcleos, ou a medição de quadros de `js/desempenho.js` deu travada; guardado 7 dias em `localStorage.brutt_fx`). No JS, `window.__FX`. Regras para não travar o celular:
+  - **Nada de JS escrevendo estilo/scroll a cada quadro.** Letreiros que andam sozinhos (menu do topo, avaliações) usam Web Animation de `transform` em loop de uma volta (roda no compositor) e, ao toque, o quanto andou vai pro `scrollLeft`. `scrollLeft` por quadro andava aos trancos no iPhone (arredonda para pixel inteiro).
+  - **Canvas animado roda em worker** (`OffscreenCanvas`, ver `topo-fogo-worker.js`); para quando sai da tela.
+  - **Não deixe `content-visibility:visible` nas seções** (testado: dobra o custo de cada quadro); as fotos das próximas seções são pré-carregadas por `desempenho.js`.
+  - Observador de mutação no `body` inteiro só pode agir quando o elemento que interessa mudou (ex.: `syncLock` filtra `.drawer,.modal,#lbox,#dlv`); antes rodava a cada classe trocada na página.
+  - Brilho girando em elemento redondo = girar o elemento (`transform`), não animar o ângulo do degradê (`--ia-ang` repinta na thread da página).
 - Modais/gavetas travam a página com `html.is-locked` (JS `syncLock`); o Lenis pausa junto. Contêineres com rolagem própria precisam estar no `prevent` do Lenis (`js/fluidez.js`).
 - Teclado virtual: alturas via `--vvh`/`--vvt` (loja) e `--ia-vh`/`--ia-kb` (Brutt IA), medidas com `visualViewport`.
 
@@ -231,5 +242,6 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - **Cota diária da Brutt IA:** tabela `ia_uso` + RPC `ia_cota` (só chave de serviço): 1.500 mensagens por dia na loja toda e 120 por aparelho (`COTA` em `brutt-ia`, IP guardado só como hash). Passou, a IA não chama o Gemini e oferece o WhatsApp da equipe. Uso normal: até ~100 por dia.
 - **Equipe:** e-mail que já tinha conta e **nunca foi confirmado** recebe a senha definida no painel (impede alguém de criar a conta antes pelo cadastro público e entrar como equipe).
 - **`sync-nex` manual e Sommelier:** só dono/administrador ativos (atendente não roda sincronização nem gasta cota do Gemini). Erros internos não voltam para quem chamou (só no log).
+- **Custo é só da equipe:** o anon lê só as colunas de `products` que a loja usa (migração `20261013120000_custo_fora_do_publico.sql`); `cost_price` fica fora. A loja pede as colunas pelo nome em `window.__buscaCatalogo`: **nunca `select=*` na loja** (o anon recebe erro de permissão). Coluna nova que a loja precise = acrescentar no `grant select (...)` do anon.
 - **Banco:** toda tabela no `public` com RLS ligada; tabela nova de teste também. `proximo_numero_pedido` é pública de propósito (a loja reserva o número no fluxo do WhatsApp).
 - **Painel do Supabase (manual, pelo dono):** Authentication → Sign In / Providers → desligar "Allow new users to sign up" (a equipe é criada só pela tela Equipe) e ligar "Leaked password protection" se o plano permitir.
