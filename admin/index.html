@@ -1371,12 +1371,12 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
   border:1px solid rgba(245,158,11,.35);box-shadow:0 18px 50px -24px rgba(20,13,28,.75),inset 0 1px 0 rgba(255,255,255,.06)}
 .eq-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 .eq-placar{display:flex;flex-direction:column;gap:2px;min-width:0}
-.eq-pd[hidden]{display:none}.eq-pd{font:600 12px var(--mono);color:var(--t-mut);letter-spacing:.02em;text-transform:uppercase}
+.eq-pd{font:600 12px var(--mono);color:var(--t-mut);letter-spacing:.02em;text-transform:uppercase}
 .eq-pv{font:800 30px/1.1 var(--mono);color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 0 22px rgba(245,158,11,.45)}
 .eq-pr{font:800 22px/1.1 var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums}.eq-pr.up{color:var(--t-ok)}.eq-pr.dn{color:var(--t-neg)}
 .eq-pb{display:flex;align-items:flex-end;gap:12px 28px;flex-wrap:wrap;margin-top:4px}
 .eq-pc{display:flex;flex-direction:column;gap:2px;min-width:0}
-.eq-pc small{font:600 11px var(--font);color:var(--t-mut);text-transform:uppercase;letter-spacing:.06em}
+.eq-pc small{font:600 11px var(--font);color:var(--t-mut);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
 .eq-pc+.eq-pc{padding-left:20px;border-left:1px solid var(--t-line)}
 .eq-pf{font:500 12px var(--font);color:var(--t-mut);white-space:nowrap}
 @media(max-width:480px){.eq-pc+.eq-pc{padding-left:0;border-left:0}.eq-pr{font-size:20px}}
@@ -4092,9 +4092,9 @@ function graficoEquilibrio(o){
     <div class="eq-term">
       <div class="eq-relogio"><i aria-hidden="true"></i><span class="eq-rel-t"></span><small>horário de Brasília</small></div>
       <div class="eq-top">
-        <div class="eq-placar" aria-live="polite"><span class="eq-pd"></span>
-          <div class="eq-pb"><div class="eq-pc"><small>Vendas · faturamento acumulado</small><b class="eq-pv"></b></div>
-          <div class="eq-pc"><small>Resultado · P&amp;L (lucro ou prejuízo)</small><b class="eq-pr"></b><span class="eq-pf"></span></div></div></div>
+        <div class="eq-placar" aria-live="polite">
+          <div class="eq-pb"><div class="eq-pc"><small class="eq-lv">Vendas · faturamento acumulado</small><b class="eq-pv"></b></div>
+          <div class="eq-pc"><small class="eq-lr">Resultado · P&amp;L (lucro ou prejuízo)</small><b class="eq-pr"></b><span class="eq-pf"></span></div></div></div>
         <div class="eq-zoom" role="group" aria-label="Período do gráfico">${[["mes","Mês"],["ate","Até hoje"],["dep","Daqui pra frente"]].map(([k, t]) => `<button type="button" data-eq-zoom="${k}" aria-pressed="${k === "mes"}">${t}</button>`).join("")}</div>
       </div>
       <div class="eq-chips"></div>
@@ -4115,8 +4115,10 @@ function graficoEquilibrio(o){
     const agora = d === "agora", t = agora ? spAgora() : null, dd = agora ? Math.max(0, t.frac) : d;
     const v = vend(dd), res = v * o.m - o.custo, pago = v >= o.equilibrio;
     /* no "agora" a data/hora já está no relógio do topo: a linha só aparece quando um dia é apontado no gráfico */
-    const pd = term.querySelector(".eq-pd"); pd.hidden = agora;
-    pd.textContent = agora ? "" : `${dataC(d)}${d === hoje ? " · hoje" : d > hoje ? " · projeção" : ""}`;
+    /* a data do dia apontado entra no próprio rótulo (sem linha extra: o gráfico não pula); no "agora" a data está no relógio */
+    const quando = agora ? "" : ` até ${dataC(d)}${d === hoje ? " · hoje" : d > hoje ? " · projeção" : ""}`;
+    term.querySelector(".eq-lv").textContent = agora ? "Vendas · faturamento acumulado" : "Vendas" + quando;
+    term.querySelector(".eq-lr").textContent = agora ? "Resultado · P&L (lucro ou prejuízo)" : "Resultado (P&L)" + quando;
     term.querySelector(".eq-pv").textContent = brl0(v);
     /* P&L até o momento: (vendas × margem) − custos do mês (fixos + dia a dia). Antes do equilíbrio é prejuízo. */
     const pr = term.querySelector(".eq-pr"); pr.className = "eq-pr " + (res >= 0 ? "up" : "dn");
