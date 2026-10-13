@@ -1204,6 +1204,25 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .cf-nums i{font:500 11px var(--font);font-style:normal;color:var(--muted-2)}
 .cf-nums em{font-style:normal}.cf-nums em.neg{color:var(--danger)}.cf-nums em.baixa{color:var(--terracota-cl)}.cf-nums em.ok{color:var(--ok)}
 @media (max-width:760px){.cf-row{grid-template-columns:minmax(0,1fr) auto}.cf-nums{grid-column:1/-1;grid-row:2;grid-template-columns:repeat(4,minmax(0,1fr))}.cf-nums span{text-align:left}.cf-row .btn-sm{grid-column:2;grid-row:1}.cf-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Giro e reposição (#/giro) + período do relatório em Mais vendidos */
+.bv-per{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 14px;margin:0 0 12px}
+.bv-per label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+.bv-per input{min-height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--field);color:var(--ink);font:500 15px var(--mono)}
+.bv-dias{font:600 13px var(--mono);color:var(--petroleo-cl);padding-bottom:12px}.bv-dias.ruim{color:var(--danger)}
+.bv-ult{margin:-4px 0 12px}
+.gr-res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 12px}
+.gr-res:empty{display:none}
+.gr-res div{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:14px;background:rgba(255,252,247,.64);border:1px solid var(--line);min-width:0}
+.gr-res small{font-size:12px;font-weight:600;color:var(--muted)}
+.gr-res b{font:700 20px var(--mono);color:var(--ouro-cl,var(--ink));white-space:nowrap;font-variant-numeric:tabular-nums}
+.gr-res i{font-style:normal;font-size:12px;color:var(--muted-2)}
+.gr-res .warn b{color:var(--terracota-cl)}.gr-res .bad b{color:var(--danger)}
+.gr-grade .cf-it.a b{color:#b45309}.gr-grade .cf-it.b b{color:var(--petroleo-cl)}.gr-grade .cf-it.c b{color:var(--muted)}
+.abc{display:inline-grid;place-items:center;width:20px;height:20px;margin-right:6px;border-radius:6px;font:700 12px var(--mono);font-style:normal;vertical-align:1px;color:#fff;background:#b45309}
+.abc-B{background:var(--petroleo,#0e7490)}.abc-C{background:#8a7a6a}
+.cf-nums em.cp{color:var(--ouro-cl,#9a6b00);font-weight:700}
+@media (max-width:900px){.gr-res{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.gr-grade{grid-template-columns:repeat(2,minmax(0,1fr))}.gr-res b{font-size:18px}}
 /* estoque: só ajuste (o Nex manda) */
 .mv-info{margin:0 0 10px;font-size:13px;line-height:1.45;color:var(--muted)}
 /* Visão geral: cartão-resumo do Financeiro (leva para #/financeiro) */
@@ -1247,7 +1266,7 @@ html[data-nav-dir=sobe]::view-transition-new(root){animation-name:vtEntraCima}
 /* menu com cor: cada tela tem sua cor (ícone num quadradinho tingido); Pedidos online (o mais usado) ganha destaque;
    item ativo = vidro dourado com borda viva. Cores escuras e saturadas: contraste ≥ 3:1 no ícone sobre o claro. */
 .nav-i{--c:var(--muted)}
-.nav-i[data-tab=visao]{--c:#c2410c}.nav-i[data-tab=financeiro]{--c:#a16207}.nav-i[data-tab=home]{--c:#b45309}.nav-i[data-tab=pedidos]{--c:#15803d}.nav-i[data-tab=clientes]{--c:#7e22ce}
+.nav-i[data-tab=visao]{--c:#c2410c}.nav-i[data-tab=financeiro]{--c:#a16207}.nav-i[data-tab=giro]{--c:#be123c}.nav-i[data-tab=home]{--c:#b45309}.nav-i[data-tab=pedidos]{--c:#15803d}.nav-i[data-tab=clientes]{--c:#7e22ce}
 .nav-i[data-tab=estoque-baixo]{--c:#dc2626}.nav-i[data-tab=conferencia]{--c:#0e7490}.nav-i[data-tab=sommelier]{--c:#a21caf}.nav-i[data-tab=fotos]{--c:#2563eb}
 .nav-i[data-tab=horarios]{--c:#0f766e}.nav-i[data-tab=nex]{--c:#4338ca}.nav-i[data-tab=equipe]{--c:#6d28d9}.nav-i[data-tab=planilha]{--c:#15803d}.nav-i[data-tab=vendidos]{--c:#be123c}
 .side .nav-i>svg{flex:none;width:28px;height:28px;padding:5px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);box-sizing:border-box}
@@ -1556,6 +1575,7 @@ const ICON = {
   sheet:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2M14 13h2M8 17h2M14 17h2"/>',
   trend:'<path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/>',
   scale:'<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+  gauge:'<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
   coin:'<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>',
   out:'<path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>',
   menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
@@ -1579,7 +1599,7 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 /* navegação lateral agrupada. Só destinos que existem em ROUTES. Tela nova = ROUTES + item aqui. */
 const NAV = [
   ["Operação", [["visao","Visão geral","dash"],["home","Produtos","pkg"],["pedidos","Pedidos online","bag","pedidos"],["clientes","Clientes","users"],["estoque-baixo","Estoque baixo","alert","estoque"]]],
-  ["Gestão",   [["financeiro","Financeiro","coin"],["conferencia","Conferência de produtos","check"],["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"],["equipe","Equipe","shield"]]],
+  ["Gestão",   [["financeiro","Financeiro","coin"],["giro","Giro e reposição","gauge"],["conferencia","Conferência de produtos","check"],["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"],["equipe","Equipe","shield"]]],
   ["Planilhas",[["planilha","Planilha de compra","sheet"],["vendidos","Mais vendidos","trend"]]],
 ];
 const ABAS = NAV.flatMap(([, itens]) => itens.map(([r, t]) => [r, t]));
@@ -2824,15 +2844,30 @@ async function confirmarSync(candidatos, tbody, fileName){
 }
 
 /* ---------------- atualizar "mais vendidos" do NEX ---------------- */
-function renderBestsellersScreen(){
+/* ---------------- mais vendidos (#/vendidos): relatório de vendas do Nex de um PERÍODO ----------------
+   products.sales_count = unidades vendidas no período (tabela vendas_periodo guarda de/até). Com isso a tela Giro e reposição
+   calcula venda por dia, dias de estoque, sugestão de compra e curva ABC. Tabaco bolado (e variações) fica fora: é feito
+   aqui com o Crazy Dogs e não é produto de prateleira. Linhas com o mesmo produto somam. */
+const ehBolado = n => /bolad/i.test(String(n || ""));
+const isoDia = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const dataBR = iso => iso ? iso.split("-").reverse().join("/") : "";
+async function renderBestsellersScreen(){
+  const hoje = new Date(), ini = new Date(hoje.getTime() - 29 * 864e5);
   app.innerHTML = `
     ${topbarHTML("Mais vendidos")}
     <div class="pg">
-      <h2 class="pg-t">Atualizar mais vendidos (NEX)</h2>
+      <h2 class="pg-t">Atualizar mais vendidos (Nex)</h2>
       <p class="pg-d" style="margin-bottom:16px">
-        Exporte a planilha de mais vendidos do NEX e solte aqui. Só produtos que já estão no catálogo online são
-        atualizados — o que não tiver correspondência fica de fora, pra você ver, sem inventar nada.
+        Exporte do Nex o relatório de vendas por produto (ex.: "Lucratividade por produto vendido") de um período e solte aqui.
+        Diga de qual a qual dia é o relatório: com isso o painel sabe quanto cada produto vende por dia, em quantos dias ele
+        acaba e quanto comprar (tela <a href="#/giro">Giro e reposição</a>). Tabaco bolado fica de fora.
       </p>
+      <div class="bv-per">
+        <label><span>Vendas de</span><input type="date" id="bestDe" value="${isoDia(ini)}"></label>
+        <label><span>até</span><input type="date" id="bestAte" value="${isoDia(hoje)}"></label>
+        <span class="bv-dias" id="bestDias"></span>
+      </div>
+      <label class="cf-esc"><input type="checkbox" id="bestZerar" checked> Zerar as vendas de quem não está no relatório (o relatório traz tudo que vendeu no período)</label>
       <div class="dropzone" id="dropzone">
         <div><b style="color:var(--ink)">Clique para escolher a planilha</b> ou arraste o arquivo aqui<br><small>.xlsx, .xls ou .csv</small></div>
         <input type="file" id="bestFile" accept=".xlsx,.xls,.csv" hidden>
@@ -2841,12 +2876,22 @@ function renderBestsellersScreen(){
     </div>
   `;
   bindTopbar();
+  const dias = () => { const d = $("#bestDe").value, a = $("#bestAte").value; if(!d || !a) return 0; return Math.round((new Date(a) - new Date(d)) / 864e5) + 1; };
+  const mostraDias = () => { const n = dias(); $("#bestDias").textContent = n > 0 ? `${n} dia${n > 1 ? "s" : ""}` : "confira as datas"; $("#bestDias").classList.toggle("ruim", !(n > 0)); };
+  $("#bestDe").onchange = $("#bestAte").onchange = mostraDias; mostraDias();
   const drop = $("#dropzone");
   drop.onclick = () => $("#bestFile").click();
   drop.ondragover = e => { e.preventDefault(); drop.style.borderColor = "var(--gold)"; };
   drop.ondragleave = () => { drop.style.borderColor = "var(--line)"; };
   drop.ondrop = e => { e.preventDefault(); drop.style.borderColor = "var(--line)"; if(e.dataTransfer.files[0]) handleBestsellersFile(e.dataTransfer.files[0]); };
   $("#bestFile").onchange = e => { if(e.target.files[0]) handleBestsellersFile(e.target.files[0]); };
+  /* o período do último relatório importado, para conferir */
+  const { data: per } = await sb.from("vendas_periodo").select("inicio,fim,dias").eq("id", 1).maybeSingle();
+  if(per && rotaAtual() === "vendidos" && $("#bestDias")){
+    const p = document.createElement("p"); p.className = "cf-dica bv-ult";
+    p.textContent = `Último relatório importado: ${dataBR(per.inicio)} a ${dataBR(per.fim)} (${per.dias} dias).`;
+    $(".bv-per").after(p);
+  }
 }
 
 async function handleBestsellersFile(file){
@@ -2859,23 +2904,29 @@ async function handleBestsellersFile(file){
   catch(e){ body.innerHTML = `<div class="empty">Não consegui ler essa planilha (${esc(e.message)}). Exporte de novo do Nex e tente outra vez.</div>`; return; }
   if(rows.length < 2){ body.innerHTML = `<div class="empty">Planilha vazia ou sem linhas de dados.</div>`; return; }
 
-  const headers = rows[0];
-  const iName = acharColuna(headers, COL_HINTS.name);
-  const iVend = acharColuna(headers, COL_HINTS.vendas);
-  const iCode = acharColuna(headers, COL_HINTS.code);
-
-  if(iName === -1 || iVend === -1){
-    body.innerHTML = `<div class="empty">Não encontrei colunas de nome e de quantidade vendida nessa planilha. Colunas vistas: ${headers.map(esc).join(", ")}</div>`;
+  /* o título pode não estar na 1ª linha (relatórios do Nex têm cabeçalho): usa a 1ª linha que tenha nome e quantidade */
+  let h = 0, iName = -1, iVend = -1, iCode = -1;
+  for(; h < Math.min(rows.length, 15); h++){
+    const hs = rows[h] || [];
+    iName = acharColuna(hs, COL_HINTS.name);
+    iVend = acharColuna(hs, COL_HINTS.vendas); if(iVend === -1) iVend = acharColunaExata(hs, ["qtd.", "qtd", "quantidade", "qtde"], ["qtd", "quant"]);
+    iCode = acharColuna(hs, COL_HINTS.code);
+    if(iName > -1 && iVend > -1 && iName !== iVend) break; /* a linha do título ("…por produto vendido") não conta */
+  }
+  if(iName === -1 || iVend === -1 || iName === iVend){
+    body.innerHTML = `<div class="empty">Não encontrei colunas de nome e de quantidade vendida nessa planilha. Colunas vistas: ${(rows[0]||[]).map(esc).join(", ")}</div>`;
     return;
   }
 
-  const linhas = rows.slice(1)
-    .filter(r => (r[iName]||"").toString().trim())
+  let bolado = 0;
+  const linhas = rows.slice(h + 1)
+    .filter(r => { const n = (r[iName]||"").toString().trim(); if(!n || /^total/i.test(n)) return false; if(ehBolado(n)){ bolado++; return false; } return true; })
     .map(r => ({
       nome: (r[iName]||"").toString().trim(),
-      vendas: parseInt((r[iVend]||"").toString().replace(/\D/g,""),10) || 0,
+      vendas: Math.round(Number(String(r[iVend] ?? "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".").replace(/[^\d.-]/g, "")) || 0),
       codigo: iCode>-1 ? (r[iCode]||"").toString().trim() : "",
-    }));
+    }))
+    .filter(l => l.vendas > 0);
 
   body.innerHTML = `<div class="loading">Comparando ${linhas.length} itens com o catálogo online…</div>`;
 
@@ -2893,22 +2944,23 @@ async function handleBestsellersFile(file){
     candidatos.push({ linha, matches, escolhido: matches[0] || null });
   }
 
-  renderBestsellersReview(candidatos, file.name);
+  renderBestsellersReview(candidatos, file.name, bolado);
 }
 
-function renderBestsellersReview(candidatos, fileName){
+function renderBestsellersReview(candidatos, fileName, bolado){
   const body = $("#bestBody");
   body.innerHTML = `
     <div class="sync-summary">
       <span><b>${candidatos.length}</b> itens lidos</span>
       <span><b>${candidatos.filter(c=>c.escolhido).length}</b> com correspondência no catálogo online</span>
       <span><b>${candidatos.filter(c=>!c.escolhido).length}</b> sem correspondência (ficam de fora)</span>
+      ${bolado ? `<span><b>${bolado}</b> de tabaco bolado (ignorados)</span>` : ""}
     </div>
     <div class="tbl-wrap">
       <table class="sync-table">
         <thead><tr>
           <th><input type="checkbox" id="chkAllBest" checked></th>
-          <th>Na planilha</th><th>Produto no catálogo</th><th>Confiança</th><th>Vendas atual → nova</th>
+          <th>No relatório</th><th>Produto no catálogo</th><th>Confiança</th><th>Vendas atual → nova</th>
         </tr></thead>
         <tbody id="bestRows"></tbody>
       </table>
@@ -2919,7 +2971,7 @@ function renderBestsellersReview(candidatos, fileName){
   `;
   const tbody = $("#bestRows");
   tbody.innerHTML = candidatos.map((c, idx) => {
-    const sel = c.matches.map(m => `<option value="${m.id}" ${m.id===c.escolhido?.id?'selected':''}>${esc(m.name)}</option>`).join("");
+    const sel = c.matches.map(m => `<option value="${esc(m.id)}" ${m.id===c.escolhido?.id?'selected':''}>${esc(m.name)}</option>`).join("");
     const semMatch = !c.escolhido;
     return `
       <tr data-idx="${idx}">
@@ -2927,7 +2979,7 @@ function renderBestsellersReview(candidatos, fileName){
         <td>${esc(c.linha.nome)}${c.linha.codigo?`<br><span class="t" style="color:var(--muted)">cód. ${esc(c.linha.codigo)}</span>`:''}</td>
         <td>${c.matches.length ? `<select class="rowProd">${sel}</select>` : `<span style="color:var(--muted)">não encontrado no catálogo online</span>`}</td>
         <td>${c.escolhido ? `<span class="score ${scoreClasse(c.escolhido.score)}">${Math.round(c.escolhido.score*100)}%</span>` : '—'}</td>
-        <td>${c.escolhido ? `${c.escolhido.sales_count ?? 0} → ${c.linha.vendas}` : '—'}</td>
+        <td>${c.escolhido ? `${esc(c.escolhido.sales_count ?? 0)} → ${esc(c.linha.vendas)}` : '—'}</td>
       </tr>`;
   }).join("");
 
@@ -2939,23 +2991,111 @@ function renderBestsellersReview(candidatos, fileName){
     };
   });
 
-  $("#bestConfirm").onclick = () => confirmarBestsellers(candidatos, tbody);
+  $("#bestConfirm").onclick = () => confirmarBestsellers(candidatos, tbody, fileName);
 }
 
-async function confirmarBestsellers(candidatos, tbody){
+async function confirmarBestsellers(candidatos, tbody, fileName){
+  const de = $("#bestDe")?.value, ate = $("#bestAte")?.value;
+  if(!de || !ate || ate < de){ toast("Confira o período do relatório (de / até)."); $("#bestDe")?.focus(); return; }
   const linhasSelecionadas = [...tbody.querySelectorAll("tr")].filter(tr => tr.querySelector(".rowChk").checked);
   if(linhasSelecionadas.length === 0){ toast("Nada selecionado."); return; }
-
-  let ok = 0, falhou = 0;
+  /* o mesmo produto em mais de uma linha (ex.: "Gudang varejo" e "Varejo Gudang") soma */
+  const soma = new Map();
   for(const tr of linhasSelecionadas){
-    const idx = tr.dataset.idx;
-    const c = candidatos[idx];
-    if(!c.escolhido) continue;
-    const { error } = await sb.from("products").update({ sales_count: c.linha.vendas }).eq("id", c.escolhido.id);
+    const c = candidatos[tr.dataset.idx];
+    if(c.escolhido) soma.set(c.escolhido.id, (soma.get(c.escolhido.id) || 0) + c.linha.vendas);
+  }
+  const btn = $("#bestConfirm"); btn.disabled = true; btn.textContent = "Atualizando…";
+  if($("#bestZerar")?.checked){
+    const { error } = await sb.from("products").update({ sales_count: 0 }).gt("sales_count", 0);
+    if(error){ toast("Não deu para zerar as vendas antigas: " + error.message); btn.disabled = false; btn.textContent = "Confirmar e atualizar"; return; }
+  }
+  let ok = 0, falhou = 0;
+  for(const [id, q] of soma){
+    const { error } = await sb.from("products").update({ sales_count: q }).eq("id", id);
     if(error) falhou++; else ok++;
   }
-  toast(`Atualizado: ${ok} produto(s)${falhou ? `, ${falhou} com erro` : ""}.`);
-  go("home");
+  const { data: { user } } = await sb.auth.getUser();
+  const { error: ePer } = await sb.from("vendas_periodo").upsert({ id: 1, inicio: de, fim: ate, arquivo: fileName || null, atualizado_em: new Date().toISOString(), atualizado_por: user?.id || null });
+  toast(`Atualizado: ${ok} produto(s)${falhou ? `, ${falhou} com erro` : ""}${ePer ? " · período não salvo: " + ePer.message : ""}.`);
+  go("giro");
+}
+
+/* ---------------- giro e reposição (#/giro) ----------------
+   Com as vendas do período (sales_count + vendas_periodo): venda por dia, em quantos dias o estoque acaba (cobertura),
+   quanto comprar para 30 dias e curva ABC pelo faturamento (A = 80% do faturamento, B = até 95%, C = o resto).
+   "Gira" = vendeu pelo menos ~1 por mês no período (senão um item parado com estoque 0 viraria "repor já").
+   Tabaco bolado fica fora; o Crazy Dogs também vira bolado, então ele sai mais rápido do que mostra aqui. */
+const GIRO_DIAS_COMPRA = 30;
+function calcGiro(prods, dias){
+  dias = Math.max(1, Number(dias) || 1);
+  const lista = prods.filter(p => !ehBolado(p.name)).map(p => {
+    const q = Math.max(0, Number(p.sales_count) || 0), est = Math.max(0, Number(p.stock) || 0), porDia = q / dias;
+    const cob = porDia > 0 ? est / porDia : null;
+    const fat = q * vendaDe(p);
+    return { p, q, est, porDia, cob, fat, gira: q >= Math.max(2, dias / 30), compra: porDia > 0 ? Math.max(0, Math.ceil(porDia * GIRO_DIAS_COMPRA - est)) : 0,
+      parado: q === 0 && est > 0 ? est * (Number(p.cost_price) || 0) : 0, abc: null };
+  });
+  const comVenda = lista.filter(g => g.fat > 0).sort((a, b) => b.fat - a.fat), total = comVenda.reduce((t, g) => t + g.fat, 0);
+  let acum = 0;
+  for(const g of comVenda){ g.abc = acum < total * .8 ? "A" : acum < total * .95 ? "B" : "C"; acum += g.fat; }
+  return { lista, total, dias };
+}
+const GIRO_FILTROS = [
+  ["repor",  "Repor já",               "ruim",   "Acabam em até 7 dias (ou já acabaram) no ritmo de venda do período. Compre já.", g => g.gira && g.cob <= 7],
+  ["atencao","Atenção",                "alerta", "Acabam entre 8 e 14 dias. Entram no próximo pedido ao fornecedor.",            g => g.gira && g.cob > 7 && g.cob <= 14],
+  ["A",      "Curva A",                "a",      "Os que fazem 80% do faturamento. Nunca podem faltar.",                         g => g.abc === "A"],
+  ["B",      "Curva B",                "b",      "Os próximos 15% do faturamento.",                                              g => g.abc === "B"],
+  ["C",      "Curva C",                "c",      "Os últimos 5% do faturamento: compre pouco e só quando acabar.",               g => g.abc === "C"],
+  ["parados","Encalhados",             "info",   "Têm estoque e não venderam nada no período: dinheiro parado na prateleira.",   g => g.q === 0 && g.est > 0],
+];
+let giroEstado = { filtro: "repor" };
+const fmtCob = g => g.cob == null ? "—" : g.est === 0 ? "acabou" : g.cob < 1 ? "< 1 dia" : g.cob > 365 ? "+1 ano" : `${Math.round(g.cob)} dia${Math.round(g.cob) === 1 ? "" : "s"}`;
+const fmtRitmo = d => { const f = (v, u) => `${String(Math.round(v * 10) / 10).replace(".", ",")}/${u}`; return d >= 1 ? f(d, "dia") : d * 7 >= 1 ? f(d * 7, "sem") : d > 0 ? f(d * 30, "mês") : "0"; };
+async function renderGiro(){
+  app.innerHTML = `${topbarHTML("Giro e reposição")}
+    <div class="pg">
+      <div class="pg-h"><div><h2 class="pg-t">Giro e reposição</h2><p class="pg-d" id="grDesc">Quanto cada produto vende por dia, em quantos dias acaba e quanto comprar.</p></div>
+        <button class="btn-ghost btn-sm" data-ir-vend>${ic("up")} Importar vendas</button></div>
+      <div class="gr-res" id="grRes"></div>
+      <div class="cf-grade gr-grade" id="grGrade"><div class="loading">Calculando o giro…</div></div>
+      <section class="ov-box cf-lista-box" id="grBox" hidden><div class="ov-box-h"><h3 id="grTit"></h3><span class="cf-res" id="grN"></span></div><p class="cf-dica" id="grDica"></p><div id="grLista"></div></section>
+    </div>`;
+  bindTopbar();
+  app.querySelector("[data-ir-vend]").onclick = () => go("vendidos");
+  const [pr, per] = await Promise.all([
+    sb.from("products").select("id,name,brand,price,promo_price,cost_price,stock,sales_count,is_active").eq("is_active", true).limit(5000),
+    sb.from("vendas_periodo").select("inicio,fim,dias").eq("id", 1).maybeSingle(),
+  ]);
+  if(rotaAtual() !== "giro" || !$("#grGrade")) return;
+  if(pr.error){ $("#grGrade").innerHTML = `<div class="empty">Não deu para ler os produtos: ${esc(pr.error.message)}</div>`; return; }
+  if(!per.data){ $("#grGrade").innerHTML = `<div class="empty">Ainda não há relatório de vendas com período. Importe em <a href="#/vendidos">Mais vendidos</a>.</div>`; return; }
+  const P = per.data, G = calcGiro(pr.data || [], P.dias);
+  $("#grDesc").innerHTML = `Vendas de <b>${esc(dataBR(P.inicio))}</b> a <b>${esc(dataBR(P.fim))}</b> (${esc(P.dias)} dias), produtos ativos. Sugestão de compra = o que falta para ${GIRO_DIAS_COMPRA} dias de venda. Tabaco bolado fica fora: lembre que o Crazy Dogs também vira bolado (compre um pouco mais).`;
+  const parado = G.lista.reduce((t, g) => t + g.parado, 0), emEst = G.lista.reduce((t, g) => t + g.est * (Number(g.p.cost_price) || 0), 0);
+  const nRepor = G.lista.filter(GIRO_FILTROS[0][4]).length;
+  $("#grRes").innerHTML = `<div><small>Vendido no período (produtos do site)</small><b>${brl0(G.total)}</b><i>${brl0(G.total / G.dias * 30)} a cada 30 dias</i></div>
+    <div><small>Dinheiro em estoque (pelo custo)</small><b>${brl0(emEst)}</b><i>dos produtos com custo cadastrado</i></div>
+    <div class="${parado ? "warn" : ""}"><small>Parado em encalhados</small><b>${brl0(parado)}</b><i>com estoque e sem venda no período</i></div>
+    <div class="${nRepor ? "bad" : ""}"><small>Para repor já</small><b>${nRepor}</b><i>acabam em até 7 dias</i></div>`;
+  const grupos = GIRO_FILTROS.map(([id, rot, sev, dica, fn]) => ({ id, rot, sev, dica, itens: G.lista.filter(fn) }));
+  const ordena = (id, l) => id === "parados" ? l.sort((a, b) => b.parado - a.parado || b.est - a.est)
+    : id === "repor" || id === "atencao" ? l.sort((a, b) => a.cob - b.cob || b.porDia - a.porDia) : l.sort((a, b) => b.fat - a.fat);
+  $("#grGrade").innerHTML = grupos.map(g => `<button type="button" class="cf-it ${g.sev}${g.itens.length ? "" : " zero"}" data-gr="${g.id}" aria-pressed="false"><b>${g.itens.length}</b><span>${esc(g.rot)}</span></button>`).join("");
+  const mostra = id => {
+    giroEstado.filtro = id; const g = grupos.find(y => y.id === id); if(!g) return;
+    $("#grGrade").querySelectorAll("[data-gr]").forEach(b => { const on = b.dataset.gr === id; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+    $("#grBox").hidden = false; $("#grTit").textContent = g.rot; $("#grN").textContent = `${g.itens.length} produto${g.itens.length === 1 ? "" : "s"}`; $("#grDica").textContent = g.dica;
+    const l = ordena(id, g.itens.slice());
+    $("#grLista").innerHTML = l.length ? l.slice(0, 400).map(x => `<div class="cf-row gr-row"><div class="cf-nm"><b>${x.abc ? `<em class="abc abc-${x.abc}">${x.abc}</em>` : ""}${esc(x.p.name)}</b>
+        <small>${x.q} vendido${x.q === 1 ? "" : "s"} no período${x.fat ? " · " + brl0(x.fat) : ""}${x.parado ? " · parado " + brl0(x.parado) : ""}</small></div>
+        <div class="cf-nums"><span><i>Vende</i>${fmtRitmo(x.porDia)}</span><span><i>Estoque</i>${x.est}</span><span><i>Acaba em</i><em class="${x.cob == null ? "" : x.cob <= 7 ? "neg" : x.cob <= 14 ? "baixa" : "ok"}">${fmtCob(x)}</em></span><span><i>Comprar</i><em class="${x.compra ? "cp" : ""}">${x.compra ? x.compra + " un" : "—"}</em></span></div>
+        <button type="button" class="btn-ghost btn-sm" data-gr-abrir="${esc(x.p.id)}">Abrir</button></div>`).join("") + (l.length > 400 ? `<p class="cf-dica">Mostrando 400 de ${l.length}.</p>` : "")
+      : `<div class="empty">Nada aqui. Tudo certo!</div>`;
+    $("#grLista").querySelectorAll("[data-gr-abrir]").forEach(b => b.onclick = () => openProduct(b.dataset.grAbrir));
+  };
+  $("#grGrade").querySelectorAll("[data-gr]").forEach(b => b.onclick = () => { mostra(b.dataset.gr); if(innerWidth < 1024) $("#grBox").scrollIntoView({ behavior:"smooth", block:"start" }); });
+  mostra(giroEstado.filtro);
 }
 
 /* ---------------- processa qualquer foto pra sempre sair 1:1, mesma resolução, boa qualidade ---------------- */
@@ -4314,7 +4454,7 @@ async function renderVisao(){
   $("#ovAtualiza").onclick = () => { navCont.t = 0; renderVisao(); };
 
   const cont = q => q.then(r => r.error ? null : (r.count || 0)).catch(() => null);
-  const [nPago, nAguard, nBaixo, nZero, nex, hor, ult, nNovo, prodsMg, fin] = await Promise.all([
+  const [nPago, nAguard, nBaixo, nZero, nex, hor, ult, nNovo, prodsMg, fin, perV] = await Promise.all([
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago")),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "aguardando_pagamento")),
     cont(filtroEstoqueBaixo(sb.from("products").select("id", { count:"exact", head:true }))),
@@ -4323,8 +4463,9 @@ async function renderVisao(){
     sb.from("loja_horarios").select("*"),
     sb.from("pedidos").select("id,numero,status,mp_status,cliente_nome,total,created_at").order("created_at", { ascending:false }).limit(5),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago").is("visto_em", null)),
-    sb.from("products").select("price,promo_price,cost_price,sales_count").eq("is_active", true).limit(5000),
+    sb.from("products").select("name,stock,price,promo_price,cost_price,sales_count").eq("is_active", true).limit(5000),
     sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),
+    sb.from("vendas_periodo").select("dias").eq("id", 1).maybeSingle(),
   ]);
   if(rotaAtual() !== "visao" || !$("#ovKpis")) return;
   const mg = margemCatalogo(prodsMg.error ? [] : prodsMg.data);
@@ -4359,6 +4500,9 @@ async function renderVisao(){
   if(nexRuim) todo.push(it("nex", "sync", "ruim", !u.ok ? "A sincronização com o Nex falhou" : "O Nex não sincroniza há " + haQuanto(u.ran_at).replace("há ", ""), u.erro ? esc(String(u.erro).slice(0, 90)) : "Estoque e preço do site podem estar desatualizados."));
   if(nNovo) todo.push(it("pedidos", "bag", "novo", `${nNovo} pedido${nNovo > 1 ? "s" : ""} novo${nNovo > 1 ? "s" : ""} pago${nNovo > 1 ? "s" : ""}!`, "Ninguém abriu ainda. Toque para ver e parar o alerta."));
   if(nPago && nPago > (nNovo || 0)) todo.push(it("pedidos", "bag", "acao", `${nPago} pedido${nPago > 1 ? "s" : ""} pago${nPago > 1 ? "s" : ""} para concluir`, "Separe, entregue e marque como concluído para avisar o cliente."));
+  /* reposição: produtos que giram e acabam em até 7 dias no ritmo do último relatório de vendas (tela Giro e reposição) */
+  const nRepor = perV && perV.data && !prodsMg.error ? calcGiro(prodsMg.data, perV.data.dias).lista.filter(GIRO_FILTROS[0][4]).length : 0;
+  if(nRepor) todo.push(it("giro", "gauge", "alerta", `${nRepor} produto${nRepor > 1 ? "s" : ""} acaba${nRepor > 1 ? "m" : ""} em até 7 dias`, "No ritmo de venda do período. Veja quanto comprar."));
   if(nBaixo) todo.push(it("estoque-baixo", "alert", "alerta", `${nBaixo} produto${nBaixo > 1 ? "s" : ""} com estoque baixo`, `Menos de ${LOW_STOCK_LIMIT} unidades. Hora de repor?`));
   if(nZero) todo.push(it("estoque-baixo", "pkg", "alerta", `${nZero} produto${nZero > 1 ? "s" : ""} ativo${nZero > 1 ? "s" : ""} sem estoque`, "Aparecem como esgotados no site."));
   const falhas = [nPago, nBaixo, nZero].some(n => n == null) || nex.error;
@@ -4891,6 +5035,7 @@ Object.assign(ROUTES, {
   "clientes": renderClientes,
   "sommelier": renderSommelier,
   "conferencia": renderConferencia,
+  "giro": renderGiro,
   "equipe": renderEquipe,
 });
 
