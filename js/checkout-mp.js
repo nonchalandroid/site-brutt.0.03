@@ -22,8 +22,8 @@ function whatsHTML(){if(!ativo())return"";return'<label class="field" for="email
 var PIN='<svg class="pin-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.1-7-12a7 7 0 0 1 14 0c0 5.9-7 12-7 12Z"/><circle cx="12" cy="10" r="2.6"/></svg>';
 /* "Prefiro eu mesmo solicitar a entrega": o cliente chama o Uber/99 dele, então aqui não aparece valor nenhum.
    Pin copia o endereço da loja (ponto de coleta); botões abrem os apps. Uber = logotipo oficial (simple-icons, CC0),
-   branco sobre preto como no kit da marca, abrindo com a loja como coleta. 99: sem logotipo oficial disponível
-   (não está em simple-icons/iconify), então vai só o nome, sem imitar a marca. */
+   branco sobre preto como no kit da marca, abrindo com a loja como coleta. 99: logotipo oficial enviado pela loja
+   (imagens/marcas/99.webp, 120 px), sem redesenhar nem tingir. */
 var UBER_URL="https://m.uber.com/go/connect/drop?pickup="+encodeURIComponent(JSON.stringify({addressLine1:"Tabacaria Brutt",addressLine2:"Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ",id:"ChIJ2ZoYwxLjmwARXZoZR_SDnp0",source:"SEARCH",latitude:-22.8814745,longitude:-43.6137391,provider:"google_places"}));
 var APP99_URL="https://99app.com/";
 var UBER_LOGO='<svg class="uber-logo" viewBox="0 7.6 24 8.8" role="img" aria-label="Uber"><path d="M0 7.97v4.958c0 1.867 1.302 3.101 3 3.101.826 0 1.562-.316 2.094-.87v.736H6.27V7.97H5.082v4.888c0 1.257-.85 2.106-1.947 2.106-1.11 0-1.946-.827-1.946-2.106V7.971H0zm7.44 0v7.925h1.13v-.725c.521.532 1.257.86 2.06.86a3.006 3.006 0 0 0 3.034-3.01 3.01 3.01 0 0 0-3.033-3.024 2.86 2.86 0 0 0-2.049.861V7.971H7.439zm9.869 2.038c-1.687 0-2.965 1.37-2.965 3 0 1.72 1.334 3.01 3.066 3.01 1.053 0 1.913-.463 2.49-1.233l-.826-.611c-.43.577-.996.847-1.664.847-.973 0-1.753-.7-1.912-1.64h4.697v-.373c0-1.72-1.222-3-2.886-3zm6.295.068c-.634 0-1.098.294-1.381.758v-.713h-1.131v5.774h1.142V12.61c0-.894.544-1.47 1.291-1.47H24v-1.065h-.396zm-6.319.928c.85 0 1.564.588 1.756 1.47H15.52c.203-.882.916-1.47 1.765-1.47zm-6.732.012c1.086 0 1.98.883 1.98 2.004a1.993 1.993 0 0 1-1.98 2.001A1.989 1.989 0 0 1 8.56 13.02a1.99 1.99 0 0 1 1.992-2.004z"/></svg>';
@@ -33,7 +33,7 @@ function clienteHTML(){
    +'<span class="pin-ok" role="status" aria-live="polite"></span></div>'
    +'<p class="cli-note">Toque no pin para copiar o endereço da loja e cole no app de entrega como ponto de coleta.</p>'
    +'<div class="cli-apps"><a class="app-btn uber" href="'+esc(UBER_URL)+'" target="_blank" rel="noopener" aria-label="Abrir o Uber com a loja como coleta">'+UBER_LOGO+'</a>'
-   +'<a class="app-btn n99" href="'+APP99_URL+'" target="_blank" rel="noopener" aria-label="Abrir o app 99">99</a></div></div>';
+   +'<a class="app-btn n99" href="'+APP99_URL+'" target="_blank" rel="noopener" aria-label="Abrir o app 99"><img src="/imagens/marcas/99.webp" alt="99" width="44" height="44" decoding="async"></a></div></div>';
 }
 /* Só Pix: sem cartão digitado no site (prevenção de fraude). Cartão só volta se a loja decidir. */
 var OPT=[["pix","Pix","QR Code na hora"]];
