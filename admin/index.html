@@ -1239,8 +1239,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .hs-mest{font:700 14px var(--font)!important;min-width:150px;text-align:center}
 .hs-seta{width:36px;height:36px;border-radius:50%;border:1px solid var(--t-line);background:rgba(255,255,255,.06);color:#fff;font:700 18px var(--font);cursor:pointer}
 .hs-seta:disabled{opacity:.3;cursor:default}
-.hs-term .eq-leg2 i.l-bar{width:8px;height:12px;border-radius:2px;background:rgba(245,158,11,.55)}
-.hs-term .eq-leg2 i.l-mm{width:18px;height:3px;border-radius:2px;background:linear-gradient(90deg,#22d3ee,#a78bfa,#f0abfc)}
+.hs-term .eq-leg2 i.l-bar{border:0;width:8px;height:12px;border-radius:2px;background:rgba(245,158,11,.55)}
+.hs-term .eq-leg2 i.l-mm{border:0;width:18px;height:3px;border-radius:2px;background:linear-gradient(90deg,#22d3ee,#a78bfa,#f0abfc)}
 .hs-term .hs-bar{fill:rgba(245,158,11,.42)}.hs-term .hs-bar.neg{fill:rgba(251,113,133,.6)}
 .hs-term .hs-area{fill:url(#hsArea)}
 .hs-term .hs-mm{fill:none;stroke:url(#hsLinha);stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
@@ -4259,6 +4259,34 @@ function spAgora(){
   const p = Object.fromEntries(_fmtBR.formatToParts(new Date()).map(x => [x.type, x.value])), h = (+p.hour) % 24;
   return { ano:+p.year, mes:+p.month - 1, dia:+p.day, h, m:+p.minute, s:+p.second, frac:(+p.day - 1) + (h * 3600 + (+p.minute) * 60 + (+p.second)) / 86400 };
 }
+/* curva suave que passa por todos os pontos sem inventar picos nem vales (cúbica monotônica, Fritsch–Carlson).
+   P = [[x, y], …] em ordem de x; devolve o "d" de um <path>. Usada nas linhas dos gráficos do Financeiro. */
+function curvaSuave(P){
+  const f = v => v.toFixed(1);
+  if(P.length < 3) return "M" + P.map(p => f(p[0]) + "," + f(p[1])).join(" L");
+  const n = P.length, dx = [], m = [], t = [];
+  for(let i = 0; i < n - 1; i++){ dx[i] = P[i + 1][0] - P[i][0]; m[i] = dx[i] ? (P[i + 1][1] - P[i][1]) / dx[i] : 0; }
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for(let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for(let i = 0; i < n - 1; i++){
+    if(m[i] === 0){ t[i] = t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], h = a * a + b * b;
+    if(h > 9){ const k = 3 / Math.sqrt(h); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; }
+  }
+  let d = `M${f(P[0][0])},${f(P[0][1])}`;
+  for(let i = 0; i < n - 1; i++){ const h = dx[i] / 3;
+    d += ` C${f(P[i][0] + h)},${f(P[i][1] + t[i] * h)} ${f(P[i + 1][0] - h)},${f(P[i + 1][1] - t[i + 1] * h)} ${f(P[i + 1][0])},${f(P[i + 1][1])}`; }
+  return d;
+}
+/* peso de cada dia da semana nas vendas (dom..sáb), dos últimos 91 dias de vendas_dia; média dos 7 = 1.
+   A projeção do mês segue esse movimento (fim de semana vende mais) em vez de uma reta. Sem dados: tudo 1. */
+function pesoSemana(){
+  const S = serieDias().slice(-91), soma = [0,0,0,0,0,0,0], n = [0,0,0,0,0,0,0];
+  if(S.length < 28) return [1,1,1,1,1,1,1];
+  S.forEach(d => { const w = new Date(d.t).getUTCDay(); soma[w] += d.fat; n[w]++; });
+  const med = soma.map((v, i) => n[i] ? v / n[i] : 0), m = med.reduce((a, b) => a + b, 0) / 7;
+  return m > 0 ? med.map(v => v / m) : [1,1,1,1,1,1,1];
+}
 function graficoEquilibrio(o){
   const box = $("#lcGraf"); if(!box) return;
   clearInterval(box._relogio);
@@ -4277,14 +4305,19 @@ function graficoEquilibrio(o){
   const real = L > 0;
   const temFat = o.fat > 0, ritmoBase = temFat ? o.fat / D : real ? R[L] / L : o.equilibrio / D, ritmoMin = o.equilibrio / D;
   const st = { ritmo: ritmoBase, zoom: "mes", sel: "agora", primeira: true, foco: null };   /* sel = "agora" ou um dia escolhido */
-  const vend = d => { if(real && d <= L){ const i = Math.floor(d); return i >= L ? R[L] : R[i] + (R[i + 1] - R[i]) * (d - i); } return R[L] + st.ritmo * (d - L); };
-  const dEq = () => { if(R[L] >= o.equilibrio){ let k = 1; while(R[k] < o.equilibrio) k++; return k - 1 + (o.equilibrio - R[k - 1]) / Math.max(1, R[k] - R[k - 1]); } return L + (o.equilibrio - R[L]) / st.ritmo; };
+  /* projeção depois do último dia real: ritmo × peso do dia da semana (F[k] = vendido até o fim do dia k) */
+  const PESO = pesoSemana(), diaSem = k => new Date(Date.UTC(ano, mes, k)).getUTCDay();
+  let F = [], Fr = null;
+  const fut = () => { if(Fr !== st.ritmo){ Fr = st.ritmo; F = []; F[L] = R[L]; for(let k = L + 1; k <= D; k++) F[k] = F[k - 1] + st.ritmo * PESO[diaSem(k)]; } return F; };
+  const acum = k => k <= L ? R[k] : fut()[k];
+  const vend = d => { if(d <= 0) return 0; if(d >= D) return acum(D); const i = Math.floor(d); return acum(i) + (acum(i + 1) - acum(i)) * (d - i); };
+  const dEq = () => { for(let k = 1; k <= D; k++) if(acum(k) >= o.equilibrio) return k - 1 + (o.equilibrio - acum(k - 1)) / Math.max(1, acum(k) - acum(k - 1)); return D + (o.equilibrio - acum(D)) / st.ritmo; };
   const resultado = d => vend(d) * o.m - o.custo;
   const fecha = () => vend(D) >= o.equilibrio;
   const maxSim = Math.max(ritmoBase, ritmoMin) * 2.2, passoSim = maxSim > 2000 ? 50 : 10;
   box.innerHTML = `<div class="eq-h"><h4>Ponto de equilíbrio · ${esc(mesNome)} de ${ano}</h4>
       <p class="eq-exp">É quanto a loja precisa <b>vender no mês para não ter prejuízo</b>: com margem de ${pctBR(o.margem || 0)}, cada R$ 100 vendidos deixam ${brlM(o.margem || 0)} de lucro bruto, e esse lucro tem que pagar os custos do mês (${brl0(o.custo)}). Isso acontece quando as vendas chegam a <b>${brl0(o.equilibrio)}</b>. Vendeu menos, fecha no prejuízo; tudo que passar disso é lucro.</p>
-      ${real ? `<p class="eq-exp">Linha cheia = <b>vendas reais</b> do Nex até ${dataC(L)}; tracejada = projeção no ritmo de ${brl0(ritmoBase)}/dia${temFat ? " (faturamento digitado ÷ dias do mês)" : " (média real do mês)"}.</p>` : ""}</div>
+      ${real ? `<p class="eq-exp">Linha cheia = <b>vendas reais</b> do Nex até ${dataC(L)}; tracejada = projeção no ritmo de ${brl0(ritmoBase)}/dia${temFat ? " (faturamento digitado ÷ dias do mês)" : " (média real do mês)"}, seguindo o movimento de cada dia da semana dos últimos 3 meses.</p>` : ""}</div>
     <div class="eq-term">
       <div class="eq-relogio"><i aria-hidden="true"></i><span class="eq-rel-t"></span><small>horário de Brasília</small></div>
       <div class="eq-top">
@@ -4351,11 +4384,11 @@ function graficoEquilibrio(o){
     const ag = Math.max(1, spAgora().frac), selN = st.sel === "agora" ? ag : st.sel, yE = y(o.equilibrio), h0 = Math.min(Math.max(ag, a), b), y0 = y(0);   /* "agora" anda com o relógio */
     const n = W < 520 ? 3 : 6, marcas = [...new Set([a, ...Array.from({ length: n - 1 }, (_, i) => Math.round(a + (b - a) * (i + 1) / n)), b])];
     /* pontos dia a dia (a venda real não é reta) */
-    const pts = (p, q, f) => { const l = [p]; for(let k = Math.floor(p) + 1; k < q; k++) l.push(k); if(q > p) l.push(q); return l.map(d => `${x(d)},${y(f(d))}`); };
-    const seg = (p, q) => pts(p, q, vend).join(" ");
+    const pts = (p, q, f) => { const l = [p]; for(let k = Math.floor(p) + 1; k < q; k++) if(k - p > .05 && q - k > .05) l.push(k); if(q > p) l.push(q); return l.map(d => [x(d), y(f(d))]); };
+    const seg = (p, q) => curvaSuave(pts(p, q, vend));
     /* P&L: linha e área até o zero (rosa = prejuízo, verde = lucro), cruzam o zero no dia do equilíbrio */
-    const segP = (p, q) => pts(p, q, resultado).join(" ");
-    const area = (p, q, cls) => q > p ? `<path class="${cls}" d="M${x(p)},${y0} L${pts(p, q, resultado).join(" L")} L${x(q)},${y0} Z"/>` : "";
+    const segP = (p, q) => curvaSuave(pts(p, q, resultado));
+    const area = (p, q, cls) => q > p ? `<path class="${cls}" d="M${x(p)},${y0} ${segP(p, q).replace(/^M/, "L")} L${x(q)},${y0} Z"/>` : "";
     const corte = Math.min(Math.max(real ? L : ag, a), b);   /* fim da linha cheia: último dia real (ou agora, sem dados) */
     const cx = Math.min(b, Math.max(a, dx));
     alvo.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
@@ -4374,9 +4407,9 @@ function graficoEquilibrio(o){
       ${corte < b ? `<rect class="eq-futuro" x="${x(corte)}" y="${P.t}" width="${Math.max(0, x(b) - x(corte))}" height="${H - P.t - P.b}"/>` : ""}
       <g clip-path="url(#eqPlot)"><g clip-path="url(#eqRevela)">
         ${area(a, Math.min(b, Math.max(a, de)), "eq-a-neg")}${area(Math.max(a, de), b, "eq-a-pos")}
-        ${de > a ? `<polyline class="eq-pl neg" points="${segP(a, Math.min(b, de))}"/>` : ""}${de < b ? `<polyline class="eq-pl pos" points="${segP(Math.max(a, de), b)}"/>` : ""}
-        <polyline class="eq-glow" points="${seg(a, b)}" filter="url(#eqBrilho)"/>
-        ${corte > a ? `<polyline class="eq-v" points="${seg(a, corte)}"/>` : ""}${b > corte ? `<polyline class="eq-v proj" points="${seg(corte, b)}"/>` : ""}
+        ${de > a ? `<path class="eq-pl neg" d="${segP(a, Math.min(b, de))}"/>` : ""}${de < b ? `<path class="eq-pl pos" d="${segP(Math.max(a, de), b)}"/>` : ""}
+        <path class="eq-glow" d="${seg(a, b)}" filter="url(#eqBrilho)"/>
+        ${corte > a ? `<path class="eq-v" d="${seg(a, corte)}"/>` : ""}${b > corte ? `<path class="eq-v proj" d="${seg(corte, b)}"/>` : ""}
       </g></g>
       <line class="eq-eq" x1="${P.l}" x2="${W - P.r}" y1="${yE}" y2="${yE}"/>
       ${fecha() && dx >= a && dx <= b ? `<g class="eq-cruza"><line class="eq-cv" x1="${x(cx)}" x2="${x(cx)}" y1="${yE}" y2="${y0}"/><circle class="eq-pt" cx="${x(cx)}" cy="${yE}" r="6"/><circle class="eq-pt" cx="${x(cx)}" cy="${y0}" r="5"/></g>` : ""}
@@ -4530,7 +4563,7 @@ function graficoHistorico(custoMes){
     /* rótulos do eixo x: início de cada mês (períodos longos) ou ~5 dias */
     const marcas = []; if(n > 45){ for(let i = a; i <= b; i++) if(S[i].k.endsWith("-01") || i === a) marcas.push([i, MES_C[+S[i].k.slice(5, 7) - 1]]); }
     else { const k = W < 520 ? 4 : 6; for(let j = 0; j < k; j++){ const i = a + Math.round(j * (n - 1) / (k - 1)); marcas.push([i, `${+S[i].k.slice(8)} ${MES_C[+S[i].k.slice(5, 7) - 1]}`]); } }
-    const mm = []; for(let i = a; i <= b; i++) mm.push(`${xc(i).toFixed(1)},${y(S[i].mm).toFixed(1)}`);
+    const mmP = []; for(let i = a; i <= b; i++) mmP.push([xc(i), y(S[i].mm)]); const mm = curvaSuave(mmP);
     alvo.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
       <defs><linearGradient id="hsLinha" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset=".55" stop-color="#a78bfa"/><stop offset="1" stop-color="#f0abfc"/></linearGradient>
         <linearGradient id="hsArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#a78bfa" stop-opacity=".38"/><stop offset="1" stop-color="#a78bfa" stop-opacity="0"/></linearGradient>
@@ -4540,8 +4573,8 @@ function graficoHistorico(custoMes){
       ${marcas.map(([i, t], j) => `<text class="eq-ax" x="${xc(i)}" y="${H - 9}" text-anchor="${j === 0 ? "start" : j === marcas.length - 1 && n <= 45 ? "end" : "middle"}">${t}</text>`).join("")}
       <g clip-path="url(#hsRevela)">
         ${Array.from({ length: n }, (_, j) => { const d = S[a + j]; return d.fat > 0 ? `<rect class="hs-bar${d.luc < 0 ? " neg" : ""}" x="${(xc(a + j) - Math.max(.5, bw * .34)).toFixed(1)}" y="${y(d.fat).toFixed(1)}" width="${Math.max(1, bw * .68).toFixed(1)}" height="${(yB - y(d.fat)).toFixed(1)}"/>` : ""; }).join("")}
-        <path class="hs-area" d="M${xc(a)},${yB} L${mm.join(" L")} L${xc(b)},${yB} Z"/>
-        <polyline class="hs-glow" points="${mm.join(" ")}" filter="url(#hsBrilho)"/><polyline class="hs-mm" points="${mm.join(" ")}"/>
+        <path class="hs-area" d="M${xc(a)},${yB} ${mm.replace(/^M/, "L")} L${xc(b)},${yB} Z"/>
+        <path class="hs-glow" d="${mm}" filter="url(#hsBrilho)"/><path class="hs-mm" d="${mm}"/>
       </g>
       <g class="eq-cruz" style="opacity:0"><line class="eq-cl" x1="0" x2="0" y1="${P.t}" y2="${yB}"/><circle class="hs-cp" cx="0" cy="0" r="5"/></g>
       <rect class="eq-hit" x="${P.l}" y="0" width="${W - P.l - P.r}" height="${H}"/></svg>`;
