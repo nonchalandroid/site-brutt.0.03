@@ -1373,7 +1373,13 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
 .eq-placar{display:flex;flex-direction:column;gap:2px;min-width:0}
 .eq-pd{font:600 12px var(--mono);color:var(--t-mut);letter-spacing:.02em;text-transform:uppercase}
 .eq-pv{font:800 30px/1.1 var(--mono);color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 0 22px rgba(245,158,11,.45)}
-.eq-pr{font:700 13px var(--mono);white-space:nowrap}.eq-pr.up{color:var(--t-ok)}.eq-pr.dn{color:var(--t-neg)}
+.eq-pr{font:800 22px/1.1 var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums}.eq-pr.up{color:var(--t-ok)}.eq-pr.dn{color:var(--t-neg)}
+.eq-pb{display:flex;align-items:flex-end;gap:12px 28px;flex-wrap:wrap;margin-top:4px}
+.eq-pc{display:flex;flex-direction:column;gap:2px;min-width:0}
+.eq-pc small{font:600 11px var(--font);color:var(--t-mut);text-transform:uppercase;letter-spacing:.06em}
+.eq-pc+.eq-pc{padding-left:20px;border-left:1px solid var(--t-line)}
+.eq-pf{font:500 12px var(--font);color:var(--t-mut);white-space:nowrap}
+@media(max-width:480px){.eq-pc+.eq-pc{padding-left:0;border-left:0}.eq-pr{font-size:20px}}
 .eq-zoom{display:inline-flex;padding:3px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--t-line)}
 .eq-zoom button{min-height:34px;padding:0 12px;border:0;border-radius:999px;background:none;color:var(--t-mut);font:600 12px var(--font);cursor:pointer;white-space:nowrap}
 .eq-zoom button[aria-pressed=true]{background:linear-gradient(135deg,#f59e0b,#fb923c);color:#1a0f02;box-shadow:0 4px 16px -6px rgba(245,158,11,.8)}
@@ -4073,7 +4079,9 @@ function graficoEquilibrio(o){
     <div class="eq-term">
       <div class="eq-relogio"><i aria-hidden="true"></i><span class="eq-rel-t"></span><small>horário de Brasília</small></div>
       <div class="eq-top">
-        <div class="eq-placar" aria-live="polite"><span class="eq-pd"></span><b class="eq-pv"></b><span class="eq-pr"></span></div>
+        <div class="eq-placar" aria-live="polite"><span class="eq-pd"></span>
+          <div class="eq-pb"><div class="eq-pc"><small>Vendas · faturamento acumulado</small><b class="eq-pv"></b></div>
+          <div class="eq-pc"><small>Resultado · P&amp;L (lucro ou prejuízo)</small><b class="eq-pr"></b><span class="eq-pf"></span></div></div></div>
         <div class="eq-zoom" role="group" aria-label="Período do gráfico">${[["mes","Mês"],["ate","Até hoje"],["dep","Daqui pra frente"]].map(([k, t]) => `<button type="button" data-eq-zoom="${k}" aria-pressed="${k === "mes"}">${t}</button>`).join("")}</div>
       </div>
       <div class="eq-chips"></div>
@@ -4094,16 +4102,18 @@ function graficoEquilibrio(o){
     const v = vend(dd), res = v * o.m - o.custo, pago = v >= o.equilibrio;
     term.querySelector(".eq-pd").textContent = agora ? `agora · ${dataC(t.dia)} · ${String(t.h).padStart(2, "0")}:${String(t.m).padStart(2, "0")}` : `${dataC(d)}${d === hoje ? " · hoje" : d > hoje ? " · projeção" : ""}`;
     term.querySelector(".eq-pv").textContent = brl0(v);
-    const pr = term.querySelector(".eq-pr"); pr.className = "eq-pr " + (pago ? "up" : "dn");
-    pr.textContent = pago ? `▲ lucro ${brl0(res)}` : `▼ faltam ${brl0(o.equilibrio - v)} p/ empatar`;
+    /* P&L até o momento: (vendas × margem) − custos do mês (fixos + dia a dia). Antes do equilíbrio é prejuízo. */
+    const pr = term.querySelector(".eq-pr"); pr.className = "eq-pr " + (res >= 0 ? "up" : "dn");
+    pr.textContent = res >= 0 ? `▲ lucro ${brl0(res)}` : `▼ prejuízo ${brl0(-res)}`;
+    term.querySelector(".eq-pf").textContent = pago ? "custos do mês já pagos" : `faltam ${brl0(o.equilibrio - v)} em vendas p/ empatar`;
   };
   /* resumo do simulador + botões + tabela (dependem do ritmo) */
   const textos = () => {
     const simulando = Math.abs(st.ritmo - ritmoBase) > 0.5, de = dEq(), dia = Math.max(1, Math.ceil(de));
     term.querySelector(".eq-sv").textContent = `${brl0(st.ritmo)}/dia`;
     term.querySelector(".eq-sres").innerHTML = fecha()
-      ? `Mês fecha com <b>${brl0(vend(D))}</b> · lucro <b class="up">${brl0(resultado(D))}</b> · custos pagos em <b>${dataC(dia)}</b>`
-      : `Mês fecha com <b>${brl0(vend(D))}</b> · <b class="dn">prejuízo ${brl0(-resultado(D))}</b> · mínimo p/ empatar: <b>${brl0(ritmoMin)}/dia</b>`;
+      ? `Mês fecha com <b>${brl0(vend(D))}</b> em vendas · P&amp;L: <b class="up">lucro ${brl0(resultado(D))}</b> · custos pagos em <b>${dataC(dia)}</b>`
+      : `Mês fecha com <b>${brl0(vend(D))}</b> em vendas · P&amp;L: <b class="dn">prejuízo ${brl0(-resultado(D))}</b> · mínimo p/ empatar: <b>${brl0(ritmoMin)}/dia</b>`;
     term.querySelector(".eq-sreset").hidden = !simulando;
     term.classList.toggle("simulando", simulando);
     term.querySelector(".eq-chips").innerHTML = `<button type="button" class="eq-chip eq-c-eq" data-eq-ver="eq" aria-pressed="${st.foco === "eq"}"><i aria-hidden="true"></i>Equilíbrio <b>${brl0(o.equilibrio)}</b></button>
