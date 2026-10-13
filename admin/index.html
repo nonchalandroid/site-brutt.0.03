@@ -1371,9 +1371,15 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
   border:1px solid rgba(245,158,11,.35);box-shadow:0 18px 50px -24px rgba(20,13,28,.75),inset 0 1px 0 rgba(255,255,255,.06)}
 .eq-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 .eq-placar{display:flex;flex-direction:column;gap:2px;min-width:0}
-.eq-pd{font:600 12px var(--mono);color:var(--t-mut);letter-spacing:.02em;text-transform:uppercase}
+.eq-pd[hidden]{display:none}.eq-pd{font:600 12px var(--mono);color:var(--t-mut);letter-spacing:.02em;text-transform:uppercase}
 .eq-pv{font:800 30px/1.1 var(--mono);color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 0 22px rgba(245,158,11,.45)}
-.eq-pr{font:700 13px var(--mono);white-space:nowrap}.eq-pr.up{color:var(--t-ok)}.eq-pr.dn{color:var(--t-neg)}
+.eq-pr{font:800 22px/1.1 var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums}.eq-pr.up{color:var(--t-ok)}.eq-pr.dn{color:var(--t-neg)}
+.eq-pb{display:flex;align-items:flex-end;gap:12px 28px;flex-wrap:wrap;margin-top:4px}
+.eq-pc{display:flex;flex-direction:column;gap:2px;min-width:0}
+.eq-pc small{font:600 11px var(--font);color:var(--t-mut);text-transform:uppercase;letter-spacing:.06em}
+.eq-pc+.eq-pc{padding-left:20px;border-left:1px solid var(--t-line)}
+.eq-pf{font:500 12px var(--font);color:var(--t-mut);white-space:nowrap}
+@media(max-width:480px){.eq-pc+.eq-pc{padding-left:0;border-left:0}.eq-pr{font-size:20px}}
 .eq-zoom{display:inline-flex;padding:3px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--t-line)}
 .eq-zoom button{min-height:34px;padding:0 12px;border:0;border-radius:999px;background:none;color:var(--t-mut);font:600 12px var(--font);cursor:pointer;white-space:nowrap}
 .eq-zoom button[aria-pressed=true]{background:linear-gradient(135deg,#f59e0b,#fb923c);color:#1a0f02;box-shadow:0 4px 16px -6px rgba(245,158,11,.8)}
@@ -1431,6 +1437,18 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
 @media(max-width:480px){.eq-pv{font-size:26px}.eq-zoom{width:100%}.eq-zoom button{flex:1;padding:0 6px}.eq-term{padding:12px 10px}
   .eq-relogio{flex-wrap:wrap;row-gap:2px}}
 @media(hover:hover) and (pointer:fine){.eq-zoom button:hover{color:#fff}}
+/* P&L (lucro/prejuízo acumulado) e legenda das séries */
+.eq-term .eq-pl{fill:none;stroke-width:2.5;stroke-linecap:round}.eq-term .eq-pl.neg{stroke:#fb7185}.eq-term .eq-pl.pos{stroke:#34d399}
+.eq-term .eq-zero{stroke:rgba(255,255,255,.35);stroke-width:1.2}
+.eq-term .eq-cv{stroke:#34d399;stroke-width:1;stroke-dasharray:2 3;opacity:.7}
+.eq-term .eq-cp2{fill:#fb7185;stroke:#fff;stroke-width:2;transition:cx .12s,cy .12s}.eq-term .eq-cp2.lucro{fill:#34d399}
+.eq-leg2{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0 0 4px;font:600 12px var(--font);color:var(--t-mut)}
+.eq-leg2 span{display:inline-flex;align-items:center;gap:6px}
+.eq-leg2 i{display:inline-block;width:18px;height:0;border-top:3px solid #f59e0b;border-radius:2px}
+.eq-leg2 i.l-p{border-top:3px solid #34d399;box-shadow:-9px 0 0 -0px transparent;background:none;border-image:linear-gradient(90deg,#fb7185 50%,#34d399 50%) 1}
+.eq-leg2 i.l-e{border-top:2px dashed #06b6d4}
+.eq-term .eq-chip svg{width:16px;height:16px;flex:none;color:#06b6d4}
+@media(max-width:480px){.eq-term .eq-chip svg{display:none}}
 @media(max-width:480px){.eq-sim label{flex-direction:column;align-items:flex-start;gap:2px}.eq-sv{font-size:20px}}
 @media(prefers-reduced-motion:reduce){.eq-relogio i{animation:none}.eq-term .eq-graf::after{transition:none}.eq-term .eq-cp{transition:none}.od-r{transition:none}.eq-revela.anima,.eq-onda,.odo-delta{animation:none}.eq-onda{display:none}}
 </style>
@@ -1537,6 +1555,7 @@ const ICON = {
   sync:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
   sheet:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2M14 13h2M8 17h2M14 17h2"/>',
   trend:'<path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/>',
+  scale:'<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
   coin:'<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>',
   out:'<path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>',
   menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
@@ -4073,10 +4092,13 @@ function graficoEquilibrio(o){
     <div class="eq-term">
       <div class="eq-relogio"><i aria-hidden="true"></i><span class="eq-rel-t"></span><small>horário de Brasília</small></div>
       <div class="eq-top">
-        <div class="eq-placar" aria-live="polite"><span class="eq-pd"></span><b class="eq-pv"></b><span class="eq-pr"></span></div>
+        <div class="eq-placar" aria-live="polite"><span class="eq-pd"></span>
+          <div class="eq-pb"><div class="eq-pc"><small>Vendas · faturamento acumulado</small><b class="eq-pv"></b></div>
+          <div class="eq-pc"><small>Resultado · P&amp;L (lucro ou prejuízo)</small><b class="eq-pr"></b><span class="eq-pf"></span></div></div></div>
         <div class="eq-zoom" role="group" aria-label="Período do gráfico">${[["mes","Mês"],["ate","Até hoje"],["dep","Daqui pra frente"]].map(([k, t]) => `<button type="button" data-eq-zoom="${k}" aria-pressed="${k === "mes"}">${t}</button>`).join("")}</div>
       </div>
       <div class="eq-chips"></div>
+      <div class="eq-leg2" aria-hidden="true"><span><i class="l-v"></i>Vendas (faturamento)</span><span><i class="l-p"></i>P&amp;L (lucro / prejuízo)</span><span><i class="l-e"></i>Ponto de equilíbrio</span></div>
       <div class="eq-graf" role="img"></div>
       <div class="eq-sim">
         <label for="eqSim"><span>Simular: vendas por dia</span><b class="eq-sv"></b></label>
@@ -4092,22 +4114,26 @@ function graficoEquilibrio(o){
   const placar = d => {
     const agora = d === "agora", t = agora ? spAgora() : null, dd = agora ? Math.max(0, t.frac) : d;
     const v = vend(dd), res = v * o.m - o.custo, pago = v >= o.equilibrio;
-    term.querySelector(".eq-pd").textContent = agora ? `agora · ${dataC(t.dia)} · ${String(t.h).padStart(2, "0")}:${String(t.m).padStart(2, "0")}` : `${dataC(d)}${d === hoje ? " · hoje" : d > hoje ? " · projeção" : ""}`;
+    /* no "agora" a data/hora já está no relógio do topo: a linha só aparece quando um dia é apontado no gráfico */
+    const pd = term.querySelector(".eq-pd"); pd.hidden = agora;
+    pd.textContent = agora ? "" : `${dataC(d)}${d === hoje ? " · hoje" : d > hoje ? " · projeção" : ""}`;
     term.querySelector(".eq-pv").textContent = brl0(v);
-    const pr = term.querySelector(".eq-pr"); pr.className = "eq-pr " + (pago ? "up" : "dn");
-    pr.textContent = pago ? `▲ lucro ${brl0(res)}` : `▼ faltam ${brl0(o.equilibrio - v)} p/ empatar`;
+    /* P&L até o momento: (vendas × margem) − custos do mês (fixos + dia a dia). Antes do equilíbrio é prejuízo. */
+    const pr = term.querySelector(".eq-pr"); pr.className = "eq-pr " + (res >= 0 ? "up" : "dn");
+    pr.textContent = res >= 0 ? `▲ lucro ${brl0(res)}` : `▼ prejuízo ${brl0(-res)}`;
+    term.querySelector(".eq-pf").textContent = pago ? "custos do mês já pagos" : `faltam ${brl0(o.equilibrio - v)} em vendas p/ empatar`;
   };
   /* resumo do simulador + botões + tabela (dependem do ritmo) */
   const textos = () => {
     const simulando = Math.abs(st.ritmo - ritmoBase) > 0.5, de = dEq(), dia = Math.max(1, Math.ceil(de));
     term.querySelector(".eq-sv").textContent = `${brl0(st.ritmo)}/dia`;
     term.querySelector(".eq-sres").innerHTML = fecha()
-      ? `Mês fecha com <b>${brl0(vend(D))}</b> · lucro <b class="up">${brl0(resultado(D))}</b> · custos pagos em <b>${dataC(dia)}</b>`
-      : `Mês fecha com <b>${brl0(vend(D))}</b> · <b class="dn">prejuízo ${brl0(-resultado(D))}</b> · mínimo p/ empatar: <b>${brl0(ritmoMin)}/dia</b>`;
+      ? `Mês fecha com <b>${brl0(vend(D))}</b> em vendas · P&amp;L: <b class="up">lucro ${brl0(resultado(D))}</b> · custos pagos em <b>${dataC(dia)}</b>`
+      : `Mês fecha com <b>${brl0(vend(D))}</b> em vendas · P&amp;L: <b class="dn">prejuízo ${brl0(-resultado(D))}</b> · mínimo p/ empatar: <b>${brl0(ritmoMin)}/dia</b>`;
     term.querySelector(".eq-sreset").hidden = !simulando;
     term.classList.toggle("simulando", simulando);
-    term.querySelector(".eq-chips").innerHTML = `<button type="button" class="eq-chip eq-c-eq" data-eq-ver="eq" aria-pressed="${st.foco === "eq"}"><i aria-hidden="true"></i>Equilíbrio <b>${brl0(o.equilibrio)}</b></button>
-      ${fecha() ? `<button type="button" class="eq-chip eq-c-pago" data-eq-ver="pago" aria-pressed="${st.foco === "pago"}"><i aria-hidden="true"></i>Custos pagos <b>${dataC(dia)}</b></button>` : `<span class="eq-chip eq-c-neg" aria-hidden="true">▼ não empata</span>`}`;
+    term.querySelector(".eq-chips").innerHTML = `<button type="button" class="eq-chip eq-c-eq" data-eq-ver="eq" aria-pressed="${st.foco === "eq"}" title="Destaca a linha do ponto de equilíbrio (vendas que pagam os custos do mês) e mostra o dia em que ela é alcançada">${ic("scale")}Ponto de equilíbrio <b>${brl0(o.equilibrio)}</b></button>
+      ${fecha() ? `<button type="button" class="eq-chip eq-c-pago" data-eq-ver="pago" aria-pressed="${st.foco === "pago"}" title="Mostra o dia em que o P&L vira lucro"><i aria-hidden="true"></i>Custos pagos <b>${dataC(dia)}</b></button>` : `<span class="eq-chip eq-c-neg" aria-hidden="true">▼ não empata</span>`}`;
     term.querySelectorAll("[data-eq-ver]").forEach(b => b.onclick = () => { st.foco = st.foco === b.dataset.eqVer ? null : b.dataset.eqVer;
       if(st.foco){ st.sel = Math.min(D, Math.max(1, st.foco === "pago" ? dia : dia)); } textos(); desenha(); placar(st.sel); });
     box.querySelector(".eq-tabc").innerHTML = `<table><thead><tr><th>Data</th><th>Vendas até o dia</th><th>Resultado do mês até o dia</th></tr></thead><tbody>
@@ -4118,13 +4144,18 @@ function graficoEquilibrio(o){
   const desenha = () => {
     const [a, b] = dominio(), de = dEq(), dx = Math.min(D, Math.max(1, de));
     const W = Math.max(280, Math.round(alvo.clientWidth || 600)), H = W < 520 ? 230 : 280, P = { l: 52, r: 14, t: 18, b: 30 };
-    const maxY = Math.max(vend(b), o.equilibrio) * 1.12, x = d => P.l + ((d - a) / Math.max(1, b - a)) * (W - P.l - P.r), y = v => P.t + (1 - v / maxY) * (H - P.t - P.b);
-    const passo = maxY > 80000 ? 20000 : maxY > 40000 ? 10000 : maxY > 20000 ? 5000 : maxY > 8000 ? 2000 : maxY > 3000 ? 1000 : 500, grade = [];
-    for(let v = 0; v <= maxY; v += passo) grade.push(v);
+    /* eixo único em R$: vendas acumuladas (≥ 0) e P&L acumulado (começa negativo = custos do mês) */
+    const minY = Math.min(0, resultado(a)) * 1.15, maxY = Math.max(vend(b), o.equilibrio, resultado(b)) * 1.12;
+    const x = d => P.l + ((d - a) / Math.max(1, b - a)) * (W - P.l - P.r), y = v => P.t + (maxY - v) / (maxY - minY) * (H - P.t - P.b);
+    const faixa = maxY - minY, passo = faixa > 80000 ? 20000 : faixa > 40000 ? 10000 : faixa > 20000 ? 5000 : faixa > 8000 ? 2000 : faixa > 3000 ? 1000 : 500, grade = [];
+    for(let v = Math.ceil(minY / passo) * passo; v <= maxY; v += passo) grade.push(v);
+    const yBase = y(minY);
     const ag = Math.max(1, spAgora().frac), selN = st.sel === "agora" ? ag : st.sel, yE = y(o.equilibrio), h0 = Math.min(Math.max(ag, a), b), y0 = y(0);   /* "agora" anda com o relógio */
     const n = W < 520 ? 3 : 6, marcas = [...new Set([a, ...Array.from({ length: n - 1 }, (_, i) => Math.round(a + (b - a) * (i + 1) / n)), b])];
     const seg = (p, q) => `${x(p)},${y(vend(p))} ${x(q)},${y(vend(q))}`;
-    const area = (p, q, cls) => q > p ? `<path class="${cls}" d="M${x(p)},${y0} L${x(p)},${y(vend(p))} L${x(q)},${y(vend(q))} L${x(q)},${y0} Z"/>` : "";
+    /* P&L: linha e área até o zero (rosa = prejuízo, verde = lucro), cruzam o zero no dia do equilíbrio */
+    const segP = (p, q) => `${x(p)},${y(resultado(p))} ${x(q)},${y(resultado(q))}`;
+    const area = (p, q, cls) => q > p ? `<path class="${cls}" d="M${x(p)},${y0} L${x(p)},${y(resultado(p))} L${x(q)},${y(resultado(q))} L${x(q)},${y0} Z"/>` : "";
     const cx = Math.min(b, Math.max(a, dx));
     alvo.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
       <defs>
@@ -4137,40 +4168,50 @@ function graficoEquilibrio(o){
         <clipPath id="eqPlot"><rect x="${P.l}" y="0" width="${W - P.l - P.r}" height="${H}"/></clipPath>
       </defs>
       <rect x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}" fill="url(#eqPontos)"/>
-      ${grade.map(v => `<line class="eq-gr" x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}"/><text class="eq-ax" x="${P.l - 8}" y="${y(v) + 4}" text-anchor="end">${v >= 1000 ? (v / 1000).toLocaleString("pt-BR") + "k" : v}</text>`).join("")}
+      ${grade.map(v => `<line class="eq-gr${v === 0 ? " eq-zero" : ""}" x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}"/><text class="eq-ax" x="${P.l - 8}" y="${y(v) + 4}" text-anchor="end">${v < 0 ? "−" : ""}${Math.abs(v) >= 1000 ? (Math.abs(v) / 1000).toLocaleString("pt-BR") + "k" : Math.abs(v)}</text>`).join("")}
       ${marcas.map((d, i) => `<text class="eq-ax" x="${x(d)}" y="${H - 9}" text-anchor="${i === 0 ? "start" : i === marcas.length - 1 ? "end" : "middle"}">${dataC(d)}</text>`).join("")}
       ${ag < b ? `<rect class="eq-futuro" x="${x(Math.max(h0, a))}" y="${P.t}" width="${Math.max(0, x(b) - x(Math.max(h0, a)))}" height="${H - P.t - P.b}"/>` : ""}
       <g clip-path="url(#eqPlot)"><g clip-path="url(#eqRevela)">
-        ${area(a, Math.min(b, Math.max(a, dx)), "eq-a-neg")}${area(Math.max(a, dx), b, "eq-a-pos")}
+        ${area(a, Math.min(b, Math.max(a, de)), "eq-a-neg")}${area(Math.max(a, de), b, "eq-a-pos")}
+        ${de > a ? `<polyline class="eq-pl neg" points="${segP(a, Math.min(b, de))}"/>` : ""}${de < b ? `<polyline class="eq-pl pos" points="${segP(Math.max(a, de), b)}"/>` : ""}
         <polyline class="eq-glow" points="${seg(a, b)}" filter="url(#eqBrilho)"/>
         ${h0 > a ? `<polyline class="eq-v" points="${seg(a, h0)}"/>` : ""}${b > h0 ? `<polyline class="eq-v proj" points="${seg(Math.max(a, h0), b)}"/>` : ""}
       </g></g>
       <line class="eq-eq" x1="${P.l}" x2="${W - P.r}" y1="${yE}" y2="${yE}"/>
-      ${fecha() && dx >= a && dx <= b ? `<g class="eq-cruza"><circle class="eq-pt" cx="${x(cx)}" cy="${yE}" r="6"/></g>` : ""}
-      ${ag >= a && ag <= b ? `<line class="eq-hoje" x1="${x(h0)}" x2="${x(h0)}" y1="${P.t}" y2="${y0}"/>
+      ${fecha() && dx >= a && dx <= b ? `<g class="eq-cruza"><line class="eq-cv" x1="${x(cx)}" x2="${x(cx)}" y1="${yE}" y2="${y0}"/><circle class="eq-pt" cx="${x(cx)}" cy="${yE}" r="6"/><circle class="eq-pt" cx="${x(cx)}" cy="${y0}" r="5"/></g>` : ""}
+      ${ag >= a && ag <= b ? `<line class="eq-hoje" x1="${x(h0)}" x2="${x(h0)}" y1="${P.t}" y2="${yBase}"/>
         <g class="eq-sinal" transform="translate(${x(h0)},${y(vend(h0))})"><circle class="eq-onda" r="6"/><circle class="eq-onda o2" r="6"/><circle class="eq-ponto" r="5"/></g>` : ""}
-      <g class="eq-cruz"><line class="eq-cl" x1="${x(selN)}" x2="${x(selN)}" y1="${P.t}" y2="${y0}"/><circle class="eq-cp" cx="${x(selN)}" cy="${y(vend(selN))}" r="6"/></g>
+      <g class="eq-cruz"><line class="eq-cl" x1="${x(selN)}" x2="${x(selN)}" y1="${P.t}" y2="${yBase}"/><circle class="eq-cp2" cx="${x(selN)}" cy="${y(resultado(selN))}" r="5"/><circle class="eq-cp" cx="${x(selN)}" cy="${y(vend(selN))}" r="6"/></g>
       <rect class="eq-hit" x="${P.l}" y="0" width="${W - P.l - P.r}" height="${H}"/>
     </svg>`;
     st.primeira = false;
     const svg = alvo.querySelector("svg"); svg.classList.toggle("v-eq", st.foco === "eq"); svg.classList.toggle("v-pago", st.foco === "pago");
-    const cruz = svg.querySelector(".eq-cruz"), cl = cruz.querySelector(".eq-cl"), cp = cruz.querySelector(".eq-cp");
+    const cruz = svg.querySelector(".eq-cruz"), cl = cruz.querySelector(".eq-cl"), cp = cruz.querySelector(".eq-cp"), cp2 = cruz.querySelector(".eq-cp2");
+    cp2.classList.toggle("lucro", resultado(selN) >= 0);
     cruz.style.opacity = st.sel !== "agora" && st.sel >= a && st.sel <= b ? "" : "0";   /* no "agora" quem marca é o sinal pulsando */
     /* arrastar o dedo/mouse: a cruz anda sozinha (sem redesenhar) e o placar acompanha */
     const ir = ev => {
       const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * (W / r.width);
       const d = Math.max(a, Math.min(b, Math.round(a + (px - P.l) / (W - P.l - P.r) * (b - a))));
       if(d === st.sel && cruz.style.opacity === "") return;
-      st.sel = d; cruz.style.opacity = ""; cl.setAttribute("x1", x(d)); cl.setAttribute("x2", x(d)); cp.setAttribute("cx", x(d)); cp.setAttribute("cy", y(vend(d)));
+      st.sel = d; cruz.style.opacity = ""; cl.setAttribute("x1", x(d)); cl.setAttribute("x2", x(d)); cp.setAttribute("cx", x(d)); cp.setAttribute("cy", y(vend(d))); cp2.setAttribute("cx", x(d)); cp2.setAttribute("cy", y(resultado(d))); cp2.classList.toggle("lucro", resultado(d) >= 0);
       cp.classList.toggle("lucro", vend(d) >= o.equilibrio); placar(d);
     };
     cp.classList.toggle("lucro", vend(selN) >= o.equilibrio);
     const hit = svg.querySelector(".eq-hit");
     hit.addEventListener("pointerdown", e => { ir(e); try { hit.setPointerCapture(e.pointerId); } catch(_){} });
     hit.addEventListener("pointermove", ir);
-    hit.addEventListener("pointerleave", () => { if(!st.foco){ st.sel = "agora"; cruz.style.opacity = "0"; placar("agora"); } });
+    hit.addEventListener("pointerleave", voltaAgora);
   };
 
+  /* tirou o mouse/dedo do gráfico: o placar SEMPRE volta para o total até agora (mesmo com Equilíbrio/Custos pagos
+     destacados). Preso também na caixa do gráfico (não é redesenhada), então não se perde no redesenho de cada minuto. */
+  function voltaAgora(){
+    if(st.sel === "agora") return;
+    st.sel = "agora"; const c = alvo.querySelector(".eq-cruz"); if(c) c.style.opacity = "0"; placar("agora");
+  }
+  alvo.addEventListener("pointerleave", voltaAgora);
+  alvo.addEventListener("pointercancel", voltaAgora);
   /* período (zoom) */
   term.querySelectorAll("[data-eq-zoom]").forEach(bt => bt.onclick = () => {
     st.zoom = bt.dataset.eqZoom; term.querySelectorAll("[data-eq-zoom]").forEach(x2 => x2.setAttribute("aria-pressed", x2 === bt));
