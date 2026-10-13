@@ -8,33 +8,36 @@
    Uso no código: SOM.toca("add"). Cliques simples (setas, filtros, opções, copiar) são tratados aqui por delegação. */
 window.SOM=(function(){
 "use strict";
-var DIR="/sons/",CHAVE="brutt_som",VOL=.42;
-/* nome da ação: [arquivo, volume relativo, prioridade] */
+var DIR="/sons/",CHAVE="brutt_som",VOL=.29;   /* 13/10/2026: −30% (era .42) */
+/* Mais graves (13/10/2026): os sons agudos tocam mais devagar (tom ↓; 4º número = velocidade, 1 = original) e tudo
+   passa por um filtro que corta o chiado acima de ~3,2 kHz. Medido: abrir/fechar tinham o "centro" do som em ~9 kHz,
+   IA/avançar ~5,5 kHz, copiar ~4,5 kHz; os graves (carrinho, pago, erro) ficaram como estavam.
+   nome da ação: [arquivo, volume relativo, prioridade, velocidade] */
 var MAPA={
   add:["drop_002",1,5],          /* produto caiu no carrinho */
-  mais:["tick_004",.8,1],        /* + quantidade */
+  mais:["tick_004",.8,1,.75],        /* + quantidade */
   menos:["tick_002",.8,1],       /* − quantidade */
   remove:["minimize_008",.75,4], /* item saiu / carrinho limpo */
   aviso:["question_004",.7,3],   /* "toque de novo pra limpar" */
   erro:["error_004",.8,7],       /* falta algo / esgotado / limite de estoque */
   falha:["error_006",.9,8],      /* pagamento recusado ou Pix vencido */
-  seleciona:["select_002",.8,1], /* menu de categorias, filtros */
-  seta:["click_002",.7,1],       /* setas dos carrosséis e do produto */
-  opcao:["toggle_002",.75,1],    /* forma de entrega / pagamento */
-  avanca:["select_007",.7,2],    /* Finalizar pedido */
-  volta:["back_003",.7,2],       /* voltar */
+  seleciona:["select_002",.8,1,.85], /* menu de categorias, filtros */
+  seta:["click_002",.7,1,.7],       /* setas dos carrosséis e do produto */
+  opcao:["toggle_002",.75,1,.7],    /* forma de entrega / pagamento */
+  avanca:["select_007",.7,2,.6],    /* Finalizar pedido */
+  volta:["back_003",.7,2,.7],       /* voltar */
   envia:["maximize_009",.7,4],   /* enviar pedido / ir para o pagamento / mandar no WhatsApp / perguntar à IA */
-  abre:["open_002",1,2],         /* abre produto, carrinho, endereço, acompanhamento */
-  fecha:["close_002",1,2],
-  copia:["pluck_001",.9,3],      /* copiou código Pix / endereço */
-  confirma:["pluck_002",.9,4],   /* endereço confirmado */
+  abre:["open_002",1,2,.5],         /* abre produto, carrinho, endereço, acompanhamento */
+  fecha:["close_002",1,2,.5],
+  copia:["pluck_001",.9,3,.65],      /* copiou código Pix / endereço */
+  confirma:["pluck_002",.9,4,.65],   /* endereço confirmado */
   pix:["glass_002",.8,6],        /* QR Code do Pix pronto */
   minimo:["glass_006",.8,5],     /* pedido mínimo atingido */
   pago:["confirmation_004",.9,9],/* pagamento confirmado */
   etapa:["confirmation_002",.8,6],/* pedido mudou de etapa (saiu para entrega, entregue) */
-  ia_abre:["maximize_003",.8,2],
-  ia_fecha:["minimize_003",.8,2],
-  ia_resposta:["glass_005",.8,3]
+  ia_abre:["maximize_003",.8,2,.6],
+  ia_fecha:["minimize_003",.8,2,.6],
+  ia_resposta:["glass_005",.8,3,.8]
 };
 var ctx=null,saida=null,buf={},carregando={},fila=[],tFila=0,ultimo={},ligado=true,tocados=[];
 try{ligado=localStorage.getItem(CHAVE)!=="0"}catch(_){}
@@ -43,7 +46,9 @@ function contexto(){
   if(ctx)return ctx;
   var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;
   try{ctx=new AC({latencyHint:"interactive"})}catch(_){try{ctx=new AC()}catch(__){return null}}
-  saida=ctx.createGain();saida.gain.value=VOL;saida.connect(ctx.destination);
+  saida=ctx.createGain();saida.gain.value=VOL;
+  var grave=ctx.createBiquadFilter();grave.type="lowpass";grave.frequency.value=3200;grave.Q.value=.5;   /* corta o agudo */
+  saida.connect(grave);grave.connect(ctx.destination);
   return ctx;
 }
 function carrega(arq){
@@ -75,7 +80,7 @@ function tocaAgora(nome){
   var vai=function(bb){
     if(!bb||performance.now()-pedido>300)return;          /* chegou atrasado demais: melhor não tocar */
     var s=ctx.createBufferSource(),g=ctx.createGain();g.gain.value=m[1];
-    s.buffer=bb;s.connect(g);g.connect(saida);s.start();
+    s.buffer=bb;if(m[3])s.playbackRate.value=m[3];s.connect(g);g.connect(saida);s.start();
     tocados.push(nome);if(tocados.length>30)tocados.shift();   /* histórico curto (diagnóstico e testes) */
   };
   if(b)vai(b);else carrega(m[0]).then(vai);

@@ -25,3 +25,7 @@ Quem toca é `js/sons.js` (`SOM.toca("ação")`). Para trocar um som, mude o arq
 | Pagamento confirmado | `pago` | confirmation_004 |
 | Pedido mudou de etapa (saiu para entrega, entregue) | `etapa` | confirmation_002 |
 | Brutt IA: abrir / fechar / resposta | `ia_abre` / `ia_fecha` / `ia_resposta` | maximize_003 / minimize_003 / glass_005 |
+
+**Volume e tom (13/10/2026):** volume geral 30% mais baixo (`VOL` .29) e sons mais graves: os agudos tocam
+mais devagar (4º número do `MAPA`, ex.: abrir/fechar a 0,5×, IA e avançar a 0,6×) e tudo passa por um filtro
+que corta acima de ~3,2 kHz. Os sons graves (carrinho, pago, erro, enviar) ficaram como estavam.
