@@ -1206,6 +1206,18 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 @media (max-width:760px){.cf-row{grid-template-columns:minmax(0,1fr) auto}.cf-nums{grid-column:1/-1;grid-row:2;grid-template-columns:repeat(4,minmax(0,1fr))}.cf-nums span{text-align:left}.cf-row .btn-sm{grid-column:2;grid-row:1}.cf-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* estoque: só ajuste (o Nex manda) */
 .mv-info{margin:0 0 10px;font-size:13px;line-height:1.45;color:var(--muted)}
+/* Visão geral: cartão-resumo do Financeiro (leva para #/financeiro) */
+.ov-fin{display:flex;align-items:center;gap:18px;width:100%;margin:0 0 16px;padding:16px 18px;text-align:left;cursor:pointer;color:var(--ink);font:inherit;
+  border:1px solid rgba(212,150,30,.45)!important;background:linear-gradient(120deg,rgba(255,236,190,.75),rgba(255,252,247,.6) 55%,rgba(52,211,153,.10))!important;transition:transform .25s cubic-bezier(.16,1,.3,1)}
+.ov-fin .fin-ic{flex:none;width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#ea580c);color:#fff;box-shadow:0 8px 20px -10px rgba(234,88,12,.8)}
+.ov-fin .fin-ic svg{width:24px;height:24px}
+.ov-fin .fin-c{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ov-fin .fin-c small{font-size:12px;color:var(--muted);font-weight:600}
+.ov-fin .fin-c b{font:800 20px var(--mono);white-space:nowrap;color:var(--ink)}.ov-fin .fin-c b.up{color:#15803d}.ov-fin .fin-c b.dn{color:#b91c1c}
+.ov-fin .fin-go{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;color:#9a3412;white-space:nowrap}
+.ov-fin .fin-go svg{width:16px;height:16px;transition:transform .25s cubic-bezier(.16,1,.3,1)}
+@media(hover:hover) and (pointer:fine){.ov-fin:hover{transform:translateY(-2px)}.ov-fin:hover .fin-go svg{transform:translateX(3px)}}
+@media(max-width:760px){.ov-fin{flex-wrap:wrap;gap:12px 18px}.ov-fin .fin-go{margin-left:0;width:100%}.ov-fin .fin-c b{font-size:18px}}
 /* =====================================================================
    NAVEGAÇÃO ANIMADA (13/10/2026): troca de tela com View Transitions (dispatch). O menu e o topo não piscam,
    o item ativo escorrega, a página entra deslizando. Itens do menu reagem ao mouse (só transform).
@@ -1235,7 +1247,7 @@ html[data-nav-dir=sobe]::view-transition-new(root){animation-name:vtEntraCima}
 /* menu com cor: cada tela tem sua cor (ícone num quadradinho tingido); Pedidos online (o mais usado) ganha destaque;
    item ativo = vidro dourado com borda viva. Cores escuras e saturadas: contraste ≥ 3:1 no ícone sobre o claro. */
 .nav-i{--c:var(--muted)}
-.nav-i[data-tab=visao]{--c:#c2410c}.nav-i[data-tab=home]{--c:#b45309}.nav-i[data-tab=pedidos]{--c:#15803d}.nav-i[data-tab=clientes]{--c:#7e22ce}
+.nav-i[data-tab=visao]{--c:#c2410c}.nav-i[data-tab=financeiro]{--c:#a16207}.nav-i[data-tab=home]{--c:#b45309}.nav-i[data-tab=pedidos]{--c:#15803d}.nav-i[data-tab=clientes]{--c:#7e22ce}
 .nav-i[data-tab=estoque-baixo]{--c:#dc2626}.nav-i[data-tab=conferencia]{--c:#0e7490}.nav-i[data-tab=sommelier]{--c:#a21caf}.nav-i[data-tab=fotos]{--c:#2563eb}
 .nav-i[data-tab=horarios]{--c:#0f766e}.nav-i[data-tab=nex]{--c:#4338ca}.nav-i[data-tab=equipe]{--c:#6d28d9}.nav-i[data-tab=planilha]{--c:#15803d}.nav-i[data-tab=vendidos]{--c:#be123c}
 .side .nav-i>svg{flex:none;width:28px;height:28px;padding:5px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);box-sizing:border-box}
@@ -1525,6 +1537,7 @@ const ICON = {
   sync:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
   sheet:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2M14 13h2M8 17h2M14 17h2"/>',
   trend:'<path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/>',
+  coin:'<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>',
   out:'<path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>',
   menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
   x:'<path d="M18 6 6 18M6 6l12 12"/>',
@@ -1547,7 +1560,7 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 /* navegação lateral agrupada. Só destinos que existem em ROUTES. Tela nova = ROUTES + item aqui. */
 const NAV = [
   ["Operação", [["visao","Visão geral","dash"],["home","Produtos","pkg"],["pedidos","Pedidos online","bag","pedidos"],["clientes","Clientes","users"],["estoque-baixo","Estoque baixo","alert","estoque"]]],
-  ["Gestão",   [["conferencia","Conferência de produtos","check"],["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"],["equipe","Equipe","shield"]]],
+  ["Gestão",   [["financeiro","Financeiro","coin"],["conferencia","Conferência de produtos","check"],["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"],["equipe","Equipe","shield"]]],
   ["Planilhas",[["planilha","Planilha de compra","sheet"],["vendidos","Mais vendidos","trend"]]],
 ];
 const ABAS = NAV.flatMap(([, itens]) => itens.map(([r, t]) => [r, t]));
@@ -4181,6 +4194,40 @@ function graficoEquilibrio(o){
   tic(); box._relogio = setInterval(tic, 1000);
   if(window.ResizeObserver){ let t = 0, w0 = alvo.clientWidth; const ro = new ResizeObserver(() => { if(!alvo.isConnected){ ro.disconnect(); return; } if(Math.abs(alvo.clientWidth - w0) < 8) return; w0 = alvo.clientWidth; clearTimeout(t); t = setTimeout(desenha, 120); }); ro.observe(alvo); }
 }
+/* ---------------- Financeiro (#/financeiro, grupo Gestão, só dono/admin) ----------------
+   Tela própria do "Lucro do mês" (faturamento, custos, lucro líquido) e do terminal do ponto de equilíbrio. A Visão
+   geral mostra só o cartão-resumo (resumoFinanceiro) que leva para cá. */
+async function renderFinanceiro(){
+  app.innerHTML = `${topbarHTML("Financeiro")}
+    <div class="pg">
+      <div class="pg-h"><div><h2 class="pg-t">Financeiro</h2><p class="pg-d">Lucro do mês, custos e ponto de equilíbrio, com o terminal ao vivo (horário de Brasília) e o simulador de vendas.</p></div>
+        <button class="btn-ghost btn-sm" id="fnAtualiza">${ic("sync")} Atualizar</button></div>
+      <section class="ov-box ov-lucro" id="ovLucro" aria-live="polite"><div class="loading">Calculando o lucro…</div></section>
+    </div>`;
+  bindTopbar();
+  $("#fnAtualiza").onclick = () => renderFinanceiro();
+  const [prodsMg, fin] = await Promise.all([
+    sb.from("products").select("price,promo_price,cost_price,sales_count").eq("is_active", true).limit(5000),
+    sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),
+  ]);
+  if(rotaAtual() !== "financeiro" || !$("#ovLucro")) return;
+  desenhaLucro(fin && !fin.error ? fin.data : null, margemCatalogo(prodsMg.error ? [] : prodsMg.data), !!(fin && fin.error));
+}
+function resumoFinanceiro(fin, mg, erro){
+  const box = $("#ovFin"); if(!box) return;
+  if(erro){ box.remove(); return; }   /* atendente não vê números de lucro */
+  const f = fin || {}, custos = Array.isArray(f.custos) ? f.custos : [];
+  const fixos = custos.reduce((t, c) => t + (Number(c.valor) || 0), 0), dia = Number(f.dia_a_dia) || 0, fat = Number(f.faturamento) || 0;
+  const m = mg.pct == null ? null : mg.pct / 100, liq = m == null || !fat ? null : fat * m - fixos - dia, eq = m ? (fixos + dia) / m : null;
+  const t = spAgora(), D = new Date(t.ano, t.mes + 1, 0).getDate(), diaEq = eq && fat ? Math.ceil(eq / (fat / D)) : null;
+  const MES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][t.mes];
+  box.innerHTML = `<span class="fin-ic">${ic("coin")}</span>
+    <span class="fin-c"><small>Lucro líquido do mês</small><b class="${liq == null ? "" : liq >= 0 ? "up" : "dn"}" data-odo="fin-liq">${liq == null ? "—" : brlM(liq)}</b></span>
+    <span class="fin-c"><small>Ponto de equilíbrio</small><b data-odo="fin-eq">${eq ? brl0(eq) : "—"}</b></span>
+    <span class="fin-c"><small>Custos pagos em</small><b>${diaEq && diaEq <= D ? `${diaEq} ${MES}` : eq && fat ? "não empata" : "—"}</b></span>
+    <span class="fin-go">Abrir Financeiro ${ic("chev")}</span>`;
+  box.querySelectorAll("[data-odo]").forEach(el => odo(el, el.dataset.odo));
+}
 function editarCustos(f, custos, mg){
   const lin = (c, i) => `<div class="lc-ed" data-i="${i}"><input class="lc-n" type="text" value="${esc(c.nome)}" placeholder="Nome (ex.: Aluguel)" aria-label="Nome do custo"><span class="lc-in"><i>R$</i><input class="lc-vv" type="text" inputmode="decimal" value="${c.valor != null ? String(Number(c.valor).toFixed(2)).replace(".", ",") : ""}" placeholder="0,00" aria-label="Valor por mês"></span><button type="button" class="btn-danger btn-sm lc-del" aria-label="Remover">${ic("x")}</button></div>`;
   openDrawer(`<div class="drawer-h"><h2>Custos fixos do mês</h2><button class="x" data-close aria-label="Fechar">${ic("x")}</button></div><div class="section"><p class="lc-nota" style="margin:0 0 12px">Valores que a loja paga todo mês, com ou sem venda. Entram na projeção do lucro e no ponto de equilíbrio.</p>
@@ -4205,7 +4252,7 @@ async function renderVisao(){
       <div class="pg-h"><div><h2 class="pg-t">Visão geral</h2><p class="pg-d">O que precisa de atenção agora. Números do banco da loja no momento em que a tela abriu.</p></div>
         <button class="btn-ghost btn-sm" id="ovAtualiza">${ic("sync")} Atualizar</button></div>
       <div class="ov-grid" id="ovKpis">${["Pedidos a concluir","Estoque baixo","Ativos sem estoque","Margem de lucro","Loja agora"].map(kpiSk).join("")}</div>
-      <section class="ov-box ov-lucro" id="ovLucro" aria-live="polite"><div class="loading">Calculando o lucro…</div></section>
+      <button type="button" class="ov-box ov-fin" id="ovFin" data-ir="financeiro" aria-label="Abrir o Financeiro"><div class="loading">Calculando o lucro…</div></button>
       <div class="ov-cols">
         <section class="ov-box"><h3>O que resolver agora</h3><div class="ov-todo" id="ovTodo"><div class="loading">Verificando…</div></div></section>
         <section class="ov-box"><div class="ov-box-h"><h3>Últimos pedidos online</h3><button class="btn-ghost btn-sm" data-ir="pedidos">Ver todos</button></div><div class="ov-ped" id="ovPed"><div class="loading">Carregando…</div></div></section>
@@ -4262,7 +4309,7 @@ async function renderVisao(){
     kpi("horarios", "store", "Loja agora", !loja ? "—" : loja.aberto ? "Aberta" : "Fechada",
         !loja ? "não disponível" : loja.aberto ? "até " + loja.fim : (loja.nunca ? "nenhum dia aberto" : "abre " + loja.quando + " às " + loja.hora), !loja ? "" : loja.aberto ? "bom" : "alerta", true);
 
-  desenhaLucro(fin && !fin.error ? fin.data : null, mg, !!(fin && fin.error));
+  resumoFinanceiro(fin && !fin.error ? fin.data : null, mg, !!(fin && fin.error));
   /* o que resolver agora: só itens que existem de verdade */
   const it = (rota, icone, cls, titulo, sub) => `<button class="ov-item ${cls}" data-ir="${rota}"><span class="ic">${ic(icone)}</span><span class="tx"><b>${titulo}</b><small>${sub}</small></span><span class="go">${ic("chev")}</span></button>`;
   const todo = [];
@@ -4282,7 +4329,7 @@ async function renderVisao(){
     ult.data.map(p => `<div class="ov-ped-r"><span class="n"><code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</span>
       <span class="t">${brlV(p.total)}<span class="st st-${esc(pedSt(p))}">${PED_ROT[pedSt(p)] || esc(p.status)}</span></span>
       <span class="q">${fmtQuando(p.created_at)}</span></div>`).join("");
-  app.querySelectorAll("#ovKpis [data-ir], #ovTodo [data-ir]").forEach(b => b.onclick = () => irPara(b.dataset.ir));
+  app.querySelectorAll("#ovKpis [data-ir], #ovTodo [data-ir], #ovFin").forEach(b => b.onclick = () => irPara(b.dataset.ir));
 }
 
 /* ---------------- clientes: cadastro único (lista do Nex + quem compra pelo site), editável pela equipe ----------------
@@ -4789,6 +4836,7 @@ function eqAbrir(m){
 /* tabela de rotas — toda tela nova entra aqui */
 Object.assign(ROUTES, {
   "visao": renderVisao,
+  "financeiro": renderFinanceiro,
   "home": renderMain,
   "nex": renderNex,
   "horarios": renderHorarios,
