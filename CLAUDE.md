@@ -17,7 +17,11 @@ Leia antes de alterar qualquer arquivo.
 │   ├── fluidez.js        # Lenis (scroll suave), navegação ←/→ e gesto no modal de produto
 │   ├── checkout-mp.js    # window.MPX: pagamento Mercado Pago (Payment Brick, Pix), campo WhatsApp, pin da loja
 │   ├── acompanhar.js     # window.ACOMP: tela "Acompanhe seu pedido" (pós-pagamento, estilo iFood) + atalho no topo
-│   └── sons.js           # window.SOM: sons das ações da loja + botão de som no topo (#somBtn)
+│   ├── sons.js           # window.SOM: sons das ações da loja + botão de som no topo (#somBtn)
+│   ├── desempenho.js     # mede se o aparelho aguenta (fx-alto/fx-leve) e pré-carrega fotos das próximas seções
+│   ├── topo-fogo*.js     # fundo animado do topo: controle (topo-fogo.js) + motor + worker (OffscreenCanvas)
+│   ├── menu-carrossel.js # menu do topo como letreiro sem fim (Web Animation)
+│   └── ia-voa.js         # "Esconder" da Brutt IA voa até a bolinha (mesma lógica do voo pro carrinho)
 ├── vendor/lenis.min.js   # Lenis 1.3.26 servido localmente (sem CDN)
 ├── vendor/fonts/         # DejaVu Sans Mono (woff2, recorte Latin) para var(--mono)
 ├── sons/                 # sons de interface (mp3) + LEIA-ME.md com a tabela ação → arquivo
@@ -198,6 +202,12 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - **Ícones SVG:** a linha minificada tem `*{scrollbar-gutter:stable}`, que no PC (barra de rolagem clássica) reservava a faixa da barra DENTRO de ícones pequenos e os apagava (a setinha do "Horários" sumia). O `#ajustes` desfaz isso com `svg{scrollbar-gutter:auto}`; não remova.
 - **Botões:** do tamanho do texto (não esticam na largura toda), centralizados na loja e à direita nas gavetas do painel; 44 px de altura no toque / 40–42 px no mouse. Textos curtos: "Voltar", "Saber mais", "Adicionar", "Gerar Pix", "Copiar código", "Salvar".
 - **Topo:** busca com 36 px de altura (menor que os ícones redondos de 42 px; texto 16 px) e texto "Buscar". Botão "Horários" com relógio no PC (some até 480 px, junto com a setinha, para o status não ser cortado).
+- **Desempenho (13/10/2026):** um `<script>` no `<head>` põe `html.fx-alto` (padrão: celular atual roda TODOS os efeitos do PC: vídeo de fumaça, desfoque do título, bordas da IA, fundo do topo a ~60 fps) ou `html.fx-leve` (economia de dados, `deviceMemory`<4, menos de 4 núcleos, ou a medição de quadros de `js/desempenho.js` deu travada; guardado 7 dias em `localStorage.brutt_fx`). No JS, `window.__FX`. Regras para não travar o celular:
+  - **Nada de JS escrevendo estilo/scroll a cada quadro.** Letreiros que andam sozinhos (menu do topo, avaliações) usam Web Animation de `transform` em loop de uma volta (roda no compositor) e, ao toque, o quanto andou vai pro `scrollLeft`. `scrollLeft` por quadro andava aos trancos no iPhone (arredonda para pixel inteiro).
+  - **Canvas animado roda em worker** (`OffscreenCanvas`, ver `topo-fogo-worker.js`); para quando sai da tela.
+  - **Não deixe `content-visibility:visible` nas seções** (testado: dobra o custo de cada quadro); as fotos das próximas seções são pré-carregadas por `desempenho.js`.
+  - Observador de mutação no `body` inteiro só pode agir quando o elemento que interessa mudou (ex.: `syncLock` filtra `.drawer,.modal,#lbox,#dlv`); antes rodava a cada classe trocada na página.
+  - Brilho girando em elemento redondo = girar o elemento (`transform`), não animar o ângulo do degradê (`--ia-ang` repinta na thread da página).
 - Modais/gavetas travam a página com `html.is-locked` (JS `syncLock`); o Lenis pausa junto. Contêineres com rolagem própria precisam estar no `prevent` do Lenis (`js/fluidez.js`).
 - Teclado virtual: alturas via `--vvh`/`--vvt` (loja) e `--ia-vh`/`--ia-kb` (Brutt IA), medidas com `visualViewport`.
 
