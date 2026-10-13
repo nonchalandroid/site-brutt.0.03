@@ -1371,7 +1371,7 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
   border:1px solid rgba(245,158,11,.35);box-shadow:0 18px 50px -24px rgba(20,13,28,.75),inset 0 1px 0 rgba(255,255,255,.06)}
 .eq-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 .eq-placar{display:flex;flex-direction:column;gap:2px;min-width:0}
-.eq-pd{font:600 12px var(--mono);color:var(--t-mut);letter-spacing:.02em;text-transform:uppercase}
+.eq-pd[hidden]{display:none}.eq-pd{font:600 12px var(--mono);color:var(--t-mut);letter-spacing:.02em;text-transform:uppercase}
 .eq-pv{font:800 30px/1.1 var(--mono);color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 0 22px rgba(245,158,11,.45)}
 .eq-pr{font:800 22px/1.1 var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums}.eq-pr.up{color:var(--t-ok)}.eq-pr.dn{color:var(--t-neg)}
 .eq-pb{display:flex;align-items:flex-end;gap:12px 28px;flex-wrap:wrap;margin-top:4px}
@@ -4114,7 +4114,9 @@ function graficoEquilibrio(o){
   const placar = d => {
     const agora = d === "agora", t = agora ? spAgora() : null, dd = agora ? Math.max(0, t.frac) : d;
     const v = vend(dd), res = v * o.m - o.custo, pago = v >= o.equilibrio;
-    term.querySelector(".eq-pd").textContent = agora ? `agora · ${dataC(t.dia)} · ${String(t.h).padStart(2, "0")}:${String(t.m).padStart(2, "0")}` : `${dataC(d)}${d === hoje ? " · hoje" : d > hoje ? " · projeção" : ""}`;
+    /* no "agora" a data/hora já está no relógio do topo: a linha só aparece quando um dia é apontado no gráfico */
+    const pd = term.querySelector(".eq-pd"); pd.hidden = agora;
+    pd.textContent = agora ? "" : `${dataC(d)}${d === hoje ? " · hoje" : d > hoje ? " · projeção" : ""}`;
     term.querySelector(".eq-pv").textContent = brl0(v);
     /* P&L até o momento: (vendas × margem) − custos do mês (fixos + dia a dia). Antes do equilíbrio é prejuízo. */
     const pr = term.querySelector(".eq-pr"); pr.className = "eq-pr " + (res >= 0 ? "up" : "dn");
