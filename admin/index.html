@@ -1207,6 +1207,48 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 /* estoque: só ajuste (o Nex manda) */
 .mv-info{margin:0 0 10px;font-size:13px;line-height:1.45;color:var(--muted)}
 /* =====================================================================
+   NAVEGAÇÃO ANIMADA (13/10/2026): troca de tela com View Transitions (dispatch). O menu e o topo não piscam,
+   o item ativo escorrega, a página entra deslizando. Itens do menu reagem ao mouse (só transform).
+   ===================================================================== */
+.side{view-transition-name:menu}
+.topbar{view-transition-name:topo}
+.nav-i.on{view-transition-name:nav-ativo}
+::view-transition-group(nav-ativo){animation-duration:.45s;animation-timing-function:cubic-bezier(.16,1,.3,1)}
+::view-transition-old(root){animation:vtSai .2s cubic-bezier(.4,0,1,1) both}
+::view-transition-new(root){animation:vtEntra .45s cubic-bezier(.16,1,.3,1) both}
+html[data-nav-dir=sobe]::view-transition-old(root){animation-name:vtSaiBaixo}
+html[data-nav-dir=sobe]::view-transition-new(root){animation-name:vtEntraCima}
+@keyframes vtSai{to{opacity:0;transform:translateY(-10px)}}
+@keyframes vtSaiBaixo{to{opacity:0;transform:translateY(10px)}}
+@keyframes vtEntra{from{opacity:0;transform:translateY(18px)}}
+@keyframes vtEntraCima{from{opacity:0;transform:translateY(-18px)}}
+.pg-entra{animation:vtEntra .45s cubic-bezier(.16,1,.3,1) both}
+/* cartões da página entram em cascata (visão geral, conferência) */
+.pg-entra .ov-kpi,.pg-entra .cf-it{animation:vtEntra .5s cubic-bezier(.16,1,.3,1) both}
+.nav-i .i{transition:transform .25s cubic-bezier(.16,1,.3,1)}
+@media(hover:hover) and (pointer:fine){
+  .nav-i:hover .i{transform:translateX(2px) scale(1.12)}
+  .btn-gold,.btn-ghost,.btn-sec,.btn-salvia,.btn-indigo{transition:transform .2s cubic-bezier(.16,1,.3,1)}
+  .btn-gold:hover,.btn-sec:hover,.btn-salvia:hover,.btn-indigo:hover{transform:translateY(-1px)}
+}
+.btn-gold:active,.btn-ghost:active,.btn-sec:active,.nav-i:active{transform:scale(.97)}
+/* menu com cor: cada tela tem sua cor (ícone num quadradinho tingido); Pedidos online (o mais usado) ganha destaque;
+   item ativo = vidro dourado com borda viva. Cores escuras e saturadas: contraste ≥ 3:1 no ícone sobre o claro. */
+.nav-i{--c:var(--muted)}
+.nav-i[data-tab=visao]{--c:#c2410c}.nav-i[data-tab=home]{--c:#b45309}.nav-i[data-tab=pedidos]{--c:#15803d}.nav-i[data-tab=clientes]{--c:#7e22ce}
+.nav-i[data-tab=estoque-baixo]{--c:#dc2626}.nav-i[data-tab=conferencia]{--c:#0e7490}.nav-i[data-tab=sommelier]{--c:#a21caf}.nav-i[data-tab=fotos]{--c:#2563eb}
+.nav-i[data-tab=horarios]{--c:#0f766e}.nav-i[data-tab=nex]{--c:#4338ca}.nav-i[data-tab=equipe]{--c:#6d28d9}.nav-i[data-tab=planilha]{--c:#15803d}.nav-i[data-tab=vendidos]{--c:#be123c}
+.side .nav-i>svg{flex:none;width:28px;height:28px;padding:5px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);box-sizing:border-box}
+.side .nav-i{gap:9px}.side .nav-i .lbl{color:var(--ink);font-weight:550;font-size:13px;letter-spacing:-.01em;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.2;text-align:left}
+.side .nav-i[data-tab=pedidos]{background:linear-gradient(90deg,rgba(21,128,61,.10),transparent 80%)}
+.side .nav-i[data-tab=pedidos] .lbl{font-weight:700;color:#14532d}
+@media(hover:hover) and (pointer:fine){.side .nav-i:hover{background:color-mix(in srgb,var(--c) 9%,rgba(255,252,247,.7))}}
+.side .nav-i.on{background:linear-gradient(135deg,rgba(255,236,190,.95),rgba(255,250,240,.9));box-shadow:inset 0 0 0 1.5px rgba(212,150,30,.7),0 6px 18px -10px rgba(180,120,20,.6)}
+.side .nav-i.on .lbl{color:#4a2c1a;font-weight:700}
+.side .nav-i.on>svg{color:#fff;background:var(--c)}
+.side-g.g-operacao>span{color:#c2410c}.side-g.g-gestao>span{color:#7e22ce}.side-g.g-planilhas>span{color:#15803d}
+@media(prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root),::view-transition-group(nav-ativo){animation:none}.pg-entra,.pg-entra .ov-kpi,.pg-entra .cf-it{animation:none}}
+/* =====================================================================
    TEXTO MAIS FORTE (13/10/2026, pedido do dono: "letras claras demais, mais saturação")
    Os cinzas de texto viram marrons mais escuros e mais saturados (contraste ≥ 7 sobre o fundo claro);
    item zerado da Conferência não fica mais esmaecido (só o número fica verde).
@@ -1362,12 +1404,23 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
 .eq-sr b{color:#fff;font-family:var(--mono);white-space:nowrap}.eq-sr b.up{color:var(--t-ok)}.eq-sr b.dn{color:var(--t-neg)}
 .eq-sreset{min-height:32px;padding:0 12px;border-radius:999px;border:1px solid rgba(253,224,71,.5);background:rgba(253,224,71,.1);color:#fde047;font:600 12px var(--font);cursor:pointer}
 .eq-term.simulando{border-color:rgba(253,224,71,.6)}
-.eq-term.simulando::after{content:"SIMULAÇÃO";position:absolute;top:10px;left:50%;transform:translateX(-50%);font:800 10px var(--mono);letter-spacing:.2em;color:#1a0f02;background:#fde047;padding:3px 8px;border-radius:999px}
+/* simulação: marca d'água grande no meio do gráfico, opacidade baixa (não esconde a linha) */
+.eq-term .eq-graf{position:relative}
+.eq-term .eq-graf::after{content:"SIMULAÇÃO";position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;
+  font:900 clamp(36px,10vw,96px)/1 var(--mono);letter-spacing:.14em;color:#fde047;opacity:0;transform:rotate(-8deg) scale(.92);
+  text-shadow:0 0 40px rgba(253,224,71,.6);transition:opacity .35s cubic-bezier(.16,1,.3,1),transform .35s cubic-bezier(.16,1,.3,1)}
+.eq-term.simulando .eq-graf::after{opacity:.16;transform:rotate(-8deg) scale(1)}
+.eq-term.simulando .eq-sim{border-color:rgba(253,224,71,.55);background:rgba(253,224,71,.07)}
+/* relógio de Brasília ao vivo */
+.eq-relogio{display:flex;align-items:center;gap:8px;margin:0 0 8px;font:700 12px var(--mono);color:#fff;letter-spacing:.02em;text-transform:uppercase}
+.eq-relogio i{width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 0 0 rgba(52,211,153,.6);animation:eqVivo 1.6s ease-out infinite}
+.eq-relogio small{font:500 11px var(--font);color:var(--t-mut);text-transform:none;letter-spacing:0}
+@keyframes eqVivo{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}
 @media(max-width:480px){.eq-pv{font-size:26px}.eq-zoom{width:100%}.eq-zoom button{flex:1;padding:0 6px}.eq-term{padding:12px 10px}
-  .eq-term.simulando::after{top:auto;bottom:auto;left:auto;right:12px;top:12px;transform:none}}
+  .eq-relogio{flex-wrap:wrap;row-gap:2px}}
 @media(hover:hover) and (pointer:fine){.eq-zoom button:hover{color:#fff}}
 @media(max-width:480px){.eq-sim label{flex-direction:column;align-items:flex-start;gap:2px}.eq-sv{font-size:20px}}
-@media(prefers-reduced-motion:reduce){.eq-term .eq-cp{transition:none}.od-r{transition:none}.eq-revela.anima,.eq-onda,.odo-delta{animation:none}.eq-onda{display:none}}
+@media(prefers-reduced-motion:reduce){.eq-relogio i{animation:none}.eq-term .eq-graf::after{transition:none}.eq-term .eq-cp{transition:none}.od-r{transition:none}.eq-revela.anima,.eq-onda,.odo-delta{animation:none}.eq-onda{display:none}}
 </style>
 </head>
 <body>
@@ -1436,11 +1489,25 @@ const ehGestor = () => !state.staff?.role || ["owner","admin"].includes(state.st
 const ROTAS_ATENDENTE = ["pedidos"];
 const podeRota = r => ehGestor() || ROTAS_ATENDENTE.includes(r);
 function rotaAtual(){ const h = location.hash.replace(/^#\/?/, ""), r = ROUTES[h] ? h : "home"; return podeRota(r) ? r : "pedidos"; }
+/* troca de tela animada: com View Transitions (Chrome/Edge/Safari 18) a tela antiga sai, a nova entra deslizando
+   (para cima ou para baixo conforme a posição no menu), o menu lateral e o topo ficam parados e o destaque do item
+   ativo escorrega até o novo. Espera os dados da tela nova até 260 ms (se chegarem antes, entra pronta; senão entra
+   com o "carregando"). Sem o recurso: só a página entra suave. reduced-motion: troca seca. */
+let _rotaAnt = null;
 function dispatch(){
   if(!state.staff) return;
   try{ closeDrawer(); }catch(_){}
-  Promise.resolve(ROUTES[rotaAtual()]()).catch(e => { console.error(e); toast("Erro ao abrir a tela."); });
-  window.scrollTo(0, 0);
+  const r = rotaAtual(), calma = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const roda = () => { const p = Promise.resolve(ROUTES[r]()).catch(e => { console.error(e); toast("Erro ao abrir a tela."); }); window.scrollTo(0, 0); return p; };
+  const ia = ABAS.findIndex(a => a[0] === _rotaAnt), ib = ABAS.findIndex(a => a[0] === r), trocou = _rotaAnt && _rotaAnt !== r;
+  _rotaAnt = r;
+  document.documentElement.dataset.navDir = ia > ib ? "sobe" : "desce";
+  if(trocou && !calma && document.startViewTransition && document.querySelector(".side")){
+    document.startViewTransition(() => Promise.race([roda(), new Promise(z => setTimeout(z, 260))]));
+    return;
+  }
+  roda();
+  if(trocou && !calma) requestAnimationFrame(() => { const pg = document.querySelector(".pg"); if(pg) pg.classList.add("pg-entra"); });
 }
 function go(nome){
   const alvo = nome === "home" ? "#/" : "#/" + nome;
@@ -3968,20 +4035,30 @@ function odo(el, chave){
    - Botões Equilíbrio / Custos pagos (lados opostos) destacam a linha ou o ponto. Tabela em "Ver em tabela".
    Painel escuro com cores neon (validadas p/ daltonismo; lucro/prejuízo também levam ▲▼ e texto). Só transform/opacity
    animam (linha que se desenha, sinal pulsando em hoje). */
+/* hora de Brasília (America/Sao_Paulo), não a do aparelho: frac = dias corridos do mês até agora (12,15 = dia 13 às 03:36) */
+const _fmtBR = new Intl.DateTimeFormat("en-US", { timeZone:"America/Sao_Paulo", year:"numeric", month:"numeric", day:"numeric", hour:"numeric", minute:"numeric", second:"numeric", hour12:false });
+function spAgora(){
+  const p = Object.fromEntries(_fmtBR.formatToParts(new Date()).map(x => [x.type, x.value])), h = (+p.hour) % 24;
+  return { ano:+p.year, mes:+p.month - 1, dia:+p.day, h, m:+p.minute, s:+p.second, frac:(+p.day - 1) + (h * 3600 + (+p.minute) * 60 + (+p.second)) / 86400 };
+}
 function graficoEquilibrio(o){
   const box = $("#lcGraf"); if(!box) return;
+  clearInterval(box._relogio);
   if(!o.equilibrio){ box.innerHTML = `<p class="lc-nota">Cadastre o custo dos produtos e os custos fixos para ver o ponto de equilíbrio.</p>`; return; }
-  const agora = new Date(), ano = agora.getFullYear(), mes = agora.getMonth(), D = new Date(ano, mes + 1, 0).getDate(), hoje = agora.getDate();
-  const MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"], mesNome = agora.toLocaleDateString("pt-BR", { month: "long" });
+  const SP = spAgora(), ano = SP.ano, mes = SP.mes, D = new Date(ano, mes + 1, 0).getDate(), hoje = SP.dia;
+  const MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  const mesNome = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"][mes];
+  const SEM = ["dom","seg","ter","qua","qui","sex","sáb"];
   const dataC = d => `${d} ${MESES[mes]}`;
   const temFat = o.fat > 0, ritmoBase = temFat ? o.fat / D : o.equilibrio / D, ritmoMin = o.equilibrio / D;
-  const st = { ritmo: ritmoBase, zoom: "mes", sel: Math.min(hoje, D), primeira: true, foco: null };
+  const st = { ritmo: ritmoBase, zoom: "mes", sel: "agora", primeira: true, foco: null };   /* sel = "agora" ou um dia escolhido */
   const vend = d => st.ritmo * d, dEq = () => o.equilibrio / st.ritmo, resultado = d => vend(d) * o.m - o.custo;
   const fecha = () => vend(D) >= o.equilibrio;
   const maxSim = Math.max(ritmoBase, ritmoMin) * 2.2, passoSim = maxSim > 2000 ? 50 : 10;
   box.innerHTML = `<div class="eq-h"><h4>Ponto de equilíbrio · ${esc(mesNome)} de ${ano}</h4>
       <p class="eq-exp">É quanto a loja precisa <b>vender no mês para não ter prejuízo</b>: com margem de ${pctBR(o.margem || 0)}, cada R$ 100 vendidos deixam ${brlM(o.margem || 0)} de lucro bruto, e esse lucro tem que pagar os custos do mês (${brl0(o.custo)}). Isso acontece quando as vendas chegam a <b>${brl0(o.equilibrio)}</b>. Vendeu menos, fecha no prejuízo; tudo que passar disso é lucro.</p></div>
     <div class="eq-term">
+      <div class="eq-relogio"><i aria-hidden="true"></i><span class="eq-rel-t"></span><small>horário de Brasília</small></div>
       <div class="eq-top">
         <div class="eq-placar" aria-live="polite"><span class="eq-pd"></span><b class="eq-pv"></b><span class="eq-pr"></span></div>
         <div class="eq-zoom" role="group" aria-label="Período do gráfico">${[["mes","Mês"],["ate","Até hoje"],["dep","Daqui pra frente"]].map(([k, t]) => `<button type="button" data-eq-zoom="${k}" aria-pressed="${k === "mes"}">${t}</button>`).join("")}</div>
@@ -4000,8 +4077,9 @@ function graficoEquilibrio(o){
 
   /* placar do topo: o dia escolhido (hoje, ou onde o dedo/mouse está) */
   const placar = d => {
-    const v = vend(d), res = resultado(d), pago = v >= o.equilibrio;
-    term.querySelector(".eq-pd").textContent = `${dataC(d)}${d === hoje ? " · hoje" : d > hoje ? " · projeção" : ""}`;
+    const agora = d === "agora", t = agora ? spAgora() : null, dd = agora ? Math.max(0, t.frac) : d;
+    const v = vend(dd), res = v * o.m - o.custo, pago = v >= o.equilibrio;
+    term.querySelector(".eq-pd").textContent = agora ? `agora · ${dataC(t.dia)} · ${String(t.h).padStart(2, "0")}:${String(t.m).padStart(2, "0")}` : `${dataC(d)}${d === hoje ? " · hoje" : d > hoje ? " · projeção" : ""}`;
     term.querySelector(".eq-pv").textContent = brl0(v);
     const pr = term.querySelector(".eq-pr"); pr.className = "eq-pr " + (pago ? "up" : "dn");
     pr.textContent = pago ? `▲ lucro ${brl0(res)}` : `▼ faltam ${brl0(o.equilibrio - v)} p/ empatar`;
@@ -4030,7 +4108,7 @@ function graficoEquilibrio(o){
     const maxY = Math.max(vend(b), o.equilibrio) * 1.12, x = d => P.l + ((d - a) / Math.max(1, b - a)) * (W - P.l - P.r), y = v => P.t + (1 - v / maxY) * (H - P.t - P.b);
     const passo = maxY > 80000 ? 20000 : maxY > 40000 ? 10000 : maxY > 20000 ? 5000 : maxY > 8000 ? 2000 : maxY > 3000 ? 1000 : 500, grade = [];
     for(let v = 0; v <= maxY; v += passo) grade.push(v);
-    const yE = y(o.equilibrio), h0 = Math.min(Math.max(hoje, a), b), y0 = y(0);
+    const ag = Math.max(1, spAgora().frac), selN = st.sel === "agora" ? ag : st.sel, yE = y(o.equilibrio), h0 = Math.min(Math.max(ag, a), b), y0 = y(0);   /* "agora" anda com o relógio */
     const n = W < 520 ? 3 : 6, marcas = [...new Set([a, ...Array.from({ length: n - 1 }, (_, i) => Math.round(a + (b - a) * (i + 1) / n)), b])];
     const seg = (p, q) => `${x(p)},${y(vend(p))} ${x(q)},${y(vend(q))}`;
     const area = (p, q, cls) => q > p ? `<path class="${cls}" d="M${x(p)},${y0} L${x(p)},${y(vend(p))} L${x(q)},${y(vend(q))} L${x(q)},${y0} Z"/>` : "";
@@ -4048,7 +4126,7 @@ function graficoEquilibrio(o){
       <rect x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}" fill="url(#eqPontos)"/>
       ${grade.map(v => `<line class="eq-gr" x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}"/><text class="eq-ax" x="${P.l - 8}" y="${y(v) + 4}" text-anchor="end">${v >= 1000 ? (v / 1000).toLocaleString("pt-BR") + "k" : v}</text>`).join("")}
       ${marcas.map((d, i) => `<text class="eq-ax" x="${x(d)}" y="${H - 9}" text-anchor="${i === 0 ? "start" : i === marcas.length - 1 ? "end" : "middle"}">${dataC(d)}</text>`).join("")}
-      ${hoje < b ? `<rect class="eq-futuro" x="${x(Math.max(h0, a))}" y="${P.t}" width="${Math.max(0, x(b) - x(Math.max(h0, a)))}" height="${H - P.t - P.b}"/>` : ""}
+      ${ag < b ? `<rect class="eq-futuro" x="${x(Math.max(h0, a))}" y="${P.t}" width="${Math.max(0, x(b) - x(Math.max(h0, a)))}" height="${H - P.t - P.b}"/>` : ""}
       <g clip-path="url(#eqPlot)"><g clip-path="url(#eqRevela)">
         ${area(a, Math.min(b, Math.max(a, dx)), "eq-a-neg")}${area(Math.max(a, dx), b, "eq-a-pos")}
         <polyline class="eq-glow" points="${seg(a, b)}" filter="url(#eqBrilho)"/>
@@ -4056,15 +4134,15 @@ function graficoEquilibrio(o){
       </g></g>
       <line class="eq-eq" x1="${P.l}" x2="${W - P.r}" y1="${yE}" y2="${yE}"/>
       ${fecha() && dx >= a && dx <= b ? `<g class="eq-cruza"><circle class="eq-pt" cx="${x(cx)}" cy="${yE}" r="6"/></g>` : ""}
-      ${hoje >= a && hoje <= b ? `<line class="eq-hoje" x1="${x(h0)}" x2="${x(h0)}" y1="${P.t}" y2="${y0}"/>
+      ${ag >= a && ag <= b ? `<line class="eq-hoje" x1="${x(h0)}" x2="${x(h0)}" y1="${P.t}" y2="${y0}"/>
         <g class="eq-sinal" transform="translate(${x(h0)},${y(vend(h0))})"><circle class="eq-onda" r="6"/><circle class="eq-onda o2" r="6"/><circle class="eq-ponto" r="5"/></g>` : ""}
-      <g class="eq-cruz"><line class="eq-cl" x1="${x(st.sel)}" x2="${x(st.sel)}" y1="${P.t}" y2="${y0}"/><circle class="eq-cp" cx="${x(st.sel)}" cy="${y(vend(st.sel))}" r="6"/></g>
+      <g class="eq-cruz"><line class="eq-cl" x1="${x(selN)}" x2="${x(selN)}" y1="${P.t}" y2="${y0}"/><circle class="eq-cp" cx="${x(selN)}" cy="${y(vend(selN))}" r="6"/></g>
       <rect class="eq-hit" x="${P.l}" y="0" width="${W - P.l - P.r}" height="${H}"/>
     </svg>`;
     st.primeira = false;
     const svg = alvo.querySelector("svg"); svg.classList.toggle("v-eq", st.foco === "eq"); svg.classList.toggle("v-pago", st.foco === "pago");
     const cruz = svg.querySelector(".eq-cruz"), cl = cruz.querySelector(".eq-cl"), cp = cruz.querySelector(".eq-cp");
-    cruz.style.opacity = st.sel >= a && st.sel <= b ? "" : "0";
+    cruz.style.opacity = st.sel !== "agora" && st.sel >= a && st.sel <= b ? "" : "0";   /* no "agora" quem marca é o sinal pulsando */
     /* arrastar o dedo/mouse: a cruz anda sozinha (sem redesenhar) e o placar acompanha */
     const ir = ev => {
       const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * (W / r.width);
@@ -4073,23 +4151,34 @@ function graficoEquilibrio(o){
       st.sel = d; cruz.style.opacity = ""; cl.setAttribute("x1", x(d)); cl.setAttribute("x2", x(d)); cp.setAttribute("cx", x(d)); cp.setAttribute("cy", y(vend(d)));
       cp.classList.toggle("lucro", vend(d) >= o.equilibrio); placar(d);
     };
-    cp.classList.toggle("lucro", vend(st.sel) >= o.equilibrio);
+    cp.classList.toggle("lucro", vend(selN) >= o.equilibrio);
     const hit = svg.querySelector(".eq-hit");
     hit.addEventListener("pointerdown", e => { ir(e); try { hit.setPointerCapture(e.pointerId); } catch(_){} });
     hit.addEventListener("pointermove", ir);
-    hit.addEventListener("pointerleave", () => { if(!st.foco){ st.sel = Math.min(Math.max(hoje, a), b); ir({ clientX: svg.getBoundingClientRect().left + x(st.sel) * (svg.getBoundingClientRect().width / W) }); } });
+    hit.addEventListener("pointerleave", () => { if(!st.foco){ st.sel = "agora"; cruz.style.opacity = "0"; placar("agora"); } });
   };
 
   /* período (zoom) */
   term.querySelectorAll("[data-eq-zoom]").forEach(bt => bt.onclick = () => {
     st.zoom = bt.dataset.eqZoom; term.querySelectorAll("[data-eq-zoom]").forEach(x2 => x2.setAttribute("aria-pressed", x2 === bt));
-    const [a, b] = dominio(); st.sel = Math.min(Math.max(hoje, a), b); st.primeira = true; desenha(); placar(st.sel);
+    st.sel = "agora"; st.primeira = true; desenha(); placar(st.sel);
   });
   /* simulador: refaz tudo enquanto arrasta (leve: SVG pequeno), placar segue no dia escolhido */
   let raf = 0;
   sim.addEventListener("input", () => { st.ritmo = Math.max(1, +sim.value); cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { textos(); desenha(); placar(st.sel); }); });
   term.querySelector(".eq-sreset").onclick = () => { sim.value = Math.round(ritmoBase); st.ritmo = ritmoBase; textos(); desenha(); placar(st.sel); };
   textos(); desenha(); placar(st.sel);
+  /* relógio de Brasília a cada segundo; a cada minuto a linha "agora" anda; virou o dia ou o mês: refaz tudo */
+  const rel = term.querySelector(".eq-rel-t"), p2 = n => String(n).padStart(2, "0");
+  let minAnt = SP.m;
+  const tic = () => {
+    if(!box.isConnected){ clearInterval(box._relogio); return; }
+    const t = spAgora(), sem = SEM[new Date(Date.UTC(t.ano, t.mes, t.dia)).getUTCDay()];
+    rel.textContent = `${sem}, ${t.dia} ${MESES[t.mes]} ${t.ano} · ${p2(t.h)}:${p2(t.m)}:${p2(t.s)}`;
+    if(t.dia !== hoje || t.mes !== mes){ graficoEquilibrio(o); return; }
+    if(t.m !== minAnt){ minAnt = t.m; desenha(); if(st.sel === "agora") placar("agora"); }
+  };
+  tic(); box._relogio = setInterval(tic, 1000);
   if(window.ResizeObserver){ let t = 0, w0 = alvo.clientWidth; const ro = new ResizeObserver(() => { if(!alvo.isConnected){ ro.disconnect(); return; } if(Math.abs(alvo.clientWidth - w0) < 8) return; w0 = alvo.clientWidth; clearTimeout(t); t = setTimeout(desenha, 120); }); ro.observe(alvo); }
 }
 function editarCustos(f, custos, mg){
