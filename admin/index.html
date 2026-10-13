@@ -1322,6 +1322,26 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
 const SUPA_URL = "https://vedlxtljilsanykmddtj.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZGx4dGxqaWxzYW55a21kZHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NjYzNzUsImV4cCI6MjEwNjE0MjM3NX0.JlUPvGdomBHLlu5ei5dEb1qFR4FZ2nC45JTZUJ-IN6g";
 const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+/* campos de valor (R$, custo, quantidade): ao tocar, zero some (e volta se sair sem digitar) e qualquer outro valor
+   fica todo selecionado, então digitar já substitui. Antes era preciso apagar o "0,00" na mão em todo campo. */
+(function(){
+  const CAMPO = 'input[inputmode="decimal"],input[type="number"]';
+  const zero = v => { const t = String(v || "").replace(/[^\d,.-]/g, ""); return t !== "" && Number(t.replace(/\./g, "").replace(",", ".")) === 0; };
+  let segura = null;
+  document.addEventListener("focusin", e => {
+    const el = e.target; if(!el.matches || !el.matches(CAMPO) || el.readOnly || el.disabled) return;
+    if(zero(el.value)){ el.dataset.zerou = el.value; el.value = ""; return; }
+    segura = el; el.dataset.vfoco = el.value; setTimeout(() => { try { el.select(); } catch(_){} }, 0);   /* foco pelo teclado (Tab) */
+  });
+  /* foco por clique/toque: o clique posiciona o cursor depois do foco, então seleciona de novo no clique */
+  document.addEventListener("click", e => { if(segura && e.target === segura && segura.value === segura.dataset.vfoco){ try { segura.select(); } catch(_){} } segura = null; }, true);
+  document.addEventListener("input", e => { if(e.target === segura) segura = null; }, true);   /* já começou a digitar: não seleciona mais */
+  document.addEventListener("focusout", e => {
+    const el = e.target; if(!el.matches || !el.matches(CAMPO) || el.dataset.zerou == null) return;
+    if(el.value.trim() === "") el.value = el.dataset.zerou;
+    delete el.dataset.zerou;
+  });
+})();
 const BUCKET = "product-images";
 
 const $ = (s, r=document) => r.querySelector(s);
