@@ -42,6 +42,39 @@ export function lerNex(o: any): Nex | null {
     promo: o?.PromoActive && Number.isFinite(promoV) && promoV > 0 && promoV < preco ? promoV : null, combo: !!o?.Combo };
 }
 let CRU: any[] = [];   // última lista crua do Nex (só para diagnóstico em ?explorar=1)
+
+// Detecta se um produto bruto do Nex está publicado no Catálogo Online.
+// Pode ser configurado em sync_config: nex_online_field e nex_online_value.
+function estaNoCatalogoOnline(o: any, cfg: Record<string, string>): boolean {
+  const campo = cfg.nex_online_field?.trim();
+  if (campo) {
+    const v = o?.[campo];
+    const esperado = cfg.nex_online_value;
+    if (esperado !== undefined && esperado !== null && esperado !== "") return String(v).toLowerCase() === esperado.toLowerCase();
+    if (typeof v === "boolean") return v;
+    if (typeof v === "number") return v === 1;
+    const s = String(v ?? "").toLowerCase();
+    return s === "true" || s === "1" || s === "yes" || s === "sim" || s === "online" || s === "publicado" || s === "ativo";
+  }
+  // Auto-detecta campos comuns, em ordem de prioridade.
+  const candidatos = [
+    "Online", "Published", "IsPublished", "ShowOnline", "InOnlineCatalog", "OnlineCatalog",
+    "Ecommerce", "ECommerce", "Site", "LojaOnline", "CatalogoOnline",
+    "online", "published", "isPublished", "showOnline", "inOnlineCatalog", "onlineCatalog",
+    "ecommerce", "eCommerce", "site", "lojaOnline", "catalogoOnline"
+  ];
+  for (const k of candidatos) {
+    const v = o?.[k];
+    if (v === undefined) continue;
+    if (typeof v === "boolean") return v;
+    if (typeof v === "number") return v === 1;
+    const s = String(v).toLowerCase();
+    if (s === "true" || s === "1" || s === "yes" || s === "sim" || s === "online" || s === "publicado" || s === "ativo") return true;
+    if (s === "false" || s === "0" || s === "no" || s === "não" || s === "nao" || s === "offline" || s === "inativo") return false;
+  }
+  return true; // se não achou nada, não filtra (preserva comportamento antigo)
+}
+
 async function nexTodos(cfg: Record<string, string>, stockControl: boolean): Promise<Nex[]> {
   const out: any[] = [];
   for (let page = 1; page <= 20; page++) {
@@ -56,7 +89,11 @@ async function nexTodos(cfg: Record<string, string>, stockControl: boolean): Pro
   }
   CRU = out;
   const vistos = new Set<string>(); const res: Nex[] = [];
-  for (const o of out) { const n = lerNex(o); if (!n) continue; const k = n.code + "|" + n.nome; if (vistos.has(k)) continue; vistos.add(k); res.push(n); }
+  for (const o of out) {
+    if (!estaNoCatalogoOnline(o, cfg)) continue;
+    const n = lerNex(o); if (!n) continue;
+    const k = n.code + "|" + n.nome; if (vistos.has(k)) continue; vistos.add(k); res.push(n);
+  }
   return res;
 }
 
@@ -123,7 +160,28 @@ export async function handler(req: Request): Promise<Response> {
     if (url.searchParams.get("explorar")) {
       const a = await nexTodos(cfg, true), b = await nexTodos(cfg, false);
       const z = (l: Nex[]) => l.filter(x => x.estoque === 0).length;
-      return json({ com_controle_de_estoque: { total: a.length, zerados: z(a) }, sem_filtro: { total: b.length, zerados: z(b) }, so_no_sem_filtro: b.filter(x => !a.some(y => y.code === x.code)).slice(0, 15).map(x => `${x.code} ${x.nome} (est ${x.estoque})`), exemplo: a.slice(0, 3), cru: CRU.filter((o: any) => /CARLTON BLEND|CAMEL KRETEK MENTHOL|GUDANG GARAM INTER/i.test(String(o?.ProductName))).slice(0, 3) });
+      const amostras = CRU.slice(0, 40);
+      const campos = new Set<string>();
+      amostras.forEach((o: any) => { if (o && typeof o === "object") Object.keys(o).forEach(k => campos.add(k)); });
+      const valoresCampo = (nome: string) => {
+        const vals = new Set<string>();
+        amostras.forEach((o: any) => { const v = o?.[nome]; vals.add(v === null ? "null" : v === undefined ? "undefined" : typeof v === "object" ? JSON.stringify(v) : String(v)); });
+        return [...vals].slice(0, 20);
+      };
+      const candidatosOnline = ["Online", "Published", "IsPublished", "ShowOnline", "InOnlineCatalog", "OnlineCatalog", "Ecommerce", "ECommerce", "Site", "LojaOnline", "CatalogoOnline", "online", "published", "showOnline", "inOnlineCatalog"];
+      const filtrados = { com_estoque: CRU.filter(o => estaNoCatalogoOnline(o, cfg)).length, sem_filtro: CRU.length };
+      return json({
+        com_controle_de_estoque: { total: a.length, zerados: z(a), brutos: filtrados.com_estoque },
+        sem_filtro: { total: b.length, zerados: z(b), brutos: filtrados.sem_filtro },
+        filtrados_catalogo_online: filtrados,
+        config_online: { field: cfg.nex_online_field || null, value: cfg.nex_online_value || null },
+        so_no_sem_filtro: b.filter(x => !a.some(y => y.code === x.code)).slice(0, 15).map(x => `${x.code} ${x.nome} (est ${x.estoque})`),
+        exemplo: a.slice(0, 3),
+        campos_encontrados: [...campos].sort(),
+        amostras_brutas: amostras,
+        candidatos_online: Object.fromEntries(candidatosOnline.map(k => [k, valoresCampo(k)])),
+        dica: "Procure um campo booleano/string que indique se o produto está publicado no Catálogo Online. Pode ser Online, Published, ShowOnline, etc. Depois configure sync_config.nex_online_field (e opcionalmente nex_online_value)."
+      });
     }
     const nex = await nexTodos(cfg, lista === "estoque");
     const prods: Prod[] = await sbGet("products?select=id,name,ean,stock,price,promo_price,is_active&limit=5000");

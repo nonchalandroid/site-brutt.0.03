@@ -77,4 +77,18 @@ r = await roda("teste");
 assert.equal(rpcs.length, 0); assert.equal(r.resumo.sem_par_zerar, 1);
 console.log("✓ modo teste só mostra");
 
-console.log("4 testes OK");
+// 5) filtro de Catálogo Online: só sincroniza produtos publicados online
+base();
+nexLista.forEach((o, i) => { o.Online = i < 100; });   // 100 publicados, 20 não
+prods.push({ id: "onlinePar", name: "Produto Online 100", ean: "7890000000100", stock: 10, price: 10, promo_price: null, is_active: true });
+nexLista.push({ ProductCode: "O100", ProductName: "Produto Online 100", BarCode: "7890000000100", CurrentStock: 8, SalePrice: 12, Online: true });
+prods.push({ id: "offlinePar", name: "Produto Online 101", ean: "7890000000101", stock: 10, price: 10, promo_price: null, is_active: true });
+nexLista.push({ ProductCode: "O101", ProductName: "Produto Online 101", BarCode: "7890000000101", CurrentStock: 7, SalePrice: 12, Online: false });
+r = await roda("teste");
+assert.equal(r.resumo.nex_total, 101, "só conta os publicados online (+ o novo online)");
+assert.equal(r.resumo.casados, 101, "liga só os online");
+assert.equal(r.resumo.sem_par_site, 21, "20 base não-publicados + 1 site-only offlinePar");
+assert.deepEqual(r.aplicado, null);
+console.log("✓ filtro de Catálogo Online ignora produtos não publicados");
+
+console.log("5 testes OK");
