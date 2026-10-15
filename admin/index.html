@@ -3576,13 +3576,33 @@ async function renderNex(){
       <div class="nx-acoes">
         <button class="btn-gold" id="nxReal">Sincronizar agora</button>
         <button class="btn-ghost" id="nxTeste">Só simular</button>
+        <button class="btn-ghost" id="nxExplorar">🔍 Explorar Nex</button>
+      </div>
+      <div class="nx-box" style="margin-top:14px">
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <label style="flex:1;min-width:160px">
+            <span style="font-size:12px;color:var(--muted)">Campo do Catálogo Online</span>
+            <input type="text" id="nxOnlineField" placeholder="Ex: Online" style="width:100%;margin-top:4px" />
+          </label>
+          <label style="flex:1;min-width:160px">
+            <span style="font-size:12px;color:var(--muted)">Valor que significa "publicado" (opcional)</span>
+            <input type="text" id="nxOnlineValue" placeholder="Ex: true" style="width:100%;margin-top:4px" />
+          </label>
+          <button class="btn-ghost" id="nxSaveCfg" style="height:38px">Salvar filtro</button>
+        </div>
+        <p id="nxCfgMsg" style="font-size:12px;color:var(--muted);margin:8px 0 0">Deixe em branco para não filtrar. Use o botão “Explorar Nex” para descobrir o nome do campo. <a href="#" id="nxCfgDocs">Saiba mais</a>.</p>
       </div>
       <p id="nxMsg" style="font-size:12px;color:var(--muted);margin:6px 0 0"></p>
+      <div id="nxExplorarBody" style="display:none;margin-top:12px"></div>
       <div id="nxBody"><div class="loading">Carregando…</div></div>
     </div>`;
   bindTopbar();
   $("#nxReal").onclick = () => nexDisparar("real");
   $("#nxTeste").onclick = () => nexDisparar("teste");
+  $("#nxExplorar").onclick = () => nexExplorar();
+  $("#nxSaveCfg").onclick = () => nexSalvarCfg();
+  $("#nxCfgDocs").onclick = (e) => { e.preventDefault(); alert("1) Clique em 'Explorar Nex'.\n2) Veja a tabela de candidatos e amostras brutas.\n3) Descubra qual campo indica 'publicado no Catálogo Online'.\n4) Digite o nome do campo em 'Campo do Catálogo Online' e salve.\n5) Se o campo tiver valores como 'S'/'N' ou 'online'/'offline', preencha também o 'Valor que significa publicado'."); };
+  carregarNexCfg();
   const { data, error } = await sb.from("nex_sync_log").select("*").order("id",{ascending:false}).limit(12);
   if(rotaAtual() !== "nex") return;
   if(error){ $("#nxBody").innerHTML = `<div class="empty">Erro ao carregar: ${esc(error.message)}</div>`; return; }
@@ -3639,6 +3659,81 @@ async function nexDisparar(modo){
   }finally{
     nexRodando = false;
     if(rotaAtual() === "nex"){ const keep = $("#nxMsg")?.textContent, col = $("#nxMsg")?.style.color; await renderNex(); if(keep && col === "var(--red)"){ $("#nxMsg").style.color = col; $("#nxMsg").textContent = keep; } }
+  }
+}
+
+async function carregarNexCfg(){
+  const { data, error } = await sb.from("sync_config").select("key,value").in("key",["nex_online_field","nex_online_value"]);
+  if(error || !data) return;
+  data.forEach(r => {
+    if(r.key === "nex_online_field") $("#nxOnlineField").value = r.value || "";
+    if(r.key === "nex_online_value") $("#nxOnlineValue").value = r.value || "";
+  });
+}
+async function nexSalvarCfg(){
+  const b = $("#nxSaveCfg"), msg = $("#nxCfgMsg");
+  b.disabled = true; b.classList.add("is-busy");
+  const field = $("#nxOnlineField").value.trim();
+  const value = $("#nxOnlineValue").value.trim();
+  const upsert = async (key, val) => {
+    const { error } = await sb.from("sync_config").upsert({ key, value: val }, { onConflict: "key" });
+    if(error) throw error;
+  };
+  try{
+    if(field){
+      await upsert("nex_online_field", field);
+      await upsert("nex_online_value", value);
+      msg.style.color = "var(--green)"; msg.textContent = "Filtro salvo. A próxima sincronização usará o campo '" + field + "'.";
+    }else{
+      await upsert("nex_online_field", "");
+      await upsert("nex_online_value", "");
+      msg.style.color = "var(--green)"; msg.textContent = "Filtro desativado. Todos os produtos do Nex serão considerados.";
+    }
+  }catch(e){
+    msg.style.color = "var(--red)"; msg.textContent = "Erro ao salvar: " + e.message;
+  }finally{
+    b.disabled = false; b.classList.remove("is-busy");
+  }
+}
+
+async function nexExplorar(){
+  if(nexRodando) return;
+  nexRodando = true;
+  const b = $("#nxExplorar"), msg = $("#nxMsg"), body = $("#nxExplorarBody");
+  b.disabled = true; b.classList.add("is-busy"); msg.style.color = "var(--muted)";
+  msg.textContent = "Buscando produtos do Nex…";
+  body.style.display = "none";
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 60000);
+    const r = await fetch(`${SUPA_URL}/functions/v1/sync-nex?explorar=1`, { method:"POST", signal: ctl.signal,
+      headers:{ apikey: SUPA_KEY, Authorization: "Bearer " + (session?.access_token || SUPA_KEY), "Content-Type":"application/json" }, body:"{}" });
+    clearTimeout(to);
+    const j = await r.json().catch(() => ({}));
+    if(r.status === 403){ throw new Error("Sem permissão. Entre com o login da equipe."); }
+    if(!r.ok && !j.erro){ throw new Error("O servidor respondeu " + r.status); }
+    if(j.erro || j.ok === false){ throw new Error(j.erro || "A exploração não funcionou."); }
+    const fmtJSON = (o) => JSON.stringify(o, null, 2);
+    const campoRows = (obj) => Object.entries(obj || {}).map(([k, v]) => `\u003ctr\u003e\u003ctd\u003e\u003ccode\u003e${esc(k)}\u003c/code\u003e\u003c/td\u003e\u003ctd\u003e${esc(Array.isArray(v) ? v.join(", ") : String(v))}\u003c/td\u003e\u003c/tr\u003e`).join("");
+    body.innerHTML = `
+      \u003cdiv class="stcard" style="cursor:default">
+        \u003cdiv class="k">Diagnóstico do Nex\u003c/div>
+        \u003cdiv class="v">Com controle de estoque: \u003cb\u003e${j.com_controle_de_estoque?.total ?? "—"}\u003c/b\u003e · Sem filtro: \u003cb\u003e${j.sem_filtro?.total ?? "—"}\u003c/b\u003e\u003c/div>
+        \u003cp style="color:var(--muted);font-size:12px;margin:6px 0 0">${esc(j.dica || "")}\u003c/p>
+      \u003c/div>
+      \u003ch4 style="margin:16px 0 8px">Campos encontrados nos produtos\u003c/h4>
+      \u003cp style="color:var(--muted);font-size:12px">Procure um campo relacionado a "online", "catálogo", "publicado" ou "loja".\u003c/p>
+      \u003ctable class="sync-table">\u003cthead\u003e\u003ctr\u003e\u003cth\u003eCampo\u003c/th\u003e\u003cth\u003eValores diferentes encontrados\u003c/th\u003e\u003c/tr\u003e\u003c/thead\u003e\u003ctbody\u003e${campoRows(j.candidatos_online)}\u003c/tbody\u003e\u003c/table\u003e
+      \u003cdetails class="nx-box">\u003csummary\u003eTodos os campos encontrados (${(j.campos_encontrados || []).length})\u003c/summary\u003e\u003cpre style="white-space:pre-wrap;font-size:12px">${esc(fmtJSON(j.campos_encontrados))}\u003c/pre\u003e\u003c/details\u003e
+      \u003cdetails class="nx-box">\u003csummary\u003eAmostras brutas de produtos (${(j.amostras_brutas || []).length})\u003c/summary\u003e\u003cpre style="white-space:pre-wrap;font-size:11px">${esc(fmtJSON(j.amostras_brutas))}\u003c/pre\u003e\u003c/details\u003e
+      \u003cdetails class="nx-box">\u003csummary\u003eSó no sem filtro (${(j.so_no_sem_filtro || []).length})\u003c/summary\u003e\u003cul class="nx-list"\u003e${(j.so_no_sem_filtro || []).map(x => `\u003cli\u003e${esc(x)}\u003c/li\u003e`).join("")}\u003c/ul\u003e\u003c/details\u003e`;
+    body.style.display = "block";
+    msg.textContent = "Exploração pronta. Confira os campos abaixo.";
+  }catch(e){
+    msg.style.color = "var(--red)"; msg.textContent = e.name === "AbortError" ? "O Nex demorou demais. Tente de novo." : "Não consegui explorar: " + e.message;
+  }finally{
+    nexRodando = false;
+    b.disabled = false; b.classList.remove("is-busy");
   }
 }
 
