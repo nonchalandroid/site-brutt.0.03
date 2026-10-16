@@ -1669,7 +1669,7 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 /* Navegação lateral agrupada. Rotas não mudam; apenas a hierarquia visual. */
 const NAV = [
   ["Operação", { items: [["visao","Visão geral","dash"],["pedidos","Pedidos online","bag","pedidos"],["home","Produtos","pkg"],["clientes","Clientes","users"]] }],
-  ["Estoque e compras", { items: [["estoque-baixo","Estoque","pkg","estoque"],["giro","Giro e reposição","gauge"],["vendidos","Mais vendidos","trend"],["planilha","Planilha de compra","sheet"]] }],
+  ["Estoque e compras", { items: [["estoque-baixo","Estoque","pkg","estoque"],["nex-novos","Produtos novos do NEX","sync"],["giro","Giro e reposição","gauge"],["vendidos","Mais vendidos","trend"],["planilha","Planilha de compra","sheet"]] }],
   ["Catálogo e lote", { collapsed: true, items: [["conferencia","Conferência de produtos","check"],["vitrine","Vitrine e destaques","trend"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
   ["Site e conteúdo", { items: [["site-cms","CMS do site","store"]] }],
   ["Gestão", { items: [["financeiro","Financeiro","coin"]] }],
@@ -5523,9 +5523,16 @@ async function renderSiteCms(){
     if(b.url&&!/^(https:\/\/|\/|#)/i.test(b.url)){toast("O link precisa ser HTTPS, caminho do site ou âncora.");return;}
     if(b.imageUrl&&!/^https:\/\//i.test(b.imageUrl)){toast("A imagem precisa usar HTTPS.");return;}
     const btn=$("#siteCmsSave");btn.disabled=true;btn.classList.add("is-busy");
-    const config={sections:cmsSiteDraft.sections.map((x,i)=>({id:x.id,title:x.title,subtitle:x.subtitle,visible:x.visible,order:i})),banner:b};
-    const {error:e}=await sb.from("site_cms_config").upsert({id:"homepage",config,updated_at:new Date().toISOString()},{onConflict:"id"});
-    btn.disabled=false;btn.classList.remove("is-busy");if(e){toast("Não foi possível salvar: "+e.message);return;}toast("CMS salvo. Atualize o site público para conferir.");
+    try{
+      const {data:{user},error:userError}=await sb.auth.getUser();
+      if(userError||!user)throw new Error("Sua sessão expirou. Entre novamente no painel.");
+      const config={sections:cmsSiteDraft.sections.map((x,i)=>({id:x.id,title:x.title,subtitle:x.subtitle,visible:x.visible,order:i})),banner:b};
+      const {data:saved,error:e}=await sb.from("site_cms_config").upsert({id:"homepage",config,updated_at:new Date().toISOString(),updated_by:user.id},{onConflict:"id"}).select("config,updated_at").single();
+      if(e)throw e;
+      if(!saved?.config?.sections||saved.config.sections.length!==config.sections.length)throw new Error("O banco não confirmou todas as seções. Tente novamente.");
+      toast("CMS salvo no banco. Atualize o site público para conferir.");
+    }catch(e){toast("Não foi possível salvar o CMS: "+String(e?.message||e));}
+    finally{btn.disabled=false;btn.classList.remove("is-busy");}
   };
   const draw=()=>{
     area.innerHTML=`<div class="cms-grid"><section class="cms-box">
@@ -5549,12 +5556,65 @@ async function renderSiteCms(){
   };draw();
 }
 
+
+/* ---------------- Importação controlada de produtos novos do NEX ---------------- */
+async function renderNexNovos(){
+  app.innerHTML=`${topbarHTML("Produtos novos do NEX")}<div class="pg">
+    <div class="pg-h"><div><h2 class="pg-t">Produtos novos do NEX</h2><p class="pg-d">Importe produtos que existem no NEX mas ainda não estão cadastrados no site. Nada é publicado sem sua seleção.</p></div><button class="btn-ghost btn-sm" id="nnRefresh">${ic("sync")} Atualizar lista</button></div>
+    <div class="cms-hint" style="margin-bottom:14px">Preço e estoque vêm do NEX. Escolha a categoria e marque “Publicar no site” para cada item. Produtos com EAN duplicado ou conflito de correspondência são omitidos por segurança.</div>
+    <div id="nnStatus" class="loading">Consultando NEX…</div><div id="nnList"></div>
+    <div class="save-row" style="margin-top:16px"><button type="button" class="btn-gold" id="nnImport" disabled>${ic("check")} Importar selecionados</button><span class="cms-hint" id="nnCount"></span></div>
+  </div>`;
+  bindTopbar();
+  const status=$("#nnStatus"),list=$("#nnList"),importBtn=$("#nnImport"),count=$("#nnCount");
+  let candidates=[],categories=[];
+  const call=async(body)=>{
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session?.access_token)throw new Error("Entre com a conta de gestor para consultar o NEX.");
+    const r=await fetch(`${SUPA_URL}/functions/v1/sync-nex`,{method:"POST",headers:{apikey:SUPA_KEY,Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.ok===false)throw new Error(j.erro||("Servidor respondeu "+r.status));
+    return j;
+  };
+  const updateCount=()=>{const n=list.querySelectorAll("[data-nn-check]:checked").length;count.textContent=n+` selecionado(s); máximo de 30 por lote.`;importBtn.disabled=n===0;};
+  const draw=()=>{
+    if(!candidates.length){list.innerHTML='<div class="empty">Nenhum produto novo seguro para importar. Se o produto estiver em conflito, confira a tela “Conferência de produtos”.</div>';importBtn.disabled=true;count.textContent="";return;}
+    const opts='<option value="">Escolher categoria…</option>'+categories.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("");
+    list.innerHTML=`<div class="cms-box"><div class="cms-box-h"><div><h3>${candidates.length} produto(s) candidatos</h3><p>Marque apenas os itens que realmente devem entrar no catálogo da Brutt.</p></div></div><div style="overflow:auto"><table class="table"><thead><tr><th>Importar</th><th>Produto no NEX</th><th>Estoque</th><th>Preço</th><th>Categoria no site</th><th>Publicar</th></tr></thead><tbody>${candidates.map((p,i)=>`<tr><td><input type="checkbox" data-nn-check="${i}" aria-label="Selecionar ${esc(p.name)}"></td><td><strong>${esc(p.name)}</strong><div class="cms-hint">Código ${esc(p.code)}${p.ean?" · EAN "+esc(p.ean):""}${p.combo?" · Combo":""}</div></td><td>${Number(p.stock)||0}</td><td>${(Number(p.price)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td><td><select class="input" data-nn-cat="${i}">${opts}</select></td><td><input type="checkbox" data-nn-pub="${i}" checked aria-label="Publicar ${esc(p.name)}"></td></tr>`).join("")}</tbody></table></div></div>`;
+    list.querySelectorAll("[data-nn-check]").forEach(el=>el.onchange=updateCount);updateCount();
+  };
+  const load=async()=>{
+    status.className="loading";status.textContent="Consultando NEX e categorias…";list.innerHTML="";importBtn.disabled=true;
+    try{
+      const [j,c]=await Promise.all([call({action:"list-unmatched"}),sb.from("categories").select("id,name").order("name")]);
+      if(c.error)throw c.error;
+      candidates=j.candidatos||[];categories=c.data||[];
+      status.className="cms-hint";status.textContent=`NEX: ${j.nex_total} itens · Site: ${j.site_total} produtos. A lista abaixo contém apenas candidatos sem correspondência segura.`;
+      draw();
+    }catch(e){status.className="err";status.textContent="Não foi possível carregar a lista: "+String(e?.message||e);}
+  };
+  $("#nnRefresh").onclick=load;
+  importBtn.onclick=async()=>{
+    const selected=[...list.querySelectorAll("[data-nn-check]:checked")].map(el=>{const i=Number(el.dataset.nnCheck);return{code:candidates[i].code,category_id:list.querySelector(`[data-nn-cat="${i}"]`)?.value||"",publish:!!list.querySelector(`[data-nn-pub="${i}"]`)?.checked};});
+    if(selected.length>30){toast("Selecione no máximo 30 itens por vez.");return;}
+    if(selected.some(x=>!x.category_id)){toast("Escolha uma categoria para cada produto selecionado.");return;}
+    if(!selected.length)return;
+    if(!confirm(`Importar ${selected.length} produto(s) do NEX para o catálogo do site? O estoque e o preço iniciais virão do NEX.`))return;
+    importBtn.disabled=true;importBtn.textContent="Importando…";
+    try{const result=await call({action:"import-unmatched",items:selected});toast(`Importados: ${result.importados||0}.${result.erros?.length?" Erros: "+result.erros.join(" | "):""}`);await load();}
+    catch(e){toast("Falha na importação: "+String(e?.message||e));}
+    finally{importBtn.innerHTML=`${ic("check")} Importar selecionados`;updateCount();}
+  };
+  await load();
+}
+
 /* tabela de rotas — toda tela nova entra aqui */
 Object.assign(ROUTES, {
   "visao": renderVisao,
   "financeiro": renderFinanceiro,
   "home": renderMain,
   "nex": renderNex,
+  "nex-novos": renderNexNovos,
   "horarios": renderHorarios,
   "estoque-baixo": renderLowStock,
   "planilha": renderSyncScreen,
