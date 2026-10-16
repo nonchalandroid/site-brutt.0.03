@@ -4175,7 +4175,7 @@ function pedBotao(p){
 function pedLinha(p){
   if(!["pago","concluido"].includes(p.status)) return "";
   const ent = (p.entrega || {}).tipo === "entrega", h = iso => iso ? new Date(iso).toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit", timeZone:"America/Sao_Paulo" }) : "";
-  const passos = [["Recebido", p.created_at, true], ["Pago", p.pago_em, true]];
+  const passos = [["Recebido", p.created_at, true], ["Pago", p.pago_em, true], ["Em separação", p.separacao_em, !!p.separacao_em]];
   if(ent){ passos.push(["Saiu", p.saiu_em, !!p.saiu_em || p.status === "concluido"]); passos.push(["Entregue", p.concluido_em, p.status === "concluido"]); }
   else { passos.push(["Link recebido", p.corrida_link_em, !!p.corrida_link_em || p.status === "concluido"]); passos.push(["Motoboy retirou", p.saiu_em, !!p.saiu_em || p.status === "concluido"]); passos.push(["Concluído", p.concluido_em, p.status === "concluido"]); }
   return `<div class="ped-linha">${passos.map(([t, iso, ok]) => `<span class="${ok ? "ok" : ""}">${t}${ok && iso ? ` <time>${h(iso)}</time>` : ""}</span>`).join("")}
@@ -4191,7 +4191,7 @@ async function renderPedidos(){
       <div id="pedLista"><div class="loading">Carregando…</div></div>
     </div>`;
   bindTopbar(); desenhaNotif();
-  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,corrida_link_em,saiu_em,concluido_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em").order("created_at", { ascending:false }).limit(60);
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,separacao_em,corrida_link_em,saiu_em,concluido_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em"").order("created_at", { ascending:false }).limit(60);
   const el = $("#pedLista");
   if(!el) return;
   if(error){ el.innerHTML = `<div class="err">Não foi possível carregar os pedidos (${esc(error.message)}).</div>`; return; }
