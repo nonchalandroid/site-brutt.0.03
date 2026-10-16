@@ -72,8 +72,9 @@ function etapas(a){
     L.push({t:"Saiu para entrega",s:a.bairro?"A caminho de "+a.bairro:"A caminho do seu endereço",h:a.saiu,ok:!!a.saiu||fim});
     L.push({t:"Pedido entregue",s:"Bom proveito!",h:a.concluido,ok:fim});
   }else{                                                              /* o cliente chama o Uber Flash / 99 */
-    L.push({t:"Separando · aguardando seu Uber / 99",s:a.saiu||fim?"Corrida chegou na loja":"Peça a corrida e mande o link pra gente",h:a.saiu,ok:!!a.saiu||fim});
-    L.push({t:"Motoboy já retirou seu pedido",s:"A caminho com o entregador do app",h:a.saiu,ok:!!a.saiu||fim});
+    L.push({t:"Aguardando você pedir Uber / 99",s:"Peça a corrida para o endereço da loja",h:a.pago,ok:!!a.pago});
+    L.push({t:"Link da corrida recebido",s:a.corrida?"A equipe já recebeu o link":"Mande o link da corrida pelo WhatsApp",h:a.corrida,ok:!!a.corrida});
+    L.push({t:"Motorista coletou o pedido",s:"A caminho com o entregador do app",h:a.saiu,ok:!!a.saiu||fim});
   }
   var atual=-1;L.forEach(function(e,i){if(e.ok)atual=i});
   L.forEach(function(e,i){e.atual=!final(a)&&i===atual+1});          /* a próxima etapa (ainda não feita) pulsa */
@@ -87,7 +88,8 @@ function topo(a){
   if(a.status==="expirado"||exp)return["clock","Pix expirado","O código venceu antes do pagamento e nada foi cobrado.","off"];
   if(a.status==="aguardando_pagamento")return["pix","Aguardando o pagamento","Assim que o Pix cair, a gente começa a separar.","vivo"];
   if(a.status==="concluido")return a.tipo==="entrega"?["check","Pedido entregue!","Obrigado pela preferência. Bom proveito! 🔥","ok"]:["check","Pedido concluído!","Obrigado pela preferência. Bom proveito! 🔥","ok"];
-  if(a.saiu)return a.tipo==="entrega"?["moto","Saiu para entrega","Seu pedido está a caminho. Fique de olho no portão 😉","vivo"]:["moto","Motoboy já retirou seu pedido","O entregador do app está levando até você.","vivo"];
+  if(a.saiu)return a.tipo==="entrega"?["moto","Saiu para entrega","Seu pedido está a caminho. Fique de olho no portão 😉","vivo"]:["moto","Motorista coletou o pedido","O entregador do app está levando até você.","vivo"];
+  if(a.corrida)return["moto","Link da corrida recebido","A equipe está aguardando o motorista chegar para coletar.","vivo"];
   if(a.reserva)return["clock","Pagamento confirmado","A loja estava fechada: separamos seu pedido assim que abrir.","vivo"];
   return a.tipo==="entrega"?["bag","Pagamento confirmado","Estamos separando seu pedido. Avisamos quando sair para entrega.","vivo"]
     :["bag","Pedido em separação","Já pode pedir o Uber Flash ou 99 para o endereço abaixo. Depois, mande o link da corrida pra gente no WhatsApp.","vivo"];
@@ -132,7 +134,7 @@ function html(a,id){
    +concluirHTML(id,a)
    +(fim&&a.status!=="concluido"?"":'<ol class="ac-linha">'+L.map(function(e){
       return'<li class="'+(e.ok?"ok":"")+(e.atual?" atual":"")+'"><span class="ac-dot" aria-hidden="true"></span><span class="ac-tx"><b>'+_esc(e.t)+'</b>'+(e.s?'<small>'+_esc(e.s)+'</small>':"")+'</span><time>'+_esc(e.ok?hora(e.h):"")+'</time></li>'}).join("")+'</ol>')
-   +(a.tipo==="cliente"&&a.status==="pago"&&!a.saiu?'<div class="ac-coleta">'+svg("pin")+'<div><b>Peça o Uber Flash / 99 para este endereço</b><span>'+_esc(END_LOJA)+'</span></div><button type="button" class="ac-copia" data-acomp-copiar>'+svg("copy")+'<span>Copiar endereço</span></button>'
+   +(a.tipo==="cliente"&&a.status==="pago"&&!a.saiu&&!a.corrida?'<div class="ac-coleta">'+svg("pin")+'<div><b>Peça o Uber Flash / 99 para este endereço</b><span>'+_esc(END_LOJA)+'</span></div><button type="button" class="ac-copia" data-acomp-copiar>'+svg("copy")+'<span>Copiar endereço</span></button>'
      +'<a class="ac-corrida" target="_blank" rel="noopener" href="https://wa.me/'+_whats()+'?text='+encodeURIComponent("Oi! Segue o link da corrida do pedido #"+a.numero+": ")+'">'+waIc()+'<span>Enviar link da corrida</span></a>'
      +'<small class="ac-dica">No app, toque em “Compartilhar corrida” e mande o link pra gente acompanhar o motoboy.</small></div>':"")
    +'<div class="ac-itens"><b>Seu pedido</b>'+(a.itens||[]).map(function(i){return'<span><em>'+_esc(i.qtd)+'×</em> '+_esc(i.nome)+'</span>'}).join("")

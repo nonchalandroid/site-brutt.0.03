@@ -4,6 +4,7 @@ self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
 
 self.addEventListener("push", e => {
+  // O service worker continua ativo mesmo com a janela minimizada ou fechada.
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (_) { d = { title: "Brutt · Painel", body: e.data ? e.data.text() : "" }; }
   const titulo = d.title || "🔔 Novo aviso da loja";
@@ -16,6 +17,7 @@ self.addEventListener("push", e => {
     badge: "/favicon/favicon-48x48.png",
     vibrate: d.fixo ? [300, 120, 300, 120, 300] : [200],
     data: { url: d.url || "/admin/#/pedidos" },
+    timestamp: Date.now(),
   }));
 });
 

@@ -4,7 +4,7 @@ Enquanto `window.__MP.publicKey` estiver vazio em `index.html`, o site continua 
 (pedido enviado pelo WhatsApp). Para ligar o pagamento online, faça os passos abaixo **nesta ordem**.
 
 ## 1. Banco (Supabase)
-Aplicar `supabase/migrations/20261010120000_pedidos_pagamentos.sql`.
+Aplicar `supabase/migrations/20261010120000_pedidos_pagamentos.sql` e, para a etapa de corrida, `supabase/migrations/20261016160000_pedidos_corrida_link.sql`.
 Só cria tabelas novas (`pedidos`, `mp_eventos`, `wa_notificacoes`, `wa_contatos`); não mexe em
 `products`, na sincronização NEX nem no `sync_config`.
 
@@ -51,7 +51,16 @@ Em `index.html`: `<script>window.__MP={publicKey:"APP_USR-..."};</script>` (Publ
    de contato novo vão em segundo plano com ~3 s de intervalo.
 5. **status** — o site consulta a cada 4 s enquanto espera o Pix; se o webhook atrasar, a função
    reconsulta o Mercado Pago (no máximo a cada 10 s).
-6. **concluir** — no admin, "💳 Pedidos online" → "Marcar como concluído" (exige login de staff).
+6. **etapas manuais** — no admin, "💳 Pedidos online", a equipe avança as etapas com botões protegidos por login de staff: link da corrida recebido → motorista coletou → concluído (ou saiu para entrega → entregue quando a loja faz a entrega).
+
+Para pedidos em que o cliente chama Uber Flash/99, o cliente envia o link pelo WhatsApp e a equipe clica em **Link da corrida recebido**. A tela de acompanhamento passa a mostrar: Pix confirmado → aguardando Uber/99 → link recebido → motorista coletou.
+
+## Avisos para a equipe (sino e Windows)
+- No painel, abra o sino → **Ativar notificações** e permita no Chrome/Edge; use **Testar** para validar o aparelho.
+- `push_assinaturas` guarda uma inscrição por navegador/aparelho; `ativo = true`, `staff.active = true` e `ultimo_ok` recente indicam um destino válido.
+- `push_config` guarda o par VAPID: a função `checkout` gera o par na primeira chamada e nunca envia a chave privada ao navegador. Não é necessário configurar VAPID no frontend.
+- Com o painel minimizado ou fechado, o `admin/sw.js` mostra a notificação nativa do Windows; ao clicar, ele focaliza a janela existente ou abre `/admin/#/pedidos`.
+- O sino piscando é o estado da janela aberta; ao retornar do segundo plano, o painel reconsulta os contadores imediatamente.
 
 ## Testes
 `node --experimental-strip-types supabase/functions/checkout/checkout.test.mts`
