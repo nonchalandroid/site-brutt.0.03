@@ -119,7 +119,13 @@ button:where(:has(> .i)){display:inline-flex;align-items:center;justify-content:
 .side-x:hover{color:var(--ink);background:var(--surface)}
 .side-nav{flex:1;overflow-y:auto;padding:4px 0;margin:0 -4px;padding-inline:4px}
 .side-g{margin:12px 0 4px}
-.side-g>span{display:block;padding:0 10px 6px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.side-g>span,.side-g-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:0 10px 6px;background:none;border:0;color:var(--muted-2);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;text-align:left}
+.side-g-toggle{cursor:pointer;min-height:28px;border-radius:var(--r-sm);transition:color .15s,background-color .15s}
+.side-g-toggle:hover{color:var(--ink);background:var(--surface)}
+.side-g-toggle .i{width:13px;height:13px;transition:transform .2s var(--ease)}
+.side-g.fechada .side-g-toggle .i{transform:rotate(-90deg)}
+.side-g-items{display:flex;flex-direction:column;overflow:hidden;max-height:520px;transition:max-height .24s var(--ease),opacity .18s}
+.side-g.fechada .side-g-items{max-height:0;opacity:.35}
 .nav-i{position:relative;display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:8px 10px;margin:1px 0;background:none;border-radius:var(--r-sm);
   color:var(--muted);font-size:14px;font-weight:500;text-align:left}
 .nav-i:hover{background:var(--surface);color:var(--ink)}
@@ -1634,19 +1640,33 @@ const ICON = {
 };
 const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]||""}</svg>`;
 
-/* navegação lateral agrupada. Só destinos que existem em ROUTES. Tela nova = ROUTES + item aqui. */
+/* Navegação lateral agrupada. Rotas não mudam; apenas a hierarquia visual. */
 const NAV = [
-  ["Operação", [["visao","Visão geral","dash"],["home","Produtos","pkg"],["pedidos","Pedidos online","bag","pedidos"],["clientes","Clientes","users"],["estoque-baixo","Estoque baixo","alert","estoque"]]],
-  ["Gestão",   [["financeiro","Financeiro","coin"],["giro","Giro e reposição","gauge"],["conferencia","Conferência de produtos","check"],["sommelier","Sommelier em massa","spark"],["fotos","Fotos em lote","img"],["horarios","Horários da loja","clock"],["nex","Sincronização Nex","sync"],["equipe","Equipe","shield"]]],
-  ["Planilhas",[["planilha","Planilha de compra","sheet"],["vendidos","Mais vendidos","trend"]]],
+  ["Operação", { items: [["visao","Visão geral","dash"],["pedidos","Pedidos online","bag","pedidos"],["home","Produtos","pkg"],["clientes","Clientes","users"]] }],
+  ["Estoque e compras", { items: [["estoque-baixo","Estoque","pkg","estoque"],["giro","Giro e reposição","gauge"],["vendidos","Mais vendidos","trend"],["planilha","Planilha de compra","sheet"]] }],
+  ["Catálogo e lote", { collapsed: true, items: [["conferencia","Conferência de produtos","check"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
+  ["Gestão", { items: [["financeiro","Financeiro","coin"]] }],
+  ["Configurações", { collapsed: true, items: [["horarios","Horários da loja","clock"],["nex","Integrações Nex","sync"],["equipe","Equipe","shield"]] }],
 ];
-const ABAS = NAV.flatMap(([, itens]) => itens.map(([r, t]) => [r, t]));
-const grupoDe = r => (NAV.find(([, itens]) => itens.some(i => i[0] === r)) || [""])[0];
+const ABAS = NAV.flatMap(([, cfg]) => cfg.items.map(([r, t]) => [r, t]));
+const grupoDe = r => (NAV.find(([, cfg]) => cfg.items.some(i => i[0] === r)) || [""])[0];
+function chaveGrupo(g){ return g.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-"); }
+function grupoFechado(key, cfg, atual, itens){
+  if (itens.some(i => i[0] === atual)) return false;
+  if (!cfg.collapsed) return false;
+  try { return localStorage.getItem("brutt-nav-" + key) === "closed" || localStorage.getItem("brutt-nav-" + key) === null; } catch { return cfg.collapsed; }
+}
 function abasHTML(){
   const atual = rotaAtual();
-  const nav = NAV.map(([g, itens]) => [g, itens.filter(i => podeRota(i[0]))]).filter(([, itens]) => itens.length);
-  return `<nav class="side-nav" aria-label="Seções do painel">${nav.map(([g, itens]) => `<div class="side-g g-${g.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()}"><span>${g}</span>${itens.map(([r, t, i, badge]) =>
-    `<button type="button" class="nav-i${atual===r?" on":""}" data-tab="${r}"${atual===r?' aria-current="page"':""}>${ic(i)}<span class="lbl">${t}</span>${badge?`<span class="nav-b" data-badge="${badge}" hidden></span>`:""}</button>`).join("")}</div>`).join("")}</nav>`;
+  const nav = NAV.map(([g, cfg]) => {
+    const itens = cfg.items.filter(i => podeRota(i[0]));
+    if (!itens.length) return "";
+    const key = chaveGrupo(g), fechada = grupoFechado(key, cfg, atual, itens);
+    const titulo = cfg.collapsed ? `<button type="button" class="side-g-toggle" data-nav-group-toggle="${key}" aria-expanded="${!fechada}">${g}${ic("chev")}</button>` : `<span>${g}</span>`;
+    return `<div class="side-g g-${key}${fechada ? " fechada" : ""}" data-nav-group="${key}">${titulo}<div class="side-g-items">${itens.map(([r, t, i, badge]) =>
+      `<button type="button" class="nav-i${atual===r?" on":""}" data-tab="${r}"${atual===r?' aria-current="page"':""}>${ic(i)}<span class="lbl">${t}</span>${badge?`<span class="nav-b" data-badge="${badge}" hidden></span>`:""}</button>`).join("")}</div></div>`;
+  }).join("");
+  return `<nav class="side-nav" aria-label="Seções do painel">${nav}</nav>`;
 }
 function topbarHTML(titulo){
   const r = rotaAtual(), nome = (ABAS.find(a => a[0] === r) || [, titulo || "Painel"])[1], quem = state.staff?.name || "";
@@ -1679,6 +1699,12 @@ function bindTopbar(){
   document.querySelectorAll("[data-home]").forEach(b => b.onclick = () => go("home"));
   document.querySelectorAll("[data-inicio]").forEach(b => b.onclick = () => go("visao"));
   document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { if(b.dataset.tab === "fotos") window.__fotosAlvos = null; go(b.dataset.tab); });
+  document.querySelectorAll("[data-nav-group-toggle]").forEach(b => b.onclick = () => {
+    const group = b.closest("[data-nav-group]"); if(!group) return;
+    const fechada = group.classList.toggle("fechada");
+    b.setAttribute("aria-expanded", String(!fechada));
+    try { localStorage.setItem("brutt-nav-" + b.dataset.navGroupToggle, fechada ? "closed" : "open"); } catch {}
+  });
   const ativa = document.querySelector(".nav-i.on"); if(ativa) ativa.scrollIntoView({ block:"nearest" });
   const out = $("#outBtn"); if(out) out.onclick = async () => { await sb.auth.signOut(); state.staff = null; navCont = { t:0, v:null, p:null }; novosAntes = null; pixAntes = null; document.title = tituloBase; location.hash = ""; renderLogin(); };
   if($("#sideAbre")) $("#sideAbre").onclick = () => menuLateral(true);
