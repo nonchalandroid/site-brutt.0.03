@@ -4191,7 +4191,7 @@ async function renderPedidos(){
       <div id="pedLista"><div class="loading">Carregando…</div></div>
     </div>`;
   bindTopbar(); desenhaNotif();
-  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,separacao_em,corrida_link_em,saiu_em,concluido_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em"").order("created_at", { ascending:false }).limit(60);
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,separacao_em,corrida_link_em,saiu_em,concluido_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em").order("created_at", { ascending:false }).limit(60);
   const el = $("#pedLista");
   if(!el) return;
   if(error){ el.innerHTML = `<div class="err">Não foi possível carregar os pedidos (${esc(error.message)}).</div>`; return; }
