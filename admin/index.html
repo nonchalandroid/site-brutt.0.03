@@ -279,6 +279,32 @@ details.manual .toolbar{margin:12px 0 2px}
 .chip.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chip .n{font:600 11px var(--mono);margin-left:6px;opacity:.7}
 .cat-head{display:flex;align-items:center;gap:10px;margin:4px 0}
+/* cms vitrine — curadoria sem duplicar o cadastro de produtos */
+.cms-tabs{display:flex;gap:6px;overflow:auto;margin:6px 0 16px;padding-bottom:2px}
+.cms-tab{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:8px 14px;font-size:13px}
+.cms-tab.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.cms-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);gap:14px}
+.cms-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px}
+.cms-box-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.cms-box-h h3{font-size:16px}.cms-box-h p{font-size:12px;color:var(--muted);margin:3px 0 0;max-width:620px}
+.cms-list{display:flex;flex-direction:column;gap:7px}
+.cms-row{display:grid;grid-template-columns:28px 44px minmax(0,1fr) 64px 76px;gap:10px;align-items:center;padding:9px 10px;background:var(--field);border:1px solid var(--line);border-radius:var(--r)}
+.cms-row:hover{border-color:var(--line-2)}
+.cms-row .cms-rank{font:600 12px var(--mono);color:var(--muted-2);text-align:center}
+.cms-row .cms-thumb{width:44px;height:44px;border-radius:8px;background:#fff;display:grid;place-items:center;overflow:hidden;font-size:20px}
+.cms-row .cms-thumb img{width:100%;height:100%;object-fit:cover}
+.cms-row .cms-name{min-width:0}.cms-row .cms-name b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}.cms-row .cms-name small{display:block;color:var(--muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}
+.cms-row .cms-priority{min-height:34px;padding:6px 7px;text-align:center;font:600 12px var(--mono)}
+.cms-row .cms-save{padding:6px 8px;min-height:34px;font-size:12px}
+.cms-row.is-featured{border-color:rgba(234,181,74,.45);background:linear-gradient(90deg,var(--accent-soft),transparent 60%),var(--field)}
+.cms-hint{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 12px}.cms-hint b{color:var(--ink)}
+.cms-section-list{display:flex;flex-direction:column;gap:8px}.cms-section{padding:11px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--field)}
+.cms-section-h{display:flex;align-items:center;justify-content:space-between;gap:8px}.cms-section h4{font-size:14px}.cms-section h4 small{display:block;color:var(--muted);font-size:11px;font-weight:400;margin-top:2px}
+.cms-subcats{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}.cms-sub{font-size:11px;color:var(--muted);border:1px solid var(--line);padding:4px 7px;border-radius:999px}.cms-sub b{color:var(--ink);font-weight:600;margin-left:3px}
+.cms-empty{padding:28px 14px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r)}
+@media(max-width:850px){.cms-grid{grid-template-columns:1fr}.cms-row{grid-template-columns:26px 40px minmax(0,1fr) 58px 65px;gap:7px}.cms-row .cms-thumb{width:40px;height:40px}}
+@media(max-width:520px){.cms-row{grid-template-columns:24px 38px minmax(0,1fr);gap:7px}.cms-row .cms-priority{grid-column:2}.cms-row .cms-save{grid-column:3;grid-row:2;justify-self:end}.cms-row .cms-name{grid-column:3;grid-row:1}.cms-row .cms-thumb{grid-row:1 / span 2}}
+
 .cat-head h2{font-size:22px}
 
 /* ---------- gaveta (editar / novo produto) ---------- */
@@ -1307,7 +1333,7 @@ html[data-nav-dir=sobe]::view-transition-new(root){animation-name:vtEntraCima}
    item ativo = vidro dourado com borda viva. Cores escuras e saturadas: contraste ≥ 3:1 no ícone sobre o claro. */
 .nav-i{--c:var(--muted)}
 .nav-i[data-tab=visao]{--c:#c2410c}.nav-i[data-tab=financeiro]{--c:#a16207}.nav-i[data-tab=giro]{--c:#be123c}.nav-i[data-tab=home]{--c:#b45309}.nav-i[data-tab=pedidos]{--c:#15803d}.nav-i[data-tab=clientes]{--c:#7e22ce}
-.nav-i[data-tab=estoque-baixo]{--c:#dc2626}.nav-i[data-tab=conferencia]{--c:#0e7490}.nav-i[data-tab=sommelier]{--c:#a21caf}.nav-i[data-tab=fotos]{--c:#2563eb}
+.nav-i[data-tab=estoque-baixo]{--c:#dc2626}.nav-i[data-tab=conferencia]{--c:#0e7490}.nav-i[data-tab=vitrine]{--c:#d97706}.nav-i[data-tab=sommelier]{--c:#a21caf}.nav-i[data-tab=fotos]{--c:#2563eb}
 .nav-i[data-tab=horarios]{--c:#0f766e}.nav-i[data-tab=nex]{--c:#4338ca}.nav-i[data-tab=equipe]{--c:#6d28d9}.nav-i[data-tab=planilha]{--c:#15803d}.nav-i[data-tab=vendidos]{--c:#be123c}
 .side .nav-i>svg{flex:none;width:28px;height:28px;padding:5px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);box-sizing:border-box}
 .side .nav-i{gap:9px}.side .nav-i .lbl{color:var(--ink);font-weight:550;font-size:13px;letter-spacing:-.01em;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.2;text-align:left}
@@ -1644,7 +1670,7 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 const NAV = [
   ["Operação", { items: [["visao","Visão geral","dash"],["pedidos","Pedidos online","bag","pedidos"],["home","Produtos","pkg"],["clientes","Clientes","users"]] }],
   ["Estoque e compras", { items: [["estoque-baixo","Estoque","pkg","estoque"],["giro","Giro e reposição","gauge"],["vendidos","Mais vendidos","trend"],["planilha","Planilha de compra","sheet"]] }],
-  ["Catálogo e lote", { collapsed: true, items: [["conferencia","Conferência de produtos","check"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
+  ["Catálogo e lote", { collapsed: true, items: [["conferencia","Conferência de produtos","check"],["vitrine","Vitrine e destaques","trend"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
   ["Gestão", { items: [["financeiro","Financeiro","coin"]] }],
   ["Configurações", { collapsed: true, items: [["horarios","Horários da loja","clock"],["nex","Integrações Nex","sync"],["equipe","Equipe","shield"]] }],
 ];
@@ -1994,6 +2020,57 @@ function renderAccessDenied(){
   $("#loOut").onclick = async () => { await sb.auth.signOut(); renderLogin(); };
 }
 
+/* ---------------- mini CMS da vitrine ----------------
+   Reaproveita products.is_featured e products.sort_priority, que já são lidos pelo catálogo público.
+   Não cria um segundo cadastro nem altera estoque/preço do Nex. */
+let cmsVitrineAba = "destaques";
+async function renderVitrine(){
+  app.innerHTML = `${topbarHTML("Vitrine e destaques")}
+    <div class="pg"><div class="pg-h"><div><h2 class="pg-t">Vitrine e destaques</h2><p class="pg-d">Controle o que aparece em “Vendendo muito” e confira as subseções que o catálogo monta automaticamente a partir das categorias.</p></div><button class="btn-ghost btn-sm" id="cmsAtualiza">${ic("sync")} Atualizar</button></div>
+      <div class="cms-tabs" role="tablist"><button class="cms-tab ${cmsVitrineAba==="destaques"?"on":""}" data-cms-tab="destaques">Vendendo muito</button><button class="cms-tab ${cmsVitrineAba==="subsecoes"?"on":""}" data-cms-tab="subsecoes">Subseções do catálogo</button></div>
+      <div id="cmsArea"><div class="loading">Carregando curadoria…</div></div>
+    </div>`;
+  bindTopbar();
+  app.querySelectorAll("[data-cms-tab]").forEach(b => b.onclick = () => { cmsVitrineAba = b.dataset.cmsTab; renderVitrine(); });
+  $("#cmsAtualiza").onclick = () => renderVitrine();
+  const area = $("#cmsArea");
+  const [pr, im] = await Promise.all([
+    sb.from("products").select("id,name,brand,icon,category_id,is_active,is_featured,sort_priority,sales_count,stock,price,promo_price").order("is_featured", {ascending:false}).order("sort_priority", {ascending:true, nullsFirst:false}).order("sales_count", {ascending:false}).limit(5000),
+    sb.from("product_images").select("product_id,url,is_primary").limit(10000),
+  ]);
+  if(rotaAtual() !== "vitrine" || !area) return;
+  if(pr.error){ area.innerHTML = `<div class="err">Não foi possível carregar a vitrine: ${esc(pr.error.message)}</div>`; return; }
+  const rows = pr.data || [], imgBy = {};
+  (im.data || []).forEach(x => { if(!imgBy[x.product_id] || x.is_primary) imgBy[x.product_id] = x.url; });
+  if(cmsVitrineAba === "subsecoes"){
+    const parents = state.categories.filter(c => !c.parent_id);
+    const nAtivos = rows.filter(p => p.is_active).length;
+    const cards = parents.map(parent => {
+      const children = state.categories.filter(c => c.parent_id === parent.id);
+      const pids = new Set(children.map(c => c.id));
+      const total = rows.filter(p => p.is_active && pids.has(p.category_id)).length;
+      const subs = children.map(c => { const n = rows.filter(p => p.is_active && p.category_id === c.id).length; return `<span class="cms-sub">${esc(c.name)} <b>${n}</b></span>`; }).join("");
+      return `<article class="cms-section"><div class="cms-section-h"><h4>${esc(parent.name)}<small>${total} produto${total===1?"":"s"} ativos</small></h4><button class="btn-ghost btn-sm" data-cms-cat="${esc(parent.id)}">Gerenciar</button></div><div class="cms-subcats">${subs || `<span class="cms-sub">Sem subseções cadastradas</span>`}</div></article>`;
+    }).join("");
+    area.innerHTML = `<div class="cms-grid"><section class="cms-box"><div class="cms-box-h"><div><h3>Subseções visíveis</h3><p>As subseções vêm da tabela de categorias e só aparecem no site quando têm produtos ativos. O Nex continua responsável por estoque e preço.</p></div><span class="badge">${nAtivos} ativos</span></div><div class="cms-section-list">${cards || `<div class="cms-empty">Nenhuma categoria cadastrada.</div>`}</div></section><aside class="cms-box"><div class="cms-box-h"><div><h3>Como organizar</h3><p>Use “Gerenciar” para abrir os produtos daquela seção e ajustar publicação, foto, descrição e ordem dos produtos.</p></div></div><p class="cms-hint"><b>Importante:</b> a tela não altera categorias nem cria duplicatas. A estrutura atual do catálogo continua preservada; esta é uma camada de curadoria por cima dela.</p><button class="btn-gold full" id="cmsAbrirProdutos">Abrir todos os produtos</button></aside></div>`;
+    area.querySelectorAll("[data-cms-cat]").forEach(b => b.onclick = () => { gestaoFiltro = { parentId:b.dataset.cmsCat, busca:"", falta:"" }; go("home"); });
+    $("#cmsAbrirProdutos").onclick = () => { gestaoFiltro = { parentId:null, busca:"", falta:"" }; go("home"); };
+    return;
+  }
+  const ativos = rows.filter(p => p.is_active), destacados = ativos.filter(p => p.is_featured);
+  const q = document.createElement("input"); q.placeholder = "Filtrar produtos por nome, marca ou categoria…"; q.setAttribute("aria-label", "Filtrar produtos da vitrine");
+  area.innerHTML = `<div class="cms-grid"><section class="cms-box"><div class="cms-box-h"><div><h3>Vendendo muito</h3><p>Marque os produtos que entram na vitrine. Dentro dela, a prioridade menor aparece primeiro; em empate, o catálogo usa vendas.</p></div><span class="badge" id="cmsCount">${destacados.length} selecionados</span></div><p class="cms-hint"><b>Sem refazer tudo:</b> esta tela grava somente destaque e prioridade. Nome, preço, estoque, fotos e categoria continuam nas telas atuais e no Nex.</p><div id="cmsSearch"></div><div class="cms-list" id="cmsList"></div></section><aside class="cms-box"><div class="cms-box-h"><div><h3>Prévia da regra</h3><p>Como o site decide a posição.</p></div></div><div class="cms-hint"><b>1.</b> Só produtos ativos entram.<br><b>2.</b> “Vendendo muito” usa os marcados nesta tela.<br><b>3.</b> Prioridade 1 vem antes de 2, 3…<br><b>4.</b> Produtos sem prioridade ficam depois, ordenados pelas vendas.<br><br>Para organizar uma subseção, use a aba ao lado e abra seus produtos.</div><button class="btn-ghost full" id="cmsSubBtn">Ver subseções</button></aside></div>`;
+  $("#cmsSearch").append(q);
+  const renderRows = () => {
+    const term = q.value.trim().toLocaleLowerCase();
+    const list = ativos.filter(p => !term || `${p.name} ${p.brand||""} ${(state.categories.find(c=>c.id===p.category_id)||{}).name||""}`.toLocaleLowerCase().includes(term));
+    $("#cmsList").innerHTML = list.length ? list.map((p, i) => { const cat = state.categories.find(c=>c.id===p.category_id); return `<article class="cms-row ${p.is_featured?"is-featured":""}" data-cms-row="${p.id}"><span class="cms-rank">${i+1}</span><span class="cms-thumb">${imgBy[p.id]?`<img src="${esc(imgBy[p.id])}" alt="" loading="lazy">`:esc(p.icon||"📦")}</span><span class="cms-name"><b>${esc(p.name)}</b><small>${esc(cat?.name || "Sem categoria")}${p.brand?` · ${esc(p.brand)}`:""} · ${Number(p.sales_count||0)} vendas</small></span><label title="Mostrar em Vendendo muito"><input type="checkbox" data-cms-feature ${p.is_featured?"checked":""}> <span class="sr-only">Destaque</span></label><input class="cms-priority" data-cms-priority type="number" min="1" max="999" value="${p.sort_priority==null?"":esc(String(p.sort_priority))}" placeholder="ordem" aria-label="Prioridade de ${esc(p.name)}"><button class="btn-gold cms-save" data-cms-save>Salvar</button></article>`; }).join("") : `<div class="cms-empty">Nenhum produto encontrado.</div>`;
+    $("#cmsList").querySelectorAll("[data-cms-save]").forEach(btn => btn.onclick = async () => { const row = btn.closest("[data-cms-row]"), p = rows.find(x=>x.id===row.dataset.cmsRow); if(!p) return; const feature = row.querySelector("[data-cms-feature]").checked, raw = row.querySelector("[data-cms-priority]").value.trim(), priority = raw ? Math.max(1, Math.min(999, Number(raw))) : 99; btn.disabled = true; btn.textContent = "…"; const { error } = await sb.from("products").update({ is_featured:feature, sort_priority:Number.isFinite(priority)?priority:99 }).eq("id", p.id); btn.disabled = false; btn.textContent = "Salvar"; if(error){ toast("Não foi possível salvar: " + error.message); return; } p.is_featured=feature; p.sort_priority=priority; row.classList.toggle("is-featured",feature); $("#cmsCount").textContent = `${ativos.filter(x=>x.is_featured).length} selecionados`; toast("Curadoria salva."); });
+  };
+  q.oninput = renderRows; renderRows();
+  $("#cmsSubBtn").onclick = () => { cmsVitrineAba="subsecoes"; renderVitrine(); };
+}
+
 /* ---------------- tela inicial ---------------- */
 async function renderMain(){
   app.innerHTML = `
@@ -2023,7 +2100,7 @@ async function renderMain(){
   $("#bestBtn").onclick = () => go("vendidos");
   carregarStatusInicio();
 
-  gestaoFiltro = { parentId: null, busca: "" };
+  gestaoFiltro = { parentId: gestaoFiltro?.parentId || null, busca: gestaoFiltro?.busca || "", falta: gestaoFiltro?.falta || "" };
   renderGestaoRapida();
 
   const box = $("#searchBox");
@@ -5419,6 +5496,7 @@ Object.assign(ROUTES, {
   "clientes": renderClientes,
   "sommelier": renderSommelier,
   "conferencia": renderConferencia,
+  "vitrine": renderVitrine,
   "giro": renderGiro,
   "equipe": renderEquipe,
 });
