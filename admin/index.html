@@ -1671,6 +1671,7 @@ const NAV = [
   ["Operação", { items: [["visao","Visão geral","dash"],["pedidos","Pedidos online","bag","pedidos"],["home","Produtos","pkg"],["clientes","Clientes","users"]] }],
   ["Estoque e compras", { items: [["estoque-baixo","Estoque","pkg","estoque"],["giro","Giro e reposição","gauge"],["vendidos","Mais vendidos","trend"],["planilha","Planilha de compra","sheet"]] }],
   ["Catálogo e lote", { collapsed: true, items: [["conferencia","Conferência de produtos","check"],["vitrine","Vitrine e destaques","trend"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
+  ["Site e conteúdo", { items: [["site-cms","CMS do site","store"]] }],
   ["Gestão", { items: [["financeiro","Financeiro","coin"]] }],
   ["Configurações", { collapsed: true, items: [["horarios","Horários da loja","clock"],["nex","Integrações Nex","sync"],["equipe","Equipe","shield"]] }],
 ];
@@ -1742,11 +1743,11 @@ function bindTopbar(){
 /* números do menu (Pedidos online, Estoque baixo) e do sininho, num lugar só */
 function pintaContadores(v){
   if(!v) return;
-  const pon = (k, n, cls) => { const el = document.querySelector(`[data-badge="${k}"]`); if(!el) return; el.hidden = !n; el.textContent = n > 99 ? "99+" : n; el.className = "nav-b " + cls; };
+  const pon = (k, n, cls) => { const el = document.querySelector(`[data-badge="${k}"]`); if(!el) return; el.hidden = !n; el.textContent = String(n); el.className = "nav-b " + cls; };
   pon("pedidos", v.pedidos, v.novos ? "novo" : "acao"); pon("estoque", v.estoque, "alerta");
   const b = $("#sinoBtn"); if(!b) return;
   const n = (v.pedidos || 0) + (v.pix || 0), el = b.querySelector(".sino-n");   /* em aberto = pagos a concluir + Pix gerado aguardando */
-  el.hidden = !n; el.textContent = n > 99 ? "99+" : n;
+  el.hidden = !n; el.textContent = String(n);
   b.classList.toggle("novo", !!v.novos); b.classList.toggle("pix", !v.novos && !!v.pix);
   b.setAttribute("aria-label", n ? `Avisos: ${v.pedidos} pedido(s) pago(s) a concluir${v.pix ? `, ${v.pix} Pix aguardando pagamento` : ""}` : "Avisos de pedidos");
   if(sinoAberto()) sinoLista();
@@ -5481,6 +5482,73 @@ function eqAbrir(m){
   });
 }
 
+
+/* ---------------- CMS do site público ---------------- */
+const CMS_DEFAULT_SECTIONS = [
+["essencias-ziggy","Essências Ziggy","Marca brasileira, dos sabores clássicos aos mais diferentes"],
+["essencias-nay","Essências Nay","Blends de frutas e opções refrescantes"],
+["essencias-onix","Essências Onix","Frutas, menta e sabores diferentes"],
+["essencias-zomo","Essências Zomo","Sabores fortes, strong drops e clássicos"],
+["essencias-sense","Essências Sense","Combinações geladas de frutas"],
+["narguile","Narguile e Acessórios","Roshs, carvão, mangueiras e mais"],
+["headshop","Headshop","Sedas, piteiras, cuias, slicks, pipes, bongs e dichavadores"],
+["tabacos","Tabacos","Os mais pedidos da casa"],
+["charutos","Charutos","Phillies Titan Chocolate, Jamm, Dona Flor, Quorum"],
+["palha","Cigarros de Palha","Fumo natural, do jeito tradicional"],
+["cigarrilhas","Cigarrilhas","Compactas e cheias de aroma"],
+["cigarros","Cigarros","Marcas nacionais e importadas"],
+["isqueiros","Isqueiros e Maçaricos","Isqueiros, maçaricos, recargas e gás"],
+["incensos","Incensos e Mais","Incensos e artigos religiosos"],
+["doces","Doces","Balas, chicletes, chocolates e biscoitos"],
+["bebidas","Bebidas","Gelada e na medida. Só para maiores de 18"],
+["conveniencia","Conveniência","Cabos, carregadores e fones de ouvido"],
+["outros","Outros Itens","Outros itens úteis"]
+];
+let cmsSiteDraft = null;
+async function renderSiteCms(){
+  app.innerHTML = `${topbarHTML("CMS do site")}<div class="pg">
+    <div class="pg-h"><div><h2 class="pg-t">CMS do site</h2><p class="pg-d">Organize a página inicial e edite os textos sem mexer em preço ou estoque.</p></div><button class="btn-ghost btn-sm" id="siteCmsRefresh">${ic("sync")} Atualizar</button></div>
+    <div class="cms-tabs"><button class="cms-tab on" type="button">Página inicial</button><button class="cms-tab" type="button" id="siteCmsJumpBanner">Banner promocional</button></div>
+    <div id="siteCmsArea"><div class="loading">Carregando configuração…</div></div></div>`;
+  bindTopbar();$("#siteCmsRefresh").onclick=()=>renderSiteCms();
+  $("#siteCmsJumpBanner").onclick=()=>$("#siteCmsBanner")?.scrollIntoView({behavior:"smooth",block:"start"});
+  const area=$("#siteCmsArea"),{data,error}=await sb.from("site_cms_config").select("config").eq("id","homepage").maybeSingle();
+  if(rotaAtual()!=="site-cms"||!area)return;
+  if(error){area.innerHTML=`<div class="err">Não foi possível carregar o CMS: ${esc(error.message)}</div>`;return;}
+  const saved=data?.config||{},byId=Object.fromEntries((Array.isArray(saved.sections)?saved.sections:[]).map(x=>[x.id,x]));
+  cmsSiteDraft={sections:CMS_DEFAULT_SECTIONS.map(([id,title,subtitle])=>{const x=byId[id]||{};return{id,title:x.title==null?title:x.title,subtitle:x.subtitle==null?subtitle:x.subtitle,visible:x.visible!==false,order:Number.isFinite(Number(x.order))?Number(x.order):CMS_DEFAULT_SECTIONS.findIndex(y=>y[0]===id)}}).sort((x,y)=>x.order-y.order),banner:{visible:saved.banner?.visible===true,title:saved.banner?.title||"",text:saved.banner?.text||"",buttonText:saved.banner?.buttonText||"Saiba mais",url:saved.banner?.url||"",imageUrl:saved.banner?.imageUrl||""}};
+  const sync=()=>cmsSiteDraft.sections.forEach(x=>{const t=area.querySelector(`[data-title="${x.id}"]`),s=area.querySelector(`[data-subtitle="${x.id}"]`),v=area.querySelector(`[data-visible="${x.id}"]`);if(t)x.title=t.value.trim();if(s)x.subtitle=s.value.trim();if(v)x.visible=v.checked;});
+  const save=async()=>{
+    sync();const b={visible:$("#siteCmsBannerVisible").checked,title:$("#siteCmsBannerTitle").value.trim(),text:$("#siteCmsBannerText").value.trim(),buttonText:$("#siteCmsBannerButton").value.trim()||"Saiba mais",url:$("#siteCmsBannerUrl").value.trim(),imageUrl:$("#siteCmsBannerImage").value.trim()};
+    if(b.url&&!/^(https:\/\/|\/|#)/i.test(b.url)){toast("O link precisa ser HTTPS, caminho do site ou âncora.");return;}
+    if(b.imageUrl&&!/^https:\/\//i.test(b.imageUrl)){toast("A imagem precisa usar HTTPS.");return;}
+    const btn=$("#siteCmsSave");btn.disabled=true;btn.classList.add("is-busy");
+    const config={sections:cmsSiteDraft.sections.map((x,i)=>({id:x.id,title:x.title,subtitle:x.subtitle,visible:x.visible,order:i})),banner:b};
+    const {error:e}=await sb.from("site_cms_config").upsert({id:"homepage",config,updated_at:new Date().toISOString()},{onConflict:"id"});
+    btn.disabled=false;btn.classList.remove("is-busy");if(e){toast("Não foi possível salvar: "+e.message);return;}toast("CMS salvo. Atualize o site público para conferir.");
+  };
+  const draw=()=>{
+    area.innerHTML=`<div class="cms-grid"><section class="cms-box">
+      <div class="cms-box-h"><div><h3>Seções do catálogo</h3><p>Use as setas para mudar a ordem. Desative uma seção para ocultá-la.</p></div><span class="badge">${cmsSiteDraft.sections.filter(x=>x.visible).length} visíveis</span></div>
+      <div class="cms-hint">“Vendendo muito”, categorias e informações institucionais mantêm suas áreas próprias. Se uma seção não tiver produtos ativos, ela continua oculta.</div>
+      <div class="cms-section-list">${cmsSiteDraft.sections.map((x,i)=>`<article class="cms-section"><div class="cms-section-h"><h4><span style="color:var(--muted);margin-right:7px">${String(i+1).padStart(2,"0")}</span>${esc(CMS_DEFAULT_SECTIONS.find(y=>y[0]===x.id)?.[1]||x.id)}</h4><div style="display:flex;gap:5px"><button type="button" class="btn-ghost btn-sm" data-up="${x.id}" ${i===0?"disabled":""} aria-label="Mover para cima">↑</button><button type="button" class="btn-ghost btn-sm" data-down="${x.id}" ${i===cmsSiteDraft.sections.length-1?"disabled":""} aria-label="Mover para baixo">↓</button></div></div>
+      <label class="cms-hint" style="display:flex;align-items:center;gap:8px;margin:10px 0"><input type="checkbox" data-visible="${x.id}" ${x.visible?"checked":""}> Exibir no site</label>
+      <label class="label" style="display:block;margin:10px 0 5px">Título</label><input class="input" data-title="${x.id}" value="${esc(x.title)}" maxlength="100">
+      <label class="label" style="display:block;margin:10px 0 5px">Subtítulo</label><input class="input" data-subtitle="${x.id}" value="${esc(x.subtitle)}" maxlength="180"></article>`).join("")}
+      </div></section><aside class="cms-box" id="siteCmsBanner"><div class="cms-box-h"><div><h3>Banner promocional</h3><p>Destaque opcional entre “Vendendo muito” e as seções de produtos.</p></div></div>
+      <label class="cms-hint" style="display:flex;align-items:center;gap:8px;margin:10px 0"><input id="siteCmsBannerVisible" type="checkbox" ${cmsSiteDraft.banner.visible?"checked":""}> Publicar banner</label>
+      <label class="label" style="display:block;margin:10px 0 5px">Título</label><input class="input" id="siteCmsBannerTitle" maxlength="100" value="${esc(cmsSiteDraft.banner.title)}" placeholder="Ex.: Novidades chegaram na Brutt">
+      <label class="label" style="display:block;margin:10px 0 5px">Texto</label><textarea class="input" id="siteCmsBannerText" rows="3" maxlength="300">${esc(cmsSiteDraft.banner.text)}</textarea>
+      <label class="label" style="display:block;margin:10px 0 5px">Texto do botão</label><input class="input" id="siteCmsBannerButton" maxlength="40" value="${esc(cmsSiteDraft.banner.buttonText)}">
+      <label class="label" style="display:block;margin:10px 0 5px">Link do botão</label><input class="input" id="siteCmsBannerUrl" maxlength="500" value="${esc(cmsSiteDraft.banner.url)}" placeholder="https://… ou /categoria">
+      <label class="label" style="display:block;margin:10px 0 5px">URL da imagem (opcional)</label><input class="input" id="siteCmsBannerImage" maxlength="1000" value="${esc(cmsSiteDraft.banner.imageUrl)}" placeholder="https://…">
+      <p class="cms-hint">A imagem precisa usar HTTPS. O banner só aparece depois de marcar “Publicar banner”.</p></aside></div>
+      <div class="save-row" style="margin-top:18px"><button type="button" class="btn-gold" id="siteCmsSave">${ic("check")} Salvar alterações</button><span class="cms-hint">O site público lê a configuração ao carregar.</span></div>`;
+    area.querySelectorAll("[data-up],[data-down]").forEach(btn=>btn.onclick=()=>{sync();const id=btn.dataset.up||btn.dataset.down,from=cmsSiteDraft.sections.findIndex(x=>x.id===id),to=from+(btn.dataset.up?-1:1);if(from<0||to<0||to>=cmsSiteDraft.sections.length)return;const [item]=cmsSiteDraft.sections.splice(from,1);cmsSiteDraft.sections.splice(to,0,item);cmsSiteDraft.sections.forEach((x,i)=>x.order=i);draw();});
+    $("#siteCmsSave").onclick=save;
+  };draw();
+}
+
 /* tabela de rotas — toda tela nova entra aqui */
 Object.assign(ROUTES, {
   "visao": renderVisao,
@@ -5497,6 +5565,7 @@ Object.assign(ROUTES, {
   "sommelier": renderSommelier,
   "conferencia": renderConferencia,
   "vitrine": renderVitrine,
+  "site-cms": renderSiteCms,
   "giro": renderGiro,
   "equipe": renderEquipe,
 });
