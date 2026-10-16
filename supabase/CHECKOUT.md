@@ -55,6 +55,13 @@ Em `index.html`: `<script>window.__MP={publicKey:"APP_USR-..."};</script>` (Publ
 
 Para pedidos em que o cliente chama Uber Flash/99, o cliente envia o link pelo WhatsApp e a equipe clica em **Link da corrida recebido**. A tela de acompanhamento passa a mostrar: Pix confirmado → aguardando Uber/99 → link recebido → motorista coletou.
 
+## Avisos para a equipe (sino e Windows)
+- No painel, abra o sino → **Ativar notificações** e permita no Chrome/Edge; use **Testar** para validar o aparelho.
+- `push_assinaturas` guarda uma inscrição por navegador/aparelho; `ativo = true`, `staff.active = true` e `ultimo_ok` recente indicam um destino válido.
+- `push_config` guarda o par VAPID: a função `checkout` gera o par na primeira chamada e nunca envia a chave privada ao navegador. Não é necessário configurar VAPID no frontend.
+- Com o painel minimizado ou fechado, o `admin/sw.js` mostra a notificação nativa do Windows; ao clicar, ele focaliza a janela existente ou abre `/admin/#/pedidos`.
+- O sino piscando é o estado da janela aberta; ao retornar do segundo plano, o painel reconsulta os contadores imediatamente.
+
 ## Testes
 `node --experimental-strip-types supabase/functions/checkout/checkout.test.mts`
 (Supabase, Mercado Pago e Evolution simulados em memória).
