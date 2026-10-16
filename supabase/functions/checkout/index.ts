@@ -242,7 +242,6 @@ export async function pagar(body: any, urlFuncao: string) {
     transaction_amount: Number(ped.total),               // valor do BANCO
     description: `Pedido ${ped.numero} - ${LOJA.nome}`,
     external_reference: ped.id,
-    notification_url: urlFuncao + "?acao=webhook",
     statement_descriptor: "TABACARIABRUTT",
     payer: { email, first_name: ped.cliente_nome.split(" ")[0] },
     metadata: { pedido_numero: ped.numero },
