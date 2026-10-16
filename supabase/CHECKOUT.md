@@ -4,7 +4,7 @@ Enquanto `window.__MP.publicKey` estiver vazio em `index.html`, o site continua 
 (pedido enviado pelo WhatsApp). Para ligar o pagamento online, faça os passos abaixo **nesta ordem**.
 
 ## 1. Banco (Supabase)
-Aplicar `supabase/migrations/20261010120000_pedidos_pagamentos.sql`.
+Aplicar `supabase/migrations/20261010120000_pedidos_pagamentos.sql` e, para a etapa de corrida, `supabase/migrations/20261016160000_pedidos_corrida_link.sql`.
 Só cria tabelas novas (`pedidos`, `mp_eventos`, `wa_notificacoes`, `wa_contatos`); não mexe em
 `products`, na sincronização NEX nem no `sync_config`.
 
@@ -51,7 +51,9 @@ Em `index.html`: `<script>window.__MP={publicKey:"APP_USR-..."};</script>` (Publ
    de contato novo vão em segundo plano com ~3 s de intervalo.
 5. **status** — o site consulta a cada 4 s enquanto espera o Pix; se o webhook atrasar, a função
    reconsulta o Mercado Pago (no máximo a cada 10 s).
-6. **concluir** — no admin, "💳 Pedidos online" → "Marcar como concluído" (exige login de staff).
+6. **etapas manuais** — no admin, "💳 Pedidos online", a equipe avança as etapas com botões protegidos por login de staff: link da corrida recebido → motorista coletou → concluído (ou saiu para entrega → entregue quando a loja faz a entrega).
+
+Para pedidos em que o cliente chama Uber Flash/99, o cliente envia o link pelo WhatsApp e a equipe clica em **Link da corrida recebido**. A tela de acompanhamento passa a mostrar: Pix confirmado → aguardando Uber/99 → link recebido → motorista coletou.
 
 ## Testes
 `node --experimental-strip-types supabase/functions/checkout/checkout.test.mts`

@@ -4080,12 +4080,13 @@ const pedSt = p => p.status === "cancelado" && p.mp_status === "refunded" ? "est
 /* pedido pendente só pode ser cancelado pela equipe se não houver Pix válido em aberto (sem Pix ou Pix vencido) */
 const pedCancelavel = p => p.status === "aguardando_pagamento" && (!p.mp_payment_id || (p.pix_expira_em && new Date(p.pix_expira_em) < new Date()));
 /* próxima etapa de um pedido pago: entrega da loja = "Saiu para entrega" → "Pedido entregue"; Uber/99 = "Motoboy retirou" → "Concluir pedido" */
-const PED_ETAPA_OK = { saiu:"saiu para entrega", entregue:"pedido entregue", retirou:"motoboy retirou", concluir:"pedido concluído" };
+const PED_ETAPA_OK = { link:"link da corrida recebido", saiu:"saiu para entrega", entregue:"pedido entregue", retirou:"motoboy retirou", concluir:"pedido concluído" };
 const pedAvisa = {};   /* link do WhatsApp com a mensagem pronta (quando o robô do WhatsApp não está ligado) */
 function pedBotao(p){
   if(p.status !== "pago") return "";
   const b = (q, t) => `<button class="btn-gold btn-sm" data-etapa="${q}" data-pid="${esc(p.id)}">${t}</button>`;
   if((p.entrega || {}).tipo === "entrega") return p.saiu_em ? b("entregue", "Pedido entregue") : b("saiu", "🛵 Saiu para entrega");
+  if(!p.corrida_link_em) return b("link", "🔗 Link da corrida recebido");
   return p.saiu_em ? b("concluir", "✅ Concluir pedido") : b("retirou", "🛵 Motoboy retirou");   /* Uber/99 do cliente: retirou → concluir (some da tela do cliente) */
 }
 function pedLinha(p){
@@ -4093,7 +4094,7 @@ function pedLinha(p){
   const ent = (p.entrega || {}).tipo === "entrega", h = iso => iso ? new Date(iso).toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit", timeZone:"America/Sao_Paulo" }) : "";
   const passos = [["Recebido", p.created_at, true], ["Pago", p.pago_em, true]];
   if(ent){ passos.push(["Saiu", p.saiu_em, !!p.saiu_em || p.status === "concluido"]); passos.push(["Entregue", p.concluido_em, p.status === "concluido"]); }
-  else { passos.push(["Motoboy retirou", p.saiu_em, !!p.saiu_em || p.status === "concluido"]); passos.push(["Concluído", p.concluido_em, p.status === "concluido"]); }
+  else { passos.push(["Link recebido", p.corrida_link_em, !!p.corrida_link_em || p.status === "concluido"]); passos.push(["Motoboy retirou", p.saiu_em, !!p.saiu_em || p.status === "concluido"]); passos.push(["Concluído", p.concluido_em, p.status === "concluido"]); }
   return `<div class="ped-linha">${passos.map(([t, iso, ok]) => `<span class="${ok ? "ok" : ""}">${t}${ok && iso ? ` <time>${h(iso)}</time>` : ""}</span>`).join("")}
     <a class="ped-ver" href="/?pedido=${esc(p.id)}&equipe=1" target="_blank" rel="noopener" title="Abrir a tela que o cliente vê">ver como o cliente vê ↗</a></div>`;
 }
@@ -4107,7 +4108,7 @@ async function renderPedidos(){
       <div id="pedLista"><div class="loading">Carregando…</div></div>
     </div>`;
   bindTopbar(); desenhaNotif();
-  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,saiu_em,concluido_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em").order("created_at", { ascending:false }).limit(60);
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,corrida_link_em,saiu_em,concluido_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em").order("created_at", { ascending:false }).limit(60);
   const el = $("#pedLista");
   if(!el) return;
   if(error){ el.innerHTML = `<div class="err">Não foi possível carregar os pedidos (${esc(error.message)}).</div>`; return; }
@@ -4176,9 +4177,10 @@ async function renderPedidos(){
       b.disabled = true; b.textContent = "Enviando…";
       if(ped && !ped.visto_em){ await marcarVisto(ped.id); ped.visto_em = new Date().toISOString(); }
       try{
-        const saida = qual === "saiu" || qual === "retirou";   /* "saiu" no servidor = saiu para entrega (loja) / motoboy retirou (Uber/99) */
-        const j = await ntfChamar(saida ? "etapa" : "concluir", saida ? { pedido_id: ped.id, etapa: "saiu" } : { pedido_id: ped.id });
-        if(saida) ped.saiu_em = j.saiu_em || new Date().toISOString();
+        const saida = qual === "saiu" || qual === "retirou", link = qual === "link";
+        const j = await ntfChamar(link || saida ? "etapa" : "concluir", link || saida ? { pedido_id: ped.id, etapa: link ? "link" : "saiu" } : { pedido_id: ped.id });
+        if(link) ped.corrida_link_em = j.corrida_link_em || new Date().toISOString();
+        else if(saida) ped.saiu_em = j.saiu_em || new Date().toISOString();
         else { ped.status = "concluido"; ped.concluido_em = new Date().toISOString(); }
         navCont.t = 0;
         if(j.whats && !j.whats.auto && j.whats.link){ pedAvisa[ped.id] = j.whats.link; toast(`#${j.numero}: ${PED_ETAPA_OK[qual]}. Toque em “Avisar no WhatsApp”.`); }

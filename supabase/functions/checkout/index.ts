@@ -7,7 +7,7 @@
 //   GET  status    → situação do pedido (o site consulta enquanto espera o Pix)
 //   POST webhook   → notificações oficiais do Mercado Pago (assinatura x-signature conferida)
 //   POST concluir  → equipe marca o pedido como concluído (exige login de staff)
-//   POST etapa     → equipe avança a etapa "saiu": saiu para entrega (loja) / motoboy retirou (Uber/99 do cliente); staff
+//   POST etapa     → equipe avança "link" ou "saiu": link da corrida recebido / entrega iniciada; staff
 //   POST push_chave → chave pública VAPID para o painel inscrever o aparelho (staff)
 //   POST push_teste → manda uma notificação de teste para o aparelho que pediu (staff)
 //
@@ -383,6 +383,7 @@ export function mensagens(ped: any) {
     pagamento_recusado: [`⚠️ *Pagamento não aprovado*`, ``, `Oi${n ? ", " + n : ""}. O pagamento do pedido *#${ped.numero}* não foi aprovado pelo emissor do cartão. Nenhum valor foi cobrado.`, `Você pode tentar de novo no site com outro cartão ou pagar com Pix.`].join("\n"),
     pix_expirado: [`⌛ *Pix expirado*`, ``, `Oi${n ? ", " + n : ""}. O código Pix do pedido *#${ped.numero}* (${brl(ped.total)}) expirou antes do pagamento. Nada foi cobrado.`, `Se ainda quiser os produtos, é só finalizar o pedido de novo no site.`].join("\n"),
     saiu_entrega: [`🛵 *Seu pedido saiu para entrega!*`, ``, `${n ? n + ", o" : "O"} pedido *#${ped.numero}* já está a caminho${ped.entrega?.endereco?.rua ? ` de ${ped.entrega.endereco.rua}, ${ped.entrega.endereco.numero}` : ""}. Fique de olho no portão 😉`, ``, `📍 Acompanhe: ${linkAcomp(ped)}`].join("\n"),
+    corrida_link_recebido: [`🔗 *Link da corrida recebido!*`, ``, `${n ? n + ", já" : "Já"} recebemos o link da corrida do pedido *#${ped.numero}*. A equipe está aguardando o motorista chegar para retirar.`, ``, `📍 Acompanhe: ${linkAcomp(ped)}`].join("\n"),
     motoboy_retirou: [`🛵 *Motoboy já retirou seu pedido!*`, ``, `${n ? n + ", o" : "O"} entregador do app já está com o pedido *#${ped.numero}* e segue para o seu endereço.`, ``, `📍 Acompanhe: ${linkAcomp(ped)}`].join("\n"),
     pedido_concluido: ped.entrega?.tipo === "entrega"
       ? [`✅ *Pedido entregue!*`, ``, `${n ? n + ", s" : "S"}eu pedido *#${ped.numero}* foi entregue. Obrigado pela preferência! 🔥`].join("\n")
@@ -455,7 +456,7 @@ export async function webhook(req: Request, url: URL) {
 export async function status(url: URL) {
   const id = url.searchParams.get("pedido") || "";
   if (!UUID.test(id)) return { erro: "Pedido inválido.", status: 400 };
-  let [ped] = await sbGet(`pedidos?id=eq.${id}&select=id,numero,status,total,taxa_entrega,metodo,mp_payment_id,mp_status,mp_status_detail,pix_qr,pix_qr_base64,pix_expira_em,updated_at,created_at,pago_em,saiu_em,concluido_em,reserva,entrega,itens,cliente_nome`);
+  let [ped] = await sbGet(`pedidos?id=eq.${id}&select=id,numero,status,total,taxa_entrega,metodo,mp_payment_id,mp_status,mp_status_detail,pix_qr,pix_qr_base64,pix_expira_em,updated_at,created_at,pago_em,corrida_link_em,saiu_em,concluido_em,reserva,entrega,itens,cliente_nome`);
   if (!ped) return { erro: "Pedido não encontrado.", status: 404 };
   // Rede de segurança caso o webhook atrase: reconsulta o Mercado Pago no máximo a cada 10 s.
   if (ped.status === "aguardando_pagamento" && ped.mp_payment_id && Date.now() - new Date(ped.updated_at).getTime() > 10e3) {
@@ -473,7 +474,7 @@ export function acompDe(ped: any) {
     tipo: e.tipo === "entrega" ? "entrega" : "cliente", bairro: e.endereco?.bairro || null, reserva: !!ped.reserva,
     nome: primeiroNome(ped.cliente_nome), total: ped.total, taxa_entrega: ped.taxa_entrega,
     itens: (ped.itens || []).map((i: any) => ({ qtd: i.qtd, nome: i.nome, subtotal: i.subtotal })),
-    criado: ped.created_at ?? null, pago: ped.pago_em ?? null, saiu: ped.saiu_em ?? null, concluido: ped.concluido_em ?? null, expira: ped.pix_expira_em ?? null };
+    criado: ped.created_at ?? null, pago: ped.pago_em ?? null, corrida: ped.corrida_link_em ?? null, saiu: ped.saiu_em ?? null, concluido: ped.concluido_em ?? null, expira: ped.pix_expira_em ?? null };
 }
 async function ehStaff(req: Request) {
   const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
@@ -502,16 +503,22 @@ export async function etapa(req: Request, body: any) {
   if (!(await ehStaff(req))) return { erro: "sem permissão", status: 403 };
   const id = String(body?.pedido_id ?? ""), qual = String(body?.etapa ?? "");
   if (!UUID.test(id)) return { erro: "Pedido inválido.", status: 400 };
-  if (qual !== "saiu") return { erro: "Etapa inválida.", status: 400 };
+  if (!["link", "saiu"].includes(qual)) return { erro: "Etapa inválida.", status: 400 };
   const [ped] = await sbGet(`pedidos?id=eq.${id}&select=*`);
   if (!ped) return { erro: "Pedido não encontrado.", status: 404 };
-  const daLoja = ped.entrega?.tipo === "entrega";   // entrega da loja: "saiu para entrega"; Uber/99 do cliente: "motoboy retirou"
-  if (ped.status !== "pago") return { erro: daLoja ? "Só pedido pago pode sair para entrega." : "Só pedido pago pode ser retirado.", status: 409 };
+  const daLoja = ped.entrega?.tipo === "entrega";
+  if (qual === "link" && daLoja) return { erro: "Entrega da loja não usa link de corrida.", status: 409 };
+  if (ped.status !== "pago") return { erro: daLoja ? "Só pedido pago pode sair para entrega." : "Só pedido pago pode avançar esta etapa.", status: 409 };
   let atual = ped;
-  if (!ped.saiu_em) { const rows = await sbPatch(`pedidos?id=eq.${id}&status=eq.pago&saiu_em=is.null`, { saiu_em: new Date().toISOString() }); if (rows?.[0]) atual = rows[0]; }
-  const tipoMsg = daLoja ? "saiu_entrega" : "motoboy_retirou", msg = mensagens(atual)[tipoMsg];
+  if (qual === "link") {
+    if (!ped.corrida_link_em) { const rows = await sbPatch(`pedidos?id=eq.${id}&status=eq.pago&corrida_link_em=is.null`, { corrida_link_em: new Date().toISOString() }); if (rows?.[0]) atual = rows[0]; }
+  } else if (!ped.saiu_em) {
+    const rows = await sbPatch(`pedidos?id=eq.${id}&status=eq.pago&saiu_em=is.null`, { saiu_em: new Date().toISOString() }); if (rows?.[0]) atual = rows[0];
+  }
+  const tipoMsg = qual === "link" ? "corrida_link_recebido" : daLoja ? "saiu_entrega" : "motoboy_retirou";
+  const msg = mensagens(atual)[tipoMsg];
   const enviou = await enviarUmaVez(atual.id, tipoMsg, atual.cliente_whats, msg);
-  return { ok: true, numero: atual.numero, saiu_em: atual.saiu_em, whats: whatsDe(atual, msg, enviou) };
+  return { ok: true, numero: atual.numero, corrida_link_em: atual.corrida_link_em ?? null, saiu_em: atual.saiu_em ?? null, whats: whatsDe(atual, msg, enviou) };
 }
 
 // ─────────────────── avisos no celular/PC da equipe (Web Push) ───────────────────

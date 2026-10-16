@@ -335,6 +335,9 @@ await t("cliente que chama Uber/99: pago (pede a corrida) → motoboy retirou �
   await C.processarPagamento({ ...mpPays.get(String(mpSeq)), status: "approved", status_detail: "accredited" }); await flush();
   const pago = whats.find(w => /Pagamento confirmado/.test(w.text) && w.number === "5521944443333");
   assert.match(pago.text, /pedir o Uber Flash ou 99[\s\S]*Rua 18, 145[\s\S]*link da corrida/);
+  const link = await call("etapa", { pedido_id: c.j.pedido_id, etapa: "link" }, equipe);
+  assert.equal(link.status, 200); assert.ok(link.j.corrida_link_em);
+  assert.match(decodeURIComponent(link.j.whats.link), /Link da corrida recebido[\s\S]*\?pedido=/);
   const r = await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe);
   assert.equal(r.status, 200); assert.ok(r.j.saiu_em);
   assert.match(decodeURIComponent(r.j.whats.link), /Motoboy já retirou seu pedido[\s\S]*\?pedido=/);
