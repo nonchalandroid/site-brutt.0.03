@@ -129,6 +129,22 @@ export function ligar(nex: Nex[], prods: Prod[]) {
   return { pares, conflitos, semParNex: nex.filter((_, i) => !usadoN.has(i)), semParSite: prods.filter(p => !usadoP.has(p.id)) };
 }
 
+
+function candidatosParaImportacao(nex: Nex[], prods: any[], conflitos: any[]) {
+  const nomesSite = new Set(prods.map(p => normaliza(p.name)));
+  const eansSite = new Set(prods.flatMap(p => eans(p.ean)));
+  const chavesSite = new Set(prods.map(p => String(p.site_product_id || "")));
+  const skusSite = new Set(prods.map(p => String(p.sku || "")));
+  const nomesConflito = new Set(conflitos.map(c => normaliza(c.nex)));
+  const vistos = new Set<string>();
+  return nex.filter(n => {
+    if (!n.code || nomesConflito.has(normaliza(n.nome)) || nomesSite.has(normaliza(n.nome))) return false;
+    if (n.eans.some(e => eansSite.has(e)) || chavesSite.has("nex-" + n.code) || skusSite.has(n.code) || vistos.has(n.code)) return false;
+    vistos.add(n.code);
+    return true;
+  });
+}
+
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-sync-secret", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 const brl = (v: number) => "R$ " + v.toFixed(2).replace(".", ",");
@@ -151,6 +167,51 @@ export async function handler(req: Request): Promise<Response> {
   let cfg: Record<string, string> = {};
   try { (await sbGet("sync_config?select=key,value")).forEach((r: any) => cfg[r.key] = r.value); } catch (e) { return json({ erro: "config indisponível" }, 500); }
   const quem = await autorizado(req, cfg); if (!quem) return json({ erro: "sem permissão" }, 403);
+
+  let body: any = {};
+  try { body = await req.json(); } catch { body = {}; }
+  const acao = String(body?.action || "");
+  if (acao === "list-unmatched" || acao === "import-unmatched") {
+    try {
+      const nexAtual = await nexTodos(cfg, false);
+      const prodsAtual: any[] = await sbGet("products?select=id,name,ean,stock,price,promo_price,is_active,site_product_id,sku&limit=5000");
+      const ligados = ligar(nexAtual, prodsAtual);
+      const candidatos = candidatosParaImportacao(nexAtual, prodsAtual, ligados.conflitos);
+      if (acao === "list-unmatched") {
+        return json({ ok: true, nex_total: nexAtual.length, site_total: prodsAtual.length, candidatos: candidatos.map(n => ({ code:n.code, name:n.nome, ean:n.eans[0] || "", stock:n.estoque, price:n.preco, promo:n.promo, combo:n.combo })) });
+      }
+      const selecionados = Array.isArray(body.items) ? body.items : [];
+      if (!selecionados.length) return json({ ok:false, erro:"Selecione pelo menos um produto." }, 400);
+      if (selecionados.length > 30) return json({ ok:false, erro:"Importe no máximo 30 produtos por vez." }, 400);
+      const categorias: any[] = await sbGet("categories?select=id&limit=500");
+      const categoriasValidas = new Set(categorias.map(c => String(c.id)));
+      let importados = 0;
+      const erros: string[] = [];
+      const codigosVistos = new Set<string>();
+      for (const item of selecionados) {
+        const code = String(item?.code || "").trim();
+        const category_id = String(item?.category_id || "").trim();
+        if (!code || codigosVistos.has(code)) { erros.push((code || "Sem código") + ": código ausente ou repetido na seleção."); continue; }
+        codigosVistos.add(code);
+        if (!categoriasValidas.has(category_id)) { erros.push(code + ": escolha uma categoria válida."); continue; }
+        const n = candidatos.find(x => x.code === code);
+        if (!n) { erros.push(code + ": o item não está mais disponível para importação ou já foi cadastrado."); continue; }
+        const slugBase = normaliza(n.nome).replace(/\s+/g, "-").replace(/^-+|-+$/g, "").slice(0, 75) || "produto";
+        const payload = {
+          site_product_id: "nex-" + code, sku: code, ean: n.eans[0] || null,
+          name: n.nome, brand: null, category_id, price: n.preco, promo_price: n.promo,
+          stock: n.estoque, description: null, specs: [], is_featured: false, sort_priority: 99,
+          sales_count: 0, is_active: item.publish === true, icon: "📦", slug: slugBase + "-" + code.toLowerCase()
+        };
+        try { await sbInsert("products", payload); importados++; }
+        catch (e) { erros.push(code + ": " + String((e as any)?.message || e).slice(0,180)); }
+      }
+      return json({ ok: erros.length === 0, importados, erros, restantes: Math.max(0,candidatos.length-importados) });
+    } catch (e) {
+      return json({ ok:false, erro:"Falha ao consultar/importar produtos do NEX: " + String((e as any)?.message || e).slice(0,220) }, 502);
+    }
+  }
+
   const modo = url.searchParams.get("modo") === "real" ? "real" : "teste";
   const origem = quem === "agenda" ? (url.searchParams.get("origem") === "manual" ? "manual" : "agenda") : "admin";
   // ?lista= só vale para a agenda/testes do servidor; quem chama pelo painel usa sempre a configuração (nex_lista)
