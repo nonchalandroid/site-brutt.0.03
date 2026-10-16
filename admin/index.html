@@ -5573,7 +5573,7 @@ async function renderNexNovos(){
     if(!session?.access_token)throw new Error("Entre com a conta de gestor para consultar o NEX.");
     const r=await fetch(`${SUPA_URL}/functions/v1/sync-nex`,{method:"POST",headers:{apikey:SUPA_KEY,Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify(body)});
     const j=await r.json().catch(()=>({}));
-    if(!r.ok||j.ok===false)throw new Error(j.erro||("Servidor respondeu "+r.status));
+    if(!r.ok||j.erro)throw new Error(j.erro||("Servidor respondeu "+r.status));
     return j;
   };
   const updateCount=()=>{const n=list.querySelectorAll("[data-nn-check]:checked").length;count.textContent=n+` selecionado(s); máximo de 30 por lote.`;importBtn.disabled=n===0;};
