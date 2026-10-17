@@ -611,6 +611,12 @@ html.menu-carrossel #menu{will-change:transform}
 }
 /* borda girando da IA (anima o ângulo do degradê = repinta na thread da página): só enquanto aparece */
 .ia:not([data-state=open]) .ia-panel::before,.ia:not([data-state=bar]) .ia-bar::before,.ia:not([data-state=bar]) .ia-bar::after{animation-play-state:paused}
+/* Auditoria mobile aprovada: a marca permanece no hero/rodapé, mas não ocupa o header estreito. */
+@media(max-width:640px){
+  header .bar .logo{display:none}
+  header .bar{gap:8px;padding-left:12px;padding-right:12px}
+  #drawer .d-b{padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));scroll-padding-bottom:28px}
+}
 </style>
 </head>
 <body>
