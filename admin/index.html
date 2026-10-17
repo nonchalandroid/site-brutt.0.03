@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@600&display=swap" rel="stylesheet">
-<meta name="theme-color" content="#f6f1e9">
+<meta name="theme-color" content="#080b09">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="../favicon/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -31,10 +31,10 @@
    (--gold, --red…) que ainda aparecem nos templates do JS.
    ===================================================================== */
 :root{
-  --bg:#100a07; --side:#150e0a; --surface:#1c140f; --surface-2:#261b14; --field:#160f0b;
-  --line:#35271d; --line-2:#4c3929;
-  --ink:#f6ead6; --muted:#c2ab8e; --muted-2:#8f7a62;
-  --accent:#eab54a; --accent-2:#cf962c; --accent-ink:#2a1704; --accent-soft:rgba(234,181,74,.10);
+  --bg:#080b09; --side:#0d120f; --surface:#111914; --surface-2:#17231b; --field:#0c110e;
+  --line:#25372b; --line-2:#35513e;
+  --ink:#edf7ef; --muted:#a8b9ad; --muted-2:#74877a;
+  --accent:#72e0a0; --accent-2:#43bd78; --accent-ink:#07150c; --accent-soft:rgba(114,224,160,.11);
   --ok:#79c48e; --ok-soft:rgba(121,196,142,.12);
   --warn:#e5843f; --warn-soft:rgba(229,132,63,.12);
   --danger:#e15a4a; --danger-soft:rgba(225,90,74,.12);
@@ -57,7 +57,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:v
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html.side-aberta{overflow:hidden}
 h1,h2,h3{font-family:var(--font);font-weight:600;letter-spacing:-.01em;margin:0}
-::selection{background:rgba(234,181,74,.28);color:var(--ink)}
+::selection{background:rgba(114,224,160,.28);color:var(--ink)}
 *{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 *::-webkit-scrollbar{width:10px;height:10px}*::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:10px;border:3px solid var(--bg)}
 a{color:var(--accent);text-underline-offset:2px}
@@ -71,7 +71,7 @@ input,select,textarea{background:var(--field);border:1px solid var(--line);borde
 textarea{line-height:1.45}
 input::placeholder,textarea::placeholder{color:var(--muted-2)}
 input:hover,select:hover,textarea:hover{border-color:var(--line-2)}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(234,181,74,.16)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(114,224,160,.16)}
 input:disabled,select:disabled,textarea:disabled{opacity:.5;cursor:not-allowed}
 select{appearance:none;-webkit-appearance:none;padding-right:34px;cursor:pointer;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c2ab8e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -86,7 +86,7 @@ button{cursor:pointer;border:0;border-radius:var(--r);padding:10px 16px;font-wei
 button:active:not(:disabled){transform:translateY(1px)}
 button:disabled{opacity:.5;cursor:not-allowed}
 .btn-gold{background:var(--accent);color:var(--accent-ink)}
-.btn-gold:hover:not(:disabled){background:#f3c463}
+.btn-gold:hover:not(:disabled){background:#8ce9b1}
 .btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
 .btn-ghost:hover:not(:disabled){background:var(--surface-2);border-color:var(--line-2)}
 .btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(225,90,74,.5)}
@@ -220,7 +220,7 @@ button.stcard:hover{border-color:var(--line-2);background:#22180f}
 
 /* ---------- login ---------- */
 .center-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;
-  background:radial-gradient(600px 300px at 50% 0%,rgba(234,181,74,.06),transparent 70%)}
+  background:radial-gradient(600px 300px at 50% 0%,rgba(114,224,160,.06),transparent 70%)}
 .login-card{width:100%;max-width:380px;padding:28px;box-shadow:var(--shadow)}
 .login-logo{display:flex;align-items:center;gap:10px;margin:0 0 22px}
 .login-logo b{font-size:15px;font-weight:700}
@@ -284,6 +284,17 @@ details.manual .toolbar{margin:12px 0 2px}
 .cms-tab{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:8px 14px;font-size:13px}
 .cms-tab.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .cms-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);gap:14px}
+.cms-site-global{margin:0 0 14px;background:linear-gradient(135deg,rgba(114,224,160,.055),transparent 58%),var(--surface)}
+.cms-site-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.cms-site-fields .span-2{grid-column:1/-1}
+.cms-site-fields label{display:block;font-size:12px;color:var(--muted);font-weight:600;margin:0 0 6px}
+.cms-site-fields .cms-hint{font-weight:400}
+.cms-menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cms-menu-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:9px;background:var(--field);border:1px solid var(--line);border-radius:var(--r)}
+.cms-menu-item input[type=text]{min-width:0}
+.cms-menu-item .cms-menu-toggle{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);white-space:nowrap}
+.cms-savebar{position:sticky;bottom:10px;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding:12px 14px;border:1px solid var(--line-2);border-radius:14px;background:rgba(8,11,9,.94);backdrop-filter:blur(14px);box-shadow:0 14px 36px rgba(0,0,0,.35)}
+@media(max-width:700px){.cms-site-fields,.cms-menu-grid{grid-template-columns:1fr}.cms-site-fields .span-2{grid-column:auto}.cms-savebar{align-items:flex-start;flex-direction:column}.cms-savebar button{width:100%}}
 .cms-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px}
 .cms-box-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
 .cms-box-h h3{font-size:16px}.cms-box-h p{font-size:12px;color:var(--muted);margin:3px 0 0;max-width:620px}
@@ -296,7 +307,7 @@ details.manual .toolbar{margin:12px 0 2px}
 .cms-row .cms-name{min-width:0}.cms-row .cms-name b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}.cms-row .cms-name small{display:block;color:var(--muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}
 .cms-row .cms-priority{min-height:34px;padding:6px 7px;text-align:center;font:600 12px var(--mono)}
 .cms-row .cms-save{padding:6px 8px;min-height:34px;font-size:12px}
-.cms-row.is-featured{border-color:rgba(234,181,74,.45);background:linear-gradient(90deg,var(--accent-soft),transparent 60%),var(--field)}
+.cms-row.is-featured{border-color:rgba(114,224,160,.45);background:linear-gradient(90deg,var(--accent-soft),transparent 60%),var(--field)}
 .cms-hint{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 12px}.cms-hint b{color:var(--ink)}
 .cms-section-list{display:flex;flex-direction:column;gap:8px}.cms-section{padding:11px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--field)}
 .cms-section-h{display:flex;align-items:center;justify-content:space-between;gap:8px}.cms-section h4{font-size:14px}.cms-section h4 small{display:block;color:var(--muted);font-size:11px;font-weight:400;margin-top:2px}
@@ -407,7 +418,7 @@ details.nx-box[open]{padding-bottom:12px}
 .gr:hover{border-color:var(--line-2)}
 .gr.dirty::before{background:var(--warn)}
 .gr.selected::before{background:var(--accent)}
-.gr.selected{background:linear-gradient(0deg,rgba(234,181,74,.05),rgba(234,181,74,.05)),var(--surface);border-color:rgba(234,181,74,.4)}
+.gr.selected{background:linear-gradient(0deg,rgba(114,224,160,.05),rgba(114,224,160,.05)),var(--surface);border-color:rgba(114,224,160,.4)}
 .gr.dirty{border-color:rgba(229,132,63,.45)}
 .gr.inativo .gr-id .nm{opacity:.6}
 @keyframes grIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -517,7 +528,7 @@ details.nx-box[open]{padding-bottom:12px}
 .ft-intro h2{font-size:22px;font-weight:650;letter-spacing:-.02em;color:var(--ink);margin:0 0 4px}
 .ft-intro p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 14px;max-width:760px}
 .ft-intro p b{color:var(--ink)}
-.ft-alvo{background:var(--accent-soft);border:1px solid rgba(234,181,74,.35);border-radius:var(--r);padding:9px 12px;font-size:13px;margin-bottom:10px}
+.ft-alvo{background:var(--accent-soft);border:1px solid rgba(114,224,160,.35);border-radius:var(--r);padding:9px 12px;font-size:13px;margin-bottom:10px}
 .ft-lk{background:none;border:0;padding:0;min-height:0;color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-size:inherit;font-weight:600}
 .ft-opts{display:grid;gap:8px;margin-bottom:12px;font-size:13px;color:var(--muted)}
 .ft-chk{display:flex;gap:8px;align-items:center;cursor:pointer}
@@ -531,7 +542,7 @@ details.nx-box[open]{padding-bottom:12px}
 .ft-drop small{color:var(--muted);font-size:12px;max-width:520px}
 .ft-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:12px;margin:16px 0 96px}
 .ft-card{display:grid;grid-template-columns:128px minmax(0,1fr);gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:10px;animation:grIn .3s var(--ease) both;transition:border-color .15s}
-.ft-card.on{border-color:rgba(234,181,74,.45)}
+.ft-card.on{border-color:rgba(114,224,160,.45)}
 .ft-card.enviada{border-color:rgba(121,196,142,.5)}
 .ft-card.falhou,.ft-card.erro{border-color:rgba(225,90,74,.55)}
 .ft-img{position:relative;width:128px;height:128px;border-radius:var(--r);overflow:hidden;background:#fff}
@@ -605,7 +616,7 @@ details.nx-box[open]{padding-bottom:12px}
 
 /* ---------- horário de funcionamento ---------- */
 .hr-row{display:grid;grid-template-columns:minmax(150px,1.1fr) 1fr 1fr;gap:10px 14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px}
-.hr-row.hr-hoje{border-color:rgba(234,181,74,.45);box-shadow:inset 3px 0 0 var(--accent)}
+.hr-row.hr-hoje{border-color:rgba(114,224,160,.45);box-shadow:inset 3px 0 0 var(--accent)}
 .hr-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .hr-dia{font-weight:600}.hr-dia small{display:inline-block;color:var(--accent-ink);background:var(--accent);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:2px}
 .hr-tempo label{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:4px}
@@ -618,7 +629,7 @@ details.nx-box[open]{padding-bottom:12px}
 .ped-filtros{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
 .ped-filtros::-webkit-scrollbar{display:none}
 .ped-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px;margin:0 0 10px;font-size:14px;line-height:1.45;transition:border-color .15s}
-.ped-card.acao{border-color:rgba(234,181,74,.4);box-shadow:inset 3px 0 0 var(--accent)}
+.ped-card.acao{border-color:rgba(114,224,160,.4);box-shadow:inset 3px 0 0 var(--accent)}
 .ped-h{display:flex;justify-content:space-between;align-items:center;gap:6px 12px;flex-wrap:wrap}
 .ped-h b{font-size:15px;font-weight:600}
 .ped-h code{font:500 13px var(--mono);color:var(--muted);margin-right:6px;white-space:nowrap}
@@ -632,7 +643,7 @@ details.nx-box[open]{padding-bottom:12px}
 .ped-f>b{font-size:17px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
-.st-pago{color:var(--accent);background:var(--accent-soft);border-color:rgba(234,181,74,.4)}
+.st-pago{color:var(--accent);background:var(--accent-soft);border-color:rgba(114,224,160,.4)}
 .st-aguardando_pagamento{color:var(--warn);background:var(--warn-soft);border-color:rgba(229,132,63,.35)}
 .st-concluido{color:var(--ok);background:var(--ok-soft);border-color:rgba(121,196,142,.35)}
 .st-recusado{color:var(--danger);background:var(--danger-soft);border-color:rgba(225,90,74,.35)}
@@ -653,7 +664,7 @@ details.nx-box[open]{padding-bottom:12px}
 .ov-kpi .v{font-size:30px;font-weight:650;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
 .ov-kpi .v.txt{font-size:18px;letter-spacing:-.01em;line-height:1.3;padding-top:4px}
 .ov-kpi .d{font-size:12px;color:var(--muted);margin-top:auto}
-.ov-kpi.acao{border-color:rgba(234,181,74,.4)}.ov-kpi.acao .v{color:var(--accent)}
+.ov-kpi.acao{border-color:rgba(114,224,160,.4)}.ov-kpi.acao .v{color:var(--accent)}
 .ov-kpi.alerta .v{color:var(--warn)}
 .ov-kpi.ruim{border-color:rgba(225,90,74,.45)}.ov-kpi.ruim .v{color:var(--danger)}
 .ov-kpi.sk .v{width:60%;height:30px;border-radius:6px;background:var(--surface-2)}
@@ -763,7 +774,7 @@ html,body{overflow-x:clip}
 .sm-tag.t-ok{color:var(--ok);border-color:rgba(121,196,142,.35);background:var(--ok-soft)}
 .sm-tag.t-revisar{color:var(--warn);border-color:rgba(229,132,63,.35);background:var(--warn-soft)}
 .sm-tag.t-erro{color:var(--danger);border-color:rgba(225,90,74,.35);background:var(--danger-soft)}
-.sm-tag.t-rodando{color:var(--accent);border-color:rgba(234,181,74,.4)}
+.sm-tag.t-rodando{color:var(--accent);border-color:rgba(114,224,160,.4)}
 @media (prefers-reduced-motion:reduce){.sm-barra i{transition:none}}
 
 /* =====================================================================
@@ -808,7 +819,7 @@ html,body{overflow-x:clip}
 .ntf-tx b{font-size:14px;color:var(--ink)}.ntf-tx small{font-size:12px;color:var(--muted);line-height:1.4}
 .ntf-bt{display:flex;gap:8px;flex-wrap:wrap}
 .ntf-ok{border-color:rgba(79,224,140,.35)}.ntf-ok .ntf-ic{background:var(--ok-soft);color:var(--ok)}
-.ntf-off{border-color:rgba(234,181,74,.45)}
+.ntf-off{border-color:rgba(114,224,160,.45)}
 .ntf-bad{border-color:rgba(255,90,74,.4)}.ntf-bad .ntf-ic{background:var(--danger-soft);color:var(--danger)}
 @keyframes piscaPix{0%,100%{opacity:.9}50%{opacity:.25}}
 .ped-card.pixnovo{position:relative;border-color:var(--warn);cursor:pointer}
@@ -833,7 +844,7 @@ html,body{overflow-x:clip}
 .cli-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px}
 .cli-card{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;font-size:13px;line-height:1.45;color:var(--ink);cursor:pointer;min-width:0;transition:border-color .15s}
 .cli-card:hover{border-color:var(--line-2)}
-.cli-card:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(234,181,74,.16)}
+.cli-card:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(114,224,160,.16)}
 .cli-card .h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .cli-card .h b{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .cli-card .h code{font:500 12px var(--mono);color:var(--muted-2);white-space:nowrap;flex:none}
@@ -843,7 +854,7 @@ html,body{overflow-x:clip}
 .cli-tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .cli-tag.inc{color:var(--warn);border-color:rgba(229,132,63,.35);background:var(--warn-soft)}
 .cli-tag.ok{color:var(--ok);border-color:rgba(121,196,142,.35);background:var(--ok-soft)}
-.cli-tag.ac{color:var(--accent);border-color:rgba(234,181,74,.4);background:var(--accent-soft)}
+.cli-tag.ac{color:var(--accent);border-color:rgba(114,224,160,.4);background:var(--accent-soft)}
 .cli-mais{display:block;margin:12px auto 0}
 .cli-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;font-size:12px;color:var(--muted)}
 .cli-stats b{display:block;font-size:16px;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -858,13 +869,13 @@ html,body{overflow-x:clip}
 .eq-pp.eq-owner b,.eq-tag.eq-owner{color:var(--accent)}
 .eq-pp.eq-admin b,.eq-tag.eq-admin{color:var(--info)}
 .eq-pp.eq-atendente b,.eq-tag.eq-atendente{color:var(--ok)}
-.eq-tag.eq-owner{border-color:rgba(234,181,74,.4);background:var(--accent-soft)}
+.eq-tag.eq-owner{border-color:rgba(114,224,160,.4);background:var(--accent-soft)}
 .eq-tag.eq-admin{border-color:rgba(127,191,255,.35);background:rgba(127,191,255,.08)}
 .eq-tag.eq-atendente{border-color:rgba(79,224,140,.35);background:rgba(79,224,140,.08)}
 .eq-lista{display:grid;gap:8px}
 .eq-card{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;color:var(--ink);cursor:pointer;min-width:0;transition:border-color .15s}
 .eq-card:hover{border-color:var(--line-2)}
-.eq-card:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(234,181,74,.16)}
+.eq-card:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(114,224,160,.16)}
 .eq-card.off{opacity:.6}
 .eq-card .avatar{flex:none}
 .eq-tx{display:flex;flex-direction:column;min-width:0;flex:1;font-size:13px;line-height:1.4}
@@ -1669,8 +1680,8 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 /* Navegação lateral agrupada. Rotas não mudam; apenas a hierarquia visual. */
 const NAV = [
   ["Operação", { items: [["visao","Visão geral","dash"],["pedidos","Pedidos online","bag","pedidos"],["home","Produtos","pkg"],["clientes","Clientes","users"]] }],
-  ["Estoque e compras", { items: [["estoque-baixo","Estoque","pkg","estoque"],["giro","Giro e reposição","gauge"],["vendidos","Mais vendidos","trend"],["planilha","Planilha de compra","sheet"]] }],
-  ["Catálogo e lote", { collapsed: true, items: [["conferencia","Conferência de produtos","check"],["vitrine","Vitrine e destaques","trend"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
+  ["Estoque e compras", { items: [["estoque-baixo","Estoque","pkg","estoque"],["nex-novos","Produtos novos do NEX","sync"],["giro","Giro e reposição","gauge"],["vendidos","Mais vendidos","trend"],["planilha","Planilha de compra","sheet"]] }],
+  ["Catálogo e conteúdo", { collapsed: true, items: [["site-cms","CMS do site","store"],["vitrine","Vitrine e destaques","trend"],["conferencia","Conferência de produtos","check"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
   ["Gestão", { items: [["financeiro","Financeiro","coin"]] }],
   ["Configurações", { collapsed: true, items: [["horarios","Horários da loja","clock"],["nex","Integrações Nex","sync"],["equipe","Equipe","shield"]] }],
 ];
@@ -1742,11 +1753,11 @@ function bindTopbar(){
 /* números do menu (Pedidos online, Estoque baixo) e do sininho, num lugar só */
 function pintaContadores(v){
   if(!v) return;
-  const pon = (k, n, cls) => { const el = document.querySelector(`[data-badge="${k}"]`); if(!el) return; el.hidden = !n; el.textContent = n > 99 ? "99+" : n; el.className = "nav-b " + cls; };
+  const pon = (k, n, cls) => { const el = document.querySelector(`[data-badge="${k}"]`); if(!el) return; el.hidden = !n; el.textContent = String(n); el.className = "nav-b " + cls; };
   pon("pedidos", v.pedidos, v.novos ? "novo" : "acao"); pon("estoque", v.estoque, "alerta");
   const b = $("#sinoBtn"); if(!b) return;
   const n = (v.pedidos || 0) + (v.pix || 0), el = b.querySelector(".sino-n");   /* em aberto = pagos a concluir + Pix gerado aguardando */
-  el.hidden = !n; el.textContent = n > 99 ? "99+" : n;
+  el.hidden = !n; el.textContent = String(n);
   b.classList.toggle("novo", !!v.novos); b.classList.toggle("pix", !v.novos && !!v.pix);
   b.setAttribute("aria-label", n ? `Avisos: ${v.pedidos} pedido(s) pago(s) a concluir${v.pix ? `, ${v.pix} Pix aguardando pagamento` : ""}` : "Avisos de pedidos");
   if(sinoAberto()) sinoLista();
@@ -4175,7 +4186,7 @@ function pedBotao(p){
 function pedLinha(p){
   if(!["pago","concluido"].includes(p.status)) return "";
   const ent = (p.entrega || {}).tipo === "entrega", h = iso => iso ? new Date(iso).toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit", timeZone:"America/Sao_Paulo" }) : "";
-  const passos = [["Recebido", p.created_at, true], ["Pago", p.pago_em, true]];
+  const passos = [["Recebido", p.created_at, true], ["Pago", p.pago_em, true], ["Em separação", p.separacao_em, !!p.separacao_em]];
   if(ent){ passos.push(["Saiu", p.saiu_em, !!p.saiu_em || p.status === "concluido"]); passos.push(["Entregue", p.concluido_em, p.status === "concluido"]); }
   else { passos.push(["Link recebido", p.corrida_link_em, !!p.corrida_link_em || p.status === "concluido"]); passos.push(["Motoboy retirou", p.saiu_em, !!p.saiu_em || p.status === "concluido"]); passos.push(["Concluído", p.concluido_em, p.status === "concluido"]); }
   return `<div class="ped-linha">${passos.map(([t, iso, ok]) => `<span class="${ok ? "ok" : ""}">${t}${ok && iso ? ` <time>${h(iso)}</time>` : ""}</span>`).join("")}
@@ -4191,7 +4202,7 @@ async function renderPedidos(){
       <div id="pedLista"><div class="loading">Carregando…</div></div>
     </div>`;
   bindTopbar(); desenhaNotif();
-  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,corrida_link_em,saiu_em,concluido_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em").order("created_at", { ascending:false }).limit(60);
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,separacao_em,corrida_link_em,saiu_em,concluido_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em").order("created_at", { ascending:false }).limit(60);
   const el = $("#pedLista");
   if(!el) return;
   if(error){ el.innerHTML = `<div class="err">Não foi possível carregar os pedidos (${esc(error.message)}).</div>`; return; }
@@ -4897,7 +4908,6 @@ async function renderVisao(){
       <div class="pg-h"><div><h2 class="pg-t">Visão geral</h2><p class="pg-d">O que precisa de atenção agora. Números do banco da loja no momento em que a tela abriu.</p></div>
         <button class="btn-ghost btn-sm" id="ovAtualiza">${ic("sync")} Atualizar</button></div>
       <div class="ov-grid" id="ovKpis">${["Pedidos a concluir","Estoque baixo","Ativos sem estoque","Margem de lucro","Loja agora"].map(kpiSk).join("")}</div>
-      <button type="button" class="ov-box ov-fin" id="ovFin" data-ir="financeiro" aria-label="Abrir o Financeiro"><div class="loading">Calculando o lucro…</div></button>
       <div class="ov-cols">
         <section class="ov-box"><div class="ov-box-h"><h3>Pendências prioritárias</h3><small class="ov-fonte">Atualiza automaticamente</small></div><div class="ov-todo" id="ovTodo"><div class="loading">Verificando…</div></div></section>
         <section class="ov-box"><div class="ov-box-h"><h3>Últimos pedidos online</h3><button class="btn-ghost btn-sm" data-ir="pedidos">Ver todos</button></div><div class="ov-ped" id="ovPed"><div class="loading">Carregando…</div></div></section>
@@ -4915,7 +4925,7 @@ async function renderVisao(){
   $("#ovAtualiza").onclick = () => { navCont.t = 0; renderVisao(); };
 
   const cont = q => q.then(r => r.error ? null : (r.count || 0)).catch(() => null);
-  const [nPago, nAguard, nBaixo, nZero, nex, hor, ult, nNovo, prodsMg, fin, perV] = await Promise.all([
+  const [nPago, nAguard, nBaixo, nZero, nex, hor, ult, nNovo, prodsMg, perV] = await Promise.all([
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago")),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "aguardando_pagamento")),
     cont(filtroEstoqueBaixo(sb.from("products").select("id", { count:"exact", head:true }))),
@@ -4925,7 +4935,6 @@ async function renderVisao(){
     sb.from("pedidos").select("id,numero,status,mp_status,cliente_nome,total,created_at").order("created_at", { ascending:false }).limit(5),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago").is("visto_em", null)),
     sb.from("products").select("name,stock,price,promo_price,cost_price,sales_count").eq("is_active", true).limit(5000),
-    sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),
     sb.from("vendas_periodo").select("dias").eq("id", 1).maybeSingle(),
   ]);
   if(rotaAtual() !== "visao" || !$("#ovKpis")) return;
@@ -4954,7 +4963,6 @@ async function renderVisao(){
     kpi("horarios", "store", "Loja agora", !loja ? "—" : loja.aberto ? "Aberta" : "Fechada",
         !loja ? "não disponível" : loja.aberto ? "até " + loja.fim : (loja.nunca ? "nenhum dia aberto" : "abre " + loja.quando + " às " + loja.hora), !loja ? "" : loja.aberto ? "bom" : "alerta", true);
 
-  resumoFinanceiro(fin && !fin.error ? fin.data : null, mg, !!(fin && fin.error));
   /* o que resolver agora: só itens que existem de verdade */
   const it = (rota, icone, cls, titulo, sub) => `<button class="ov-item ${cls}" data-ir="${rota}"><span class="ic">${ic(icone)}</span><span class="tx"><b>${titulo}</b><small>${sub}</small></span><span class="go">${ic("chev")}</span></button>`;
   const todo = [];
@@ -4977,7 +4985,7 @@ async function renderVisao(){
     ult.data.map(p => `<div class="ov-ped-r"><span class="n"><code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</span>
       <span class="t">${brlV(p.total)}<span class="st st-${esc(pedSt(p))}">${PED_ROT[pedSt(p)] || esc(p.status)}</span></span>
       <span class="q">${fmtQuando(p.created_at)}</span></div>`).join("");
-  app.querySelectorAll("#ovKpis [data-ir], #ovTodo [data-ir], #ovFin").forEach(b => b.onclick = () => irPara(b.dataset.ir));
+  app.querySelectorAll("#ovKpis [data-ir], #ovTodo [data-ir]").forEach(b => b.onclick = () => irPara(b.dataset.ir));
 }
 
 /* ---------------- clientes: cadastro único (lista do Nex + quem compra pelo site), editável pela equipe ----------------
@@ -5481,12 +5489,141 @@ function eqAbrir(m){
   });
 }
 
+
+/* ---------------- CMS do site público ---------------- */
+const CMS_DEFAULT_SECTIONS = [
+["essencias-ziggy","Ziggy","Marca brasileira, dos sabores clássicos aos mais diferentes"],
+["essencias-nay","Nay","Blends de frutas e opções refrescantes"],
+["essencias-onix","Onix","Frutas, menta e sabores diferentes"],
+["essencias-zomo","Zomo","Sabores fortes, strong drops e clássicos"],
+["essencias-sense","Sense","Combinações geladas de frutas"],
+["narguile","Narguile e Acessórios","Roshs, carvão, mangueiras e mais"],
+["headshop","Headshop","Sedas, piteiras, cuias, slicks, pipes, bongs e dichavadores"],
+["tabacos","Tabacos","Os mais pedidos da casa"],
+["charutos","Charutos","Phillies Titan Chocolate, Jamm, Dona Flor, Quorum"],
+["palha","Cigarros de Palha","Fumo natural, do jeito tradicional"],
+["cigarrilhas","Cigarrilhas","Compactas e cheias de aroma"],
+["cigarros","Cigarros","Marcas nacionais e importadas"],
+["isqueiros","Isqueiros e Maçaricos","Isqueiros, maçaricos, recargas e gás"],
+["incensos","Incensos e Mais","Incensos e artigos religiosos"],
+["doces","Doces","Balas, chicletes, chocolates e biscoitos"],
+["bebidas","Bebidas","Gelada e na medida. Só para maiores de 18"],
+["conveniencia","Conveniência","Cabos, carregadores e fones de ouvido"],
+["outros","Outros Itens","Outros itens úteis"]
+];
+let cmsSiteDraft = null;
+async function renderSiteCms(){
+  app.innerHTML = `${topbarHTML("CMS do site")}<div class="pg">
+    <div class="pg-h"><div><h2 class="pg-t">CMS do site</h2><p class="pg-d">Organize a página inicial e edite os textos sem mexer em preço ou estoque.</p></div><button class="btn-ghost btn-sm" id="siteCmsRefresh">${ic("sync")} Atualizar</button></div>
+    <div class="cms-tabs"><button class="cms-tab on" type="button" id="siteCmsJumpHome">Conteúdo do site</button><button class="cms-tab" type="button" id="siteCmsJumpBanner">Banner promocional</button></div>
+    <div id="siteCmsArea"><div class="loading">Carregando configuração…</div></div></div>`;
+  bindTopbar();$("#siteCmsRefresh").onclick=()=>renderSiteCms();
+  const jump=(id,btn)=>{document.querySelectorAll(".cms-tabs .cms-tab").forEach(x=>x.classList.toggle("on",x===btn));$(id)?.scrollIntoView({behavior:"smooth",block:"start"});};
+  $("#siteCmsJumpHome").onclick=()=>jump("#siteCmsGlobal",$("#siteCmsJumpHome"));
+  $("#siteCmsJumpBanner").onclick=()=>jump("#siteCmsBanner",$("#siteCmsJumpBanner"));
+  const area=$("#siteCmsArea"),{data,error}=await sb.from("site_cms_config").select("config").eq("id","homepage").maybeSingle();
+  if(rotaAtual()!=="site-cms"||!area)return;
+  if(error){area.innerHTML=`<div class="err">Não foi possível carregar o CMS: ${esc(error.message)}</div>`;return;}
+  const saved=data?.config||{},byId=Object.fromEntries((Array.isArray(saved.sections)?saved.sections:[]).map(x=>[x.id,x]));
+  cmsSiteDraft={sections:CMS_DEFAULT_SECTIONS.map(([id,title,subtitle])=>{const x=byId[id]||{};return{id,title:x.title==null?title:x.title,subtitle:x.subtitle==null?subtitle:x.subtitle,visible:x.visible!==false,order:Number.isFinite(Number(x.order))?Number(x.order):CMS_DEFAULT_SECTIONS.findIndex(y=>y[0]===id)}}).sort((x,y)=>x.order-y.order),banner:{visible:saved.banner?.visible===true,title:saved.banner?.title||"",text:saved.banner?.text||"",buttonText:saved.banner?.buttonText||"Saiba mais",url:saved.banner?.url||"",imageUrl:saved.banner?.imageUrl||""},site:{heroTitle:saved.site?.heroTitle??"Tudo de melhor pra sua sessão.",heroSubtitle:saved.site?.heroSubtitle??"Tabacaria e Smokeshop · Campo Grande RJ · Conjunto Campinho",footerText:saved.site?.footerText??"© Tabacaria Brutt · Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ · Venda proibida para menores de 18 anos. Fumar faz mal à saúde.",instagramUrl:saved.site?.instagramUrl??"https://www.instagram.com/tabacariabrutt/",hotTitle:saved.site?.hotTitle??"VENDENDO MUITO!",hotSubtitle:saved.site?.hotSubtitle??"Os queridinhos da Brutt, direto da vitrine",categoriesTitle:saved.site?.categoriesTitle??"Categorias",categoriesSubtitle:saved.site?.categoriesSubtitle??"Escolha o que você procura",locationTitle:saved.site?.locationTitle??"Como chegar",locationSubtitle:saved.site?.locationSubtitle??"Tabacaria Brutt · Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ · Conjunto Campinho",reviewsTitle:saved.site?.reviewsTitle??"Avaliações no Google"},menuItems:[["em-alta","Em alta"],["essencias","Essências"],["narguile","Narguile"],["headshop","Headshop"],["tabacos","Tabacos"],["charutos","Charutos"],["cigarros","Cigarros"],["isqueiros","Isqueiros"],["bebidas","Bebidas"],["mais","Mais"]].map(([id,label])=>{const x=(saved.menuItems||[]).find(y=>y.id===id)||{};return{id,label:x.label??label,visible:x.visible!==false}}),effects:{mode:["auto","alto","leve"].includes(saved.effects?.mode)?saved.effects.mode:"auto",scrollSnap:saved.effects?.scrollSnap!==false}};
+  const sync=()=>{cmsSiteDraft.sections.forEach(x=>{const t=area.querySelector(`[data-title="${x.id}"]`),s=area.querySelector(`[data-subtitle="${x.id}"]`),v=area.querySelector(`[data-visible="${x.id}"]`);if(t)x.title=t.value.trim();if(s)x.subtitle=s.value.trim();if(v)x.visible=v.checked;});const get=id=>area.querySelector("#"+id);const t=get("siteCmsHeroTitle"),s=get("siteCmsHeroSubtitle"),f=get("siteCmsFooterText"),ig=get("siteCmsInstagram"),mode=get("siteCmsEffectsMode"),snap=get("siteCmsSnap");if(t)cmsSiteDraft.site.heroTitle=t.value.trim();if(s)cmsSiteDraft.site.heroSubtitle=s.value.trim();if(f)cmsSiteDraft.site.footerText=f.value.trim();if(ig)cmsSiteDraft.site.instagramUrl=ig.value.trim();for(const [key,id] of [["hotTitle","siteCmsHotTitle"],["hotSubtitle","siteCmsHotSubtitle"],["categoriesTitle","siteCmsCategoriesTitle"],["categoriesSubtitle","siteCmsCategoriesSubtitle"],["locationTitle","siteCmsLocationTitle"],["locationSubtitle","siteCmsLocationSubtitle"],["reviewsTitle","siteCmsReviewsTitle"]]){const el=get(id);if(el)cmsSiteDraft.site[key]=el.value.trim();}cmsSiteDraft.menuItems.forEach(x=>{const l=area.querySelector(`[data-menu-label="${x.id}"]`),v=area.querySelector(`[data-menu-visible="${x.id}"]`);if(l)x.label=l.value.trim()||x.label;if(v)x.visible=v.checked;});if(mode)cmsSiteDraft.effects.mode=mode.value;if(snap)cmsSiteDraft.effects.scrollSnap=snap.checked;};
+  const save=async()=>{
+    sync();const b={visible:$("#siteCmsBannerVisible").checked,title:$("#siteCmsBannerTitle").value.trim(),text:$("#siteCmsBannerText").value.trim(),buttonText:$("#siteCmsBannerButton").value.trim()||"Saiba mais",url:$("#siteCmsBannerUrl").value.trim(),imageUrl:$("#siteCmsBannerImage").value.trim()};const site={heroTitle:$("#siteCmsHeroTitle").value.trim(),heroSubtitle:$("#siteCmsHeroSubtitle").value.trim(),footerText:$("#siteCmsFooterText").value.trim(),instagramUrl:$("#siteCmsInstagram").value.trim(),hotTitle:$("#siteCmsHotTitle").value.trim(),hotSubtitle:$("#siteCmsHotSubtitle").value.trim(),categoriesTitle:$("#siteCmsCategoriesTitle").value.trim(),categoriesSubtitle:$("#siteCmsCategoriesSubtitle").value.trim(),locationTitle:$("#siteCmsLocationTitle").value.trim(),locationSubtitle:$("#siteCmsLocationSubtitle").value.trim(),reviewsTitle:$("#siteCmsReviewsTitle").value.trim()};const menuItems=cmsSiteDraft.menuItems.map(x=>({id:x.id,label:area.querySelector(`[data-menu-label="${x.id}"]`).value.trim()||x.label,visible:area.querySelector(`[data-menu-visible="${x.id}"]`).checked}));const effects={mode:$("#siteCmsEffectsMode").value,scrollSnap:$("#siteCmsSnap").checked};
+    if(b.url&&!/^(https:\/\/|\/|#)/i.test(b.url)){toast("O link precisa ser HTTPS, caminho do site ou âncora.");return;}
+    if(b.imageUrl&&!/^https:\/\//i.test(b.imageUrl)){toast("A imagem precisa usar HTTPS.");return;}if(site.instagramUrl&&!/^https:\/\//i.test(site.instagramUrl)){toast("O Instagram precisa usar um endereço HTTPS.");return;}if(!site.heroTitle||!site.heroSubtitle){toast("Preencha o título e o subtítulo principal.");return;}
+    const btn=$("#siteCmsSave");btn.disabled=true;btn.classList.add("is-busy");
+    try{
+      const {data:{user},error:userError}=await sb.auth.getUser();
+      if(userError||!user)throw new Error("Sua sessão expirou. Entre novamente no painel.");
+      const config={sections:cmsSiteDraft.sections.map((x,i)=>({id:x.id,title:x.title,subtitle:x.subtitle,visible:x.visible,order:i})),banner:b,site,menuItems,effects};
+      const {data:saved,error:e}=await sb.from("site_cms_config").upsert({id:"homepage",config,updated_at:new Date().toISOString(),updated_by:user.id},{onConflict:"id"}).select("config,updated_at").single();
+      if(e)throw e;
+      if(!saved?.config?.sections||saved.config.sections.length!==config.sections.length)throw new Error("O banco não confirmou todas as seções. Tente novamente.");
+      toast("CMS salvo no banco. Atualize o site público para conferir.");
+    }catch(e){toast("Não foi possível salvar o CMS: "+String(e?.message||e));}
+    finally{btn.disabled=false;btn.classList.remove("is-busy");}
+  };
+  const draw=()=>{
+    area.innerHTML=`<section class="cms-box cms-site-global" id="siteCmsGlobal"><div class="cms-box-h"><div><h3>Identidade e conteúdo do site</h3><p>Edite os textos fixos que aparecem no topo e no rodapé sem tocar no código.</p></div><span class="badge">Conteúdo global</span></div><div class="cms-site-fields"><div><label for="siteCmsHeroTitle">Título principal</label><input class="input" id="siteCmsHeroTitle" maxlength="120" value="${esc(cmsSiteDraft.site.heroTitle)}"></div><div><label for="siteCmsHeroSubtitle">Subtítulo principal</label><input class="input" id="siteCmsHeroSubtitle" maxlength="180" value="${esc(cmsSiteDraft.site.heroSubtitle)}"></div><div><label for="siteCmsHotTitle">Título de “Vendendo muito”</label><input class="input" id="siteCmsHotTitle" maxlength="100" value="${esc(cmsSiteDraft.site.hotTitle)}"></div><div><label for="siteCmsHotSubtitle">Subtítulo de “Vendendo muito”</label><input class="input" id="siteCmsHotSubtitle" maxlength="180" value="${esc(cmsSiteDraft.site.hotSubtitle)}"></div><div><label for="siteCmsCategoriesTitle">Título de categorias</label><input class="input" id="siteCmsCategoriesTitle" maxlength="100" value="${esc(cmsSiteDraft.site.categoriesTitle)}"></div><div><label for="siteCmsCategoriesSubtitle">Subtítulo de categorias</label><input class="input" id="siteCmsCategoriesSubtitle" maxlength="180" value="${esc(cmsSiteDraft.site.categoriesSubtitle)}"></div><div><label for="siteCmsLocationTitle">Título de localização</label><input class="input" id="siteCmsLocationTitle" maxlength="100" value="${esc(cmsSiteDraft.site.locationTitle)}"></div><div><label for="siteCmsLocationSubtitle">Texto de localização</label><input class="input" id="siteCmsLocationSubtitle" maxlength="240" value="${esc(cmsSiteDraft.site.locationSubtitle)}"></div><div><label for="siteCmsReviewsTitle">Título das avaliações</label><input class="input" id="siteCmsReviewsTitle" maxlength="100" value="${esc(cmsSiteDraft.site.reviewsTitle)}"></div><div class="span-2"><label for="siteCmsFooterText">Texto do rodapé</label><textarea class="input" id="siteCmsFooterText" rows="3" maxlength="500">${esc(cmsSiteDraft.site.footerText)}</textarea></div><div class="span-2"><label for="siteCmsInstagram">Link do Instagram</label><input class="input" id="siteCmsInstagram" maxlength="300" value="${esc(cmsSiteDraft.site.instagramUrl)}" placeholder="https://www.instagram.com/…"></div></div><div class="divider" style="margin:18px 0"></div><div class="cms-box-h"><div><h3>Menu principal</h3><p>Troque os nomes e escolha quais atalhos aparecem no menu do site.</p></div></div><div class="cms-menu-grid">${cmsSiteDraft.menuItems.map(x=>`<div class="cms-menu-item"><input class="input" type="text" data-menu-label="${x.id}" maxlength="32" value="${esc(x.label)}" aria-label="Nome do menu ${esc(x.label)}"><label class="cms-menu-toggle"><input type="checkbox" data-menu-visible="${x.id}" ${x.visible?"checked":""}> Exibir</label></div>`).join("")}</div><div class="divider" style="margin:18px 0"></div><div class="cms-box-h"><div><h3>Efeitos e navegação</h3><p>Escolha o peso dos efeitos visuais e se a rolagem encaixa nas seções.</p></div></div><div class="cms-site-fields"><div><label for="siteCmsEffectsMode">Efeitos visuais</label><select id="siteCmsEffectsMode" class="input"><option value="auto" ${cmsSiteDraft.effects.mode==="auto"?"selected":""}>Automático (recomendado)</option><option value="alto" ${cmsSiteDraft.effects.mode==="alto"?"selected":""}>Completo</option><option value="leve" ${cmsSiteDraft.effects.mode==="leve"?"selected":""}>Leve (mais desempenho)</option></select></div><div><label class="cms-menu-toggle" style="margin-top:22px"><input id="siteCmsSnap" type="checkbox" ${cmsSiteDraft.effects.scrollSnap?"checked":""}> Encaixar rolagem por seção</label></div></div></section><div class="cms-grid"><section class="cms-box">
+      <div class="cms-box-h"><div><h3>Seções do catálogo</h3><p>Use as setas para mudar a ordem. Desative uma seção para ocultá-la.</p></div><span class="badge">${cmsSiteDraft.sections.filter(x=>x.visible).length} visíveis</span></div>
+      <div class="cms-hint">“Vendendo muito”, categorias e informações institucionais mantêm suas áreas próprias. Se uma seção não tiver produtos ativos, ela continua oculta.</div>
+      <div class="cms-section-list">${cmsSiteDraft.sections.map((x,i)=>`<article class="cms-section"><div class="cms-section-h"><h4><span style="color:var(--muted);margin-right:7px">${String(i+1).padStart(2,"0")}</span>${esc(CMS_DEFAULT_SECTIONS.find(y=>y[0]===x.id)?.[1]||x.id)}</h4><div style="display:flex;gap:5px"><button type="button" class="btn-ghost btn-sm" data-up="${x.id}" ${i===0?"disabled":""} aria-label="Mover para cima">↑</button><button type="button" class="btn-ghost btn-sm" data-down="${x.id}" ${i===cmsSiteDraft.sections.length-1?"disabled":""} aria-label="Mover para baixo">↓</button></div></div>
+      <label class="cms-hint" style="display:flex;align-items:center;gap:8px;margin:10px 0"><input type="checkbox" data-visible="${x.id}" ${x.visible?"checked":""}> Exibir no site</label>
+      <label class="label" style="display:block;margin:10px 0 5px">Título</label><input class="input" data-title="${x.id}" value="${esc(x.title)}" maxlength="100">
+      <label class="label" style="display:block;margin:10px 0 5px">Subtítulo</label><input class="input" data-subtitle="${x.id}" value="${esc(x.subtitle)}" maxlength="180"></article>`).join("")}
+      </div></section><aside class="cms-box" id="siteCmsBanner"><div class="cms-box-h"><div><h3>Banner promocional</h3><p>Destaque opcional entre “Vendendo muito” e as seções de produtos.</p></div></div>
+      <label class="cms-hint" style="display:flex;align-items:center;gap:8px;margin:10px 0"><input id="siteCmsBannerVisible" type="checkbox" ${cmsSiteDraft.banner.visible?"checked":""}> Publicar banner</label>
+      <label class="label" style="display:block;margin:10px 0 5px">Título</label><input class="input" id="siteCmsBannerTitle" maxlength="100" value="${esc(cmsSiteDraft.banner.title)}" placeholder="Ex.: Novidades chegaram na Brutt">
+      <label class="label" style="display:block;margin:10px 0 5px">Texto</label><textarea class="input" id="siteCmsBannerText" rows="3" maxlength="300">${esc(cmsSiteDraft.banner.text)}</textarea>
+      <label class="label" style="display:block;margin:10px 0 5px">Texto do botão</label><input class="input" id="siteCmsBannerButton" maxlength="40" value="${esc(cmsSiteDraft.banner.buttonText)}">
+      <label class="label" style="display:block;margin:10px 0 5px">Link do botão</label><input class="input" id="siteCmsBannerUrl" maxlength="500" value="${esc(cmsSiteDraft.banner.url)}" placeholder="https://… ou /categoria">
+      <label class="label" style="display:block;margin:10px 0 5px">URL da imagem (opcional)</label><input class="input" id="siteCmsBannerImage" maxlength="1000" value="${esc(cmsSiteDraft.banner.imageUrl)}" placeholder="https://…">
+      <p class="cms-hint">A imagem precisa usar HTTPS. O banner só aparece depois de marcar “Publicar banner”.</p></aside></div>
+      <div class="cms-savebar"><div><strong>Publicação do site</strong><div class="cms-hint" style="margin:3px 0 0">As alterações são salvas no banco e aplicadas quando o site público carregar.</div></div><button type="button" class="btn-gold" id="siteCmsSave">${ic("check")} Salvar alterações</button></div>`;
+    area.querySelectorAll("[data-up],[data-down]").forEach(btn=>btn.onclick=()=>{sync();const id=btn.dataset.up||btn.dataset.down,from=cmsSiteDraft.sections.findIndex(x=>x.id===id),to=from+(btn.dataset.up?-1:1);if(from<0||to<0||to>=cmsSiteDraft.sections.length)return;const [item]=cmsSiteDraft.sections.splice(from,1);cmsSiteDraft.sections.splice(to,0,item);cmsSiteDraft.sections.forEach((x,i)=>x.order=i);draw();});
+    $("#siteCmsSave").onclick=save;
+  };draw();
+}
+
+
+/* ---------------- Importação controlada de produtos novos do NEX ---------------- */
+async function renderNexNovos(){
+  app.innerHTML=`${topbarHTML("Produtos novos do NEX")}<div class="pg">
+    <div class="pg-h"><div><h2 class="pg-t">Produtos novos do NEX</h2><p class="pg-d">Importe produtos que existem no NEX mas ainda não estão cadastrados no site. Nada é publicado sem sua seleção.</p></div><button class="btn-ghost btn-sm" id="nnRefresh">${ic("sync")} Atualizar lista</button></div>
+    <div class="cms-hint" style="margin-bottom:14px">Preço e estoque vêm do NEX. Escolha a categoria e marque “Publicar no site” para cada item. Produtos com EAN duplicado ou conflito de correspondência são omitidos por segurança.</div>
+    <div id="nnStatus" class="loading">Consultando NEX…</div><div id="nnList"></div>
+    <div class="save-row" style="margin-top:16px"><button type="button" class="btn-gold" id="nnImport" disabled>${ic("check")} Importar selecionados</button><span class="cms-hint" id="nnCount"></span></div>
+  </div>`;
+  bindTopbar();
+  const status=$("#nnStatus"),list=$("#nnList"),importBtn=$("#nnImport"),count=$("#nnCount");
+  let candidates=[],categories=[];
+  const call=async(body)=>{
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session?.access_token)throw new Error("Entre com a conta de gestor para consultar o NEX.");
+    const r=await fetch(`${SUPA_URL}/functions/v1/sync-nex`,{method:"POST",headers:{apikey:SUPA_KEY,Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.erro)throw new Error(j.erro||("Servidor respondeu "+r.status));
+    return j;
+  };
+  const updateCount=()=>{const n=list.querySelectorAll("[data-nn-check]:checked").length;count.textContent=n+` selecionado(s); máximo de 30 por lote.`;importBtn.disabled=n===0;};
+  const draw=()=>{
+    if(!candidates.length){list.innerHTML='<div class="empty">Nenhum produto novo seguro para importar. Se o produto estiver em conflito, confira a tela “Conferência de produtos”.</div>';importBtn.disabled=true;count.textContent="";return;}
+    const opts='<option value="">Escolher categoria…</option>'+categories.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("");
+    list.innerHTML=`<div class="cms-box"><div class="cms-box-h"><div><h3>${candidates.length} produto(s) candidatos</h3><p>Marque apenas os itens que realmente devem entrar no catálogo da Brutt.</p></div></div><div style="overflow:auto"><table class="table"><thead><tr><th>Importar</th><th>Produto no NEX</th><th>Estoque</th><th>Preço</th><th>Categoria no site</th><th>Publicar</th></tr></thead><tbody>${candidates.map((p,i)=>`<tr><td><input type="checkbox" data-nn-check="${i}" aria-label="Selecionar ${esc(p.name)}"></td><td><strong>${esc(p.name)}</strong><div class="cms-hint">Código ${esc(p.code)}${p.ean?" · EAN "+esc(p.ean):""}${p.combo?" · Combo":""}</div></td><td>${Number(p.stock)||0}</td><td>${(Number(p.price)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td><td><select class="input" data-nn-cat="${i}">${opts}</select></td><td><input type="checkbox" data-nn-pub="${i}" checked aria-label="Publicar ${esc(p.name)}"></td></tr>`).join("")}</tbody></table></div></div>`;
+    list.querySelectorAll("[data-nn-check]").forEach(el=>el.onchange=updateCount);updateCount();
+  };
+  const load=async()=>{
+    status.className="loading";status.textContent="Consultando NEX e categorias…";list.innerHTML="";importBtn.disabled=true;
+    try{
+      const [j,c]=await Promise.all([call({action:"list-unmatched"}),sb.from("categories").select("id,name").order("name")]);
+      if(c.error)throw c.error;
+      candidates=j.candidatos||[];categories=c.data||[];
+      status.className="cms-hint";status.textContent=`NEX: ${j.nex_total} itens · Site: ${j.site_total} produtos. A lista abaixo contém apenas candidatos sem correspondência segura.`;
+      draw();
+    }catch(e){status.className="err";status.textContent="Não foi possível carregar a lista: "+String(e?.message||e);}
+  };
+  $("#nnRefresh").onclick=load;
+  importBtn.onclick=async()=>{
+    const selected=[...list.querySelectorAll("[data-nn-check]:checked")].map(el=>{const i=Number(el.dataset.nnCheck);return{code:candidates[i].code,category_id:list.querySelector(`[data-nn-cat="${i}"]`)?.value||"",publish:!!list.querySelector(`[data-nn-pub="${i}"]`)?.checked};});
+    if(selected.length>30){toast("Selecione no máximo 30 itens por vez.");return;}
+    if(selected.some(x=>!x.category_id)){toast("Escolha uma categoria para cada produto selecionado.");return;}
+    if(!selected.length)return;
+    if(!confirm(`Importar ${selected.length} produto(s) do NEX para o catálogo do site? O estoque e o preço iniciais virão do NEX.`))return;
+    importBtn.disabled=true;importBtn.textContent="Importando…";
+    try{const result=await call({action:"import-unmatched",items:selected});toast(`Importados: ${result.importados||0}.${result.erros?.length?" Erros: "+result.erros.join(" | "):""}`);await load();}
+    catch(e){toast("Falha na importação: "+String(e?.message||e));}
+    finally{importBtn.innerHTML=`${ic("check")} Importar selecionados`;updateCount();}
+  };
+  await load();
+}
+
 /* tabela de rotas — toda tela nova entra aqui */
 Object.assign(ROUTES, {
   "visao": renderVisao,
   "financeiro": renderFinanceiro,
   "home": renderMain,
   "nex": renderNex,
+  "nex-novos": renderNexNovos,
   "horarios": renderHorarios,
   "estoque-baixo": renderLowStock,
   "planilha": renderSyncScreen,
@@ -5497,6 +5634,7 @@ Object.assign(ROUTES, {
   "sommelier": renderSommelier,
   "conferencia": renderConferencia,
   "vitrine": renderVitrine,
+  "site-cms": renderSiteCms,
   "giro": renderGiro,
   "equipe": renderEquipe,
 });
