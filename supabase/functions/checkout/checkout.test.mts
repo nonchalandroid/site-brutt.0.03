@@ -129,7 +129,7 @@ await t("Pix: gera QR dinâmico com valor do banco; pendente NÃO marca pago", a
   const p = await call("pagar", { pedido_id: pixPedido, metodo: "pix", formData: { payment_method_id: "pix", transaction_amount: 0.01, payer: { email: "joao@ex.com" } } });
   assert.equal(p.status, 200); assert.equal(p.j.status, "aguardando_pagamento"); assert.match(p.j.pix.qr_code, /^000201PIX/); assert.equal(p.j.pix.qr_code_base64, "aW1n");
   const pay = mpPays.get(String(mpSeq)); assert.equal(pay._req.transaction_amount, 25); assert.equal(pay._req.external_reference, pixPedido);
-  assert.match(pay._req.date_of_expiration, /-03:00$/); assert.equal(pay._req.notification_url, F + "?acao=webhook");
+  assert.match(pay._req.date_of_expiration, /-03:00$/); assert.equal(pay._req.notification_url, undefined); // a URL do webhook é configurada no Mercado Pago, não no payload do pagamento
   assert.equal(whats.length, 0);
 });
 await t("webhook com assinatura inválida é rejeitado", async () => {
