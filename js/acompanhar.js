@@ -10,7 +10,7 @@ var S=window.__SUPA||{},FN=(S.url||"")+"/functions/v1/checkout",CHAVE="brutt_ped
 var END_LOJA="Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ";
 var UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var equipe={};                               /* pedidos abertos pelo "ver como o cliente vê" do painel: não guarda no aparelho */
-var abertoId=null,tPoll=null,tPill=null,ultimo={};
+var abertoId=null,tPoll=null,tPill=null,tTerminal=null,ultimo={};
 var _esc=typeof esc==="function"?esc:function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
 var _R=function(v){return typeof R==="function"?R(Number(v)||0):"R$ "+(Number(v)||0).toFixed(2).replace(".",",")};
 var _toast=function(m){if(typeof toast==="function")toast(m)};
@@ -64,6 +64,15 @@ function buscar(id){
 /* ── estado → textos ── */
 var hora=function(iso){if(!iso)return"";try{return new Date(iso).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit",timeZone:"America/Sao_Paulo"})}catch(_){return""}};
 function final(a){return a.status==="concluido"||a.status==="cancelado"||a.status==="expirado"||a.status==="recusado"}
+function terminalPagamento(a){return!!a&&(a.status==="cancelado"||a.status==="expirado"||a.status==="recusado"||a.estornado===true)}
+function agendarFechamentoTerminal(id){
+  clearTimeout(tTerminal);
+  tTerminal=setTimeout(function(){
+    if(abertoId!==id)return;
+    if(!equipe[id])esquece(id);
+    fechar(true);
+  },3500);
+}
 function etapas(a){
   var pago=!!a.pago||a.status==="pago"||a.status==="concluido",fim=a.status==="concluido";
   var L=[{t:"Recebemos seu pedido",s:"Pedido #"+a.numero,h:a.criado,ok:true},
@@ -160,7 +169,10 @@ function desenha(id,a){
 }
 function poll(id){
   clearTimeout(tPoll);if(abertoId!==id)return;
-  var a=ultimo[id],ms=document.hidden?30e3:a&&a.status==="aguardando_pagamento"?5e3:15e3;
+  var a=ultimo[id];
+  if(terminalPagamento(a)){agendarFechamentoTerminal(id);return}
+  clearTimeout(tTerminal);
+  var ms=document.hidden?30e3:a&&a.status==="aguardando_pagamento"?5e3:15e3;
   tPoll=setTimeout(function(){
     if(abertoId!==id)return;
     buscar(id).then(function(j){if(abertoId!==id)return;if(j&&j.acomp){var antes=ultimo[id];desenha(id,j.acomp);avisaMudanca(antes,j.acomp)}poll(id)}).catch(function(){poll(id)});
@@ -175,6 +187,7 @@ function abrir(id,op){
   if(!UUID.test(String(id)))return;
   op=op||{};
   if(op.equipe)equipe[id]=true;else guarda(id,op.numero||(ultimo[id]&&ultimo[id].numero)||"",op.txtLoja||"");
+  clearTimeout(tTerminal);
   var m=el();if(!m.classList.contains("on")&&window.SOM)SOM.toca("abre");abertoId=id;
   m.innerHTML=ultimo[id]?html(ultimo[id],id):'<div class="ac-h"><span class="ac-num">Pedido'+(op.numero?' <b>#'+_esc(op.numero)+'</b>':"")+'</span><button type="button" class="ac-x" data-acomp-fechar aria-label="Fechar">×</button></div><div class="ac-load" role="status"><span class="ac-spin"></span>Carregando seu pedido…</div>';
   var v=document.getElementById("veil");if(v)v.classList.add("on");
@@ -194,7 +207,7 @@ function fechar(forcar){
     return;
   }
   var fechou=abertoId;
-  var m=document.getElementById("acomp");abertoId=null;clearTimeout(tPoll);
+  var m=document.getElementById("acomp");abertoId=null;clearTimeout(tPoll);clearTimeout(tTerminal);
   if(fechou&&a&&a.status==="concluido")esquece(fechou);   /* pedido concluído: o acompanhamento some do aparelho */
   if(!m)return;if(m.classList.contains("on")&&window.SOM)SOM.toca("fecha");m.classList.remove("on");m.setAttribute("aria-hidden","true");
   if(!document.querySelector("#drawer.on,#pm.on")){var v=document.getElementById("veil");if(v)v.classList.remove("on")}
