@@ -242,6 +242,8 @@ export async function pagar(body: any, urlFuncao: string) {
     transaction_amount: Number(ped.total),               // valor do BANCO
     description: `Pedido ${ped.numero} - ${LOJA.nome}`,
     external_reference: ped.id,
+    // Configura o webhook por pagamento para não depender apenas do painel externo do Mercado Pago.
+    notification_url: `${SB()}/functions/v1/checkout?acao=webhook`,
     statement_descriptor: "TABACARIABRUTT",
     payer: { email, first_name: ped.cliente_nome.split(" ")[0] },
     metadata: { pedido_numero: ped.numero },
@@ -508,11 +510,23 @@ export async function etapa(req: Request, body: any) {
   const daLoja = ped.entrega?.tipo === "entrega";
   if (qual === "link" && daLoja) return { erro: "Entrega da loja não usa link de corrida.", status: 409 };
   if (ped.status !== "pago") return { erro: daLoja ? "Só pedido pago pode sair para entrega." : "Só pedido pago pode avançar esta etapa.", status: 409 };
+  // Para entregas solicitadas pelo cliente (Uber Flash/99), registre o link antes da retirada.
+  // Entregas feitas pela loja não usam corrida_link_em.
+  if (qual === "saiu" && !daLoja && !ped.corrida_link_em) {
+    return { erro: "Registre primeiro o recebimento do link da corrida.", status: 409 };
+  }
   let atual = ped;
   if (qual === "link") {
     if (!ped.corrida_link_em) { const rows = await sbPatch(`pedidos?id=eq.${id}&status=eq.pago&corrida_link_em=is.null`, { corrida_link_em: new Date().toISOString() }); if (rows?.[0]) atual = rows[0]; }
   } else if (!ped.saiu_em) {
-    const rows = await sbPatch(`pedidos?id=eq.${id}&status=eq.pago&saiu_em=is.null`, { saiu_em: new Date().toISOString() }); if (rows?.[0]) atual = rows[0];
+    const filtroCorrida = daLoja ? "" : "&corrida_link_em=not.is.null";
+    const rows = await sbPatch(`pedidos?id=eq.${id}&status=eq.pago&saiu_em=is.null${filtroCorrida}`, { saiu_em: new Date().toISOString() });
+    if (rows?.[0]) atual = rows[0];
+    else {
+      const [atualizado] = await sbGet(`pedidos?id=eq.${id}&select=*`);
+      if (!atualizado?.saiu_em) return { erro: "A etapa não pôde avançar. Confira se o link da corrida foi registrado.", status: 409 };
+      atual = atualizado;
+    }
   }
   const tipoMsg = qual === "link" ? "corrida_link_recebido" : daLoja ? "saiu_entrega" : "motoboy_retirou";
   const msg = mensagens(atual)[tipoMsg];
