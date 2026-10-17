@@ -51,6 +51,7 @@ const res = (o: any, status = 200) => new Response(o == null ? "" : JSON.stringi
   if (u.host === "api.mercadopago.com") {
     assert.equal(init.headers.Authorization, "Bearer TEST-token");
     if (m === "POST") {
+      assert.equal(body.notification_url, "https://sb.test/functions/v1/checkout?acao=webhook", "todo pagamento configura webhook explícito");
       idemKeys.push(init.headers["X-Idempotency-Key"]);
       if (body.payer?.email === "dono@loja.com") return res({ message: "Invalid users involved", status: 400, cause: [{ code: 4390 }] }, 400);
       const id = String(++mpSeq);
@@ -335,6 +336,9 @@ await t("cliente que chama Uber/99: pago (pede a corrida) → motoboy retirou �
   await C.processarPagamento({ ...mpPays.get(String(mpSeq)), status: "approved", status_detail: "accredited" }); await flush();
   const pago = whats.find(w => /Pagamento confirmado/.test(w.text) && w.number === "5521944443333");
   assert.match(pago.text, /pedir o Uber Flash ou 99[\s\S]*Rua 18, 145[\s\S]*link da corrida/);
+  const saiuAntesDoLink = await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe);
+  assert.equal(saiuAntesDoLink.status, 409);
+  assert.match(saiuAntesDoLink.j.erro, /link da corrida/i);
   const link = await call("etapa", { pedido_id: c.j.pedido_id, etapa: "link" }, equipe);
   assert.equal(link.status, 200); assert.ok(link.j.corrida_link_em);
   assert.match(decodeURIComponent(link.j.whats.link), /Link da corrida recebido[\s\S]*\?pedido=/);
