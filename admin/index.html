@@ -3025,7 +3025,7 @@ async function renderBestsellersScreen(){
         <label><span>até</span><input type="date" id="bestAte" value="${isoDia(hoje)}"></label>
         <span class="bv-dias" id="bestDias"></span>
       </div>
-      <label class="cf-esc"><input type="checkbox" id="bestZerar" checked> Zerar as vendas de quem não está no relatório (o relatório traz tudo que vendeu no período)</label>
+      <label class="cf-esc"><input type="checkbox" id="bestZerar"> Zerar vendas de produtos ausentes (somente se o relatório estiver completo)</label>
       <div class="dropzone" id="dropzone">
         <div><b style="color:var(--ink)">Clique para escolher a planilha</b> ou arraste o arquivo aqui<br><small>.xlsx, .xls ou .csv</small></div>
         <input type="file" id="bestFile" accept=".xlsx,.xls,.csv" hidden>
@@ -3157,25 +3157,45 @@ async function confirmarBestsellers(candidatos, tbody, fileName){
   if(!de || !ate || ate < de){ toast("Confira o período do relatório (de / até)."); $("#bestDe")?.focus(); return; }
   const linhasSelecionadas = [...tbody.querySelectorAll("tr")].filter(tr => tr.querySelector(".rowChk").checked);
   if(linhasSelecionadas.length === 0){ toast("Nada selecionado."); return; }
+  const zerarAusentes = $("#bestZerar")?.checked === true;
+  // O período é global: para zerar ausentes sem distorcer o giro, é obrigatório importar o relatório inteiro,
+  // com todas as linhas correspondidas e selecionadas. A opção vem desmarcada e exige confirmação explícita.
+  if(!zerarAusentes){
+    toast("Para atualizar um período completo, marque a opção de zerar ausentes após conferir a planilha.");
+    return;
+  }
+  if(linhasSelecionadas.length !== candidatos.length || candidatos.some(c => !c.escolhido)){
+    toast("Importação bloqueada: corrija os produtos sem correspondência e selecione todas as linhas antes de zerar vendas.");
+    return;
+  }
   /* o mesmo produto em mais de uma linha (ex.: "Gudang varejo" e "Varejo Gudang") soma */
   const soma = new Map();
   for(const tr of linhasSelecionadas){
     const c = candidatos[tr.dataset.idx];
     if(c.escolhido) soma.set(c.escolhido.id, (soma.get(c.escolhido.id) || 0) + c.linha.vendas);
   }
+  if(!confirm(`Importar o período de ${de} a ${ate} com ${soma.size} produto(s)? As vendas dos demais produtos serão zeradas. Só confirme se o arquivo do NEX contém o relatório completo do período.`)) return;
   const btn = $("#bestConfirm"); btn.disabled = true; btn.textContent = "Atualizando…";
-  if($("#bestZerar")?.checked){
-    const { error } = await sb.from("products").update({ sales_count: 0 }).gt("sales_count", 0);
-    if(error){ toast("Não deu para zerar as vendas antigas: " + error.message); btn.disabled = false; btn.textContent = "Confirmar e atualizar"; return; }
-  }
   let ok = 0, falhou = 0;
   for(const [id, q] of soma){
     const { error } = await sb.from("products").update({ sales_count: q }).eq("id", id);
     if(error) falhou++; else ok++;
   }
+  if(falhou){
+    toast(`Importação incompleta: ${ok} produto(s) atualizados e ${falhou} com erro. As vendas ausentes NÃO foram zeradas; revise e tente novamente.`);
+    btn.disabled = false; btn.textContent = "Confirmar e atualizar";
+    return;
+  }
+  const ids = [...soma.keys()];
+  const { error: eZero } = await sb.from("products").update({ sales_count: 0 }).gt("sales_count", 0).not("id", "in", `(${ids.join(",")})`);
+  if(eZero){
+    toast("As vendas dos produtos importados foram atualizadas, mas não consegui zerar os ausentes: " + eZero.message + ". Revise antes de confiar no giro.");
+    btn.disabled = false; btn.textContent = "Confirmar e atualizar";
+    return;
+  }
   const { data: { user } } = await sb.auth.getUser();
   const { error: ePer } = await sb.from("vendas_periodo").upsert({ id: 1, inicio: de, fim: ate, arquivo: fileName || null, atualizado_em: new Date().toISOString(), atualizado_por: user?.id || null });
-  toast(`Atualizado: ${ok} produto(s)${falhou ? `, ${falhou} com erro` : ""}${ePer ? " · período não salvo: " + ePer.message : ""}.`);
+  toast(`Atualizado: ${ok} produto(s)${ePer ? " · período não salvo: " + ePer.message : ""}.`);
   go("giro");
 }
 
