@@ -1681,8 +1681,7 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 const NAV = [
   ["Operação", { items: [["visao","Visão geral","dash"],["pedidos","Pedidos online","bag","pedidos"],["home","Produtos","pkg"],["clientes","Clientes","users"]] }],
   ["Estoque e compras", { items: [["estoque-baixo","Estoque","pkg","estoque"],["nex-novos","Produtos novos do NEX","sync"],["giro","Giro e reposição","gauge"],["vendidos","Mais vendidos","trend"],["planilha","Planilha de compra","sheet"]] }],
-  ["Catálogo e lote", { collapsed: true, items: [["conferencia","Conferência de produtos","check"],["vitrine","Vitrine e destaques","trend"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
-  ["Site e conteúdo", { items: [["site-cms","CMS do site","store"]] }],
+  ["Catálogo e conteúdo", { collapsed: true, items: [["site-cms","CMS do site","store"],["vitrine","Vitrine e destaques","trend"],["conferencia","Conferência de produtos","check"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
   ["Gestão", { items: [["financeiro","Financeiro","coin"]] }],
   ["Configurações", { collapsed: true, items: [["horarios","Horários da loja","clock"],["nex","Integrações Nex","sync"],["equipe","Equipe","shield"]] }],
 ];
@@ -4909,7 +4908,6 @@ async function renderVisao(){
       <div class="pg-h"><div><h2 class="pg-t">Visão geral</h2><p class="pg-d">O que precisa de atenção agora. Números do banco da loja no momento em que a tela abriu.</p></div>
         <button class="btn-ghost btn-sm" id="ovAtualiza">${ic("sync")} Atualizar</button></div>
       <div class="ov-grid" id="ovKpis">${["Pedidos a concluir","Estoque baixo","Ativos sem estoque","Margem de lucro","Loja agora"].map(kpiSk).join("")}</div>
-      <button type="button" class="ov-box ov-fin" id="ovFin" data-ir="financeiro" aria-label="Abrir o Financeiro"><div class="loading">Calculando o lucro…</div></button>
       <div class="ov-cols">
         <section class="ov-box"><div class="ov-box-h"><h3>Pendências prioritárias</h3><small class="ov-fonte">Atualiza automaticamente</small></div><div class="ov-todo" id="ovTodo"><div class="loading">Verificando…</div></div></section>
         <section class="ov-box"><div class="ov-box-h"><h3>Últimos pedidos online</h3><button class="btn-ghost btn-sm" data-ir="pedidos">Ver todos</button></div><div class="ov-ped" id="ovPed"><div class="loading">Carregando…</div></div></section>
@@ -4927,7 +4925,7 @@ async function renderVisao(){
   $("#ovAtualiza").onclick = () => { navCont.t = 0; renderVisao(); };
 
   const cont = q => q.then(r => r.error ? null : (r.count || 0)).catch(() => null);
-  const [nPago, nAguard, nBaixo, nZero, nex, hor, ult, nNovo, prodsMg, fin, perV] = await Promise.all([
+  const [nPago, nAguard, nBaixo, nZero, nex, hor, ult, nNovo, prodsMg, perV] = await Promise.all([
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago")),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "aguardando_pagamento")),
     cont(filtroEstoqueBaixo(sb.from("products").select("id", { count:"exact", head:true }))),
@@ -4937,7 +4935,6 @@ async function renderVisao(){
     sb.from("pedidos").select("id,numero,status,mp_status,cliente_nome,total,created_at").order("created_at", { ascending:false }).limit(5),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago").is("visto_em", null)),
     sb.from("products").select("name,stock,price,promo_price,cost_price,sales_count").eq("is_active", true).limit(5000),
-    sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),
     sb.from("vendas_periodo").select("dias").eq("id", 1).maybeSingle(),
   ]);
   if(rotaAtual() !== "visao" || !$("#ovKpis")) return;
@@ -4966,7 +4963,6 @@ async function renderVisao(){
     kpi("horarios", "store", "Loja agora", !loja ? "—" : loja.aberto ? "Aberta" : "Fechada",
         !loja ? "não disponível" : loja.aberto ? "até " + loja.fim : (loja.nunca ? "nenhum dia aberto" : "abre " + loja.quando + " às " + loja.hora), !loja ? "" : loja.aberto ? "bom" : "alerta", true);
 
-  resumoFinanceiro(fin && !fin.error ? fin.data : null, mg, !!(fin && fin.error));
   /* o que resolver agora: só itens que existem de verdade */
   const it = (rota, icone, cls, titulo, sub) => `<button class="ov-item ${cls}" data-ir="${rota}"><span class="ic">${ic(icone)}</span><span class="tx"><b>${titulo}</b><small>${sub}</small></span><span class="go">${ic("chev")}</span></button>`;
   const todo = [];
@@ -4989,7 +4985,7 @@ async function renderVisao(){
     ult.data.map(p => `<div class="ov-ped-r"><span class="n"><code>#${esc(p.numero)}</code>${esc(p.cliente_nome)}</span>
       <span class="t">${brlV(p.total)}<span class="st st-${esc(pedSt(p))}">${PED_ROT[pedSt(p)] || esc(p.status)}</span></span>
       <span class="q">${fmtQuando(p.created_at)}</span></div>`).join("");
-  app.querySelectorAll("#ovKpis [data-ir], #ovTodo [data-ir], #ovFin").forEach(b => b.onclick = () => irPara(b.dataset.ir));
+  app.querySelectorAll("#ovKpis [data-ir], #ovTodo [data-ir]").forEach(b => b.onclick = () => irPara(b.dataset.ir));
 }
 
 /* ---------------- clientes: cadastro único (lista do Nex + quem compra pelo site), editável pela equipe ----------------
