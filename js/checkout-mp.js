@@ -7,7 +7,7 @@ window.MPX=(function(){
 var CFG=window.__MP||{},S=window.__SUPA||{};
 var FN=(S.url||"")+"/functions/v1/checkout";
 var LOJA_CEP="23067-030";            /* o mesmo do link "Como chegar" do site */
-var metodo="pix",whatsVal="",pedido=null,brick=null,poll=null,emailVal="";
+var metodo="pix",whatsVal="",pedido=null,brick=null,poll=null,emailVal="",_avisoTimer=null;
 try{whatsVal=JSON.parse(localStorage.getItem("brutt_whats")||'""')||"";emailVal=JSON.parse(localStorage.getItem("brutt_email")||'""')||""}catch(e){}
 
 function ativo(){return!!(CFG.publicKey&&S.url&&S.key)}
@@ -156,6 +156,7 @@ function gerarPix(){
   pagar({payment_method_id:"pix",payer:emailOk()?{email:String(emailVal).trim().toLowerCase()}:{}}).catch(function(){var x=$("#mpArea");if(x&&!x.querySelector(".pix"))x.innerHTML=""});
 }
 function montarBrick(){
+  clearTimeout(_avisoTimer);
   desmontar();
   var area=$("#mpArea");if(!area)return;
   if(metodo==="pix")return gerarPix();
@@ -226,14 +227,14 @@ function acompanhar(){
       api("status&pedido="+encodeURIComponent(id)).then(function(j){
         if(!pedido||pedido.pedido_id!==id)return;
         if(j.status==="pago"||j.status==="concluido")return sucesso(j.numero);
-        if(j.status==="expirado"){if(cartView==="pagamento")aviso("Pix expirado","O código Pix expirou e nada foi cobrado. Gere um novo pagamento.");pedido._t=0;return}
+        if(j.status==="expirado"){pedido._t=0;if(cartView==="pagamento")aviso("Pix expirado","O código Pix expirou e nada foi cobrado. Voltando ao checkout…",true);return}
         if(j.status==="recusado"){if(cartView==="pagamento"){erroPag("Pagamento não aprovado. "+(RECUSA[j.mp_status_detail]||"Tente de novo."),true)}return}
         if(Date.now()-inicio<40*60e3)vez();
       }).catch(function(){if(Date.now()-inicio<40*60e3)vez()});
     },document.hidden?8e3:4e3);
   })();
 }
-function aviso(t,s){if(window.SOM)SOM.toca("falha");var a=$("#mpArea");if(a)a.innerHTML='<div class="mp-wait off"><b>'+esc(t)+'</b><span>'+esc(s)+'</span><button type="button" class="go" data-mp-tentar>Gerar novo Pix</button></div>'}
+function aviso(t,s,voltarAoCheckout){clearTimeout(_avisoTimer);if(window.SOM)SOM.toca("falha");var a=$("#mpArea");if(a)a.innerHTML='<div class="mp-wait off"><b>'+esc(t)+'</b><span>'+esc(s)+'</span>'+(voltarAoCheckout?'<small>Voltando ao checkout em instantes…</small>':'<button type="button" class="go" data-mp-tentar>Gerar novo Pix</button>')+'</div>';if(voltarAoCheckout){var id=pedido&&pedido.pedido_id;_avisoTimer=setTimeout(function(){if(cartView==="pagamento"&&pedido&&pedido.pedido_id===id)voltar()},3500)}}
 /* Mensagem do pedido PAGO para o WhatsApp da loja (o cliente toca em enviar). Valores vindos do servidor. */
 /* Mensagem do pedido para o WhatsApp da loja: o MESMO formato do pedido pelo WhatsApp (montarMsg da loja), para a equipe
    saber tudo sem abrir o painel. A linha do pagamento fica como {PAGAMENTO} e é preenchida na hora do envio com a situação
@@ -302,7 +303,7 @@ function deIA(co){
   drawCart("checkout");
   setTimeout(function(){var m=$("#email"),w=$("#whats");if(m&&!emailOk())m.focus();else if(w&&!whatsOk())w.focus()},350);
 }
-function voltar(){clearTimeout(poll);clearInterval(_tempo);desmontar();drawCart("checkout")}
+function voltar(){clearTimeout(poll);clearInterval(_tempo);clearTimeout(_avisoTimer);desmontar();drawCart("checkout")}
 
 return{deIA:deIA,ativo:ativo,pagamentoLinha:pagamentoLinha,emailOk:emailOk,whatsOk:whatsOk,whatsHTML:whatsHTML,clienteHTML:clienteHTML,pagamentoHTML:pagamentoHTML,iniciar:iniciar,selosHTML:selosHTML};
 })();

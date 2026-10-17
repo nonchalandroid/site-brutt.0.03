@@ -242,7 +242,6 @@ export async function pagar(body: any, urlFuncao: string) {
     transaction_amount: Number(ped.total),               // valor do BANCO
     description: `Pedido ${ped.numero} - ${LOJA.nome}`,
     external_reference: ped.id,
-    notification_url: urlFuncao + "?acao=webhook",
     statement_descriptor: "TABACARIABRUTT",
     payer: { email, first_name: ped.cliente_nome.split(" ")[0] },
     metadata: { pedido_numero: ped.numero },
@@ -330,7 +329,7 @@ export async function processarPagamento(p: any) {
     if (alvo === "pago" && !valorOk) console.error("valor divergente", ped.numero, p.transaction_amount, ped.total);
     else if (alvo === "pago" || mesmo) {
       const patch: any = { status: alvo, mp_payment_id: String(p.id), mp_status: p.status, mp_status_detail: p.status_detail };
-      if (alvo === "pago") { patch.pago_em = p.date_approved || new Date().toISOString(); patch.visto_em = null; patch.visto_por = null; }   // pago volta a piscar no admin
+      if (alvo === "pago") { const agora = p.date_approved || new Date().toISOString(); patch.pago_em = agora; patch.separacao_em = ped.separacao_em || agora; patch.visto_em = null; patch.visto_por = null; }   // pagamento confirmado: avança automaticamente para Em separação
       const rows = await sbPatch(`pedidos?id=eq.${id}&status=in.(${DE[alvo].join(",")})`, patch);
       if (rows?.[0]) atual = rows[0];
     }
