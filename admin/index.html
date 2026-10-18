@@ -1331,7 +1331,7 @@ html[data-nav-dir=sobe]::view-transition-new(root){animation-name:vtEntraCima}
 /* menu com cor: cada tela tem sua cor (ícone num quadradinho tingido); Pedidos online (o mais usado) ganha destaque;
    item ativo = vidro dourado com borda viva. Cores escuras e saturadas: contraste ≥ 3:1 no ícone sobre o claro. */
 .nav-i{--c:var(--muted)}
-.nav-i[data-tab=visao]{--c:#c2410c}.nav-i[data-tab=financeiro]{--c:#a16207}.nav-i[data-tab=giro]{--c:#be123c}.nav-i[data-tab=home]{--c:#b45309}.nav-i[data-tab=pedidos]{--c:#15803d}.nav-i[data-tab=clientes]{--c:#7e22ce}
+.nav-i[data-tab=ia]{--c:#6d28d9}.nav-i[data-tab=visao]{--c:#c2410c}.nav-i[data-tab=financeiro]{--c:#a16207}.nav-i[data-tab=giro]{--c:#be123c}.nav-i[data-tab=home]{--c:#b45309}.nav-i[data-tab=pedidos]{--c:#15803d}.nav-i[data-tab=clientes]{--c:#7e22ce}
 .nav-i[data-tab=estoque-baixo]{--c:#dc2626}.nav-i[data-tab=conferencia]{--c:#0e7490}.nav-i[data-tab=vitrine]{--c:#d97706}.nav-i[data-tab=sommelier]{--c:#a21caf}.nav-i[data-tab=fotos]{--c:#2563eb}
 .nav-i[data-tab=horarios]{--c:#0f766e}.nav-i[data-tab=nex]{--c:#4338ca}.nav-i[data-tab=equipe]{--c:#6d28d9}.nav-i[data-tab=planilha]{--c:#15803d}.nav-i[data-tab=vendidos]{--c:#be123c}
 .side .nav-i>svg{flex:none;width:28px;height:28px;padding:5px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);box-sizing:border-box}
@@ -1544,6 +1544,26 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
 .ped-card.foco::after{content:"";position:absolute;inset:-4px;border-radius:inherit;border:2px solid var(--ouro,#c8902a);pointer-events:none;animation:pedFoco 1.2s ease-in-out 2 both}
 @keyframes pedFoco{0%,100%{opacity:0}50%{opacity:1}}
 @media(prefers-reduced-motion:reduce){.ped-card.foco::after{animation:none;opacity:1}}
+/* Brutt IA · o que ela sabe (#/ia) */
+.ia-uso{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 14px;font-size:13px;color:var(--muted)}
+.ia-uso b{color:var(--ink)}
+.ia-barra{flex:1 1 140px;max-width:260px;height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.ia-barra i{display:block;height:100%;background:#6d28d9;transform-origin:left;transition:transform .4s}
+.ia-passou{color:var(--bordo-cl,#9f1239)}
+.ia-card{margin:0 0 12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);display:grid;gap:10px}
+.ia-card.off{opacity:.62}
+.ia-card.fora{border-color:var(--bordo-cl,#9f1239)}
+.ia-c-top{display:flex;align-items:center;gap:12px}
+.ia-c-top .ia-tit{flex:1;min-width:0;font-weight:600}
+.ia-txt{width:100%;resize:vertical;min-height:72px;font:inherit;line-height:1.45}
+.ia-c-pe{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.ia-c-pe small{color:var(--muted)}
+.ia-c-pe span{display:flex;gap:8px;margin-left:auto}
+.ia-teste{margin-top:18px}
+.ia-t-linha{display:flex;gap:8px}
+.ia-t-linha .input{flex:1;min-width:0}
+.ia-resp{margin-top:10px;padding:12px 14px;border-radius:12px;background:var(--surface-2,rgba(0,0,0,.04));line-height:1.5;font-size:14px;color:var(--ink)}
+@media(prefers-reduced-motion:reduce){.ia-barra i{transition:none}}
 </style>
 </head>
 <body>
@@ -1676,7 +1696,7 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 const NAV = [
   ["Operação", { items: [["visao","Visão geral","dash"],["pedidos","Pedidos online","bag","pedidos"],["home","Produtos","pkg"],["clientes","Clientes","users"]] }],
   ["Estoque e compras", { items: [["estoque-baixo","Estoque","pkg","estoque"],["nex-novos","Produtos novos do NEX","sync"],["giro","Giro e reposição","gauge"],["vendidos","Mais vendidos","trend"],["planilha","Planilha de compra","sheet"]] }],
-  ["Catálogo e conteúdo", { items: [["site-cms","CMS do site","store"],["vitrine","Vitrine e destaques","trend"],["conferencia","Conferência de produtos","check"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
+  ["Catálogo e conteúdo", { items: [["ia","Brutt IA","spark"],["site-cms","CMS do site","store"],["vitrine","Vitrine e destaques","trend"],["conferencia","Conferência de produtos","check"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
   ["Gestão", { items: [["financeiro","Financeiro","coin"]] }],
   ["Configurações", { collapsed: true, items: [["horarios","Horários da loja","clock"],["nex","Integrações Nex","sync"],["equipe","Equipe","shield"]] }],
 ];
@@ -4339,6 +4359,90 @@ async function renderPedidos(){
   }
 }
 
+/* ---------------- Brutt IA · o que ela sabe (#/ia, só dono/admin) ----------------
+   Cartões (título + texto) na tabela ia_conhecimento: os ativos entram no prompt da função brutt-ia em até 1 minuto
+   (cache de 60 s), como "O QUE A EQUIPE ENSINOU". Limites: título 80, texto 800, 6.000 caracteres no total (o resto
+   não entra). Preço e estoque continuam vindo do catálogo; as regras de frete/pagamento ficam no código. */
+const IA_MAX_TOTAL = 6000;
+let iaCartoes = [];
+async function renderIA(){
+  app.innerHTML = `${topbarHTML("Brutt IA")}
+    <div class="pg">
+      <div class="pg-h"><div><h2 class="pg-t">Brutt IA · o que ela sabe</h2>
+        <p class="pg-d">Ensine a Brutt IA sem precisar de programador: escreva cada informação da loja num cartão. Os cartões <b>ligados</b> passam a valer na conversa em até 1 minuto. Preço e estoque ela já pega do catálogo; aqui vão coisas como estacionamento, aluguel de narguile, promoções, regras da casa.</p></div>
+        <button class="btn-gold btn-sm" id="iaNovo">${ic("plus")} Novo cartão</button></div>
+      <div class="ia-uso" id="iaUso"></div>
+      <div id="iaLista"><div class="loading">Carregando…</div></div>
+      <section class="ov-box ia-teste"><div class="ov-box-h"><h3>Testar a Brutt IA</h3></div>
+        <p class="cf-dica">Pergunte como um cliente perguntaria. Salvou um cartão agora? Espere 1 minuto antes de testar.</p>
+        <div class="ia-t-linha"><input class="input" id="iaPerg" maxlength="300" placeholder="Ex.: Vocês têm estacionamento?"><button class="btn-sec btn-sm" id="iaPergBtn">Perguntar</button></div>
+        <div class="ia-resp" id="iaResp" hidden></div></section>
+    </div>`;
+  bindTopbar();
+  $("#iaNovo").onclick = () => { iaCartoes.unshift({ id: null, titulo: "", texto: "", ativo: true, ordem: 0, novo: true }); iaDesenha(); setTimeout(() => app.querySelector("[data-ia-tit]")?.focus(), 30); };
+  $("#iaPergBtn").onclick = iaPerguntar;
+  $("#iaPerg").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); iaPerguntar(); } });
+  const { data, error } = await sb.from("ia_conhecimento").select("id,titulo,texto,ativo,ordem,updated_at").order("ordem").order("created_at");
+  if(rotaAtual() !== "ia" || !$("#iaLista")) return;
+  if(error){ $("#iaLista").innerHTML = `<div class="empty">Não deu para ler os cartões: ${esc(error.message)}</div>`; return; }
+  iaCartoes = data || [];
+  iaDesenha();
+}
+function iaDesenha(){
+  const el = $("#iaLista"); if(!el) return;
+  let soma = 0;
+  const entra = iaCartoes.map(c => { if(!c.ativo || !String(c.texto).trim()) return false; soma += (c.titulo || "").length + String(c.texto).length + 4; return soma <= IA_MAX_TOTAL; });
+  const usado = iaCartoes.filter(c => c.ativo).reduce((t, c) => t + (c.titulo || "").length + String(c.texto || "").length + 4, 0);
+  $("#iaUso").innerHTML = `<span><b>${iaCartoes.filter(c => c.ativo && c.id).length}</b> cartões ligados</span><span class="ia-barra" aria-hidden="true"><i style="transform:scaleX(${Math.min(1, usado / IA_MAX_TOTAL).toFixed(3)})"></i></span><span>${usado.toLocaleString("pt-BR")} de ${IA_MAX_TOTAL.toLocaleString("pt-BR")} caracteres${usado > IA_MAX_TOTAL ? ' · <b class="ia-passou">os últimos não entram</b>' : ""}</span>`;
+  el.innerHTML = iaCartoes.length ? iaCartoes.map((c, i) => `<article class="ia-card${c.ativo ? "" : " off"}${c.ativo && !entra[i] && c.id ? " fora" : ""}" data-i="${i}">
+      <div class="ia-c-top"><input class="input ia-tit" data-ia-tit maxlength="80" placeholder="Título (ex.: Estacionamento)" value="${esc(c.titulo || "")}">
+        <label class="switch" title="${c.ativo ? "Ligado: a IA usa" : "Desligado: a IA não usa"}"><input type="checkbox" data-ia-on ${c.ativo ? "checked" : ""} aria-label="Cartão ligado"><span class="track"></span></label></div>
+      <textarea class="input ia-txt" data-ia-txt rows="3" maxlength="800" placeholder="O que a IA deve saber, escrito como você explicaria a um atendente novo.">${esc(c.texto || "")}</textarea>
+      <div class="ia-c-pe"><small data-ia-n>${String(c.texto || "").length}/800${c.ativo && !entra[i] && c.id ? " · passou do limite total: não entra" : ""}</small>
+        <span>${c.id ? `<button class="btn-ghost btn-sm" data-ia-del>Apagar</button>` : `<button class="btn-ghost btn-sm" data-ia-cancela>Cancelar</button>`}<button class="btn-gold btn-sm" data-ia-salva>Salvar</button></span></div>
+    </article>`).join("") : `<div class="empty">Nenhum cartão ainda. Toque em <b>Novo cartão</b> e ensine a primeira coisa.</div>`;
+  el.querySelectorAll(".ia-card").forEach(card => {
+    const i = +card.dataset.i, c = iaCartoes[i];
+    card.querySelector("[data-ia-txt]").addEventListener("input", e => { card.querySelector("[data-ia-n]").textContent = e.target.value.length + "/800"; });
+    card.querySelector("[data-ia-on]").onchange = async e => {
+      if(!c.id){ c.ativo = e.target.checked; return; }
+      const { error } = await sb.from("ia_conhecimento").update({ ativo: e.target.checked }).eq("id", c.id);
+      if(error){ toast("Não salvou: " + error.message); e.target.checked = !e.target.checked; return; }
+      c.ativo = e.target.checked; toast(c.ativo ? "Ligado: a IA passa a usar em até 1 minuto." : "Desligado: a IA deixa de usar em até 1 minuto."); iaDesenha();
+    };
+    card.querySelector("[data-ia-salva]").onclick = async ev => {
+      const titulo = card.querySelector("[data-ia-tit]").value.trim().slice(0, 80), texto = card.querySelector("[data-ia-txt]").value.trim().slice(0, 800), ativo = card.querySelector("[data-ia-on]").checked;
+      if(!texto){ toast("Escreva o que a IA deve saber."); card.querySelector("[data-ia-txt]").focus(); return; }
+      const b = ev.currentTarget; b.disabled = true; b.textContent = "Salvando…";
+      const q = c.id ? sb.from("ia_conhecimento").update({ titulo, texto, ativo }).eq("id", c.id).select().single()
+                     : sb.from("ia_conhecimento").insert({ titulo, texto, ativo, ordem: iaCartoes.reduce((m, x) => Math.max(m, x.ordem || 0), 0) + 1 }).select().single();
+      const { data, error } = await q;
+      if(error){ toast("Não salvou: " + error.message); b.disabled = false; b.textContent = "Salvar"; return; }
+      iaCartoes[i] = data; toast("Salvo. A IA usa em até 1 minuto."); iaDesenha();
+    };
+    const del = card.querySelector("[data-ia-del]");
+    if(del) del.onclick = async () => {
+      if(!confirm(`Apagar o cartão "${c.titulo || String(c.texto).slice(0, 40)}"? A IA deixa de saber isso.`)) return;
+      const { error } = await sb.from("ia_conhecimento").delete().eq("id", c.id);
+      if(error){ toast("Não apagou: " + error.message); return; }
+      iaCartoes.splice(i, 1); toast("Cartão apagado."); iaDesenha();
+    };
+    const can = card.querySelector("[data-ia-cancela]");
+    if(can) can.onclick = () => { iaCartoes.splice(i, 1); iaDesenha(); };
+  });
+}
+async function iaPerguntar(){
+  const inp = $("#iaPerg"), out = $("#iaResp"), b = $("#iaPergBtn"), msg = (inp.value || "").trim();
+  if(!msg){ inp.focus(); return; }
+  b.disabled = true; b.textContent = "Perguntando…"; out.hidden = false; out.textContent = "…";
+  try{
+    const { data, error } = await sb.functions.invoke("brutt-ia", { body: { message: msg, session: "painel-" + (crypto.randomUUID ? crypto.randomUUID() : Date.now()), history: [] } });
+    if(error) throw error;
+    out.innerHTML = `<b>Brutt IA:</b> ${esc(String(data?.reply || "(sem resposta)")).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>")}`;
+  }catch(e){ out.textContent = "Não deu para perguntar agora: " + (e?.message || e); }
+  b.disabled = false; b.textContent = "Perguntar";
+}
+
 /* ---------------- visão geral: o que precisa de atenção agora (só dados reais, consultas leves) ---------------- */
 /* ---------------- conferência de produtos (#/conferencia) ----------------
    Tudo que deixa a margem, o lucro ou a vitrine errados, contado num lugar só. Cada problema vira um botão com o número;
@@ -5694,6 +5798,7 @@ Object.assign(ROUTES, {
   "vitrine": renderVitrine,
   "site-cms": renderSiteCms,
   "giro": renderGiro,
+  "ia": renderIA,
   "equipe": renderEquipe,
 });
 
