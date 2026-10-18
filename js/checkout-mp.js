@@ -251,9 +251,8 @@ function msgLojaPedido(numero){
   if(ship==="entrega"&&entrega&&entrega.endereco){
     var e=entrega.endereco,cepF=(e.cep||"").length===8?e.cep.slice(0,5)+"-"+e.cep.slice(5):(e.cep||"");
     var mapa=[e.rua+", "+e.numero,e.bairro,e.cidade+" - "+e.uf,cepF].filter(Boolean).join(", ");
-    var km=p.km!=null?p.km:entrega.distKm;
     envio="Entrega pela loja — "+e.rua+", "+e.numero+(e.complemento?" ("+e.complemento+")":"")+", "+[e.bairro,(e.cidade||"")+(e.uf?"/"+e.uf:"")].filter(Boolean).join(", ")+"."+(e.cep?" CEP "+e.cep+".":"")
-      +(km!=null?" Distância ≈ "+String(km).replace(".",",")+" km.":"")+" Taxa de entrega: "+R(Number(p.taxa_entrega)||0)+" (já incluída no total)."
+      +" Taxa de entrega: "+R(Number(p.taxa_entrega)||0)+" (já incluída no total)."
       +"\n🗺️ Localização: https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(mapa).replace(/%20/g,"+");
   }else envio="Vou solicitar a entrega por conta própria (Uber Flash ou 99) — frete da loja R$ 0,00. Eu sou o destinatário, a Tabacaria Brutt é o ponto de coleta.";
   return [r?"📌 RESERVA DE PEDIDO #"+numero:"📦 NOVO PEDIDO #"+numero,

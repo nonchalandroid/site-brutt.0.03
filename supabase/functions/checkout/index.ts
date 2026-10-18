@@ -371,7 +371,7 @@ const primeiroNome = (n: string) => String(n || "").trim().split(/\s+/)[0] || ""
 function linhasItens(ped: any) { return (ped.itens || []).map((i: any) => `• ${i.qtd}x ${i.nome} — ${brl(i.subtotal)}`).join("\n"); }
 function linhaEntrega(ped: any) {
   const e = ped.entrega || {};
-  if (e.tipo === "entrega") { const a = e.endereco || {}; return `🚚 Entrega pela loja: ${a.rua}, ${a.numero}${a.complemento ? " (" + a.complemento + ")" : ""} — ${a.bairro ? a.bairro + ", " : ""}${a.cidade}/${a.uf} · ≈ ${String(e.km).replace(".", ",")} km`; }
+  if (e.tipo === "entrega") { const a = e.endereco || {}; return `🚚 Entrega pela loja: ${a.rua}, ${a.numero}${a.complemento ? " (" + a.complemento + ")" : ""} — ${a.bairro ? a.bairro + ", " : ""}${a.cidade}/${a.uf}`; }   // sem km: a distância pode sair errada se o mapa não achar a rua (o painel mostra)
   return `🚗 Você mesmo solicita a entrega (Uber Flash ou 99). Endereço de coleta: ${LOJA.endereco}`;
 }
 const METODO_TXT: Record<string, string> = { pix: "Pix", debito: "Cartão de débito", credito: "Cartão de crédito (à vista)" };
