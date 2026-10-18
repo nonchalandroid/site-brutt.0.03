@@ -247,7 +247,8 @@ function acompanhar(){
     },document.hidden?8e3:4e3);
   })();
 }
-function aviso(t,s,voltarAoCheckout){clearTimeout(_avisoTimer);if(window.SOM)SOM.toca("falha");var a=$("#mpArea");if(a)a.innerHTML='<div class="mp-wait off"><b>'+esc(t)+'</b><span>'+esc(s)+'</span>'+(voltarAoCheckout?'<small>Voltando ao checkout em instantes…</small>':'<button type="button" class="go" data-mp-tentar>Gerar novo Pix</button>')+'</div>';if(voltarAoCheckout){var id=pedido&&pedido.pedido_id;_avisoTimer=setTimeout(function(){if(cartView==="pagamento"&&pedido&&pedido.pedido_id===id)voltar()},3500)}}
+function aviso(t,s,voltarAoCheckout){clearTimeout(_avisoTimer);clearInterval(_tempo);var tp=$("#pixTempo");if(tp)tp.textContent="Código vencido";if(window.SOM)SOM.toca("falha");var a=$("#mpArea");if(a)a.innerHTML='<div class="mp-wait off"><b>'+esc(t)+'</b><span>'+esc(s)+'</span>'+(voltarAoCheckout?'<small>Voltando ao checkout em instantes…</small>':'<button type="button" class="go" data-mp-tentar>Gerar novo Pix</button>')+'</div>';if(voltarAoCheckout){var id=pedido&&pedido.pedido_id;_avisoTimer=setTimeout(function(){if(!(cartView==="pagamento"&&pedido&&pedido.pedido_id===id))return;document.querySelectorAll("#mpArea .mp-wait.off,#dBody .pg-ticket").forEach(function(w){w.classList.add("some-nevoa")});   /* some como fumaça antes de voltar */
+    _avisoTimer=setTimeout(function(){if(cartView==="pagamento"&&pedido&&pedido.pedido_id===id)voltar()},matchMedia("(prefers-reduced-motion: reduce)").matches?0:1500)},3500)}}
 /* Mensagem do pedido PAGO para o WhatsApp da loja (o cliente toca em enviar). Valores vindos do servidor. */
 /* Mensagem do pedido para o WhatsApp da loja: o MESMO formato do pedido pelo WhatsApp (montarMsg da loja), para a equipe
    saber tudo sem abrir o painel. A linha do pagamento fica como {PAGAMENTO} e é preenchida na hora do envio com a situação
