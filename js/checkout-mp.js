@@ -9,8 +9,10 @@ var FN=(S.url||"")+"/functions/v1/checkout";
 var LOJA_CEP="23067-030";            /* o mesmo do link "Como chegar" do site */
 var metodo="pix",whatsVal="",pedido=null,brick=null,poll=null,emailVal="",_avisoTimer=null;
 /* 18/10/2026: o checkout pede só o NOME (e-mail e WhatsApp travavam compras). O contato chega quando o cliente manda o
-   pedido no WhatsApp da loja; o Mercado Pago recebe um e-mail interno do pedido (servidor). */
+   pedido no WhatsApp da loja. Na tela do Pix há um e-mail OPCIONAL para o comprovante do Mercado Pago; vazio = e-mail
+   interno do pedido (servidor). */
 var CNPJ="68.325.560/0001-50";   /* chave Pix da loja: aparece formatada, copia só os números (o banco reconhece a chave) */
+try{emailVal=JSON.parse(localStorage.getItem("brutt_email")||'""')||""}catch(e){}   /* e-mail do comprovante (opcional) */
 
 function ativo(){return!!(CFG.publicKey&&S.url&&S.key)}
 function dig(s){return String(s||"").replace(/\D/g,"")}
@@ -57,6 +59,7 @@ function pagamentoHTML(){
    +OPT.map(function(o){var on=o[0]===metodo;return'<button type="button" class="popt'+(on?" sel":"")+'" role="radio" aria-checked="'+on+'" data-pay="'+o[0]+'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+(o[0]==="pix"?PAY_IC.pix:PAY_IC.cartao)+'</svg><b>'+o[1]+'</b><small>'+o[2]+'</small></button>'}).join("")
    +'</div><p class="pay-safe"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></svg><span>Pix instantâneo, processado com segurança pelo <b>Mercado Pago</b>. Não aceitamos cartão digitado no site.</span></p>';
 }
+document.addEventListener("input",function(e){if(e.target&&e.target.id==="pgEmail"){emailVal=e.target.value.trim();try{localStorage.setItem("brutt_email",JSON.stringify(emailVal))}catch(_){}}});
 document.addEventListener("click",function(e){
   var b=e.target.closest&&e.target.closest("[data-pay],[data-pin-copy],[data-mp-voltar],[data-mp-copiar],[data-mp-tentar],[data-mp-whats],[data-mp-gerar],[data-mp-cnpj]");if(!b)return;
   if(b.dataset.pay){metodo=b.dataset.pay;document.querySelectorAll(".popt").forEach(function(x){var on=x.dataset.pay===metodo;x.classList.toggle("sel",on);x.setAttribute("aria-checked",String(on))})}
@@ -126,20 +129,31 @@ function viaWhats(){
   drawCart("checkout");
   if(typeof sendOrder==="function")sendOrder(true);
 }
+/* Comanda do pedido (pagamento, antes de gerar o Pix): itens à esquerda, picote, total grande em Anton. */
 function resumoHTML(){
   var p=pedido,dif=Math.abs(p.total-(total()+taxaAtual()))>=.01;
-  return'<div class="mp-res"><div><span>Pedido</span><b>#'+esc(p.numero)+'</b></div>'
-   +'<div><span>Produtos</span><b>'+R(p.subtotal)+'</b></div>'
-   +(ship==="entrega"?'<div><span>Entrega pela loja</span><b>'+R(p.taxa_entrega)+'</b></div>':"")   /* Uber/99 do cliente: sem linha de valor */
-   +'<div class="mp-tot"><span>Total</span><b>'+R(p.total)+'</b></div>'
-   +(dif?'<p class="mp-dif">Valores conferidos com o estoque e a distância atuais.</p>':"")+'</div>';
+  return'<div class="pg-ticket"><div class="pg-lin"><span>Pedido</span><b class="pg-num">#'+esc(p.numero)+'</b></div>'
+   +'<div class="pg-lin"><span>Produtos</span><b>'+R(p.subtotal)+'</b></div>'
+   +(ship==="entrega"?'<div class="pg-lin"><span>Entrega pela loja</span><b>'+R(p.taxa_entrega)+'</b></div>':"")   /* Uber/99 do cliente: sem linha de valor */
+   +'<div class="pg-total"><span>Total a pagar</span><b>'+R(p.total)+'</b></div>'
+   +(dif?'<p class="pg-dif">O total foi conferido com o estoque e a taxa de entrega de agora.</p>':"")+'</div>';
+}
+/* E-mail é OPCIONAL: com ele o Mercado Pago manda as informações da compra ao cliente; sem ele vai um e-mail interno da loja. */
+function emailHTML(){
+  return'<div class="pg-mail"><label for="pgEmail">E-mail para o comprovante <small>(opcional)</small></label>'
+   +'<input class="t" id="pgEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="voce@email.com" maxlength="120" value="'+esc(emailVal)+'">'
+   +'<p>O Mercado Pago envia para esse e-mail as informações da compra.</p></div>';
 }
 function mostrarEtapa(){
   var nome={pix:"Pix",debito:"Cartão de débito",credito:"Cartão de crédito · à vista"}[metodo];
   $("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button>'+resumoHTML()
     +(metodo==="pix"?"":'<div class="mp-h"><b>'+nome+'</b></div>')+'<p class="mp-err" id="mpErr" role="alert" hidden></p>'
     +'<div id="mpArea"><div id="mpBrick"></div><div class="mp-load" id="mpLoad" role="status">'+spin()+'<span>Carregando o pagamento seguro…</span></div></div>';
-  if(metodo==="pix"){var a=$("#mpArea");a.innerHTML='<div class="pix-gerar"><button type="button" class="go pix-gera" data-mp-gerar><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+PAY_IC.pix+'</svg><span>Gerar Pix</span></button><p class="pix-t">O QR Code e o código copia e cola aparecem na hora. Vale 30 min.</p>'+selosHTML()+'</div>';return}
+  if(metodo==="pix"){
+    $("#mpArea").innerHTML=emailHTML()+'<div class="pg-gerar"><button type="button" class="go pix-gera" data-mp-gerar><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+PAY_IC.pix+'</svg><span>Gerar Pix de '+R(pedido.total)+'</span></button>'
+      +'<p>O QR Code e o código copia e cola aparecem na hora e valem 30 minutos.</p>'+selosHTML()+'</div>';
+    return;
+  }
   montarBrick();
 }
 var _sdk=null;
@@ -202,26 +216,30 @@ function aguardando(html){desmontar();var a=$("#mpArea");if(a)a.innerHTML=html;a
 function mostrarPix(px){if(window.SOM)SOM.toca("pix");
   desmontar();
   var a=$("#mpArea");if(!a)return;
-  var res=document.querySelector("#dBody .mp-res");
-  if(res&&pedido)res.outerHTML='<div class="pix-topo"><span>Pedido <b>#'+esc(pedido.numero)+'</b></span><span>Total <b>'+R(pedido.total)+'</b></span></div>';
-  a.innerHTML='<div class="pix">'
-    +(px.qr_code_base64?'<img class="pix-qr" alt="QR Code Pix do pedido" width="220" height="220" src="data:image/png;base64,'+esc(px.qr_code_base64)+'">':"")
-    +'<div class="pix-code"><input id="pixCode" readonly value="'+esc(px.qr_code||"")+'" aria-label="Código Pix copia e cola"><button type="button" class="go pix-copy" data-mp-copiar>Copiar código</button></div>'
-    +'<p class="pix-t">No app do banco: <b>Pix → Ler QR Code</b> ou <b>Pix copia e cola</b>. O código vale 30 min e é só deste pedido.</p>'
-    +'<div class="pix-cnpj"><div class="pix-code"><span class="pix-chave"><small>Ou pague pela chave CNPJ</small><b>'+CNPJ+'</b></span><button type="button" class="go pix-copy" data-mp-cnpj>Copiar chave CNPJ</button></div>'
-    +'<p class="pix-t">Pela chave, o site não confirma sozinho: depois de pagar <b>'+R(pedido?pedido.total:0)+'</b>, <a class="pix-av" id="pixAvisa" target="_blank" rel="noopener">mande o comprovante no WhatsApp da loja</a>.</p></div>'
-    +'<div class="mp-wait">'+spin()+'<b>Aguardando o pagamento…</b><span id="pixTempo"></span></div>'+selosHTML()+'</div>';
+  var res=document.querySelector("#dBody .pg-ticket");
+  if(res&&pedido)res.outerHTML='<div class="pg-ticket pg-curto"><div class="pg-total"><span><span>Pedido <b class="pg-num">#'+esc(pedido.numero)+'</b></span><small id="pixTempo"></small></span><b>'+R(pedido.total)+'</b></div></div>';
+  var mail=emailOk()?'<p class="pg-aviso">'+ic("check")+'<span>O Mercado Pago também vai enviar as informações da compra para <b>'+esc(String(emailVal).trim())+'</b>.</span></p>':"";
+  a.innerHTML='<div class="pg-pix">'
+    +(px.qr_code_base64?'<div class="pg-qr"><img alt="QR Code Pix do pedido" width="220" height="220" src="data:image/png;base64,'+esc(px.qr_code_base64)+'"></div>':"")
+    +'<input id="pixCode" class="pg-codigo" readonly value="'+esc(px.qr_code||"")+'" aria-label="Código Pix copia e cola">'
+    +'<button type="button" class="go pix-copy" data-mp-copiar>Copiar código Pix</button>'
+    +'<div class="pg-espera" role="status"><i aria-hidden="true"></i><span><b>Aguardando o pagamento</b>Assim que o Pix cair, a confirmação aparece aqui.</span></div>'
+    +'<ol class="pg-passos"><li>Abra o app do seu banco e entre em <b>Pix</b>.</li><li>Escolha <b>Ler QR Code</b> ou <b>Pix copia e cola</b>.</li><li>Confira o valor e confirme.</li></ol>'
+    +'<div class="pg-ou"><span>ou pague pela chave CNPJ</span></div>'
+    +'<div class="pg-chave"><span class="pg-cnpj">'+CNPJ+'</span><button type="button" class="pg-copiar" data-mp-cnpj>Copiar</button></div>'
+    +'<p class="pg-nota">Pela chave, a confirmação não é automática: depois de pagar, <a id="pixAvisa" target="_blank" rel="noopener">mande o comprovante no WhatsApp da loja</a>.</p>'
+    +mail+selosHTML()+'</div>';
   tempoPix(px.expira_em);
   var av=$("#pixAvisa");if(av&&pedido)av.href="https://wa.me/"+WHATS+"?text="+encodeURIComponent(msgLojaPedido(pedido.numero).replace(PAG_TOKEN,"💳 *Pagamento:* Pix pela chave CNPJ — conferir o comprovante"));
   if(window.ACOMP&&pedido)ACOMP.guarda(pedido.pedido_id,pedido.numero,msgLojaPedido(pedido.numero));   /* atalho "Acompanhar" + mensagem completa do pedido guardada JÁ AQUI: o celular pode recarregar a página enquanto o cliente paga no app do banco */
   acompanhar();
 }
-function copiarCnpj(b){copiarTexto(CNPJ.replace(/\D/g,"")).then(function(){b.textContent="Chave copiada!";b.classList.add("done");toast("Chave CNPJ copiada");setTimeout(function(){if(b.isConnected){b.textContent="Copiar chave CNPJ";b.classList.remove("done")}},2500)})}
-function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado!";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código";b.classList.remove("done")}},2500)})}
+function copiarCnpj(b){copiarTexto(CNPJ.replace(/\D/g,"")).then(function(){b.textContent="Copiada!";b.classList.add("done");toast("Chave CNPJ copiada");setTimeout(function(){if(b.isConnected){b.textContent="Copiar";b.classList.remove("done")}},2500)})}
+function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código Pix";b.classList.remove("done")}},2500)})}
 var _tempo=null;
 function tempoPix(fim){
   clearInterval(_tempo);var f=fim?new Date(fim).getTime():0;if(!f)return;
-  var t=function(){var el=$("#pixTempo");if(!el){clearInterval(_tempo);return}var s=Math.max(0,Math.round((f-Date.now())/1e3));el.textContent=s?"O código expira em "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0"):"Código expirado";};
+  var t=function(){var el=$("#pixTempo");if(!el){clearInterval(_tempo);return}var s=Math.max(0,Math.round((f-Date.now())/1e3));el.textContent=s?"Vale por "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0"):"Código vencido";};
   t();_tempo=setInterval(t,1e3);
 }
 function acompanhar(){

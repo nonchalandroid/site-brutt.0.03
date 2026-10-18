@@ -287,15 +287,57 @@ button.ia-wa{width:100%;border:0;cursor:pointer;font-family:inherit}
 .ent-longe{margin:10px 0 0;padding:10px 12px;border-radius:10px;border:1px solid var(--hot);background:rgba(214,57,43,.12);color:var(--ink);font-size:13px;line-height:1.45}
 .ent-longe b{color:#ff9c90}
 .dlv-res .ent-longe{margin:8px 0 2px}
-/* Pix em 2 passos (18/10/2026): botão "Gerar Pix" antes do QR; chave CNPJ como alternativa */
-.pix-gerar{display:flex;flex-direction:column;align-items:center;gap:12px;padding:10px 0 4px}
-.pix-gera{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:auto;min-width:200px;min-height:48px;padding:0 28px;font-size:16px}
+/* Pagamento Pix (18/10/2026, redesenho): a "comanda" com o total em Anton é o destaque; o resto fica quieto.
+   Tela 1: comanda + e-mail opcional + "Gerar Pix de R$ X". Tela 2: total e validade no topo, QR, copiar código, passos,
+   chave CNPJ como alternativa, status aguardando. */
+.pg-ticket{position:relative;margin:12px 0 0;padding:14px 16px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);display:grid;gap:8px}
+.pg-lin{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:14px;color:var(--muted)}
+.pg-lin b{color:var(--ink);font-weight:600;white-space:nowrap}
+.pg-num{font-family:var(--mono);font-weight:600;letter-spacing:.01em;white-space:nowrap}
+.pg-total{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:4px;padding-top:12px;border-top:2px dashed var(--line);font-size:14px;color:var(--muted)}
+.pg-total>b{font:400 34px/1 var(--head);color:var(--brand-2);letter-spacing:.01em;white-space:nowrap}
+.pg-total>span{display:flex;flex-direction:column;gap:4px}
+.pg-total>span b{color:var(--ink)}
+.pg-total small{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pg-curto{padding-top:12px}
+.pg-curto .pg-total{margin:0;padding:0;border:0}
+.pg-dif{margin:0;font-size:12px;color:var(--muted)}
+.pg-mail{display:grid;gap:6px;margin:16px 0 0}
+.pg-mail label{font-size:14px;font-weight:600;color:var(--ink)}
+.pg-mail label small{font-weight:400;color:var(--muted);font-size:13px}
+.pg-mail input{margin:0}
+.pg-mail p{margin:0;font-size:13px;line-height:1.4;color:var(--muted)}
+.pg-gerar{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:18px;text-align:center}
+.pg-gerar>p{margin:0;max-width:34ch;font-size:13px;line-height:1.45;color:var(--muted)}
+.pix-gera{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:auto;min-width:220px;min-height:50px;padding:0 26px;font-size:16px}
 .pix-gera .ic{width:22px;height:22px;flex:none}
-.pix-cnpj{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:4px;padding-top:14px;border-top:1px dashed var(--line)}
-.pix-chave{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
-.pix-chave small{font-size:13px;color:var(--muted)}
-.pix-chave b{font:600 18px var(--mono);color:var(--ink);white-space:nowrap;letter-spacing:.02em}
-.pix-av{color:var(--brand-2);text-decoration:underline}
+.pg-gerar .selos{margin-top:4px}
+.pg-pix{display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 0 4px}
+.pg-qr{padding:12px;border-radius:16px;background:#fff;box-shadow:0 0 0 1px var(--line),0 0 0 6px var(--surface)}
+.pg-qr img{display:block;width:min(208px,56vw);height:auto;aspect-ratio:1/1;image-rendering:pixelated}
+.pg-codigo{width:100%;max-width:340px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--muted);font:500 13px var(--mono);text-overflow:ellipsis;text-align:center}
+.pg-pix .pix-copy{width:auto;min-width:200px;min-height:46px;margin:0 auto;padding:0 26px;font-size:16px}
+.pg-passos{align-self:stretch;margin:4px 0 0;padding:0 0 0 22px;display:grid;gap:4px;font-size:14px;line-height:1.45;color:var(--muted)}
+.pg-passos b{color:var(--ink);font-weight:600}
+.pg-passos li::marker{color:var(--gold);font-weight:700}
+.pg-ou{align-self:stretch;display:flex;align-items:center;gap:10px;margin-top:4px;font-size:13px;color:var(--muted)}
+.pg-ou::before,.pg-ou::after{content:"";flex:1;height:1px;background:var(--line)}
+.pg-chave{align-self:stretch;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 8px 8px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.pg-cnpj{font:600 16px var(--mono);color:var(--ink);white-space:nowrap;letter-spacing:.01em}
+.pg-copiar{flex:none;min-height:40px;padding:0 16px;border:1px solid var(--gold);border-radius:10px;background:transparent;color:var(--brand-2);font:600 14px var(--body);cursor:pointer}
+.pg-copiar.done{border-color:var(--ok-line);color:var(--ok-txt)}
+.pg-nota{align-self:stretch;margin:0;font-size:13px;line-height:1.45;color:var(--muted)}
+.pg-nota a{color:var(--brand-2);text-decoration:underline;text-underline-offset:2px}
+.pg-espera{align-self:stretch;display:flex;align-items:flex-start;gap:12px;margin-top:2px;padding:12px 14px;border-radius:12px;background:var(--ok-bg);font-size:13px;line-height:1.4;color:var(--ink)}
+.pg-espera b{display:block;font-size:15px;color:var(--ok-txt)}
+.pg-espera i{position:relative;flex:none;width:10px;height:10px;margin-top:5px;border-radius:50%;background:var(--ok-line)}
+.pg-espera i::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--ok-line);animation:pgPulso 1.6s var(--ease-app) infinite}
+@keyframes pgPulso{from{transform:scale(1);opacity:.6}to{transform:scale(2.6);opacity:0}}
+.pg-aviso{align-self:stretch;display:flex;gap:10px;margin:0;font-size:13px;line-height:1.45;color:var(--muted)}
+.pg-aviso .ic{flex:none;width:18px;height:18px;color:var(--ok-txt)}
+.pg-aviso b{color:var(--ink);overflow-wrap:anywhere}
+@media(max-width:360px){.pg-total>b{font-size:30px}.pg-cnpj{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.pg-espera i::after{animation:none}}
 </style>
 <style id="ajustes">
 /* ── Auditoria visual: correções de alinhamento e responsividade ── */
@@ -856,7 +898,7 @@ function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox
 <script src="/js/menu-carrossel.js?v=20261013a" defer></script>
 <script src="/js/desempenho.js?v=20261013a" defer></script>
 <script src="/js/avaliacoes.js?v=20261013a" defer></script>
-<script src="/js/checkout-mp.js?v=20261018b" defer></script>
+<script src="/js/checkout-mp.js?v=20261018c" defer></script>
 <script src="/js/acompanhar.js?v=20261013a" defer></script>
 <script src="/js/sons.js?v=20261018a" defer></script>
 </body>
