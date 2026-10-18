@@ -650,6 +650,9 @@ html.nav-indo .sec{content-visibility:visible}
 .nv.on::after{transform:scaleX(1)}
 @media(hover:hover) and (pointer:fine){.nv:hover::after{transform:scaleX(1)}}
 @media(prefers-reduced-motion:reduce){.nv::after{transition:none}}
+/* Aviso rápido (toast, 18/10/2026): o pílula amarelo-ouro maciço brigava com a loja e ficava em cima da barra da
+   Brutt IA. Agora: fundo escuro da loja com borda dourada fina, texto claro, acima da barra da IA (≈110 px do fim). */
+.toast{bottom:calc(124px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 32px);width:max-content;text-align:center;background:rgba(23,15,10,.96);color:var(--ink);border:1px solid rgba(227,172,61,.55);box-shadow:0 10px 30px rgba(0,0,0,.45);font-weight:600;line-height:1.35}
 </style>
 </head>
 <body>
