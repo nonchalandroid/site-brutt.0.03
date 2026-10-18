@@ -4388,16 +4388,23 @@ function desenhaLucro(fin, mg, erro){
   const f = fin || { custos: [], dia_a_dia: 0, faturamento: null };
   const custos = Array.isArray(f.custos) ? f.custos : [];
   const fixos = custos.reduce((t, c) => t + (Number(c.valor) || 0), 0), dia = Number(f.dia_a_dia) || 0, fat = Number(f.faturamento) || 0;
-  const m = mg.pct == null ? null : mg.pct / 100;
-  const bruto = m == null ? null : fat * m, cmv = m == null ? null : fat - bruto, liquido = bruto == null ? null : bruto - fixos - dia;
+  const m0 = mg.pct == null ? null : mg.pct / 100;   /* margem do catálogo: padrão enquanto o lucro bruto não for digitado */
+  const brutoMan = f.lucro_bruto != null ? Number(f.lucro_bruto) : null, cmvMan = f.cmv != null ? Number(f.cmv) : null;
+  /* lucro bruto digitado tem prioridade; depois o custo das mercadorias digitado; senão a margem do catálogo */
+  const bruto = fat && brutoMan != null ? brutoMan : fat && cmvMan != null ? fat - cmvMan : m0 == null ? null : fat * m0;
+  const cmv = bruto == null ? null : fat - bruto, liquido = bruto == null ? null : bruto - fixos - dia;
+  const m = fat > 0 && bruto != null ? bruto / fat : m0;   /* margem efetiva (a digitada, se houver): é ela que move o ponto de equilíbrio */
   const equilibrio = m ? (fixos + dia) / m : null;
+  const campo = v => (v == null || !Number.isFinite(v) ? "" : String(Number(v).toFixed(2)).replace(".", ","));
+  const origemCmv = cmvMan != null ? "digitado" : brutoMan != null ? "pelo lucro bruto digitado" : m0 == null ? "" : `automático: ${pctBR(100 - m0 * 100)} do faturamento`;
+  const origemBruto = brutoMan != null ? "digitado" : cmvMan != null ? "pelo custo digitado" : m0 == null ? "" : "automático: margem do catálogo";
   const linha = (rot, v, cls = "", k = "") => `<div class="lc-l ${cls}"><span>${rot}</span><b${k ? ` data-odo="${k}"` : ""}>${v}</b></div>`;
   box.innerHTML = `<div class="ov-box-h"><h3>Lucro do mês <small>projeção</small></h3><button class="btn-ghost btn-sm" id="lcEditar">${ic("sheet")} Custos</button></div>
     <div class="lc-grid">
       <div class="lc-conta">
         <label class="lc-fat"><span>Faturamento bruto do mês</span><span class="lc-in"><i>R$</i><input id="lcFat" type="text" inputmode="decimal" placeholder="0,00" value="${fat ? String(fat.toFixed(2)).replace(".", ",") : ""}"></span></label>
-        ${linha("− Custo das mercadorias" + (m == null ? "" : ` <small>(${pctBR(100 - mg.pct)} do faturamento)</small>`), cmv == null ? "—" : brlM(cmv), "", "cmv")}
-        ${linha("= Lucro bruto" + (m == null ? "" : ` <small>(margem ${pctBR(mg.pct)})</small>`), bruto == null ? "—" : brlM(bruto), "lc-sub", "bruto")}
+        <label class="lc-l lc-dia"><span>− Custo das mercadorias <small>${origemCmv}</small></span><span class="lc-in"><i>R$</i><input id="lcCmv" type="text" inputmode="decimal" placeholder="0,00" value="${campo(fat ? cmv : null)}"></span></label>
+        <label class="lc-l lc-sub"><span>= Lucro bruto <small>${m == null ? "" : `margem ${pctBR(m * 100)} · ${origemBruto}`}</small></span><span class="lc-in"><i>R$</i><input id="lcBruto" type="text" inputmode="decimal" placeholder="0,00" value="${campo(fat ? bruto : null)}"></span></label>
         ${linha(`− Custos fixos <small>(${custos.map(c => esc(c.nome)).join(", ") || "nenhum"})</small>`, brlM(fixos), "", "fixos")}
         <label class="lc-l lc-dia"><span>− Dia a dia <small>(comida, combustível das entregas…)</small></span><span class="lc-in"><i>R$</i><input id="lcDia" type="text" inputmode="decimal" placeholder="0,00" value="${dia ? String(dia.toFixed(2)).replace(".", ",") : ""}"></span></label>
       </div>
@@ -4429,10 +4436,23 @@ function desenhaLucro(fin, mg, erro){
   };
   $("#lcFat").onchange = e => salvar("faturamento", e.target);
   $("#lcDia").onchange = e => salvar("dia_a_dia", e.target);
-  [$("#lcFat"), $("#lcDia")].forEach(i => i.onkeydown = e => { if(e.key === "Enter") e.target.blur(); });
+  /* lucro bruto ou custo digitado: só um dos dois fica guardado (o outro sai da conta); apagar volta à margem do catálogo */
+  const salvarMargem = async (alvo, el) => {
+    const v = el.value.trim() ? num(el.value) : null;
+    if(el.value.trim() && v == null){ toast("Valor inválido."); return; }
+    if(v != null && (!fat || v > fat)){ toast(!fat ? "Digite o faturamento do mês antes." : "Não pode passar do faturamento."); campoAtual(); return; }
+    const novo = { ...f, id: 1, custos, lucro_bruto: alvo === "lucro_bruto" ? v : null, cmv: alvo === "cmv" ? v : null, atualizado_em: new Date().toISOString(), atualizado_por: state.staff?.user_id || null };
+    const { error } = await sb.from("financeiro").upsert(novo);
+    if(error){ toast("Não deu para salvar: " + error.message); return; }
+    desenhaLucro(novo, mg);
+  };
+  const campoAtual = () => { $("#lcBruto").value = campo(fat ? bruto : null); $("#lcCmv").value = campo(fat ? cmv : null); };   /* devolve o valor real ao campo */
+  $("#lcBruto").onchange = e => salvarMargem("lucro_bruto", e.target);
+  $("#lcCmv").onchange = e => salvarMargem("cmv", e.target);
+  [$("#lcFat"), $("#lcDia"), $("#lcBruto"), $("#lcCmv")].forEach(i => i.onkeydown = e => { if(e.key === "Enter") e.target.blur(); });
   $("#lcEditar").onclick = () => editarCustos(f, custos, mg);
   box.querySelectorAll("[data-odo]").forEach(el => odo(el, el.dataset.odo));   /* números rolando (efeito bolsa) */
-  graficoEquilibrio({ fat, m, custo: fixos + dia, equilibrio, margem: mg.pct });
+  graficoEquilibrio({ fat, m, custo: fixos + dia, equilibrio, margem: m == null ? mg.pct : m * 100 });
 }
 /* ---------------- números "de bolsa": os dígitos rolam até o valor novo ----------------
    odo(el, chave): troca o texto de el por colunas de dígitos que rolam (transform) do valor anterior (ou de zero, na
