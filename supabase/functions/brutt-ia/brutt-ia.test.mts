@@ -68,4 +68,5 @@ console.log("IA: 'eu mesmo peço' sem endereço, fechamento com checkout e promp
   geoMapa=[{rua:"Rua 5",numero:"120",bairro:"Santa Cruz",cidade:"Rio de Janeiro",uf:"RJ",cep:"",lat:-22.92,lng:-43.69}]; rotaM=12000;
   r=await ent({rua:"Rua 5",numero:"120",bairro:"Santa Cruz"}); assert.equal(r.ok,true); assert.equal(r.taxa_entrega,8,"fora do conjunto: sem limite de raio, paga a regra normal (teto R$ 8)");
   assert.ok(prompts.at(-1)!.includes("CONJUNTO CAMPINHO"));
+  assert.ok(prompts.at(-1)!.includes("ONDE FICA A LOJA") && prompts.at(-1)!.includes("Rua Dezoito, 145 — Conjunto Campinho, Campo Grande"), "a loja é do Conjunto Campinho, em Campo Grande");
   geoMapa=[]; rotaM=500; console.log("IA: Conjunto Campinho = taxa mínima; casa achada longe soma por km; homônima não engana — OK"); }
