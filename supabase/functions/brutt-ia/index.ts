@@ -11,8 +11,8 @@
 
 // ---------- MESMAS REGRAS DO SITE (ENTREGA_LOJA / HORARIOS / MIN) ----------
 const LOJA = { lat: -22.8814745, lng: -43.6137391 };
-// mesma tabela do site e do checkout: R$ 5,00 até 3 km; + R$ 1,50 por km fracionado; sem limite de raio; teto R$ 8,00
-const RAIO_MAX_KM = 999, TAXA_BASE = 5.00, BASE_ATE_KM = 3, POR_KM_EXTRA = 1.50, TAXA_MAXIMA = 8.00;
+// mesma tabela do site e do checkout: R$ 5,00 até 2 km; + R$ 2,00 por km fracionado; sem limite de raio; teto R$ 8,00
+const RAIO_MAX_KM = 999, TAXA_BASE = 5.00, BASE_ATE_KM = 2, POR_KM_EXTRA = 2.00, TAXA_MAXIMA = 8.00;
 const MIN_PEDIDO = 20;
 const LOJA_ENDERECO = "Rua Dezoito, 145 — Campo Grande, Rio de Janeiro — RJ, 23067-030";
 type Horario = { d: number; n: string; a: number | null; b?: number };
@@ -146,7 +146,7 @@ const SUBBAIRROS: Record<string, string> = (() => {
 })();
 // Conjunto Campinho: fica colado na loja (centro a ~250 m). As ruas são numeradas ("Rua 5", "Rua 18") e o mapa
 // costuma não achar o número ou acha uma rua homônima longe. Regra da loja: no conjunto é a TAXA MÍNIMA; se a casa for
-// achada no mapa com o número exato, vale o km rodado (passou de 3 km, soma por km, igual a qualquer endereço).
+// achada no mapa com o número exato, vale o km rodado (passou de 2 km, soma por km, igual a qualquer endereço).
 export const CONJUNTO = { nome: "Conjunto Campinho", lat: -22.882284, lng: -43.6161089, raioKm: 2.5 };
 export const ehConjunto = (...t: unknown[]) => { const x = semAcento(t.filter(Boolean).join(" ")); return /campinho/.test(x) || /^(o )?conjunto$/.test(x.trim()) || /\bconjunto\b/.test(x) && !/marinha|bnh|madureira|cascadura/.test(x); };
 async function comTempo(url: string, init: any = {}, ms = 6000) {

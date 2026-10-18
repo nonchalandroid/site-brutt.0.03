@@ -64,7 +64,7 @@ console.log("IA: 'eu mesmo peço' sem endereço, fechamento com checkout e promp
   geoMapa=[{rua:"Rua 5",numero:"120",bairro:"Santa Cruz",cidade:"Rio de Janeiro",uf:"RJ",cep:"",lat:-22.92,lng:-43.69}]; rotaM=12000;
   r=await ent({rua:"Rua 5",numero:"120",bairro:"Conjunto Campinho"}); assert.equal(r.ok,true); assert.equal(r.taxa_entrega,5,"homônima longe não vale");
   geoMapa=[{rua:"Rua 5",numero:"120",bairro:"Campo Grande",cidade:"Rio de Janeiro",uf:"RJ",cep:"23060000",lat:-22.8890,lng:-43.6300}]; rotaM=3400;
-  r=await ent({rua:"Rua 5",numero:"120",bairro:"Conjunto Campinho"}); assert.equal(r.ok,true); assert.equal(r.km,3.4); assert.equal(r.taxa_entrega,6.5,"casa achada a 3,4 km: soma por km");
+  r=await ent({rua:"Rua 5",numero:"120",bairro:"Conjunto Campinho"}); assert.equal(r.ok,true); assert.equal(r.km,3.4); assert.equal(r.taxa_entrega,8,"casa achada a 3,4 km: 5 + 2×2 = 9 → teto 8");
   geoMapa=[{rua:"Rua 5",numero:"120",bairro:"Santa Cruz",cidade:"Rio de Janeiro",uf:"RJ",cep:"",lat:-22.92,lng:-43.69}]; rotaM=12000;
   r=await ent({rua:"Rua 5",numero:"120",bairro:"Santa Cruz"}); assert.equal(r.ok,true); assert.equal(r.taxa_entrega,8,"fora do conjunto: sem limite de raio, paga a regra normal (teto R$ 8)");
   assert.ok(prompts.at(-1)!.includes("CONJUNTO CAMPINHO"));
