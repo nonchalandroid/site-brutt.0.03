@@ -1302,18 +1302,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 @media(max-width:480px){.hs-v{font-size:26px}.hs-faixa{width:100%}.hs-faixa button{flex:1;padding:0 4px}}
 /* estoque: só ajuste (o Nex manda) */
 .mv-info{margin:0 0 10px;font-size:13px;line-height:1.45;color:var(--muted)}
-/* Visão geral: cartão-resumo do Financeiro (leva para #/financeiro) */
-.ov-fin{display:flex;align-items:center;gap:18px;width:100%;margin:0 0 16px;padding:16px 18px;text-align:left;cursor:pointer;color:var(--ink);font:inherit;
-  border:1px solid rgba(212,150,30,.45)!important;background:linear-gradient(120deg,rgba(255,236,190,.75),rgba(255,252,247,.6) 55%,rgba(52,211,153,.10))!important;transition:transform .25s cubic-bezier(.16,1,.3,1)}
-.ov-fin .fin-ic{flex:none;width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#ea580c);color:#fff;box-shadow:0 8px 20px -10px rgba(234,88,12,.8)}
-.ov-fin .fin-ic svg{width:24px;height:24px}
-.ov-fin .fin-c{display:flex;flex-direction:column;gap:2px;min-width:0}
-.ov-fin .fin-c small{font-size:12px;color:var(--muted);font-weight:600}
-.ov-fin .fin-c b{font:800 20px var(--mono);white-space:nowrap;color:var(--ink)}.ov-fin .fin-c b.up{color:#15803d}.ov-fin .fin-c b.dn{color:#b91c1c}
-.ov-fin .fin-go{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;color:#9a3412;white-space:nowrap}
-.ov-fin .fin-go svg{width:16px;height:16px;transition:transform .25s cubic-bezier(.16,1,.3,1)}
-@media(hover:hover) and (pointer:fine){.ov-fin:hover{transform:translateY(-2px)}.ov-fin:hover .fin-go svg{transform:translateX(3px)}}
-@media(max-width:760px){.ov-fin{flex-wrap:wrap;gap:12px 18px}.ov-fin .fin-go{margin-left:0;width:100%}.ov-fin .fin-c b{font-size:18px}}
 /* =====================================================================
    NAVEGAÇÃO ANIMADA (13/10/2026): troca de tela com View Transitions (dispatch). O menu e o topo não piscam,
    o item ativo escorrega, a página entra deslizando. Itens do menu reagem ao mouse (só transform).
@@ -1733,7 +1721,6 @@ function menuLateral(abrir){
 function bindTopbar(){
   document.body.classList.add("com-side");
   document.documentElement.classList.remove("side-aberta");
-  document.querySelectorAll("[data-home]").forEach(b => b.onclick = () => go("home"));
   document.querySelectorAll("[data-inicio]").forEach(b => b.onclick = () => go("visao"));
   document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { if(b.dataset.tab === "fotos") window.__fotosAlvos = null; go(b.dataset.tab); });
   document.querySelectorAll("[data-nav-group-toggle]").forEach(b => b.onclick = () => {
@@ -3783,31 +3770,27 @@ async function nexDisparar(modo){
   }
 }
 
+/* filtro "Catálogo Online" do Nex: sync_config é fechada para o navegador (guarda o segredo da sincronização), então
+   ler e gravar passam pelas RPCs nex_filtro_ler / nex_filtro_salvar (só dono/admin, só essas duas chaves). */
 async function carregarNexCfg(){
-  const { data, error } = await sb.from("sync_config").select("key,value").in("key",["nex_online_field","nex_online_value"]);
-  if(error || !data) return;
-  data.forEach(r => {
-    if(r.key === "nex_online_field") $("#nxOnlineField").value = r.value || "";
-    if(r.key === "nex_online_value") $("#nxOnlineValue").value = r.value || "";
-  });
+  const { data, error } = await sb.rpc("nex_filtro_ler");
+  const r = !error && Array.isArray(data) ? data[0] : null;
+  if(!r || !$("#nxOnlineField")) return;
+  $("#nxOnlineField").value = r.campo || "";
+  $("#nxOnlineValue").value = r.valor || "";
 }
 async function nexSalvarCfg(){
   const b = $("#nxSaveCfg"), msg = $("#nxCfgMsg");
   b.disabled = true; b.classList.add("is-busy");
   const field = $("#nxOnlineField").value.trim();
   const value = $("#nxOnlineValue").value.trim();
-  const upsert = async (key, val) => {
-    const { error } = await sb.from("sync_config").upsert({ key, value: val }, { onConflict: "key" });
-    if(error) throw error;
-  };
   try{
+    if(field && !/^[A-Za-z0-9_]+$/.test(field)) throw new Error("o nome do campo só pode ter letras, números e _ (como aparece no Explorar Nex).");
+    const { error } = await sb.rpc("nex_filtro_salvar", { p_campo: field, p_valor: field ? value : "" });
+    if(error) throw error;
     if(field){
-      await upsert("nex_online_field", field);
-      await upsert("nex_online_value", value);
       msg.style.color = "var(--green)"; msg.textContent = "Filtro salvo. A próxima sincronização usará o campo '" + field + "'.";
     }else{
-      await upsert("nex_online_field", "");
-      await upsert("nex_online_value", "");
       msg.style.color = "var(--green)"; msg.textContent = "Filtro desativado. Todos os produtos do Nex serão considerados.";
     }
   }catch(e){
@@ -4902,7 +4885,7 @@ async function importarResumoNex(file, custoMes){
 }
 /* ---------------- Financeiro (#/financeiro, grupo Gestão, só dono/admin) ----------------
    Tela própria do "Lucro do mês" (faturamento, custos, lucro líquido) e do terminal do ponto de equilíbrio. A Visão
-   geral mostra só o cartão-resumo (resumoFinanceiro) que leva para cá. */
+   geral mostra os indicadores e as pendências; o lucro fica só aqui. */
 async function renderFinanceiro(){
   app.innerHTML = `${topbarHTML("Financeiro")}
     <div class="pg">
@@ -4925,21 +4908,6 @@ async function renderFinanceiro(){
   if(fin && fin.error){ $("#fnHist").remove(); return; }
   const custoMes = (Array.isArray(f?.custos) ? f.custos : []).reduce((t, c) => t + (Number(c.valor) || 0), 0) + (Number(f?.dia_a_dia) || 0);
   graficoHistorico(custoMes);
-}
-function resumoFinanceiro(fin, mg, erro){
-  const box = $("#ovFin"); if(!box) return;
-  if(erro){ box.remove(); return; }   /* atendente não vê números de lucro */
-  const f = fin || {}, custos = Array.isArray(f.custos) ? f.custos : [];
-  const fixos = custos.reduce((t, c) => t + (Number(c.valor) || 0), 0), dia = Number(f.dia_a_dia) || 0, fat = Number(f.faturamento) || 0;
-  const m = mg.pct == null ? null : mg.pct / 100, liq = m == null || !fat ? null : fat * m - fixos - dia, eq = m ? (fixos + dia) / m : null;
-  const t = spAgora(), D = new Date(t.ano, t.mes + 1, 0).getDate(), diaEq = eq && fat ? Math.ceil(eq / (fat / D)) : null;
-  const MES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][t.mes];
-  box.innerHTML = `<span class="fin-ic">${ic("coin")}</span>
-    <span class="fin-c"><small>Lucro líquido do mês</small><b class="${liq == null ? "" : liq >= 0 ? "up" : "dn"}" data-odo="fin-liq">${liq == null ? "—" : brlM(liq)}</b></span>
-    <span class="fin-c"><small>Ponto de equilíbrio</small><b data-odo="fin-eq">${eq ? brl0(eq) : "—"}</b></span>
-    <span class="fin-c"><small>Custos pagos em</small><b>${diaEq && diaEq <= D ? `${diaEq} ${MES}` : eq && fat ? "não empata" : "—"}</b></span>
-    <span class="fin-go">Abrir Financeiro ${ic("chev")}</span>`;
-  box.querySelectorAll("[data-odo]").forEach(el => odo(el, el.dataset.odo));
 }
 function editarCustos(f, custos, mg){
   const lin = (c, i) => `<div class="lc-ed" data-i="${i}"><input class="lc-n" type="text" value="${esc(c.nome)}" placeholder="Nome (ex.: Aluguel)" aria-label="Nome do custo"><span class="lc-in"><i>R$</i><input class="lc-vv" type="text" inputmode="decimal" value="${c.valor != null ? String(Number(c.valor).toFixed(2)).replace(".", ",") : ""}" placeholder="0,00" aria-label="Valor por mês"></span><button type="button" class="btn-danger btn-sm lc-del" aria-label="Remover">${ic("x")}</button></div>`;
@@ -5586,7 +5554,7 @@ async function renderSiteCms(){
   const sync=()=>{cmsSiteDraft.sections.forEach(x=>{const t=area.querySelector(`[data-title="${x.id}"]`),s=area.querySelector(`[data-subtitle="${x.id}"]`),v=area.querySelector(`[data-visible="${x.id}"]`);if(t)x.title=t.value.trim();if(s)x.subtitle=s.value.trim();if(v)x.visible=v.checked;});const get=id=>area.querySelector("#"+id);const t=get("siteCmsHeroTitle"),s=get("siteCmsHeroSubtitle"),f=get("siteCmsFooterText"),ig=get("siteCmsInstagram"),mode=get("siteCmsEffectsMode"),snap=get("siteCmsSnap");if(t)cmsSiteDraft.site.heroTitle=t.value.trim();if(s)cmsSiteDraft.site.heroSubtitle=s.value.trim();if(f)cmsSiteDraft.site.footerText=f.value.trim();if(ig)cmsSiteDraft.site.instagramUrl=ig.value.trim();for(const [key,id] of [["hotTitle","siteCmsHotTitle"],["hotSubtitle","siteCmsHotSubtitle"],["categoriesTitle","siteCmsCategoriesTitle"],["categoriesSubtitle","siteCmsCategoriesSubtitle"],["locationTitle","siteCmsLocationTitle"],["locationSubtitle","siteCmsLocationSubtitle"],["reviewsTitle","siteCmsReviewsTitle"]]){const el=get(id);if(el)cmsSiteDraft.site[key]=el.value.trim();}cmsSiteDraft.menuItems.forEach(x=>{const l=area.querySelector(`[data-menu-label="${x.id}"]`),v=area.querySelector(`[data-menu-visible="${x.id}"]`);if(l)x.label=l.value.trim()||x.label;if(v)x.visible=v.checked;});if(mode)cmsSiteDraft.effects.mode=mode.value;if(snap)cmsSiteDraft.effects.scrollSnap=snap.checked;};
   const save=async()=>{
     sync();const b={visible:$("#siteCmsBannerVisible").checked,title:$("#siteCmsBannerTitle").value.trim(),text:$("#siteCmsBannerText").value.trim(),buttonText:$("#siteCmsBannerButton").value.trim()||"Saiba mais",url:$("#siteCmsBannerUrl").value.trim(),imageUrl:$("#siteCmsBannerImage").value.trim()};const site={heroTitle:$("#siteCmsHeroTitle").value.trim(),heroSubtitle:$("#siteCmsHeroSubtitle").value.trim(),footerText:$("#siteCmsFooterText").value.trim(),instagramUrl:$("#siteCmsInstagram").value.trim(),hotTitle:$("#siteCmsHotTitle").value.trim(),hotSubtitle:$("#siteCmsHotSubtitle").value.trim(),categoriesTitle:$("#siteCmsCategoriesTitle").value.trim(),categoriesSubtitle:$("#siteCmsCategoriesSubtitle").value.trim(),locationTitle:$("#siteCmsLocationTitle").value.trim(),locationSubtitle:$("#siteCmsLocationSubtitle").value.trim(),reviewsTitle:$("#siteCmsReviewsTitle").value.trim()};const menuItems=cmsSiteDraft.menuItems.map(x=>({id:x.id,label:area.querySelector(`[data-menu-label="${x.id}"]`).value.trim()||x.label,visible:area.querySelector(`[data-menu-visible="${x.id}"]`).checked}));const effects={mode:$("#siteCmsEffectsMode").value,scrollSnap:$("#siteCmsSnap").checked};
-    if(b.url&&!/^(https:\/\/|\/|#)/i.test(b.url)){toast("O link precisa ser HTTPS, caminho do site ou âncora.");return;}
+    if(b.url&&!/^(https:\/\/|\/(?![\/\\])|#)/i.test(b.url)){toast("O link precisa ser HTTPS, caminho do site ou âncora.");return;}
     if(b.imageUrl&&!/^https:\/\//i.test(b.imageUrl)){toast("A imagem precisa usar HTTPS.");return;}if(site.instagramUrl&&!/^https:\/\//i.test(site.instagramUrl)){toast("O Instagram precisa usar um endereço HTTPS.");return;}if(!site.heroTitle||!site.heroSubtitle){toast("Preencha o título e o subtítulo principal.");return;}
     const btn=$("#siteCmsSave");btn.disabled=true;btn.classList.add("is-busy");
     try{
