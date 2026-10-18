@@ -414,8 +414,8 @@ export async function notificar(ped: any) {
         if (enviou && await saudarSeNovo(cliente)) { await pausa(INTERVALO_MSG_MS); await enviarWhats(cliente, m.saudacao).catch(() => {}); }
         if (ped.status === "concluido") { await pausa(INTERVALO_MSG_MS); await enviarUmaVez(ped.id, "pedido_concluido", cliente, m.pedido_concluido); }
       })().catch(e => console.error("notificar bg", e)));
-    } else if (ped.status === "recusado") await enviarUmaVez(ped.id, "pagamento_recusado", cliente, m.pagamento_recusado);
-    else if (ped.status === "expirado") await enviarUmaVez(ped.id, "pix_expirado", cliente, m.pix_expirado);
+    } else if (ped.status === "recusado") { emSegundoPlano(avisarEquipe(ped, "recusado")); await enviarUmaVez(ped.id, "pagamento_recusado", cliente, m.pagamento_recusado); }
+    else if (ped.status === "expirado") { emSegundoPlano(avisarEquipe(ped, "expirado")); await enviarUmaVez(ped.id, "pix_expirado", cliente, m.pix_expirado); }
   } catch (e) { console.error("notificar", e); }   // WhatsApp nunca derruba o pagamento
 }
 
@@ -480,22 +480,24 @@ export function acompDe(ped: any) {
     itens: (ped.itens || []).map((i: any) => ({ qtd: i.qtd, nome: i.nome, subtotal: i.subtotal })),
     criado: ped.created_at ?? null, pago: ped.pago_em ?? null, corrida: ped.corrida_link_em ?? null, saiu: ped.saiu_em ?? null, concluido: ped.concluido_em ?? null, expira: ped.pix_expira_em ?? null };
 }
-async function ehStaff(req: Request) {
+async function ehStaff(req: Request): Promise<string | false> {
   const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
   if (!token) return false;
   const r = await fetch(`${SB()}/auth/v1/user`, { headers: { apikey: SK(), Authorization: "Bearer " + token } });
   if (!r.ok) return false;
   const u = await r.json();
-  return !!u?.id && (await sbGet(`staff?select=user_id&active=eq.true&user_id=eq.${u.id}`)).length > 0;
+  return !!u?.id && (await sbGet(`staff?select=user_id&active=eq.true&user_id=eq.${u.id}`)).length > 0 ? String(u.id) : false;
 }
 export async function concluir(req: Request, body: any) {
-  if (!(await ehStaff(req))) return { erro: "sem permissão", status: 403 };
+  const quem = await ehStaff(req);
+  if (!quem) return { erro: "sem permissão", status: 403 };
   const id = String(body?.pedido_id ?? "");
   if (!UUID.test(id)) return { erro: "Pedido inválido.", status: 400 };
   const rows = await sbPatch(`pedidos?id=eq.${id}&status=eq.pago`, { status: "concluido", concluido_em: new Date().toISOString() });
   if (!rows?.[0]) return { erro: "Só pedidos pagos podem ser concluídos.", status: 409 };
   const msg = mensagens(rows[0]).pedido_concluido;
   const enviou = await enviarUmaVez(rows[0].id, "pedido_concluido", rows[0].cliente_whats, msg);
+  emSegundoPlano(avisarEquipe(rows[0], "concluido", quem));
   return { ok: true, numero: rows[0].numero, status: "concluido", whats: whatsDe(rows[0], msg, enviou) };
 }
 /** O que a equipe faz com o WhatsApp do cliente: se o robô (Evolution) mandou, nada; senão um link com a mensagem pronta. */
@@ -506,7 +508,8 @@ function whatsDe(ped: any, msg: string, enviou: boolean) {
 }
 /** Etapa "saiu para entrega" (só quando a loja entrega). Idempotente: a 2ª vez não muda nada. */
 export async function etapa(req: Request, body: any) {
-  if (!(await ehStaff(req))) return { erro: "sem permissão", status: 403 };
+  const quem = await ehStaff(req);
+  if (!quem) return { erro: "sem permissão", status: 403 };
   const id = String(body?.pedido_id ?? ""), qual = String(body?.etapa ?? "");
   if (!UUID.test(id)) return { erro: "Pedido inválido.", status: 400 };
   if (!["link", "saiu"].includes(qual)) return { erro: "Etapa inválida.", status: 400 };
@@ -524,6 +527,7 @@ export async function etapa(req: Request, body: any) {
   const tipoMsg = qual === "link" ? "corrida_link_recebido" : daLoja ? "saiu_entrega" : "motoboy_retirou";
   const msg = mensagens(atual)[tipoMsg];
   const enviou = await enviarUmaVez(atual.id, tipoMsg, atual.cliente_whats, msg);
+  emSegundoPlano(avisarEquipe(atual, qual === "link" ? "link" : "saiu", quem));
   return { ok: true, numero: atual.numero, corrida_link_em: atual.corrida_link_em ?? null, saiu_em: atual.saiu_em ?? null, whats: whatsDe(atual, msg, enviou) };
 }
 
@@ -543,11 +547,26 @@ export async function chavesPush() {
   vapidCache = { publica: c.vapid_public, privadaJwk: c.vapid_private_jwk };
   return vapidCache;
 }
-export function avisoEquipe(ped: any, tipo: "pago" | "pix" | "teste") {
-  const nome = String(ped?.cliente_nome || "").trim().slice(0, 40), ent = ped?.entrega?.tipo === "entrega" ? "entrega pela loja" : "cliente chama o entregador";
-  if (tipo === "teste") return { title: "✅ Notificações ligadas", body: "Este aparelho vai receber os avisos de Pix gerado e de pedido pago.", tag: "teste", url: "/admin/#/pedidos", tipo };
-  if (tipo === "pago") return { title: `✅ Pedido PAGO #${ped.numero}`, body: `${nome} · ${brl(ped.total)} · ${ent}. Toque para abrir.`, tag: "ped-" + ped.numero, url: "/admin/#/pedidos", tipo, fixo: true };
-  return { title: `⚠️ Pix gerado #${ped.numero}`, body: `${nome} · ${brl(ped.total)} · aguardando o pagamento.`, tag: "ped-" + ped.numero, url: "/admin/#/pedidos", tipo };
+// Um aviso por etapa do pedido, sempre com o que falta fazer ("👉"). O toque abre Pedidos já no pedido certo
+// (#/pedidos?ped=<id>), com o botão da próxima ação em destaque. Mesmo pedido = mesma "tag": a etapa nova substitui a anterior.
+export type TipoAviso = "pix" | "pago" | "link" | "saiu" | "concluido" | "expirado" | "recusado" | "teste";
+export function avisoEquipe(ped: any, tipo: TipoAviso) {
+  if (tipo === "teste") return { title: "✅ Notificações ligadas", body: "Este aparelho vai receber um aviso a cada etapa dos pedidos.", tag: "teste", url: "/admin/#/pedidos", tipo };
+  const nome = String(ped?.cliente_nome || "").trim().slice(0, 40), daLoja = ped?.entrega?.tipo === "entrega";
+  const ent = daLoja ? "entrega pela loja" : "cliente chama o entregador", base = `${nome} · ${brl(ped.total)}`;
+  const a = (title: string, body: string, fixo = false) => ({ title, body, tag: "ped-" + ped.numero, url: "/admin/#/pedidos?ped=" + ped.id, tipo, ...(fixo ? { fixo: true } : {}) });
+  const n = ped.numero;
+  switch (tipo) {
+    case "pix": return a(`⚠️ Pix gerado #${n}`, `${base} · aguardando o pagamento.\n👉 Nada a fazer ainda: avisamos quando o Pix cair.`);
+    case "pago": return a(`✅ Pedido PAGO #${n}`, `${base} · ${ent}.\n👉 A fazer: separar o pedido${daLoja ? " e tocar em 🛵 Saiu para entrega" : "; o cliente chama o Uber/99. Quando o motoboy retirar, toque em 🛵 Motoboy retirou"}.`, true);
+    case "link": return a(`🔗 Link da corrida #${n}`, `${base}.\n👉 A fazer: entregar ao motoboy e tocar em 🛵 Motoboy retirou.`);
+    case "saiu": return daLoja
+      ? a(`🛵 Saiu para entrega #${n}`, `${base}.\n👉 A fazer: quando entregar, tocar em Pedido entregue.`)
+      : a(`🛵 Motoboy retirou #${n}`, `${base}.\n👉 A fazer: tocar em ✅ Concluir pedido.`);
+    case "concluido": return a(`✔ Pedido concluído #${n}`, `${base}.\nNada mais a fazer.`);
+    case "expirado": return a(`⌛ Pix vencido #${n}`, `${base} · nada foi cobrado.\n👉 Se o cliente não voltar, dá para cancelar o pedido.`);
+    default: return a(`❌ Pagamento recusado #${n}`, `${base}.\n👉 Se o cliente não tentar de novo, dá para cancelar o pedido.`);
+  }
 }
 async function mandarPara(subs: any[], dados: unknown) {
   const vapid = await chavesPush(); let ok = 0;
@@ -562,14 +581,14 @@ async function mandarPara(subs: any[], dados: unknown) {
   return ok;
 }
 /** Avisa todos os aparelhos da equipe. 1 vez por (pedido, tipo): reserva em wa_notificacoes. Nunca derruba o pedido. */
-export async function avisarEquipe(ped: any, tipo: "pago" | "pix") {
+export async function avisarEquipe(ped: any, tipo: Exclude<TipoAviso, "teste">, exceto: string | false = false) {
   try {
     if (!ped?.id) return 0;
     try { await sbInsert("wa_notificacoes", { pedido_id: ped.id, tipo: "push_" + tipo, destino: "equipe" }, "return=minimal"); }
     catch (e: any) { if (e?.status === 409) return 0; throw e; }
     // só aparelhos de quem ainda está na equipe (quem foi desativado para de receber na hora)
     const ativos = new Set(((await sbGet("staff?active=eq.true&select=user_id")) || []).map((x: any) => x.user_id));
-    const subs = ((await sbGet("push_assinaturas?ativo=eq.true&select=id,endpoint,p256dh,auth,falhas,user_id")) || []).filter((x: any) => ativos.has(x.user_id));
+    const subs = ((await sbGet("push_assinaturas?ativo=eq.true&select=id,endpoint,p256dh,auth,falhas,user_id")) || []).filter((x: any) => ativos.has(x.user_id) && x.user_id !== exceto);   // quem fez a etapa não recebe aviso dela
     const ok = subs?.length ? await mandarPara(subs, avisoEquipe(ped, tipo)) : 0;
     await sbPatch(`wa_notificacoes?pedido_id=eq.${ped.id}&tipo=eq.push_${tipo}`, { ok: ok > 0, erro: subs?.length ? null : "nenhum aparelho inscrito" }).catch(() => {});
     return ok;

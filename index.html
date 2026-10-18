@@ -336,6 +336,24 @@ button.ia-wa{width:100%;border:0;cursor:pointer;font-family:inherit}
 .ac-auto{margin:10px 0 0;font-size:14px;color:var(--ink);text-align:center}
 .ac-auto b{font-family:var(--mono);color:var(--ok-txt)}
 .ac-auto button{margin-left:6px;min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font:600 13px var(--body);cursor:pointer}
+/* Pix expirado (18/10/2026): cor de fumaça (cinza quente, sem salmão nem dourado) e saída em névoa.
+   .some-nevoa: o conteúdo sobe e some enquanto uma névoa (degradês já desfocados) cresce e se desfaz; só transform/opacity. */
+.ac-off .ac-ic{background:rgba(214,204,192,.07);border-color:rgba(214,204,192,.3);color:#cfc5b8}
+.ac-off h2{color:#d9d0c4}
+.ac-hero.ac-off~.ac-itens>b{color:var(--muted)}
+.ac-hero.ac-off~.ac-acoes .ac-volta{background:transparent;border:1px solid rgba(214,204,192,.35);color:#d9d0c4}
+.mp-wait.off,.pg-ticket{position:relative}
+.mp-wait.off b{color:#d9d0c4}
+.some-nevoa{animation:nvPainel .9s var(--ease-app) .6s forwards}
+.some-nevoa>*{animation:nvSai 1.1s var(--ease-app) forwards}
+.some-nevoa>*:nth-child(2){animation-delay:.06s}.some-nevoa>*:nth-child(3){animation-delay:.12s}.some-nevoa>*:nth-child(4){animation-delay:.18s}.some-nevoa>*:nth-child(n+5){animation-delay:.24s}
+.some-nevoa::after{content:"";position:absolute;inset:-6% -4%;z-index:3;pointer-events:none;border-radius:inherit;opacity:0;
+  background:radial-gradient(38% 26% at 28% 62%,rgba(214,204,192,.30),transparent 72%),radial-gradient(34% 24% at 72% 44%,rgba(214,204,192,.24),transparent 72%),radial-gradient(52% 32% at 50% 82%,rgba(214,204,192,.20),transparent 72%),radial-gradient(30% 20% at 50% 28%,rgba(214,204,192,.16),transparent 72%);
+  animation:nvFumo 1.5s var(--ease-app) forwards}
+@keyframes nvSai{to{opacity:0;transform:translateY(-16px) scale(1.02)}}
+@keyframes nvFumo{0%{opacity:0;transform:translateY(28px) scale(.9)}35%{opacity:1}100%{opacity:0;transform:translateY(-46px) scale(1.4)}}
+@keyframes nvPainel{to{opacity:0}}
+@media(prefers-reduced-motion:reduce){.some-nevoa,.some-nevoa>*{animation:none}.some-nevoa::after{display:none}}
 </style>
 <style id="ajustes">
 /* ── Auditoria visual: correções de alinhamento e responsividade ── */
@@ -632,6 +650,9 @@ html.nav-indo .sec{content-visibility:visible}
 .nv.on::after{transform:scaleX(1)}
 @media(hover:hover) and (pointer:fine){.nv:hover::after{transform:scaleX(1)}}
 @media(prefers-reduced-motion:reduce){.nv::after{transition:none}}
+/* Aviso rápido (toast, 18/10/2026): o pílula amarelo-ouro maciço brigava com a loja e ficava em cima da barra da
+   Brutt IA. Agora: fundo escuro da loja com borda dourada fina, texto claro, acima da barra da IA (≈110 px do fim). */
+.toast{bottom:calc(124px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 32px);width:max-content;text-align:center;background:rgba(23,15,10,.96);color:var(--ink);border:1px solid rgba(227,172,61,.55);box-shadow:0 10px 30px rgba(0,0,0,.45);font-weight:600;line-height:1.35}
 </style>
 </head>
 <body>
@@ -905,8 +926,8 @@ function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox
 <script src="/js/ia-sugestoes.js?v=20261012a" defer></script>
 <script src="/js/desempenho.js?v=20261013a" defer></script>
 <script src="/js/avaliacoes.js?v=20261013a" defer></script>
-<script src="/js/checkout-mp.js?v=20261018f" defer></script>
-<script src="/js/acompanhar.js?v=20261018a" defer></script>
+<script src="/js/checkout-mp.js?v=20261018g" defer></script>
+<script src="/js/acompanhar.js?v=20261018b" defer></script>
 <script src="/js/sons.js?v=20261018a" defer></script>
 </body>
 </html>

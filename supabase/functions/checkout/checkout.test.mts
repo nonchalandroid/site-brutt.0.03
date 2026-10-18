@@ -238,10 +238,10 @@ async function hk(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, n: number
   return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, k, n * 8));
 }
 const te = new TextEncoder();
-async function aparelho(caminho: string) {
+async function aparelho(caminho: string, user_id = "u-staff") {
   const par = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
   const pub = new Uint8Array(await crypto.subtle.exportKey("raw", par.publicKey)), auth = crypto.getRandomValues(new Uint8Array(16));
-  db.push_assinaturas.push({ id: crypto.randomUUID(), endpoint: "https://push.test" + caminho, p256dh: P.b64u(pub), auth: P.b64u(auth), ativo: true, falhas: 0, user_id: "u-staff" });
+  db.push_assinaturas.push({ id: crypto.randomUUID(), endpoint: "https://push.test" + caminho, p256dh: P.b64u(pub), auth: P.b64u(auth), ativo: true, falhas: 0, user_id });
   return { par, pub, auth };
 }
 async function abre(ua: any, corpo: Uint8Array) {   // RFC 8291 do lado do navegador
@@ -273,7 +273,7 @@ await t("avisa a equipe no celular: Pix gerado e pago, 1 vez cada, criptografado
   const p1 = pushes.filter(x => x.path === "/meu-celular");
   assert.equal(p1.length, 1);
   const d1 = await abre(ua, p1[0].corpo);
-  assert.match(d1.title, /Pix gerado #BR-/); assert.match(d1.body, /Maria Push · R\$ 25,00/); assert.equal(d1.url, "/admin/#/pedidos");
+  assert.match(d1.title, /Pix gerado #BR-/); assert.match(d1.body, /Maria Push · R\$ 25,00/); assert.equal(d1.url, "/admin/#/pedidos?ped=" + c.j.pedido_id); assert.match(d1.body, /👉/);
   assert.equal(p1[0].headers["Content-Encoding"], "aes128gcm"); assert.equal(p1[0].headers.Urgency, "high");
   const pubServidor = await vapidOk(p1[0].headers.Authorization);
   assert.equal(pubServidor, db.push_config[0].vapid_public);                       // chave gerada e guardada no servidor
@@ -440,5 +440,27 @@ await t("sem WhatsApp (só o nome): cria, gera Pix, paga sem mandar mensagem ao 
   await C.processarPagamento(mpPays.get(id));
   assert.equal(ped.status, "cancelado");
   assert.match(C._whatsDe({ cliente_whats: null }, "oi", false).link, /^https:\/\/wa\.me\/\?text=oi$/, "sem número: link abre o WhatsApp para escolher a conversa");
+});
+await t("um aviso por etapa, com o que fazer; quem fez a etapa não recebe o aviso dela", async () => {
+  db.staff.push({ user_id: "u-outro", active: true });
+  const outro = await aparelho("/outro-celular", "u-outro"), meu = () => pushes.filter(x => x.path === "/meu-celular").length;
+  const c = await call("criar", { ...base, nome: "Ana Etapas", entrega: { tipo: "cliente" } }), id = c.j.pedido_id;
+  proximoMp = { status: "pending", status_detail: "pending_waiting_transfer" };
+  await call("pagar", { pedido_id: id, metodo: "pix", formData: { payment_method_id: "pix", payer: {} } });
+  await C.processarPagamento({ ...mpPays.get(String(mpSeq)), status: "approved", status_detail: "accredited" }); await flush();
+  const doOutro = async () => Promise.all(pushes.filter(x => x.path === "/outro-celular").map(x => abre(outro, x.corpo)));
+  let av = await doOutro();
+  assert.deepEqual(av.map(x => x.title.split(" #")[0]), ["⚠️ Pix gerado", "✅ Pedido PAGO"]);
+  assert.match(av[1].body, /👉 A fazer: separar o pedido; o cliente chama o Uber\/99/);
+  const antes = meu();
+  await call("etapa", { pedido_id: id, etapa: "saiu" }, equipe); await flush();
+  await call("concluir", { pedido_id: id }, equipe); await flush();
+  av = await doOutro();
+  assert.deepEqual(av.slice(2).map(x => x.title.split(" #")[0]), ["🛵 Motoboy retirou", "✔ Pedido concluído"]);
+  assert.match(av[2].body, /Concluir pedido/); assert.ok(av.every(x => x.url === "/admin/#/pedidos?ped=" + id && x.tag === av[0].tag));
+  assert.equal(meu(), antes, "o aparelho de quem tocou na etapa não é avisado");
+  await call("etapa", { pedido_id: id, etapa: "saiu" }, equipe); await flush();
+  assert.equal((await doOutro()).length, 4, "repetir a etapa não avisa de novo");
+  db.staff.pop();
 });
 console.log(`\n${ok} testes passaram`);

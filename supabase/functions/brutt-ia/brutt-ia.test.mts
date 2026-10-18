@@ -23,8 +23,10 @@ const R=(o:any,s=200)=>new Response(JSON.stringify(o),{status:s});
   if(p==="ia_sessoes") {const sid=u.searchParams.get("session_id")!.slice(3);return R(sessoes[sid]?[{draft:sessoes[sid]}]:[])}
   if(p==="rpc/ia_cota") { cotaChamadas.push(body); return R({ok:cotaOk,total:1,ip:1}); }
   if(p==="rpc/ia_buscar_produtos") return R([]);
+  if(p==="ia_conhecimento") return R(conhecimento);
   return R([],201);
 };
+let conhecimento:any[]=[{titulo:"Estacionamento",texto:"Tem vaga na rua em frente à loja."},{titulo:"",texto:"  "}];
 let cotaOk=true; const cotaChamadas:any[]=[]; let geoMapa:any[]=[]; let rotaM=500;
 const M=await import(new URL("./index.ts", import.meta.url).href);
 const chama=async(msg:string,pag:boolean)=>{const r=await M.handler(new Request("https://x/brutt-ia",{method:"POST",body:JSON.stringify({message:msg,session:"sessao-teste-1",history:[],pagamento_online:pag})}));return r.json()};
@@ -33,6 +35,8 @@ roteiro=[[{functionCall:{name:"atualizar_pedido",args:{itens:[{id:"p1",qtd:1}]}}
 let j=await chama("quero 1 essência x",true);
 assert.ok(prompts.at(-1)!.includes("Prefiro eu mesmo solicitar a entrega"),"prompt oferece as 2 opções");
 assert.ok(prompts.at(-1)!.includes("Mercado Pago"),"prompt fala do pagamento online");
+assert.ok(prompts.at(-1)!.includes("O QUE A EQUIPE ENSINOU")&&prompts.at(-1)!.includes("• Estacionamento: Tem vaga na rua em frente à loja."),"conhecimento do painel entra no prompt");
+assert.equal(M.conhecimentoTexto([{titulo:"a",texto:"x".repeat(5000)},{titulo:"b",texto:"y".repeat(800)},{titulo:"c",texto:"z".repeat(800)}]).length<=M.CONHECIMENTO_MAX,true,"limite total");
 assert.ok(j.sugestoes.some((s:any)=>/Uber\/99/.test(s.t)),"atalho 'Eu mesmo peço Uber/99': "+JSON.stringify(j.sugestoes));
 roteiro=[[{functionCall:{name:"escolher_uber_99",args:{app:"ambos"}}}],[{text:"Fechou, frete da loja R$ 0,00."}]];
 j=await chama("Prefiro eu mesmo solicitar a entrega pelo Uber ou 99",true);
@@ -68,4 +72,5 @@ console.log("IA: 'eu mesmo peço' sem endereço, fechamento com checkout e promp
   geoMapa=[{rua:"Rua 5",numero:"120",bairro:"Santa Cruz",cidade:"Rio de Janeiro",uf:"RJ",cep:"",lat:-22.92,lng:-43.69}]; rotaM=12000;
   r=await ent({rua:"Rua 5",numero:"120",bairro:"Santa Cruz"}); assert.equal(r.ok,true); assert.equal(r.taxa_entrega,8,"fora do conjunto: sem limite de raio, paga a regra normal (teto R$ 8)");
   assert.ok(prompts.at(-1)!.includes("CONJUNTO CAMPINHO"));
+  assert.ok(prompts.at(-1)!.includes("ONDE FICA A LOJA") && prompts.at(-1)!.includes("Rua Dezoito, 145 — Conjunto Campinho, Campo Grande"), "a loja é do Conjunto Campinho, em Campo Grande");
   geoMapa=[]; rotaM=500; console.log("IA: Conjunto Campinho = taxa mínima; casa achada longe soma por km; homônima não engana — OK"); }

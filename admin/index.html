@@ -1331,7 +1331,7 @@ html[data-nav-dir=sobe]::view-transition-new(root){animation-name:vtEntraCima}
 /* menu com cor: cada tela tem sua cor (ícone num quadradinho tingido); Pedidos online (o mais usado) ganha destaque;
    item ativo = vidro dourado com borda viva. Cores escuras e saturadas: contraste ≥ 3:1 no ícone sobre o claro. */
 .nav-i{--c:var(--muted)}
-.nav-i[data-tab=visao]{--c:#c2410c}.nav-i[data-tab=financeiro]{--c:#a16207}.nav-i[data-tab=giro]{--c:#be123c}.nav-i[data-tab=home]{--c:#b45309}.nav-i[data-tab=pedidos]{--c:#15803d}.nav-i[data-tab=clientes]{--c:#7e22ce}
+.nav-i[data-tab=ia]{--c:#6d28d9}.nav-i[data-tab=visao]{--c:#c2410c}.nav-i[data-tab=financeiro]{--c:#a16207}.nav-i[data-tab=giro]{--c:#be123c}.nav-i[data-tab=home]{--c:#b45309}.nav-i[data-tab=pedidos]{--c:#15803d}.nav-i[data-tab=clientes]{--c:#7e22ce}
 .nav-i[data-tab=estoque-baixo]{--c:#dc2626}.nav-i[data-tab=conferencia]{--c:#0e7490}.nav-i[data-tab=vitrine]{--c:#d97706}.nav-i[data-tab=sommelier]{--c:#a21caf}.nav-i[data-tab=fotos]{--c:#2563eb}
 .nav-i[data-tab=horarios]{--c:#0f766e}.nav-i[data-tab=nex]{--c:#4338ca}.nav-i[data-tab=equipe]{--c:#6d28d9}.nav-i[data-tab=planilha]{--c:#15803d}.nav-i[data-tab=vendidos]{--c:#be123c}
 .side .nav-i>svg{flex:none;width:28px;height:28px;padding:5px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);box-sizing:border-box}
@@ -1539,6 +1539,106 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
 @media(max-width:480px){.eq-term .eq-chip svg{display:none}}
 @media(max-width:480px){.eq-sim label{flex-direction:column;align-items:flex-start;gap:2px}.eq-sv{font-size:20px}}
 @media(prefers-reduced-motion:reduce){.eq-relogio i{animation:none}.eq-term .eq-graf::after{transition:none}.eq-term .eq-cp{transition:none}.od-r{transition:none}.eq-revela.anima,.eq-onda,.odo-delta{animation:none}.eq-onda{display:none}}
+/* pedido aberto por uma notificação (#/pedidos?ped=<id>): anel dourado que pulsa 2 vezes (só opacidade) */
+.ped-card.foco{position:relative}
+.ped-card.foco::after{content:"";position:absolute;inset:-4px;border-radius:inherit;border:2px solid var(--ouro,#c8902a);pointer-events:none;animation:pedFoco 1.2s ease-in-out 2 both}
+@keyframes pedFoco{0%,100%{opacity:0}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.ped-card.foco::after{animation:none;opacity:1}}
+/* Brutt IA · o que ela sabe (#/ia) */
+.ia-uso{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 14px;font-size:13px;color:var(--muted)}
+.ia-uso b{color:var(--ink)}
+.ia-barra{flex:1 1 140px;max-width:260px;height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.ia-barra i{display:block;height:100%;background:#6d28d9;transform-origin:left;transition:transform .4s}
+.ia-passou{color:var(--bordo-cl,#9f1239)}
+.ia-card{margin:0 0 12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);display:grid;gap:10px}
+.ia-card.off{opacity:.62}
+.ia-card.fora{border-color:var(--bordo-cl,#9f1239)}
+.ia-c-top{display:flex;align-items:center;gap:12px}
+.ia-c-top .ia-tit{flex:1;min-width:0;font-weight:600}
+.ia-txt{width:100%;resize:vertical;min-height:72px;font:inherit;line-height:1.45}
+.ia-c-pe{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.ia-c-pe small{color:var(--muted)}
+.ia-c-pe span{display:flex;gap:8px;margin-left:auto}
+.ia-teste{margin-top:18px}
+.ia-t-linha{display:flex;gap:8px}
+.ia-t-linha .input{flex:1;min-width:0}
+.ia-resp{margin-top:10px;padding:12px 14px;border-radius:12px;background:var(--surface-2,rgba(0,0,0,.04));line-height:1.5;font-size:14px;color:var(--ink)}
+@media(prefers-reduced-motion:reduce){.ia-barra i{transition:none}}
+/* CMS do site (18/10/2026, redesenho): grupos em cartões de vidro, navegação por âncoras que fica no topo,
+   seções em linhas compactas (nº · título/subtítulo · liga/desliga · ordem), banner com prévia ao vivo e barra de
+   salvar clara com o estado "Alterações não salvas". */
+.cms-nav{position:sticky;top:var(--topbar-h,56px);z-index:5;display:flex;gap:6px;overflow-x:auto;margin:0 0 16px;padding:8px 0;scrollbar-width:none;background:linear-gradient(var(--bg) 70%,transparent)}
+.cms-nav::-webkit-scrollbar{display:none}
+.cms-nav a{flex:none;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap}
+.cms-nav a.on,.cms-nav a:hover{border-color:var(--ouro,#b7791f);color:var(--marrom,#5a3a1a)}
+.cms2{display:grid;gap:16px;padding-bottom:90px}
+.cms-g{scroll-margin-top:120px;padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--surface);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.cms-g>header{display:flex;flex-wrap:wrap;align-items:flex-start;gap:4px 16px;margin:0 0 14px}
+.cms-g>header h3{flex:1 1 60%;margin:0;font-size:18px;color:var(--marrom,var(--ink));display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cms-g>header p{flex:1 1 100%;order:3;margin:0;font-size:13px;color:var(--muted);line-height:1.45}
+.cms-cont{font-size:12px;font-weight:600;color:var(--muted);padding:3px 10px;border-radius:999px;background:var(--line)}
+.cms-par{display:grid;grid-template-columns:130px 1fr 1fr;gap:10px 12px;align-items:end;padding:12px 0;border-top:1px solid var(--line)}
+.cms-par:first-of-type{border-top:0;padding-top:0}
+.cms-par.um{grid-template-columns:130px 1fr}
+.cms-par-t{align-self:center;font-size:13px;font-weight:700;color:var(--ink)}
+.cms-f{display:grid;gap:5px;min-width:0}
+.cms-f label{font-size:12px;font-weight:600;color:var(--muted)}
+.cms-f .input{width:100%}
+.cms-f2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end}
+.cms-menu2{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.cms-mi{display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.cms-mi .input{flex:1;min-width:0;border-color:transparent;background:transparent}
+.cms-mi.off .input,.cms-sec.off .cms-sec-c{opacity:.5}
+.cms-secs{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.cms-sec{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.cms-sec-n{font:600 13px var(--mono);color:var(--muted);text-align:center}
+@media(max-width:560px){.cms-sec-n{line-height:36px}}
+.cms-sec-c{display:grid;grid-template-columns:140px minmax(0,1fr) minmax(0,1.6fr);gap:8px;align-items:center;min-width:0}
+.cms-sec-c b{font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cms-sec-a{display:flex;align-items:center;gap:10px}
+.cms-ord{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cms-ord button{display:grid;place-items:center;width:34px;height:22px;min-height:0;padding:0;border:0;border-radius:0;background:var(--surface);color:var(--ink);cursor:pointer}
+.cms-ord button+button{border-top:1px solid var(--line)}
+.cms-ord button .i{width:14px;height:14px}
+.cms-ord button:first-child .i{transform:rotate(-90deg)}.cms-ord button:last-child .i{transform:rotate(90deg)}
+.cms-ord button:disabled{opacity:.3;cursor:default}
+.cms-liga{display:inline-flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
+.cms-ban{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);gap:18px;align-items:start}
+.cms-ban-f{display:grid;gap:12px}
+.cms-prev{margin:0;position:sticky;top:130px}
+.cms-prev figcaption{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 6px}
+.cms-prev-b{position:relative;display:flex;gap:14px;align-items:center;padding:18px;border-radius:16px;background:linear-gradient(140deg,#1c120c,#0e0806);border:1px solid rgba(227,172,61,.45);color:#f3e4c8;min-height:120px;overflow:hidden}
+.cms-prev-b img{width:84px;height:84px;object-fit:cover;border-radius:12px;flex:none}
+.cms-prev-b b{display:block;font:400 22px/1.1 Anton,Impact,sans-serif;text-transform:uppercase;color:#efc25e}
+.cms-prev-b p{margin:6px 0 0;font-size:13px;line-height:1.4;color:#d8c4a4}
+.cms-prev-btn{display:inline-block;margin-top:10px;padding:7px 14px;border-radius:10px;background:#e3ac3d;color:#2a1810;font-size:13px;font-weight:700}
+.cms-prev-b.off>*:not(em){opacity:.35}
+.cms-prev-b em{position:absolute;inset:auto 10px 8px auto;font-size:11px;font-style:normal;color:#d8c4a4}
+.cms-save2{position:sticky;bottom:12px;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:-74px;padding:10px 10px 10px 16px;border:1px solid var(--line);border-radius:16px;background:var(--surface);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(60,40,20,.12)}
+.cms-st{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted)}
+.cms-st i{width:9px;height:9px;border-radius:50%;background:var(--salvia,#4d7c5a)}
+.cms-st.sujo{color:var(--terracota,#9a3412)}
+.cms-st.sujo i{background:var(--terracota,#c2410c)}
+@media(max-width:900px){
+  .cms-par,.cms-par.um{grid-template-columns:1fr 1fr}
+  .cms-par-t{grid-column:1/-1}
+  .cms-sec-c{grid-template-columns:1fr}
+  .cms-sec-c b{white-space:normal}
+  .cms-ban{grid-template-columns:1fr}
+  .cms-prev{position:static;order:-1}
+}
+@media(max-width:560px){
+  .cms-g{padding:14px}
+  .cms-par,.cms-par.um,.cms-f2{grid-template-columns:1fr}
+  .cms-sec{position:relative;grid-template-columns:18px 1fr;gap:8px;align-items:start;padding:10px}
+  .cms-sec-n{padding-top:2px}
+  .cms-sec-c b{padding-right:150px;min-height:36px;display:flex;align-items:center}
+  .cms-sec-a{position:absolute;top:8px;right:8px}
+  .cms-ord{flex-direction:row}
+  .cms-ord button{width:40px;height:36px;min-height:0}
+  .cms-ord button+button{border-top:0;border-left:1px solid var(--line)}
+  .cms-save2 .btn-gold{flex:none}
+}
 </style>
 </head>
 <body>
@@ -1606,7 +1706,9 @@ const PAPEL = { owner:"Dono", admin:"Administrador", atendente:"Atendente" };
 const ehGestor = () => !state.staff?.role || ["owner","admin"].includes(state.staff.role);   // sem papel = cadastro antigo (o banco decide de verdade)
 const ROTAS_ATENDENTE = ["pedidos"];
 const podeRota = r => ehGestor() || ROTAS_ATENDENTE.includes(r);
-function rotaAtual(){ const h = location.hash.replace(/^#\/?/, ""), r = ROUTES[h] ? h : "home"; return podeRota(r) ? r : "pedidos"; }
+function rotaAtual(){ const h = location.hash.replace(/^#\/?/, "").split("?")[0], r = ROUTES[h] ? h : "home"; return podeRota(r) ? r : "pedidos"; }
+/* parâmetro depois da rota (#/pedidos?ped=<id>): o toque numa notificação abre o pedido certo */
+const hashParam = n => new URLSearchParams(location.hash.split("?")[1] || "").get(n);
 /* troca de tela animada: com View Transitions (Chrome/Edge/Safari 18) a tela antiga sai, a nova entra deslizando
    (para cima ou para baixo conforme a posição no menu), o menu lateral e o topo ficam parados e o destaque do item
    ativo escorrega até o novo. Espera os dados da tela nova até 260 ms (se chegarem antes, entra pronta; senão entra
@@ -1669,7 +1771,7 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 const NAV = [
   ["Operação", { items: [["visao","Visão geral","dash"],["pedidos","Pedidos online","bag","pedidos"],["home","Produtos","pkg"],["clientes","Clientes","users"]] }],
   ["Estoque e compras", { items: [["estoque-baixo","Estoque","pkg","estoque"],["nex-novos","Produtos novos do NEX","sync"],["giro","Giro e reposição","gauge"],["vendidos","Mais vendidos","trend"],["planilha","Planilha de compra","sheet"]] }],
-  ["Catálogo e conteúdo", { items: [["site-cms","CMS do site","store"],["vitrine","Vitrine e destaques","trend"],["conferencia","Conferência de produtos","check"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
+  ["Catálogo e conteúdo", { items: [["ia","Brutt IA","spark"],["site-cms","CMS do site","store"],["vitrine","Vitrine e destaques","trend"],["conferencia","Conferência de produtos","check"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
   ["Gestão", { items: [["financeiro","Financeiro","coin"]] }],
   ["Configurações", { collapsed: true, items: [["horarios","Horários da loja","clock"],["nex","Integrações Nex","sync"],["equipe","Equipe","shield"]] }],
 ];
@@ -1918,21 +2020,26 @@ function sinoAbrir(abrir){
 async function sinoLista(){
   const box = $("#sinoLista"); if(!box) return;
   const desde = new Date(Date.now() - 72 * 3600e3).toISOString(), agora = new Date();
-  const { data, error } = await sb.from("pedidos").select("id,numero,status,cliente_nome,total,created_at,pago_em,visto_em,pix_expira_em,mp_payment_id,concluido_em,saiu_em")
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,cliente_nome,total,created_at,pago_em,visto_em,pix_expira_em,mp_payment_id,concluido_em,saiu_em,corrida_link_em,entrega")
     .gte("created_at", desde).order("created_at", { ascending:false }).limit(20);
   if(!$("#sinoLista")) return;
   if(error){ box.innerHTML = `<div class="sino-vazio">Não deu para carregar os avisos agora.</div>`; return; }
+  /* a última etapa de cada pedido, com o que falta fazer (o mesmo texto das notificações do celular) */
   const itens = (data || []).map(p => {
-    const nome = esc(String(p.cliente_nome || "Cliente").split(" ")[0]), val = brl(p.total), num = esc(p.numero);
-    if(p.status === "pago") return { cls: p.visto_em ? "pago" : "pago novo", ic: "✅", t: `Pedido PAGO #${num}`, s: `${nome} · ${val} · ${p.saiu_em ? "saiu para entrega" : "a concluir"}`, h: p.pago_em || p.created_at };
-    if(p.status === "aguardando_pagamento" && p.mp_payment_id && p.pix_expira_em && new Date(p.pix_expira_em) > agora)
-      return { cls: "pix", ic: "⚠️", t: `Pix gerado #${num}`, s: `${nome} · ${val} · aguardando pagamento`, h: p.created_at };
-    if(p.status === "concluido") return { cls: "feito", ic: "✔", t: `Concluído #${num}`, s: `${nome} · ${val}`, h: p.concluido_em || p.created_at };
+    const nome = esc(String(p.cliente_nome || "Cliente").split(" ")[0]), val = brl(p.total), num = esc(p.numero), daLoja = p.entrega?.tipo === "entrega";
+    const it = (cls, ic, t, s, h) => ({ id: p.id, cls, ic, t: `${t} #${num}`, s: `${nome} · ${val}` + (s ? ` · 👉 ${s}` : ""), h });
+    if(p.status === "pago" && p.saiu_em) return daLoja ? it("pago", "🛵", "Saiu para entrega", "tocar em Pedido entregue", p.saiu_em) : it("pago", "🛵", "Motoboy retirou", "tocar em Concluir pedido", p.saiu_em);
+    if(p.status === "pago" && p.corrida_link_em) return it("pago", "🔗", "Link da corrida", "tocar em Motoboy retirou", p.corrida_link_em);
+    if(p.status === "pago") return it(p.visto_em ? "pago" : "pago novo", "✅", "Pedido PAGO", daLoja ? "separar e tocar em Saiu para entrega" : "separar; o cliente chama o Uber/99", p.pago_em || p.created_at);
+    if(p.status === "aguardando_pagamento" && p.mp_payment_id && p.pix_expira_em && new Date(p.pix_expira_em) > agora) return it("pix", "⚠️", "Pix gerado", "", p.created_at);
+    if(p.status === "expirado" || p.status === "aguardando_pagamento" && p.mp_payment_id && p.pix_expira_em) return it("feito", "⌛", "Pix vencido", "dá para cancelar", p.pix_expira_em || p.created_at);
+    if(p.status === "recusado") return it("feito", "❌", "Pagamento recusado", "dá para cancelar", p.created_at);
+    if(p.status === "concluido") return it("feito", "✔", "Concluído", "", p.concluido_em || p.created_at);
     return null;
   }).filter(Boolean);
-  box.innerHTML = itens.length ? itens.map(x => `<button type="button" class="sino-it ${x.cls}" data-sino-ir><span class="sino-e" aria-hidden="true">${x.ic}</span><span class="sino-tx"><b>${x.t}</b><small>${x.s}</small></span><time>${esc(haQuanto(x.h))}</time></button>`).join("")
+  box.innerHTML = itens.length ? itens.map(x => `<button type="button" class="sino-it ${x.cls}" data-sino-ir="${esc(x.id)}"><span class="sino-e" aria-hidden="true">${x.ic}</span><span class="sino-tx"><b>${x.t}</b><small>${x.s}</small></span><time>${esc(haQuanto(x.h))}</time></button>`).join("")
     : `<div class="sino-vazio">Nenhum pedido nas últimas 72 horas.</div>`;
-  box.querySelectorAll("[data-sino-ir]").forEach(b => b.onclick = () => { sinoAbrir(false); go("pedidos"); });
+  box.querySelectorAll("[data-sino-ir]").forEach(b => b.onclick = () => { sinoAbrir(false); go("pedidos?ped=" + b.dataset.sinoIr); });
 }
 /* mesmo critério da tela "Estoque baixo" (ativos com menos de LOW_STOCK_LIMIT, sem destilados/vinho/Red Bull) */
 function filtroEstoqueBaixo(q){
@@ -4310,6 +4417,105 @@ async function renderPedidos(){
     });
   };
   desenha();
+  /* veio de uma notificação (#/pedidos?ped=<id>): mostra o pedido, destaca e põe o foco no botão da próxima ação */
+  const foco = hashParam("ped");
+  if(foco){
+    history.replaceState(null, "", "#/pedidos");
+    const p = data.find(x => x.id === foco);
+    if(p){
+      if(!FILTROS.find(f => f[0] === pedFiltro)[2](p)){ pedFiltro = "todos"; desenha(); }
+      const c = el.querySelector(`[data-ped="${CSS.escape(foco)}"]`);
+      if(c){
+        c.classList.add("foco"); c.scrollIntoView({ block:"center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        const b = c.querySelector("[data-etapa],.ped-avisa,[data-cancelar]"); if(b) setTimeout(() => b.focus({ preventScroll:true }), 400);
+        setTimeout(() => c.classList.remove("foco"), 4000);
+      }
+    } else toast("Esse pedido não está entre os 60 mais recentes.");
+  }
+}
+
+/* ---------------- Brutt IA · o que ela sabe (#/ia, só dono/admin) ----------------
+   Cartões (título + texto) na tabela ia_conhecimento: os ativos entram no prompt da função brutt-ia em até 1 minuto
+   (cache de 60 s), como "O QUE A EQUIPE ENSINOU". Limites: título 80, texto 800, 6.000 caracteres no total (o resto
+   não entra). Preço e estoque continuam vindo do catálogo; as regras de frete/pagamento ficam no código. */
+const IA_MAX_TOTAL = 6000;
+let iaCartoes = [];
+async function renderIA(){
+  app.innerHTML = `${topbarHTML("Brutt IA")}
+    <div class="pg">
+      <div class="pg-h"><div><h2 class="pg-t">Brutt IA · o que ela sabe</h2>
+        <p class="pg-d">Ensine a Brutt IA sem precisar de programador: escreva cada informação da loja num cartão. Os cartões <b>ligados</b> passam a valer na conversa em até 1 minuto. Preço e estoque ela já pega do catálogo; aqui vão coisas como estacionamento, aluguel de narguile, promoções, regras da casa.</p></div>
+        <button class="btn-gold btn-sm" id="iaNovo">${ic("plus")} Novo cartão</button></div>
+      <div class="ia-uso" id="iaUso"></div>
+      <div id="iaLista"><div class="loading">Carregando…</div></div>
+      <section class="ov-box ia-teste"><div class="ov-box-h"><h3>Testar a Brutt IA</h3></div>
+        <p class="cf-dica">Pergunte como um cliente perguntaria. Salvou um cartão agora? Espere 1 minuto antes de testar.</p>
+        <div class="ia-t-linha"><input class="input" id="iaPerg" maxlength="300" placeholder="Ex.: Vocês têm estacionamento?"><button class="btn-sec btn-sm" id="iaPergBtn">Perguntar</button></div>
+        <div class="ia-resp" id="iaResp" hidden></div></section>
+    </div>`;
+  bindTopbar();
+  $("#iaNovo").onclick = () => { iaCartoes.unshift({ id: null, titulo: "", texto: "", ativo: true, ordem: 0, novo: true }); iaDesenha(); setTimeout(() => app.querySelector("[data-ia-tit]")?.focus(), 30); };
+  $("#iaPergBtn").onclick = iaPerguntar;
+  $("#iaPerg").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); iaPerguntar(); } });
+  const { data, error } = await sb.from("ia_conhecimento").select("id,titulo,texto,ativo,ordem,updated_at").order("ordem").order("created_at");
+  if(rotaAtual() !== "ia" || !$("#iaLista")) return;
+  if(error){ $("#iaLista").innerHTML = `<div class="empty">Não deu para ler os cartões: ${esc(error.message)}</div>`; return; }
+  iaCartoes = data || [];
+  iaDesenha();
+}
+function iaDesenha(){
+  const el = $("#iaLista"); if(!el) return;
+  let soma = 0;
+  const entra = iaCartoes.map(c => { if(!c.ativo || !String(c.texto).trim()) return false; soma += (c.titulo || "").length + String(c.texto).length + 4; return soma <= IA_MAX_TOTAL; });
+  const usado = iaCartoes.filter(c => c.ativo).reduce((t, c) => t + (c.titulo || "").length + String(c.texto || "").length + 4, 0);
+  $("#iaUso").innerHTML = `<span><b>${iaCartoes.filter(c => c.ativo && c.id).length}</b> cartões ligados</span><span class="ia-barra" aria-hidden="true"><i style="transform:scaleX(${Math.min(1, usado / IA_MAX_TOTAL).toFixed(3)})"></i></span><span>${usado.toLocaleString("pt-BR")} de ${IA_MAX_TOTAL.toLocaleString("pt-BR")} caracteres${usado > IA_MAX_TOTAL ? ' · <b class="ia-passou">os últimos não entram</b>' : ""}</span>`;
+  el.innerHTML = iaCartoes.length ? iaCartoes.map((c, i) => `<article class="ia-card${c.ativo ? "" : " off"}${c.ativo && !entra[i] && c.id ? " fora" : ""}" data-i="${i}">
+      <div class="ia-c-top"><input class="input ia-tit" data-ia-tit maxlength="80" placeholder="Título (ex.: Estacionamento)" value="${esc(c.titulo || "")}">
+        <label class="switch" title="${c.ativo ? "Ligado: a IA usa" : "Desligado: a IA não usa"}"><input type="checkbox" data-ia-on ${c.ativo ? "checked" : ""} aria-label="Cartão ligado"><span class="track"></span></label></div>
+      <textarea class="input ia-txt" data-ia-txt rows="3" maxlength="800" placeholder="O que a IA deve saber, escrito como você explicaria a um atendente novo.">${esc(c.texto || "")}</textarea>
+      <div class="ia-c-pe"><small data-ia-n>${String(c.texto || "").length}/800${c.ativo && !entra[i] && c.id ? " · passou do limite total: não entra" : ""}</small>
+        <span>${c.id ? `<button class="btn-ghost btn-sm" data-ia-del>Apagar</button>` : `<button class="btn-ghost btn-sm" data-ia-cancela>Cancelar</button>`}<button class="btn-gold btn-sm" data-ia-salva>Salvar</button></span></div>
+    </article>`).join("") : `<div class="empty">Nenhum cartão ainda. Toque em <b>Novo cartão</b> e ensine a primeira coisa.</div>`;
+  el.querySelectorAll(".ia-card").forEach(card => {
+    const i = +card.dataset.i, c = iaCartoes[i];
+    card.querySelector("[data-ia-txt]").addEventListener("input", e => { card.querySelector("[data-ia-n]").textContent = e.target.value.length + "/800"; });
+    card.querySelector("[data-ia-on]").onchange = async e => {
+      if(!c.id){ c.ativo = e.target.checked; return; }
+      const { error } = await sb.from("ia_conhecimento").update({ ativo: e.target.checked }).eq("id", c.id);
+      if(error){ toast("Não salvou: " + error.message); e.target.checked = !e.target.checked; return; }
+      c.ativo = e.target.checked; toast(c.ativo ? "Ligado: a IA passa a usar em até 1 minuto." : "Desligado: a IA deixa de usar em até 1 minuto."); iaDesenha();
+    };
+    card.querySelector("[data-ia-salva]").onclick = async ev => {
+      const titulo = card.querySelector("[data-ia-tit]").value.trim().slice(0, 80), texto = card.querySelector("[data-ia-txt]").value.trim().slice(0, 800), ativo = card.querySelector("[data-ia-on]").checked;
+      if(!texto){ toast("Escreva o que a IA deve saber."); card.querySelector("[data-ia-txt]").focus(); return; }
+      const b = ev.currentTarget; b.disabled = true; b.textContent = "Salvando…";
+      const q = c.id ? sb.from("ia_conhecimento").update({ titulo, texto, ativo }).eq("id", c.id).select().single()
+                     : sb.from("ia_conhecimento").insert({ titulo, texto, ativo, ordem: iaCartoes.reduce((m, x) => Math.max(m, x.ordem || 0), 0) + 1 }).select().single();
+      const { data, error } = await q;
+      if(error){ toast("Não salvou: " + error.message); b.disabled = false; b.textContent = "Salvar"; return; }
+      iaCartoes[i] = data; toast("Salvo. A IA usa em até 1 minuto."); iaDesenha();
+    };
+    const del = card.querySelector("[data-ia-del]");
+    if(del) del.onclick = async () => {
+      if(!confirm(`Apagar o cartão "${c.titulo || String(c.texto).slice(0, 40)}"? A IA deixa de saber isso.`)) return;
+      const { error } = await sb.from("ia_conhecimento").delete().eq("id", c.id);
+      if(error){ toast("Não apagou: " + error.message); return; }
+      iaCartoes.splice(i, 1); toast("Cartão apagado."); iaDesenha();
+    };
+    const can = card.querySelector("[data-ia-cancela]");
+    if(can) can.onclick = () => { iaCartoes.splice(i, 1); iaDesenha(); };
+  });
+}
+async function iaPerguntar(){
+  const inp = $("#iaPerg"), out = $("#iaResp"), b = $("#iaPergBtn"), msg = (inp.value || "").trim();
+  if(!msg){ inp.focus(); return; }
+  b.disabled = true; b.textContent = "Perguntando…"; out.hidden = false; out.textContent = "…";
+  try{
+    const { data, error } = await sb.functions.invoke("brutt-ia", { body: { message: msg, session: "painel-" + (crypto.randomUUID ? crypto.randomUUID() : Date.now()), history: [] } });
+    if(error) throw error;
+    out.innerHTML = `<b>Brutt IA:</b> ${esc(String(data?.reply || "(sem resposta)")).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>")}`;
+  }catch(e){ out.textContent = "Não deu para perguntar agora: " + (e?.message || e); }
+  b.disabled = false; b.textContent = "Perguntar";
 }
 
 /* ---------------- visão geral: o que precisa de atenção agora (só dados reais, consultas leves) ---------------- */
@@ -5546,12 +5752,10 @@ let cmsSiteDraft = null;
 async function renderSiteCms(){
   app.innerHTML = `${topbarHTML("CMS do site")}<div class="pg">
     <div class="pg-h"><div><h2 class="pg-t">CMS do site</h2><p class="pg-d">Organize a página inicial e edite os textos sem mexer em preço ou estoque.</p></div><button class="btn-ghost btn-sm" id="siteCmsRefresh">${ic("sync")} Atualizar</button></div>
-    <div class="cms-tabs"><button class="cms-tab on" type="button" id="siteCmsJumpHome">Conteúdo do site</button><button class="cms-tab" type="button" id="siteCmsJumpBanner">Banner promocional</button></div>
+    <nav class="cms-nav" aria-label="Partes do CMS"><a href="#cmsTopo" data-cms-ir>Textos da página</a><a href="#cmsMenu" data-cms-ir>Menu do topo</a><a href="#cmsSecoes" data-cms-ir>Seções</a><a href="#siteCmsBanner" data-cms-ir>Banner</a><a href="#cmsEfeitos" data-cms-ir>Efeitos</a></nav>
     <div id="siteCmsArea"><div class="loading">Carregando configuração…</div></div></div>`;
   bindTopbar();$("#siteCmsRefresh").onclick=()=>renderSiteCms();
-  const jump=(id,btn)=>{document.querySelectorAll(".cms-tabs .cms-tab").forEach(x=>x.classList.toggle("on",x===btn));$(id)?.scrollIntoView({behavior:"smooth",block:"start"});};
-  $("#siteCmsJumpHome").onclick=()=>jump("#siteCmsGlobal",$("#siteCmsJumpHome"));
-  $("#siteCmsJumpBanner").onclick=()=>jump("#siteCmsBanner",$("#siteCmsJumpBanner"));
+  app.querySelectorAll("[data-cms-ir]").forEach(l=>l.onclick=e=>{e.preventDefault();app.querySelectorAll("[data-cms-ir]").forEach(x=>x.classList.toggle("on",x===l));document.querySelector(l.getAttribute("href"))?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});});
   const area=$("#siteCmsArea"),{data,error}=await sb.from("site_cms_config").select("config").eq("id","homepage").maybeSingle();
   if(rotaAtual()!=="site-cms"||!area)return;
   if(error){area.innerHTML=`<div class="err">Não foi possível carregar o CMS: ${esc(error.message)}</div>`;return;}
@@ -5570,28 +5774,61 @@ async function renderSiteCms(){
       const {data:saved,error:e}=await sb.from("site_cms_config").upsert({id:"homepage",config,updated_at:new Date().toISOString(),updated_by:user.id},{onConflict:"id"}).select("config,updated_at").single();
       if(e)throw e;
       if(!saved?.config?.sections||saved.config.sections.length!==config.sections.length)throw new Error("O banco não confirmou todas as seções. Tente novamente.");
-      toast("CMS salvo no banco. Atualize o site público para conferir.");
+      toast("Salvo. A loja mostra as mudanças ao ser aberta de novo.");window._cmsSujo&&window._cmsSujo(false);
     }catch(e){toast("Não foi possível salvar o CMS: "+String(e?.message||e));}
     finally{btn.disabled=false;btn.classList.remove("is-busy");}
   };
   const draw=()=>{
-    area.innerHTML=`<section class="cms-box cms-site-global" id="siteCmsGlobal"><div class="cms-box-h"><div><h3>Identidade e conteúdo do site</h3><p>Edite os textos fixos que aparecem no topo e no rodapé sem tocar no código.</p></div><span class="badge">Conteúdo global</span></div><div class="cms-site-fields"><div><label for="siteCmsHeroTitle">Título principal</label><input class="input" id="siteCmsHeroTitle" maxlength="120" value="${esc(cmsSiteDraft.site.heroTitle)}"></div><div><label for="siteCmsHeroSubtitle">Subtítulo principal</label><input class="input" id="siteCmsHeroSubtitle" maxlength="180" value="${esc(cmsSiteDraft.site.heroSubtitle)}"></div><div><label for="siteCmsHotTitle">Título de “Vendendo muito”</label><input class="input" id="siteCmsHotTitle" maxlength="100" value="${esc(cmsSiteDraft.site.hotTitle)}"></div><div><label for="siteCmsHotSubtitle">Subtítulo de “Vendendo muito”</label><input class="input" id="siteCmsHotSubtitle" maxlength="180" value="${esc(cmsSiteDraft.site.hotSubtitle)}"></div><div><label for="siteCmsCategoriesTitle">Título de categorias</label><input class="input" id="siteCmsCategoriesTitle" maxlength="100" value="${esc(cmsSiteDraft.site.categoriesTitle)}"></div><div><label for="siteCmsCategoriesSubtitle">Subtítulo de categorias</label><input class="input" id="siteCmsCategoriesSubtitle" maxlength="180" value="${esc(cmsSiteDraft.site.categoriesSubtitle)}"></div><div><label for="siteCmsLocationTitle">Título de localização</label><input class="input" id="siteCmsLocationTitle" maxlength="100" value="${esc(cmsSiteDraft.site.locationTitle)}"></div><div><label for="siteCmsLocationSubtitle">Texto de localização</label><input class="input" id="siteCmsLocationSubtitle" maxlength="240" value="${esc(cmsSiteDraft.site.locationSubtitle)}"></div><div><label for="siteCmsReviewsTitle">Título das avaliações</label><input class="input" id="siteCmsReviewsTitle" maxlength="100" value="${esc(cmsSiteDraft.site.reviewsTitle)}"></div><div class="span-2"><label for="siteCmsFooterText">Texto do rodapé</label><textarea class="input" id="siteCmsFooterText" rows="3" maxlength="500">${esc(cmsSiteDraft.site.footerText)}</textarea></div><div class="span-2"><label for="siteCmsInstagram">Link do Instagram</label><input class="input" id="siteCmsInstagram" maxlength="300" value="${esc(cmsSiteDraft.site.instagramUrl)}" placeholder="https://www.instagram.com/…"></div></div><div class="divider" style="margin:18px 0"></div><div class="cms-box-h"><div><h3>Menu principal</h3><p>Troque os nomes e escolha quais atalhos aparecem no menu do site.</p></div></div><div class="cms-menu-grid">${cmsSiteDraft.menuItems.map(x=>`<div class="cms-menu-item"><input class="input" type="text" data-menu-label="${x.id}" maxlength="32" value="${esc(x.label)}" aria-label="Nome do menu ${esc(x.label)}"><label class="cms-menu-toggle"><input type="checkbox" data-menu-visible="${x.id}" ${x.visible?"checked":""}> Exibir</label></div>`).join("")}</div><div class="divider" style="margin:18px 0"></div><div class="cms-box-h"><div><h3>Efeitos e navegação</h3><p>Escolha o peso dos efeitos visuais e se a rolagem encaixa nas seções.</p></div></div><div class="cms-site-fields"><div><label for="siteCmsEffectsMode">Efeitos visuais</label><select id="siteCmsEffectsMode" class="input"><option value="auto" ${cmsSiteDraft.effects.mode==="auto"?"selected":""}>Automático (recomendado)</option><option value="alto" ${cmsSiteDraft.effects.mode==="alto"?"selected":""}>Completo</option><option value="leve" ${cmsSiteDraft.effects.mode==="leve"?"selected":""}>Leve (mais desempenho)</option></select></div><div><label class="cms-menu-toggle" style="margin-top:22px"><input id="siteCmsSnap" type="checkbox" ${cmsSiteDraft.effects.scrollSnap?"checked":""}> Encaixar rolagem por seção</label></div></div></section><div class="cms-grid"><section class="cms-box">
-      <div class="cms-box-h"><div><h3>Seções do catálogo</h3><p>Use as setas para mudar a ordem. Desative uma seção para ocultá-la.</p></div><span class="badge">${cmsSiteDraft.sections.filter(x=>x.visible).length} visíveis</span></div>
-      <div class="cms-hint">“Vendendo muito”, categorias e informações institucionais mantêm suas áreas próprias. Se uma seção não tiver produtos ativos, ela continua oculta.</div>
-      <div class="cms-section-list">${cmsSiteDraft.sections.map((x,i)=>`<article class="cms-section"><div class="cms-section-h"><h4><span style="color:var(--muted);margin-right:7px">${String(i+1).padStart(2,"0")}</span>${esc(CMS_DEFAULT_SECTIONS.find(y=>y[0]===x.id)?.[1]||x.id)}</h4><div style="display:flex;gap:5px"><button type="button" class="btn-ghost btn-sm" data-up="${x.id}" ${i===0?"disabled":""} aria-label="Mover para cima">↑</button><button type="button" class="btn-ghost btn-sm" data-down="${x.id}" ${i===cmsSiteDraft.sections.length-1?"disabled":""} aria-label="Mover para baixo">↓</button></div></div>
-      <label class="cms-hint" style="display:flex;align-items:center;gap:8px;margin:10px 0"><input type="checkbox" data-visible="${x.id}" ${x.visible?"checked":""}> Exibir no site</label>
-      <label class="label" style="display:block;margin:10px 0 5px">Título</label><input class="input" data-title="${x.id}" value="${esc(x.title)}" maxlength="100">
-      <label class="label" style="display:block;margin:10px 0 5px">Subtítulo</label><input class="input" data-subtitle="${x.id}" value="${esc(x.subtitle)}" maxlength="180"></article>`).join("")}
-      </div></section><aside class="cms-box" id="siteCmsBanner"><div class="cms-box-h"><div><h3>Banner promocional</h3><p>Destaque opcional entre “Vendendo muito” e as seções de produtos.</p></div></div>
-      <label class="cms-hint" style="display:flex;align-items:center;gap:8px;margin:10px 0"><input id="siteCmsBannerVisible" type="checkbox" ${cmsSiteDraft.banner.visible?"checked":""}> Publicar banner</label>
-      <label class="label" style="display:block;margin:10px 0 5px">Título</label><input class="input" id="siteCmsBannerTitle" maxlength="100" value="${esc(cmsSiteDraft.banner.title)}" placeholder="Ex.: Novidades chegaram na Brutt">
-      <label class="label" style="display:block;margin:10px 0 5px">Texto</label><textarea class="input" id="siteCmsBannerText" rows="3" maxlength="300">${esc(cmsSiteDraft.banner.text)}</textarea>
-      <label class="label" style="display:block;margin:10px 0 5px">Texto do botão</label><input class="input" id="siteCmsBannerButton" maxlength="40" value="${esc(cmsSiteDraft.banner.buttonText)}">
-      <label class="label" style="display:block;margin:10px 0 5px">Link do botão</label><input class="input" id="siteCmsBannerUrl" maxlength="500" value="${esc(cmsSiteDraft.banner.url)}" placeholder="https://… ou /categoria">
-      <label class="label" style="display:block;margin:10px 0 5px">URL da imagem (opcional)</label><input class="input" id="siteCmsBannerImage" maxlength="1000" value="${esc(cmsSiteDraft.banner.imageUrl)}" placeholder="https://…">
-      <p class="cms-hint">A imagem precisa usar HTTPS. O banner só aparece depois de marcar “Publicar banner”.</p></aside></div>
-      <div class="cms-savebar"><div><strong>Publicação do site</strong><div class="cms-hint" style="margin:3px 0 0">As alterações são salvas no banco e aplicadas quando o site público carregar.</div></div><button type="button" class="btn-gold" id="siteCmsSave">${ic("check")} Salvar alterações</button></div>`;
-    area.querySelectorAll("[data-up],[data-down]").forEach(btn=>btn.onclick=()=>{sync();const id=btn.dataset.up||btn.dataset.down,from=cmsSiteDraft.sections.findIndex(x=>x.id===id),to=from+(btn.dataset.up?-1:1);if(from<0||to<0||to>=cmsSiteDraft.sections.length)return;const [item]=cmsSiteDraft.sections.splice(from,1);cmsSiteDraft.sections.splice(to,0,item);cmsSiteDraft.sections.forEach((x,i)=>x.order=i);draw();});
+    const S=cmsSiteDraft,nomeSec=id=>esc(CMS_DEFAULT_SECTIONS.find(y=>y[0]===id)?.[1]||id),B=S.banner;
+    area.innerHTML=`<div class="cms2">
+      <section class="cms-g" id="cmsTopo"><header><h3>Textos da página</h3><p>O que aparece no topo, nos títulos das áreas fixas e no rodapé da loja.</p></header>
+        <div class="cms-par"><span class="cms-par-t">Topo</span><div class="cms-f"><label for="siteCmsHeroTitle">Título</label><input class="input" id="siteCmsHeroTitle" maxlength="120" value="${esc(cmsSiteDraft.site.heroTitle)}"></div><div class="cms-f"><label for="siteCmsHeroSubtitle">Subtítulo</label><input class="input" id="siteCmsHeroSubtitle" maxlength="180" value="${esc(cmsSiteDraft.site.heroSubtitle)}"></div></div>
+        <div class="cms-par"><span class="cms-par-t">Vendendo muito</span><div class="cms-f"><label for="siteCmsHotTitle">Título</label><input class="input" id="siteCmsHotTitle" maxlength="100" value="${esc(cmsSiteDraft.site.hotTitle)}"></div><div class="cms-f"><label for="siteCmsHotSubtitle">Subtítulo</label><input class="input" id="siteCmsHotSubtitle" maxlength="180" value="${esc(cmsSiteDraft.site.hotSubtitle)}"></div></div>
+        <div class="cms-par"><span class="cms-par-t">Categorias</span><div class="cms-f"><label for="siteCmsCategoriesTitle">Título</label><input class="input" id="siteCmsCategoriesTitle" maxlength="100" value="${esc(cmsSiteDraft.site.categoriesTitle)}"></div><div class="cms-f"><label for="siteCmsCategoriesSubtitle">Subtítulo</label><input class="input" id="siteCmsCategoriesSubtitle" maxlength="180" value="${esc(cmsSiteDraft.site.categoriesSubtitle)}"></div></div>
+        <div class="cms-par"><span class="cms-par-t">Como chegar</span><div class="cms-f"><label for="siteCmsLocationTitle">Título</label><input class="input" id="siteCmsLocationTitle" maxlength="100" value="${esc(cmsSiteDraft.site.locationTitle)}"></div><div class="cms-f"><label for="siteCmsLocationSubtitle">Texto</label><input class="input" id="siteCmsLocationSubtitle" maxlength="240" value="${esc(cmsSiteDraft.site.locationSubtitle)}"></div></div>
+        <div class="cms-par"><span class="cms-par-t">Avaliações</span><div class="cms-f"><label for="siteCmsReviewsTitle">Título</label><input class="input" id="siteCmsReviewsTitle" maxlength="100" value="${esc(cmsSiteDraft.site.reviewsTitle)}"></div><div class="cms-f"><label for="siteCmsInstagram">Link do Instagram</label><input class="input" id="siteCmsInstagram" maxlength="300" value="${esc(cmsSiteDraft.site.instagramUrl)}" placeholder="https://www.instagram.com/…"></div></div>
+        <div class="cms-par um"><span class="cms-par-t">Rodapé</span><div class="cms-f"><label for="siteCmsFooterText">Texto</label><textarea class="input" id="siteCmsFooterText" rows="2" maxlength="500">${esc(S.site.footerText)}</textarea></div></div>
+      </section>
+      <section class="cms-g" id="cmsMenu"><header><h3>Menu do topo</h3><p>Troque os nomes dos atalhos e desligue os que não quer mostrar.</p></header>
+        <div class="cms-menu2">${S.menuItems.map(x=>`<div class="cms-mi${x.visible?"":" off"}"><input class="input" type="text" data-menu-label="${x.id}" maxlength="32" value="${esc(x.label)}" aria-label="Nome do atalho ${esc(x.label)}"><label class="switch" title="Mostrar no menu"><input type="checkbox" data-menu-visible="${x.id}" ${x.visible?"checked":""} aria-label="Mostrar ${esc(x.label)} no menu"><span class="track"></span></label></div>`).join("")}</div>
+      </section>
+      <section class="cms-g" id="cmsSecoes"><header><h3>Seções do catálogo <span class="cms-cont">${S.sections.filter(x=>x.visible).length} de ${S.sections.length} no ar</span></h3><p>A ordem aqui é a ordem na loja. Seção sem produto ativo continua escondida mesmo ligada.</p></header>
+        <ol class="cms-secs">${S.sections.map((x,i)=>`<li class="cms-sec${x.visible?"":" off"}">
+          <span class="cms-sec-n">${i+1}</span>
+          <div class="cms-sec-c"><b>${nomeSec(x.id)}</b>
+            <input class="input" data-title="${x.id}" value="${esc(x.title)}" maxlength="100" aria-label="Título da seção ${nomeSec(x.id)}" placeholder="Título">
+            <input class="input" data-subtitle="${x.id}" value="${esc(x.subtitle)}" maxlength="180" aria-label="Subtítulo da seção ${nomeSec(x.id)}" placeholder="Subtítulo"></div>
+          <div class="cms-sec-a"><label class="switch" title="Mostrar na loja"><input type="checkbox" data-visible="${x.id}" ${x.visible?"checked":""} aria-label="Mostrar ${nomeSec(x.id)} na loja"><span class="track"></span></label>
+            <span class="cms-ord"><button type="button" data-up="${x.id}" ${i===0?"disabled":""} aria-label="Subir ${nomeSec(x.id)}">${ic("chev")}</button><button type="button" data-down="${x.id}" ${i===S.sections.length-1?"disabled":""} aria-label="Descer ${nomeSec(x.id)}">${ic("chev")}</button></span></div>
+        </li>`).join("")}</ol>
+      </section>
+      <section class="cms-g" id="siteCmsBanner"><header><h3>Banner promocional</h3><p>Aparece entre “Vendendo muito” e as seções, só quando estiver ligado.</p>
+        <label class="cms-liga"><span class="switch"><input id="siteCmsBannerVisible" type="checkbox" ${B.visible?"checked":""}><span class="track"></span></span><span>No ar</span></label></header>
+        <div class="cms-ban">
+          <div class="cms-ban-f">
+            <div class="cms-f"><label for="siteCmsBannerTitle">Título</label><input class="input" id="siteCmsBannerTitle" maxlength="100" value="${esc(B.title)}" placeholder="Ex.: Novidades chegaram na Brutt"></div>
+            <div class="cms-f"><label for="siteCmsBannerText">Texto</label><textarea class="input" id="siteCmsBannerText" rows="2" maxlength="300">${esc(B.text)}</textarea></div>
+            <div class="cms-f2"><div class="cms-f"><label for="siteCmsBannerButton">Botão</label><input class="input" id="siteCmsBannerButton" maxlength="40" value="${esc(B.buttonText)}"></div>
+              <div class="cms-f"><label for="siteCmsBannerUrl">Link do botão</label><input class="input" id="siteCmsBannerUrl" maxlength="500" value="${esc(B.url)}" placeholder="https://… ou /categoria"></div></div>
+            <div class="cms-f"><label for="siteCmsBannerImage">Imagem (opcional, https)</label><input class="input" id="siteCmsBannerImage" maxlength="1000" value="${esc(B.imageUrl)}" placeholder="https://…"></div>
+          </div>
+          <figure class="cms-prev" aria-label="Prévia do banner na loja"><figcaption>Prévia na loja</figcaption><div class="cms-prev-b" id="cmsPrev"></div></figure>
+        </div>
+      </section>
+      <section class="cms-g" id="cmsEfeitos"><header><h3>Efeitos e navegação</h3><p>Peso dos efeitos visuais da loja e o encaixe da rolagem nas seções.</p></header>
+        <div class="cms-f2"><div class="cms-f"><label for="siteCmsEffectsMode">Efeitos visuais</label><select id="siteCmsEffectsMode" class="input"><option value="auto" ${S.effects.mode==="auto"?"selected":""}>Automático (recomendado)</option><option value="alto" ${S.effects.mode==="alto"?"selected":""}>Completo</option><option value="leve" ${S.effects.mode==="leve"?"selected":""}>Leve (mais desempenho)</option></select></div>
+          <label class="cms-liga"><span class="switch"><input id="siteCmsSnap" type="checkbox" ${S.effects.scrollSnap?"checked":""}><span class="track"></span></span><span>Encaixar a rolagem nas seções</span></label></div>
+      </section>
+    </div>
+    <div class="cms-save2" id="cmsSaveBar"><span class="cms-st" id="cmsSt"><i aria-hidden="true"></i><span>Tudo salvo</span></span><button type="button" class="btn-gold" id="siteCmsSave">${ic("check")} Salvar alterações</button></div>`;
+    const prev=()=>{const v=id=>(area.querySelector("#"+id)?.value||"").trim(),on=area.querySelector("#siteCmsBannerVisible")?.checked,img=v("siteCmsBannerImage");const el=area.querySelector("#cmsPrev");if(!el)return;
+      el.classList.toggle("off",!on);el.innerHTML=`${/^https:\/\//i.test(img)?`<img src="${esc(img)}" alt="" loading="lazy">`:""}<div><b>${esc(v("siteCmsBannerTitle")||"Título do banner")}</b><p>${esc(v("siteCmsBannerText")||"Texto do banner")}</p>${v("siteCmsBannerUrl")?`<span class="cms-prev-btn">${esc(v("siteCmsBannerButton")||"Saiba mais")}</span>`:""}</div>${on?"":'<em>Desligado: não aparece na loja</em>'}`;};
+    prev();
+    const sujo=on=>{const st=$("#cmsSt");if(!st)return;st.classList.toggle("sujo",on);st.querySelector("span").textContent=on?"Alterações não salvas":"Tudo salvo";};
+    area.addEventListener("input",e=>{sujo(true);if(e.target.closest("#siteCmsBanner"))prev();});
+    area.addEventListener("change",e=>{sujo(true);if(e.target.closest("#siteCmsBanner"))prev();const li=e.target.closest(".cms-sec,.cms-mi");if(li&&e.target.type==="checkbox")li.classList.toggle("off",!e.target.checked);});
+    window._cmsSujo=sujo;
+    area.querySelectorAll("[data-up],[data-down]").forEach(btn=>btn.onclick=()=>{sync();const id=btn.dataset.up||btn.dataset.down,from=cmsSiteDraft.sections.findIndex(x=>x.id===id),to=from+(btn.dataset.up?-1:1);if(from<0||to<0||to>=cmsSiteDraft.sections.length)return;const [item]=cmsSiteDraft.sections.splice(from,1);cmsSiteDraft.sections.splice(to,0,item);cmsSiteDraft.sections.forEach((x,i)=>x.order=i);draw();window._cmsSujo&&window._cmsSujo(true);document.querySelector(`[data-${btn.dataset.up?"up":"down"}="${id}"]`)?.focus();});
     $("#siteCmsSave").onclick=save;
   };draw();
 }
@@ -5667,6 +5904,7 @@ Object.assign(ROUTES, {
   "vitrine": renderVitrine,
   "site-cms": renderSiteCms,
   "giro": renderGiro,
+  "ia": renderIA,
   "equipe": renderEquipe,
 });
 

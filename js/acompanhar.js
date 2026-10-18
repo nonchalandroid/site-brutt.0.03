@@ -84,7 +84,9 @@ function agendarFechamentoTerminal(id){
   tTerminal=setTimeout(function(){
     if(abertoId!==id)return;
     if(!equipe[id])esquece(id);
-    fechar(true);
+    /* some como fumaça: o conteúdo sobe e se desfaz numa névoa, depois a janela fecha (CSS .some-nevoa) */
+    var m=document.getElementById("acomp");if(m)m.classList.add("some-nevoa");
+    tTerminal=setTimeout(function(){fechar(true);setTimeout(function(){if(m)m.classList.remove("some-nevoa")},600)},reduz?0:1500);
   },3500);
 }
 function etapas(a){
