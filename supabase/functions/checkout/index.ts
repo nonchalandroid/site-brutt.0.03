@@ -48,8 +48,8 @@ export const LOJA = { nome: "Tabacaria Brutt", endereco: "Rua 18, 145 - Campo Gr
 /** Link da tela "Acompanhe seu pedido" (o id do pedido é um UUID: só quem tem o link vê) */
 export const linkAcomp = (ped: any) => `${LOJA.site}/?pedido=${ped.id}`;
 const evolutionOk = () => !!(env("EVOLUTION_API_URL") && env("EVOLUTION_API_KEY") && env("EVOLUTION_INSTANCE"));
-// R$ 5,00 até 2 km de rota; acima, + R$ 1,50 por km (fração de km conta como km inteiro); só até 2,5 km (Conjunto Campinho e arredores); teto R$ 8,00.
-export const ENTREGA_LOJA = { lat: -22.8814745, lng: -43.6137391, raioMaxKm: 2.5, taxaBase: 5, baseAteKm: 2, porKmExtra: 1.5, taxaMaxima: 8 };
+// R$ 5,00 até 3 km de rota; acima, + R$ 1,50 por km (fração de km conta como km inteiro); sem limite de raio; teto R$ 8,00.
+export const ENTREGA_LOJA = { lat: -22.8814745, lng: -43.6137391, raioMaxKm: 999, taxaBase: 5, baseAteKm: 3, porKmExtra: 1.5, taxaMaxima: 8 };
 export const PEDIDO_MINIMO = 20;
 export const PIX_MINUTOS = 30;
 const INTERVALO_MSG_MS = 3000;
@@ -372,7 +372,7 @@ function linhasItens(ped: any) { return (ped.itens || []).map((i: any) => `• $
 function linhaEntrega(ped: any) {
   const e = ped.entrega || {};
   if (e.tipo === "entrega") { const a = e.endereco || {}; return `🚚 Entrega pela loja: ${a.rua}, ${a.numero}${a.complemento ? " (" + a.complemento + ")" : ""} — ${a.bairro ? a.bairro + ", " : ""}${a.cidade}/${a.uf} · ≈ ${String(e.km).replace(".", ",")} km`; }
-  return `🛵 Você mesmo solicita a entrega (Uber Flash ou 99). Endereço de coleta: ${LOJA.endereco}`;
+  return `🚗 Você mesmo solicita a entrega (Uber Flash ou 99). Endereço de coleta: ${LOJA.endereco}`;
 }
 const METODO_TXT: Record<string, string> = { pix: "Pix", debito: "Cartão de débito", credito: "Cartão de crédito (à vista)" };
 export function mensagens(ped: any) {
@@ -381,9 +381,9 @@ export function mensagens(ped: any) {
     pagamento_confirmado: [`✅ *Pagamento confirmado!*`, ``, `Oi${n ? ", " + n : ""}! Recebemos o pagamento do pedido *#${ped.numero}* (${METODO_TXT[ped.metodo] || "online"}).`, ``, linhasItens(ped), ``, `💰 Total pago: *${brl(ped.total)}*`, linhaEntrega(ped), ``, ped.reserva ? `🕐 A loja estava fechada quando você pediu: a gente separa tudo assim que abrir.` : ped.entrega?.tipo === "entrega" ? `Já estamos separando seu pedido. Avisamos por aqui quando sair para entrega.` : `Já estamos separando seu pedido. Pode pedir o Uber Flash ou 99 para *${LOJA.endereco}* e mandar o link da corrida aqui pra gente acompanhar.`, ``, `📍 Acompanhe aqui: ${linkAcomp(ped)}`].join("\n"),
     pagamento_recusado: [`⚠️ *Pagamento não aprovado*`, ``, `Oi${n ? ", " + n : ""}. O pagamento do pedido *#${ped.numero}* não foi aprovado pelo emissor do cartão. Nenhum valor foi cobrado.`, `Você pode tentar de novo no site com outro cartão ou pagar com Pix.`].join("\n"),
     pix_expirado: [`⌛ *Pix expirado*`, ``, `Oi${n ? ", " + n : ""}. O código Pix do pedido *#${ped.numero}* (${brl(ped.total)}) expirou antes do pagamento. Nada foi cobrado.`, `Se ainda quiser os produtos, é só finalizar o pedido de novo no site.`].join("\n"),
-    saiu_entrega: [`🛵 *Seu pedido saiu para entrega!*`, ``, `${n ? n + ", o" : "O"} pedido *#${ped.numero}* já está a caminho${ped.entrega?.endereco?.rua ? ` de ${ped.entrega.endereco.rua}, ${ped.entrega.endereco.numero}` : ""}. Fique de olho no portão 😉`, ``, `📍 Acompanhe: ${linkAcomp(ped)}`].join("\n"),
+    saiu_entrega: [`🚚 *Seu pedido saiu para entrega!*`, ``, `${n ? n + ", o" : "O"} pedido *#${ped.numero}* já está a caminho${ped.entrega?.endereco?.rua ? ` de ${ped.entrega.endereco.rua}, ${ped.entrega.endereco.numero}` : ""}. Fique de olho no portão 😉`, ``, `📍 Acompanhe: ${linkAcomp(ped)}`].join("\n"),
     corrida_link_recebido: [`🔗 *Link da corrida recebido!*`, ``, `${n ? n + ", já" : "Já"} recebemos o link da corrida do pedido *#${ped.numero}*. A equipe está aguardando o motorista chegar para retirar.`, ``, `📍 Acompanhe: ${linkAcomp(ped)}`].join("\n"),
-    motoboy_retirou: [`🛵 *Motoboy já retirou seu pedido!*`, ``, `${n ? n + ", o" : "O"} entregador do app já está com o pedido *#${ped.numero}* e segue para o seu endereço.`, ``, `📍 Acompanhe: ${linkAcomp(ped)}`].join("\n"),
+    motoboy_retirou: [`🚚 *Entregador já retirou seu pedido!*`, ``, `${n ? n + ", o" : "O"} entregador do app já está com o pedido *#${ped.numero}* e segue para o seu endereço.`, ``, `📍 Acompanhe: ${linkAcomp(ped)}`].join("\n"),
     pedido_concluido: ped.entrega?.tipo === "entrega"
       ? [`✅ *Pedido entregue!*`, ``, `${n ? n + ", s" : "S"}eu pedido *#${ped.numero}* foi entregue. Obrigado pela preferência! 🔥`].join("\n")
       : [`✅ *Pedido concluído!*`, ``, `${n ? n + ", o" : "O"} pedido *#${ped.numero}* foi finalizado. Obrigado pela preferência! 🔥`].join("\n"),
@@ -537,7 +537,7 @@ export async function chavesPush() {
   return vapidCache;
 }
 export function avisoEquipe(ped: any, tipo: "pago" | "pix" | "teste") {
-  const nome = String(ped?.cliente_nome || "").trim().slice(0, 40), ent = ped?.entrega?.tipo === "entrega" ? "entrega pela loja" : "cliente chama o motoboy";
+  const nome = String(ped?.cliente_nome || "").trim().slice(0, 40), ent = ped?.entrega?.tipo === "entrega" ? "entrega pela loja" : "cliente chama o entregador";
   if (tipo === "teste") return { title: "✅ Notificações ligadas", body: "Este aparelho vai receber os avisos de Pix gerado e de pedido pago.", tag: "teste", url: "/admin/#/pedidos", tipo };
   if (tipo === "pago") return { title: `✅ Pedido PAGO #${ped.numero}`, body: `${nome} · ${brl(ped.total)} · ${ent}. Toque para abrir.`, tag: "ped-" + ped.numero, url: "/admin/#/pedidos", tipo, fixo: true };
   return { title: `⚠️ Pix gerado #${ped.numero}`, body: `${nome} · ${brl(ped.total)} · aguardando o pagamento.`, tag: "ped-" + ped.numero, url: "/admin/#/pedidos", tipo };

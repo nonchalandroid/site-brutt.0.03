@@ -11,7 +11,7 @@
   var nav=document.querySelector(".navwrap nav"),ul=document.getElementById("menu"),
     L=document.getElementById("navL"),R=document.getElementById("navR");
   if(!nav||!ul)return;
-  var calma=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var calma=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;   /* quem pede movimento reduzido não anda sozinho */
   var VEL=28;                         /* px por segundo */
   var setW=0,pos=0,deriva=null,ultimoSet=0,pausa=0,mouseEm=false,toque=false,anima=null,tFim=0,montando=false;
   document.documentElement.classList.add("menu-carrossel");
