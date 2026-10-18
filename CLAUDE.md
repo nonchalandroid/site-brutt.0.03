@@ -39,6 +39,7 @@ Leia antes de alterar qualquer arquivo.
     ├── functions/gerar-ficha-sommelier/  # Sommelier IA (ficha, perfil, categoria) + testes
     ├── functions/equipe/  # criar login da equipe e trocar senha (tela Equipe do admin) + testes
     ├── functions/sync-nex/  # estoque e preço Nex → site a cada 15 min (pg_cron) + botão no painel
+    ├── functions/fotos-mini/  # miniaturas WebP 400 px das fotos (chamada pelo banco com x-sync-secret; o painel faz o mesmo no navegador)
     ├── functions/avaliacoes/  # (publicada, SEM USO) busca avaliações na Places API do Google; precisa de GOOGLE_PLACES_KEY com cobrança ativada. Hoje o carrossel #avaliacoes lê a lista AVALIACOES em js/avaliacoes.js (copiada do perfil do Google)
     ├── CHECKOUT.md       # como ativar/operar o pagamento online
     └── EVOLUTION.md      # (NÃO USADO) instalar a Evolution API; a loja decidiu não usar (custo do VPS)
@@ -166,7 +167,7 @@ Admin: roteador por hash (`ROUTES`, `go("nome")`, `rotaAtual()`); cada tela é `
 
 **Sommelier em massa** (`#/sommelier`): fila no navegador (1–4 ao mesmo tempo) chamando a função `gerar-ficha-sommelier` (código em `supabase/functions/gerar-ficha-sommelier/`, publicada pelo padrão de import fixado num commit). Regra "só completar" (padrão: descrição ≤80 ou >170 caracteres, ficha ≤2 itens, perfil/whisky vazios) ou "reescrever tudo"; categoria só muda com confiança alta e para um slug que existe. Confiança baixa não grava (fica "para revisar"). Cada gravação vai antes para `sommelier_log` (antes/depois, lote) e pode ser desfeita por produto ou por lote.
 
-**Fotos:** envio já comprime (WebP 88%, até 1000 px). "Otimizar fotos pesadas" (Fotos em lote) recomprime as acima de 100 KB em WebP 86% e só troca se ficar ≥20% menor.
+**Fotos:** envio já comprime (WebP 88%, até 1000 px). "Otimizar fotos pesadas" (Fotos em lote) recomprime as acima de 100 KB em WebP 86% e só troca se ficar ≥20% menor. **Miniaturas da loja (13/10/2026):** cada foto tem uma miniatura WebP de 400 px com cache de 1 ano em `product-images/mini/<product_id>.webp` (`product_images.mini_url`); a loja usa a miniatura nos cards e no carrinho (`fotoMini`) e a foto grande só no produto aberto e no zoom (`media(p,1)`); miniatura que falha volta para a grande (`fotoFalhou`). Motivo: as fotos têm até 1000 px para cards de ~180 px e quase todas tinham cache de só 1 h. O painel gera a miniatura ao enviar a foto (`gravaMini`) e o botão "Preparar fotos da loja" (Fotos em lote) gera as que faltarem. A função `fotos-mini` (ImageMagick em wasm, só com `x-sync-secret`, lotes de até 8, `?p=` 1º dígito do id para rodar em paralelo) gerou a carga inicial pelo banco (pg_net).
 
 **Navegação animada (13/10/2026):** `dispatch()` troca de tela com **View Transitions** (`document.startViewTransition`): a tela antiga sai, a nova entra deslizando (para cima/baixo conforme a posição no menu), menu (`view-transition-name: menu`) e topo (`topo`) ficam parados e o item ativo (`nav-ativo`) escorrega; espera os dados da tela nova até 260 ms. Sem o recurso: `.pg-entra`. **Menu com cor por tela** (`--c` em `.nav-i[data-tab=…]`, ícone num quadradinho tingido); Pedidos online com destaque verde; item ativo em vidro dourado. Bloco "NAVEGAÇÃO ANIMADA" no CSS.
 

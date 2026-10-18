@@ -2683,6 +2683,7 @@ async function uploadPhoto(productId, file, opts = {}){
   await sb.from("product_images").delete().eq("product_id", productId);
   const { error: insErr } = await sb.from("product_images").insert({ product_id: productId, url: urlComVersao, is_primary: true });
   if(insErr){ toast("Erro ao vincular: " + insErr.message); return null; }
+  gravaMini(productId, processada.blob);
   sb.storage.from(BUCKET).remove([`${productId}.${ext === "webp" ? "jpg" : "webp"}`]).catch(()=>{});
   toast("Foto atualizada (" + Math.max(1, Math.round(processada.blob.size/1024)) + " KB).");
   if(!opts.semAbrir) openProduct(productId);
@@ -2809,7 +2810,7 @@ function openNewProduct(){
       if(!upErr){
         const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
         const { error: insErr } = await sb.from("product_images").insert({ product_id: data.id, url: pub.publicUrl + "?v=" + Date.now(), is_primary: true });
-        if(insErr) avisoFoto = " Mas a foto não foi vinculada: " + insErr.message;
+        if(insErr) avisoFoto = " Mas a foto não foi vinculada: " + insErr.message; else gravaMini(data.id, novaFotoStaged.blob);
       } else {
         avisoFoto = " Mas a foto não subiu: " + upErr.message;
       }
@@ -4030,6 +4031,7 @@ async function ftEnviar(){
         await sb.from("product_images").delete().eq("product_id", it.pid);
         const { error:e2 } = await sb.from("product_images").insert({ product_id: it.pid, url, is_primary:true });
         if(e2) throw e2;
+        await gravaMini(it.pid, it.blob);
         sb.storage.from(BUCKET).remove([`${it.pid}.${ext === "webp" ? "jpg" : "webp"}`]).catch(() => {});   /* arquivo antigo do outro formato, se existir */
         FT.imgs[it.pid] = url; it.estado = "enviada"; it.on = false; ok++;
       }catch(e){ it.estado = "falhou"; it.aviso = e.message || "erro ao enviar"; falhou++; }
@@ -4065,6 +4067,39 @@ async function ftCarregaCatalogo(){
   }
 }
 
+/* miniatura da loja: WebP 400 px (cards de ~180 px em tela 2×), cache de 1 ano, em mini/<id>.webp -> product_images.mini_url.
+   A loja usa a miniatura nos cards e no carrinho e a foto grande só no produto aberto/zoom. Falhou: a loja usa a grande. */
+async function gravaMini(pid, blob){
+  try{
+    const bm = await createImageBitmap(blob), k = Math.min(1, 400 / Math.max(bm.width, bm.height)), c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(bm.width * k)); c.height = Math.max(1, Math.round(bm.height * k));
+    const ctx = c.getContext("2d"); ctx.imageSmoothingQuality = "high"; ctx.drawImage(bm, 0, 0, c.width, c.height);
+    const mini = await new Promise(r => c.toBlob(r, "image/webp", 0.8));
+    if(!mini || mini.type !== "image/webp") return false;
+    const path = `mini/${pid}.webp`;
+    const up = await sb.storage.from(BUCKET).upload(path, mini, { upsert: true, contentType: "image/webp", cacheControl: "31536000" });
+    if(up.error) return false;
+    const url = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl + "?v=" + Date.now();
+    const r = await sb.from("product_images").update({ mini_url: url }).eq("product_id", pid);
+    return !r.error;
+  }catch(_){ return false; }
+}
+/* "Preparar fotos da loja": gera a miniatura de todas as fotos que ainda não têm (4 ao mesmo tempo). Pode repetir. */
+async function ftMinis(){
+  const b = $("#ftMini"), txt = $("#ftMiniTxt"); if(b.disabled) return;
+  b.disabled = true; b.textContent = "Procurando…";
+  const fim = m => { b.disabled = false; b.textContent = "Preparar fotos da loja"; if(txt) txt.textContent = m; toast(m); };
+  const { data, error } = await sb.from("product_images").select("product_id,url").is("mini_url", null).limit(5000);
+  if(error) return fim("Não consegui ler as fotos: " + error.message);
+  const fila = [...new Map((data || []).filter(r => /^https:\/\//.test(r.url)).map(r => [r.product_id, r])).values()];
+  if(!fila.length) return fim("Todas as fotos já têm miniatura. A loja está leve.");
+  let i = 0, ok = 0, feitos = 0;
+  const um = async () => { while(i < fila.length){ const r = fila[i++];
+    try{ const resp = await fetch(r.url, { cache: "no-store" }); if(resp.ok && await gravaMini(r.product_id, await resp.blob())) ok++; }catch(_){}
+    b.textContent = `Preparando ${++feitos}/${fila.length}…`; } };
+  await Promise.all([um(), um(), um(), um()]);
+  fim(`${ok} de ${fila.length} foto(s) com miniatura pronta.${ok < fila.length ? " As que falharam continuam usando a foto grande; tente de novo depois." : ""}`);
+}
 /* recomprime as fotos já enviadas que passam de 100 KB (fotos antigas em JPEG): WebP 86%, mesmo tamanho em pixels
    (no máximo 1000 px). Só troca se o arquivo novo ficar pelo menos 20% menor — senão deixa a original. */
 async function ftOtimizar(){
@@ -4111,6 +4146,7 @@ async function renderFotos(){
         <label><input type="checkbox" id="ftIA" ${FT.ia?"checked":""}> Ler a embalagem com IA quando o nome do arquivo não ajudar</label>
         <label><input type="checkbox" id="ftSub" ${FT.substituir?"checked":""}> Marcar para enviar também os produtos que <b>já têm foto</b> (substitui)</label>
       </div>
+      <div class="ft-otim"><button type="button" class="btn-ghost btn-sm" id="ftMini">Preparar fotos da loja</button><small id="ftMiniTxt">Cria uma miniatura leve (400 px) de cada foto para os cards da loja carregarem rápido no celular. Fotos novas já ganham a miniatura sozinhas.</small></div>
       <div class="ft-otim"><button type="button" class="btn-ghost btn-sm" id="ftOtim">Otimizar fotos pesadas</button><small id="ftOtimTxt">Recomprime em WebP as fotos acima de 100 KB, sem mudar o tamanho da imagem. Só troca quando fica bem menor.</small></div>
       <label class="ft-drop" id="ftDrop"><input type="file" id="ftFile" accept="image/*" multiple hidden>
         <span class="ft-ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg></span><b>Toque ou arraste as fotos aqui</b><small>JPG, PNG, WebP ou HEIC · quantas quiser · dica: nomeie o arquivo com o nome do produto ou o código de barras</small></label>
@@ -4127,6 +4163,7 @@ async function renderFotos(){
   drop.addEventListener("drop", e => ftAdiciona(e.dataTransfer.files));
   $("#ftIA").onchange = e => FT.ia = e.target.checked;
   $("#ftOtim").onclick = ftOtimizar;
+  $("#ftMini").onclick = ftMinis;
   $("#ftSub").onchange = e => { FT.substituir = e.target.checked; };
   if($("#ftTodos")) $("#ftTodos").onclick = () => { FT.alvos = null; renderFotos(); };
 
