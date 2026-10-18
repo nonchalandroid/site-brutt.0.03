@@ -218,10 +218,8 @@ function mostrarPix(px){if(window.SOM)SOM.toca("pix");
     +'<p class="pg-passos">No app do banco: <b>Pix</b> → <b>Ler QR Code</b> ou <b>Copia e cola</b>.</p>'
     +'<div class="pg-espera" role="status"><i aria-hidden="true"></i><b>Aguardando o pagamento</b></div>'
     +'<div class="pg-chave"><span class="pg-cnpj"><small>Ou pague pela chave CNPJ</small>'+CNPJ+'</span><button type="button" class="pg-copiar" data-mp-cnpj>Copiar</button></div>'
-    +'<p class="pg-nota">Pagou pela chave? <a id="pixAvisa" target="_blank" rel="noopener">Mande o comprovante no WhatsApp</a>.</p>'
     +'<p class="pg-aviso">'+AVISO_MP+'</p></div>';
   tempoPix(px.expira_em);
-  var av=$("#pixAvisa");if(av&&pedido)av.href="https://wa.me/"+WHATS+"?text="+encodeURIComponent(msgLojaPedido(pedido.numero).replace(PAG_TOKEN,"💳 *Pagamento:* Pix pela chave CNPJ — conferir o comprovante"));
   if(window.ACOMP&&pedido)ACOMP.guarda(pedido.pedido_id,pedido.numero,msgLojaPedido(pedido.numero));   /* atalho "Acompanhar" + mensagem completa do pedido guardada JÁ AQUI: o celular pode recarregar a página enquanto o cliente paga no app do banco */
   acompanhar();
 }
