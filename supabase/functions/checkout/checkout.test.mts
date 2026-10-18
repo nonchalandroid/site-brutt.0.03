@@ -439,5 +439,6 @@ await t("sem WhatsApp (só o nome): cria, gera Pix, paga sem mandar mensagem ao 
   ped.status = "cancelado";                                   // pago e cancelado pela equipe: aviso repetido do MP não desfaz
   await C.processarPagamento(mpPays.get(id));
   assert.equal(ped.status, "cancelado");
+  assert.match(C._whatsDe({ cliente_whats: null }, "oi", false).link, /^https:\/\/wa\.me\/\?text=oi$/, "sem número: link abre o WhatsApp para escolher a conversa");
 });
 console.log(`\n${ok} testes passaram`);

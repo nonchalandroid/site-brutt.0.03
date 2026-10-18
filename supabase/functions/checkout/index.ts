@@ -499,8 +499,10 @@ export async function concluir(req: Request, body: any) {
   return { ok: true, numero: rows[0].numero, status: "concluido", whats: whatsDe(rows[0], msg, enviou) };
 }
 /** O que a equipe faz com o WhatsApp do cliente: se o robô (Evolution) mandou, nada; senão um link com a mensagem pronta. */
+export function _whatsDe(ped: any, msg: string, enviou: boolean) { return whatsDe(ped, msg, enviou); }   // só para os testes
 function whatsDe(ped: any, msg: string, enviou: boolean) {
-  return { auto: enviou && evolutionOk(), link: ped.cliente_whats ? `https://wa.me/${ped.cliente_whats}?text=${encodeURIComponent(msg)}` : null };
+  // sem o WhatsApp do cliente: o link abre o WhatsApp com a mensagem pronta e a equipe escolhe a conversa dele
+  return { auto: enviou && evolutionOk(), link: `https://wa.me/${ped.cliente_whats ?? ""}?text=${encodeURIComponent(msg)}` };
 }
 /** Etapa "saiu para entrega" (só quando a loja entrega). Idempotente: a 2ª vez não muda nada. */
 export async function etapa(req: Request, body: any) {
