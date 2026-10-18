@@ -20,7 +20,6 @@ Leia antes de alterar qualquer arquivo.
 │   ├── sons.js           # window.SOM: sons das ações da loja + botão de som no topo (#somBtn)
 │   ├── desempenho.js     # mede se o aparelho aguenta (fx-alto/fx-leve) e pré-carrega fotos das próximas seções
 │   ├── topo-fogo*.js     # fundo animado do topo: controle (topo-fogo.js) + motor + worker (OffscreenCanvas)
-│   └── menu-carrossel.js # menu do topo como letreiro sem fim (Web Animation)
 ├── vendor/lenis.min.js   # Lenis 1.3.26 servido localmente (sem CDN)
 ├── vendor/fonts/         # DejaVu Sans Mono (woff2, recorte Latin) para var(--mono)
 ├── sons/                 # sons de interface (mp3) + LEIA-ME.md com a tabela ação → arquivo
@@ -224,7 +223,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
 - **Menu do topo (18/10/2026):** sem carrossel (o `js/menu-carrossel.js` saiu): só rolagem para os lados; setas `#navL`/`#navR` em dourado sólido com seta escura, a do lado que já chegou ao fim apaga (`edge-l`/`edge-r`); sublinhado dourado que cresce do centro no hover (`.nv::after`, transform) e fica no item ativo.
 - **Topo:** busca com 36 px de altura (menor que os ícones redondos de 42 px; texto 16 px) e texto "Buscar". Botão "Horários" com relógio no PC (some até 480 px, junto com a setinha, para o status não ser cortado).
 - **Desempenho (13/10/2026):** um `<script>` no `<head>` põe `html.fx-alto` (padrão: celular atual roda TODOS os efeitos do PC: vídeo de fumaça, desfoque do título, bordas da IA, fundo do topo a ~60 fps) ou `html.fx-leve` (economia de dados, `deviceMemory`<4, menos de 4 núcleos, ou a medição de quadros de `js/desempenho.js` deu travada; guardado 7 dias em `localStorage.brutt_fx`). No JS, `window.__FX`. Regras para não travar o celular:
-  - **Nada de JS escrevendo estilo/scroll a cada quadro.** Letreiros que andam sozinhos (menu do topo, avaliações) usam Web Animation de `transform` em loop de uma volta (roda no compositor) e, ao toque, o quanto andou vai pro `scrollLeft`. `scrollLeft` por quadro andava aos trancos no iPhone (arredonda para pixel inteiro).
+  - **Nada de JS escrevendo estilo/scroll a cada quadro.** Letreiros que andam sozinhos (avaliações) usam Web Animation de `transform` em loop de uma volta (roda no compositor) e, ao toque, o quanto andou vai pro `scrollLeft`. `scrollLeft` por quadro andava aos trancos no iPhone (arredonda para pixel inteiro).
   - **Canvas animado roda em worker** (`OffscreenCanvas`, ver `topo-fogo-worker.js`); para quando sai da tela.
   - **Não deixe `content-visibility:visible` nas seções** (testado: dobra o custo de cada quadro); as fotos das próximas seções são pré-carregadas por `desempenho.js`.
   - Observador de mutação no `body` inteiro só pode agir quando o elemento que interessa mudou (ex.: `syncLock` filtra `.drawer,.modal,#lbox,#dlv`); antes rodava a cada classe trocada na página.
