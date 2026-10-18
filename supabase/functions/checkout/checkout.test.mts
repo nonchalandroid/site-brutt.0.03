@@ -421,4 +421,23 @@ await t("segurança: nome sem links, freio de pedidos em massa, estoque conferid
   assert.equal(await C.avisarEquipe({ id: crypto.randomUUID(), numero: "BR-999999", total: 10, cliente_nome: "X", entrega: { tipo: "cliente" } }, "pago"), 0);
   assert.equal(pushes.length, antes, "desativado não recebe"); db.staff[0].active = true;
 });
+await t("sem WhatsApp (só o nome): cria, gera Pix, paga sem mandar mensagem ao cliente; cancelado e pago depois vira pago", async () => {
+  const { whats: _w, ...semWhats } = base;
+  const c = await call("criar", { ...semWhats, entrega: { tipo: "cliente" } });
+  assert.equal(c.status, 200); const ped = db.pedidos.find(p => p.id === c.j.pedido_id); assert.equal(ped.cliente_whats, null);
+  assert.equal((await call("criar", { ...semWhats, whats: "  ", entrega: { tipo: "cliente" } })).status, 200, "WhatsApp em branco = sem WhatsApp");
+  proximoMp = { status: "pending", status_detail: "pending_waiting_transfer" };
+  const pg = await call("pagar", { pedido_id: ped.id, metodo: "pix", formData: { payment_method_id: "pix", payer: {} } });
+  assert.equal(pg.status, 200); assert.match(pg.j.pix.qr_code, /^000201PIX/);
+  ped.status = "cancelado";                                   // a equipe cancelou com o Pix em aberto…
+  const id = String(mpSeq); mpPays.get(id).status = "approved"; // …e o cliente pagou mesmo assim
+  const antes = whats.length;
+  await C.processarPagamento(mpPays.get(id)); await flush();
+  assert.equal(ped.status, "pago", "pagamento depois do cancelamento aparece como pago");
+  assert.equal(whats.filter(m => m.number === null || m.number === "null").length, 0, "nada vai para número vazio");
+  assert.ok(whats.length >= antes);
+  ped.status = "cancelado";                                   // pago e cancelado pela equipe: aviso repetido do MP não desfaz
+  await C.processarPagamento(mpPays.get(id));
+  assert.equal(ped.status, "cancelado");
+});
 console.log(`\n${ok} testes passaram`);
