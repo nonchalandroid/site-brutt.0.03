@@ -9,35 +9,18 @@
 window.SOM=(function(){
 "use strict";
 var DIR="/sons/",CHAVE="brutt_som",VOL=.29;   /* 13/10/2026: −30% (era .42) */
-/* Mais graves (13/10/2026): os sons agudos tocam mais devagar (tom ↓; 4º número = velocidade, 1 = original) e tudo
-   passa por um filtro que corta o chiado acima de ~3,2 kHz. Medido: abrir/fechar tinham o "centro" do som em ~9 kHz,
-   IA/avançar ~5,5 kHz, copiar ~4,5 kHz; os graves (carrinho, pago, erro) ficaram como estavam.
-   nome da ação: [arquivo, volume relativo, prioridade, velocidade] */
+/* Só sons graves e "ocos" (18/10/2026, pedido da loja): ficaram só os sons com quase toda a energia abaixo de 800 Hz
+   (medido: drop 91%, minimize_008 100%, question 100%, error_006 99%, error_004 72%). Todos os cliques, aberturas,
+   "glass", "pluck" e confirmações agudas saíram; ação que não está aqui fica em silêncio.
+   nome da ação: [arquivo, volume relativo, prioridade, velocidade (menor = mais grave; 1 = original)] */
 var MAPA={
   add:["drop_002",1,5],          /* produto caiu no carrinho */
-  mais:["tick_004",.8,1,.75],        /* + quantidade */
-  menos:["tick_002",.8,1],       /* − quantidade */
   remove:["minimize_008",.75,4], /* item saiu / carrinho limpo */
   aviso:["question_004",.7,3],   /* "toque de novo pra limpar" */
-  erro:["error_004",.8,7],       /* falta algo / esgotado / limite de estoque */
+  erro:["error_004",.8,7,.8],    /* falta algo / esgotado / limite de estoque */
   falha:["error_006",.9,8],      /* pagamento recusado ou Pix vencido */
-  seleciona:["select_002",.8,1,.85], /* menu de categorias, filtros */
-  seta:["click_002",.7,1,.7],       /* setas dos carrosséis e do produto */
-  opcao:["toggle_002",.75,1,.7],    /* forma de entrega / pagamento */
-  avanca:["select_007",.7,2,.6],    /* Finalizar pedido */
-  volta:["back_003",.7,2,.7],       /* voltar */
-  envia:["maximize_009",.7,4],   /* enviar pedido / ir para o pagamento / mandar no WhatsApp / perguntar à IA */
-  abre:["open_002",1,2,.5],         /* abre produto, carrinho, endereço, acompanhamento */
-  fecha:["close_002",1,2,.5],
-  copia:["pluck_001",.9,3,.65],      /* copiou código Pix / endereço */
-  confirma:["pluck_002",.9,4,.65],   /* endereço confirmado */
-  pix:["glass_002",.8,6],        /* QR Code do Pix pronto */
-  minimo:["glass_006",.8,5],     /* pedido mínimo atingido */
-  pago:["confirmation_004",.9,9],/* pagamento confirmado */
-  etapa:["confirmation_002",.8,6],/* pedido mudou de etapa (saiu para entrega, entregue) */
-  ia_abre:["maximize_003",.8,2,.6],
-  ia_fecha:["minimize_003",.8,2,.6],
-  ia_resposta:["glass_005",.8,3,.8]
+  confirma:["drop_002",.8,4,.85],/* endereço confirmado */
+  pago:["drop_002",1,9,.7]       /* pagamento confirmado */
 };
 var ctx=null,saida=null,buf={},carregando={},fila=[],tFila=0,ultimo={},ligado=true,tocados=[];
 try{ligado=localStorage.getItem(CHAVE)!=="0"}catch(_){}
@@ -47,7 +30,7 @@ function contexto(){
   var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;
   try{ctx=new AC({latencyHint:"interactive"})}catch(_){try{ctx=new AC()}catch(__){return null}}
   saida=ctx.createGain();saida.gain.value=VOL;
-  var grave=ctx.createBiquadFilter();grave.type="lowpass";grave.frequency.value=3200;grave.Q.value=.5;   /* corta o agudo */
+  var grave=ctx.createBiquadFilter();grave.type="lowpass";grave.frequency.value=2000;grave.Q.value=.5;   /* corta o agudo */
   saida.connect(grave);grave.connect(ctx.destination);
   return ctx;
 }
@@ -97,21 +80,6 @@ function toca(nome){
   fila.push(nome);if(!tFila)tFila=setTimeout(despeja,0);
 }
 
-/* cliques simples: o som sai daqui (o resultado não depende de validação) */
-var CLIQUES=[
-  ["[data-scroll],[data-pm-nav],.arrows button","seta"],
-  ["[data-chip],.nv,[data-mi]","seleciona"],
-  ["[data-ship],[data-app],[data-pay]","opcao"],
-  ["[data-copy],[data-pin-copy],[data-mp-copiar],[data-acomp-copiar]","copia"],
-  ["[data-checkout]","avanca"],
-  ["[data-back],[data-mp-voltar]","volta"],
-  ["[data-acomp-concluir]","envia"]
-];
-document.addEventListener("click",function(e){
-  var t=e.target&&e.target.closest?e.target:null;if(!t)return;
-  for(var i=0;i<CLIQUES.length;i++){var el=t.closest(CLIQUES[i][0]);if(el&&!el.disabled){toca(CLIQUES[i][1]);return}}
-});
-
 /* botão de som no topo */
 var IC_ON='<svg class="ic bi" viewBox="0 0 16 16" aria-hidden="true"><path d="M11.536 14.01A8.47 8.47 0 0 0 14.026 8a8.47 8.47 0 0 0-2.49-6.01l-.708.707A7.48 7.48 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303z"/> <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.48 5.48 0 0 1 11.025 8a5.48 5.48 0 0 1-1.61 3.89z"/> <path d="M10.025 8a4.5 4.5 0 0 1-1.318 3.182L8 10.475A3.5 3.5 0 0 0 9.025 8c0-.966-.392-1.841-1.025-2.475l.707-.707A4.5 4.5 0 0 1 10.025 8M7 4a.5.5 0 0 0-.812-.39L3.825 5.5H1.5A.5.5 0 0 0 1 6v4a.5.5 0 0 0 .5.5h2.325l2.363 1.89A.5.5 0 0 0 7 12zM4.312 6.39 6 5.04v5.92L4.312 9.61A.5.5 0 0 0 4 9.5H2v-3h2a.5.5 0 0 0 .312-.11"/></svg>';
 var IC_OFF='<svg class="ic bi" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06M6 5.04 4.312 6.39A.5.5 0 0 1 4 6.5H2v3h2a.5.5 0 0 1 .312.11L6 10.96zm7.854.606a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0"/></svg>';
@@ -125,7 +93,7 @@ function alterna(v){
   ligado=v===void 0?!ligado:!!v;
   try{localStorage.setItem(CHAVE,ligado?"1":"0")}catch(_){}
   desenhaBotao();
-  if(ligado){libera();toca("opcao")}
+  if(ligado){libera();toca("add")}
   if(typeof toast==="function")toast(ligado?"Sons ligados":"Sons desligados");
 }
 function inicio(){

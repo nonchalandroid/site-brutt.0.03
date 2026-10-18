@@ -138,9 +138,11 @@ type ItemIn = { id: string; q: number };
 export async function criarPedido(body: any, ip = "") {
   const nome = nomeLimpo(body?.nome);
   if (!nome) return { erro: "Digite seu nome.", status: 400 };
-  const whats = normalizaWhats(body?.whats);
-  if (!whats) return { erro: "Digite um WhatsApp válido com DDD.", status: 400 };
-  if ((ip && freioIp(ip)) || await freioWhats(whats)) return { erro: "Muitos pedidos seguidos. Finalize o que já está aberto ou fale com a gente no WhatsApp.", status: 429 };
+  // WhatsApp é opcional desde 18/10/2026 (o site pede só o nome; o contato chega quando o cliente manda o pedido à loja).
+  // Se vier, tem que ser válido.
+  const whatsBruto = String(body?.whats ?? "").trim(), whats = whatsBruto ? normalizaWhats(whatsBruto) : null;
+  if (whatsBruto && !whats) return { erro: "Digite um WhatsApp válido com DDD.", status: 400 };
+  if ((ip && freioIp(ip)) || (whats && await freioWhats(whats))) return { erro: "Muitos pedidos seguidos. Finalize o que já está aberto ou fale com a gente no WhatsApp.", status: 429 };
   const brutos: ItemIn[] = Array.isArray(body?.itens) ? body.itens : [];
   const qtd = new Map<string, number>();
   for (const it of brutos.slice(0, 80)) {
@@ -303,7 +305,7 @@ export async function pagar(body: any, urlFuncao: string) {
 // ─────────────────── aplicar o status REAL do Mercado Pago ───────────────────
 // Transições permitidas (UPDATE condicional = idempotente: rodar 2x não muda nada).
 const DE: Record<string, string[]> = {
-  pago: ["aguardando_pagamento", "recusado", "expirado"],
+  pago: ["aguardando_pagamento", "recusado", "expirado", "cancelado"],   // cancelado pela equipe e o cliente pagou o Pix mesmo assim: vira pago (a equipe vê e devolve)
   recusado: ["aguardando_pagamento"],
   expirado: ["aguardando_pagamento"],
   cancelado: ["pago", "concluido"],
@@ -322,7 +324,9 @@ export async function processarPagamento(p: any) {
   if (!ped) return null;
   const alvo = novoStatus(p);
   let atual = ped;
-  if (alvo && DE[alvo].includes(ped.status)) {
+  // pedido que já foi pago e a equipe cancelou não volta a "pago" quando o MP repete o aviso do mesmo pagamento
+  const jaPagoCancelado = ped.status === "cancelado" && !!ped.pago_em;
+  if (alvo && DE[alvo].includes(ped.status) && !(alvo === "pago" && jaPagoCancelado)) {
     // Pagamento antigo (de uma tentativa anterior) só pode APROVAR; nunca recusar a tentativa nova.
     const mesmo = ped.mp_payment_id === String(p.id);
     const valorOk = Math.abs(Number(p.transaction_amount) - Number(ped.total)) < 0.01 && (p.currency_id ?? "BRL") === "BRL";
@@ -357,7 +361,8 @@ export async function enviarWhats(numero: string, text: string) {
   } finally { clearTimeout(t); }
 }
 // Reserva (pedido, tipo) — só quem conseguir inserir envia. Se o envio falhar, libera para tentar de novo.
-async function enviarUmaVez(pedidoId: string, tipo: string, destino: string, msg: string) {
+async function enviarUmaVez(pedidoId: string, tipo: string, destino: string | null, msg: string) {
+  if (!destino) return false;   // pedido sem WhatsApp do cliente
   try { await sbInsert("wa_notificacoes", { pedido_id: pedidoId, tipo, destino }, "return=minimal"); }
   catch (e: any) { if (e?.status === 409) return false; throw e; }
   try { await enviarWhats(destino, msg); await sbPatch(`wa_notificacoes?pedido_id=eq.${pedidoId}&tipo=eq.${tipo}`, { ok: true }); return true; }
@@ -388,7 +393,7 @@ export function mensagens(ped: any) {
       ? [`✅ *Pedido entregue!*`, ``, `${n ? n + ", s" : "S"}eu pedido *#${ped.numero}* foi entregue. Obrigado pela preferência! 🔥`].join("\n")
       : [`✅ *Pedido concluído!*`, ``, `${n ? n + ", o" : "O"} pedido *#${ped.numero}* foi finalizado. Obrigado pela preferência! 🔥`].join("\n"),
     saudacao: [`👋 Seja bem-vindo(a) à *${LOJA.nome}*!`, `Este é o nosso WhatsApp oficial: salve o número pra receber as novidades e falar com a equipe.`, `📍 ${LOJA.endereco}`].join("\n"),
-    loja_novo_pedido: [`🔔 *NOVO PEDIDO PAGO #${ped.numero}*${ped.reserva ? " (reserva: loja fechada)" : ""}`, `👤 ${ped.cliente_nome} · wa.me/${ped.cliente_whats}`, `💳 ${METODO_TXT[ped.metodo] || "-"} · MP ${ped.mp_payment_id || "-"}`, ``, linhasItens(ped), ``, `🛒 Produtos: ${brl(ped.subtotal)} · 🚚 Entrega: ${brl(ped.taxa_entrega)}`, `💰 *Total pago: ${brl(ped.total)}*`, linhaEntrega(ped)].join("\n"),
+    loja_novo_pedido: [`🔔 *NOVO PEDIDO PAGO #${ped.numero}*${ped.reserva ? " (reserva: loja fechada)" : ""}`, `👤 ${ped.cliente_nome}${ped.cliente_whats ? ` · wa.me/${ped.cliente_whats}` : ""}`, `💳 ${METODO_TXT[ped.metodo] || "-"} · MP ${ped.mp_payment_id || "-"}`, ``, linhasItens(ped), ``, `🛒 Produtos: ${brl(ped.subtotal)} · 🚚 Entrega: ${brl(ped.taxa_entrega)}`, `💰 *Total pago: ${brl(ped.total)}*`, linhaEntrega(ped)].join("\n"),
   };
 }
 async function saudarSeNovo(numero: string) {
@@ -494,8 +499,10 @@ export async function concluir(req: Request, body: any) {
   return { ok: true, numero: rows[0].numero, status: "concluido", whats: whatsDe(rows[0], msg, enviou) };
 }
 /** O que a equipe faz com o WhatsApp do cliente: se o robô (Evolution) mandou, nada; senão um link com a mensagem pronta. */
+export function _whatsDe(ped: any, msg: string, enviou: boolean) { return whatsDe(ped, msg, enviou); }   // só para os testes
 function whatsDe(ped: any, msg: string, enviou: boolean) {
-  return { auto: enviou && evolutionOk(), link: `https://wa.me/${ped.cliente_whats}?text=${encodeURIComponent(msg)}` };
+  // sem o WhatsApp do cliente: o link abre o WhatsApp com a mensagem pronta e a equipe escolhe a conversa dele
+  return { auto: enviou && evolutionOk(), link: `https://wa.me/${ped.cliente_whats ?? ""}?text=${encodeURIComponent(msg)}` };
 }
 /** Etapa "saiu para entrega" (só quando a loja entrega). Idempotente: a 2ª vez não muda nada. */
 export async function etapa(req: Request, body: any) {

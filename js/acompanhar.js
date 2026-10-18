@@ -54,6 +54,20 @@ function msgPedido(id,a){
   return L.join("\n");
 }
 var tentouFechar={};
+/* Pix confirmado agora (celular): o WhatsApp da loja abre sozinho com o pedido PAGO, depois de uma contagem curta que o
+   cliente pode cancelar. Assim o pedido chega à loja como pago e a loja fica com o número do cliente.
+   No PC não abre sozinho (sairia da loja): fica o botão "Concluir pedido". */
+var autoWa={},tAuto=null,TOQUE=window.matchMedia&&matchMedia("(pointer:coarse)").matches;
+function autoWaCancela(){clearInterval(tAuto);tAuto=null;var c=document.getElementById("acAuto");if(c)c.remove()}
+function autoWaTalvez(id,a){
+  if(!autoWa[id]||!TOQUE||equipe[id]||!pago(a)||!falta(id,a))return;
+  autoWa[id]=false;
+  var f=document.getElementById("acFim"),btn=f&&f.querySelector(".ac-concluir");if(!btn)return;
+  var n=4;f.insertAdjacentHTML("beforeend",'<p class="ac-auto" id="acAuto" role="status">Abrindo o WhatsApp em <b>'+n+'</b>… <button type="button" data-acomp-auto-cancela>Agora não</button></p>');
+  tAuto=setInterval(function(){n--;var c=document.getElementById("acAuto");if(!c||abertoId!==id){autoWaCancela();return}
+    if(n>0){c.querySelector("b").textContent=n;return}
+    autoWaCancela();marcaAvisou(id);location.href=btn.href;setTimeout(function(){if(abertoId===id&&ultimo[id])desenha(id,ultimo[id])},800)},1000);
+}
 function esquece(id){grava(lista().filter(function(x){return x.id!==id}));pill()}
 
 function buscar(id){
@@ -122,8 +136,9 @@ function el(){
   m=document.createElement("div");m.id="acomp";m.className="modal acomp";m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-labelledby","acT");m.setAttribute("aria-hidden","true");
   document.body.appendChild(m);
   m.addEventListener("click",function(e){
+    if(tAuto&&!(e.target.closest&&e.target.closest("[data-acomp-concluir]")))autoWaCancela();   /* qualquer toque na tela cancela a contagem */
     var t=e.target.closest&&e.target.closest("[data-acomp-fechar],[data-acomp-copiar],[data-acomp-concluir]");if(!t)return;
-    if(t.hasAttribute("data-acomp-concluir")){var id=abertoId;marcaAvisou(id);setTimeout(function(){if(abertoId===id&&ultimo[id])desenha(id,ultimo[id])},800);return}   /* o link abre o WhatsApp normalmente */
+    if(t.hasAttribute("data-acomp-concluir")){autoWaCancela();var id=abertoId;marcaAvisou(id);setTimeout(function(){if(abertoId===id&&ultimo[id])desenha(id,ultimo[id])},800);return}   /* o link abre o WhatsApp normalmente */
     if(t.hasAttribute("data-acomp-fechar"))fechar();
     else copiar(END_LOJA).then(function(){t.classList.add("done");t.querySelector("span").textContent="Endereço copiado!";_toast("Endereço da loja copiado");setTimeout(function(){if(t.isConnected){t.classList.remove("done");t.querySelector("span").textContent="Copiar endereço"}},2500)});
   });
@@ -163,7 +178,7 @@ function concluirHTML(id,a){
 function desenha(id,a){
   ultimo[id]=a;
   var m=document.getElementById("acomp");
-  if(m&&abertoId===id){var y=m.scrollTop;m.innerHTML=html(a,id);m.scrollTop=y}
+  if(m&&abertoId===id){if(tAuto)return pill();var y=m.scrollTop;m.innerHTML=html(a,id);m.scrollTop=y;autoWaTalvez(id,a)}
   pill();
 }
 function poll(id){
@@ -185,6 +200,7 @@ function avisaMudanca(antes,a){
 function abrir(id,op){
   if(!UUID.test(String(id)))return;
   op=op||{};
+  if(op.txtLoja&&!op.equipe)autoWa[id]=true;   /* veio do pagamento confirmado agora */
   if(op.equipe)equipe[id]=true;else guarda(id,op.numero||(ultimo[id]&&ultimo[id].numero)||"",op.txtLoja||"");
   clearTimeout(tTerminal);
   var m=el();if(!m.classList.contains("on")&&window.SOM)SOM.toca("abre");abertoId=id;
