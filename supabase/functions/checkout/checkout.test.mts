@@ -108,18 +108,18 @@ await t("valida estoque, whatsapp e produto inexistente", async () => {
   assert.equal((await call("criar", { ...base, whats: "123", entrega: { tipo: "cliente" } })).status, 400);
   assert.equal((await call("criar", { ...base, itens: [{ id: "nao-existe", q: 1 }], entrega: { tipo: "cliente" } })).status, 409);
 });
-await t("entrega pela loja: tabela recalculada no servidor (até 2 km R$ 5; 2–2,5 km + R$ 1,50/km fracionado; acima, fora)", async () => {
+await t("entrega pela loja: tabela recalculada no servidor (até 3 km R$ 5; acima + R$ 1,50/km fracionado; teto R$ 8; sem limite de raio)", async () => {
   const ent = { tipo: "entrega", geo: { lat: -22.9, lng: -43.6 }, endereco: { rua: "Rua A", numero: "10", cidade: "Rio de Janeiro", uf: "rj", bairro: "Campo Grande" } };
   rotaM = 1800; let r = await call("criar", { ...base, entrega: ent });
   assert.equal(r.j.taxa_entrega, 5); assert.equal(r.j.total, 30); assert.equal(r.j.km, 1.8);
-  rotaM = 2000; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.j.taxa_entrega, 5, "2,0 km ainda é a base");
-  rotaM = 2100; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.j.taxa_entrega, 6.5, "2,1 km = base + 1 km fracionado");
-  rotaM = 2500; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.j.taxa_entrega, 6.5); assert.equal(r.j.km, 2.5);
-  rotaM = 2600; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.status, 400); assert.match(r.j.erro, /indisponível/);
-  rotaM = 4600; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.status, 400);
+  rotaM = 3000; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.j.taxa_entrega, 5, "3,0 km ainda é a base");
+  rotaM = 3100; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.j.taxa_entrega, 6.5, "3,1 km = base + 1 km fracionado");
+  rotaM = 3500; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.j.taxa_entrega, 6.5); assert.equal(r.j.km, 3.5);
+  rotaM = 9000; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.status, 200, "sem limite de raio"); assert.equal(r.j.taxa_entrega, 8, "teto R$ 8,00");
+  rotaM = 4600; r = await call("criar", { ...base, entrega: ent }); assert.equal(r.j.taxa_entrega, 8);
   rotaM = 1800;
   const C2 = await import("./index.ts");
-  assert.equal(C2.taxaEntrega(2.01), 6.5); assert.equal(C2.taxaEntrega(3.9), 8, "teto R$ 8,00"); assert.equal(C2.taxaEntrega(0.4), 5);
+  assert.equal(C2.taxaEntrega(3.01), 6.5); assert.equal(C2.taxaEntrega(3.9), 6.5); assert.equal(C2.taxaEntrega(9), 8, "teto R$ 8,00"); assert.equal(C2.taxaEntrega(0.4), 5);
 });
 
 let pixPedido = "";
@@ -340,10 +340,10 @@ await t("cliente que chama Uber/99: pago (pede a corrida) → motoboy retirou �
   assert.match(decodeURIComponent(link.j.whats.link), /Link da corrida recebido[\s\S]*\?pedido=/);
   const r = await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe);
   assert.equal(r.status, 200); assert.ok(r.j.saiu_em);
-  assert.match(decodeURIComponent(r.j.whats.link), /Motoboy já retirou seu pedido[\s\S]*\?pedido=/);
-  assert.equal(whats.filter(w => /Motoboy já retirou/.test(w.text)).length, 1);
+  assert.match(decodeURIComponent(r.j.whats.link), /Entregador já retirou seu pedido[\s\S]*\?pedido=/);
+  assert.equal(whats.filter(w => /Entregador já retirou/.test(w.text)).length, 1);
   await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe);
-  assert.equal(whats.filter(w => /Motoboy já retirou/.test(w.text)).length, 1);                // 1 vez só
+  assert.equal(whats.filter(w => /Entregador já retirou/.test(w.text)).length, 1);                // 1 vez só
   const a = (await getStatus(c.j.pedido_id)).acomp; assert.equal(a.status, "pago"); assert.ok(a.saiu);
   const fim = await call("concluir", { pedido_id: c.j.pedido_id }, equipe);
   assert.equal(fim.status, 200); assert.match(decodeURIComponent(fim.j.whats.link), /Pedido concluído/);
@@ -369,26 +369,26 @@ await t("taxa de entrega: endereço digitado conferido no mapa (coordenada do na
   // golpe: manda a coordenada da porta da loja, mas o endereço digitado fica a 9 km → vale a distância do mapa → fora da área
   mapa = [{ rua: "Rua Dezoito", numero: "200", lat: -22.95, lng: -43.70 }]; rotaPorLng["-43.7"] = 9000;
   r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo: { lat: -22.8815, lng: -43.6136 }, endereco: end } });
-  assert.equal(r.status, 400); assert.match(r.j.erro, /indisponível/);
-  // golpe menor: endereço real a 2,4 km, coordenada a 1,5 km → cobra a taxa dos 2,4 km
-  mapa = [{ rua: "Rua Dezoito", numero: "200", lat: -22.90, lng: -43.63 }]; rotaPorLng["-43.63"] = 2400;
+  assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 8, "endereço do mapa a 9 km paga o teto, não a coordenada da loja"); assert.ok(r.j.km > 8);
+  // golpe menor: endereço real a 3,4 km, coordenada a 1,5 km → cobra a taxa dos 3,4 km
+  mapa = [{ rua: "Rua Dezoito", numero: "200", lat: -22.90, lng: -43.63 }]; rotaPorLng["-43.63"] = 3400;
   r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo: { lat: -22.8815, lng: -43.6136 }, endereco: end } });
-  assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 6.5); assert.equal(r.j.km, 2.4);
-  ped = db.pedidos.find(p => p.id === r.j.pedido_id); assert.equal(ped.entrega.conferencia.km_mapa, 2.4);
+  assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 6.5); assert.equal(r.j.km, 3.4);
+  ped = db.pedidos.find(p => p.id === r.j.pedido_id); assert.equal(ped.entrega.conferencia.km_mapa, 3.4);
   // número que o mapa não conhece: não bloqueia, mas fica "não conferido" para a equipe
   mapa = [{ rua: "Rua Dezoito", numero: "1", lat: -22.90, lng: -43.63 }];
   r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo: { lat: -22.8817, lng: -43.6138 }, endereco: end } });
   assert.equal(r.status, 200); ped = db.pedidos.find(p => p.id === r.j.pedido_id); assert.equal(ped.entrega.conferencia.exato, false);
   mapa = []; rotaM = 1800;
 });
-await t("Conjunto Campinho (pedido da IA): homônima longe não muda a taxa; casa achada no conjunto a 2,4 km soma por km", async () => {
+await t("Conjunto Campinho (pedido da IA): homônima longe não muda a taxa; casa achada no conjunto a 3,4 km soma por km", async () => {
   const end = { rua: "Rua 5", numero: "120", cidade: "Rio de Janeiro", uf: "RJ", bairro: "Conjunto Campinho (Campo Grande)" };
   const geo = { lat: -22.882284, lng: -43.6161089 }, cli = { ...base, whats: "21933330001" };
   rotaM = 500; mapa = [{ rua: "Rua 5", numero: "120", bairro: "Santa Cruz", lat: -22.92, lng: -43.69 }];
   let r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo, endereco: end } });
   assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 5);
   assert.equal(db.pedidos.find(p => p.id === r.j.pedido_id).entrega.conferencia.exato, false);
-  mapa = [{ rua: "Rua 5", numero: "120", bairro: "Campo Grande", lat: -22.8890, lng: -43.6300 }]; rotaPorLng["-43.63"] = 2400;
+  mapa = [{ rua: "Rua 5", numero: "120", bairro: "Campo Grande", lat: -22.8890, lng: -43.6300 }]; rotaPorLng["-43.63"] = 3400;
   r = await call("criar", { ...cli, entrega: { tipo: "entrega", geo, endereco: end } });
   assert.equal(r.status, 200); assert.equal(r.j.taxa_entrega, 6.5);
   // fora do conjunto, rua homônima em OUTRO bairro também não vale como conferência

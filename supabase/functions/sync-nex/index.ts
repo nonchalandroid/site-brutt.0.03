@@ -29,7 +29,15 @@ export function parecido(a: string, b: string): number {
   return inter / (SA.size + SB_.size - inter);
 }
 
-type Nex = { code: string; eans: string[]; nome: string; estoque: number; preco: number; promo: number | null; combo: boolean };
+// estoque: number = valor informado pelo Nex (0 é zero válido); null = o Nex não informou um estoque utilizável (ausente, vazio, não numérico ou negativo).
+type Nex = { code: string; eans: string[]; nome: string; estoque: number | null; preco: number; promo: number | null; combo: boolean };
+// Regra de negativos (documentada): CurrentStock negativo é tratado como DESCONHECIDO (null), não como zero.
+export function lerEstoque(v: unknown): number | null {
+  if (typeof v === "number") return Number.isFinite(v) && v >= 0 ? Math.floor(v) : null;
+  // só decimal simples: Number() aceitaria "0x10", "1e3" etc. e transformaria texto em estoque
+  if (typeof v === "string" && /^\s*\d+(\.\d+)?\s*$/.test(v)) return Math.floor(Number(v));
+  return null;
+}
 function extrair(j: any): any[] {
   if (Array.isArray(j)) return j.length && typeof j[0] === "object" && ("ProductCode" in j[0] || "ProductName" in j[0]) ? j : (j.flatMap(extrair));
   if (j && typeof j === "object") for (const v of Object.values(j)) { const r = extrair(v); if (r.length) return r; }
@@ -38,7 +46,7 @@ function extrair(j: any): any[] {
 export function lerNex(o: any): Nex | null {
   const nome = String(o?.ProductName ?? "").trim(); if (!nome) return null;
   const preco = Number(o?.SalePrice), promoV = Number(o?.PromoSalePrice);
-  return { code: String(o?.ProductCode ?? ""), eans: eans(o?.BarCode), nome, estoque: Math.max(0, Math.floor(Number(o?.CurrentStock) || 0)), preco: Number.isFinite(preco) ? preco : 0,
+  return { code: String(o?.ProductCode ?? ""), eans: eans(o?.BarCode), nome, estoque: lerEstoque(o?.CurrentStock), preco: Number.isFinite(preco) ? preco : 0,
     promo: o?.PromoActive && Number.isFinite(promoV) && promoV > 0 && promoV < preco ? promoV : null, combo: !!o?.Combo };
 }
 let CRU: any[] = [];   // última lista crua do Nex (só para diagnóstico em ?explorar=1)
@@ -75,30 +83,71 @@ function estaNoCatalogoOnline(o: any, cfg: Record<string, string>): boolean {
   return true; // se não achou nada, não filtra (preserva comportamento antigo)
 }
 
-async function nexTodos(cfg: Record<string, string>, stockControl: boolean): Promise<Nex[]> {
-  const out: any[] = [];
+// Lista completa do Nex, com verificação de integridade em duas dimensões:
+//  - integra=false: erro detectado (página repetida, erro HTTP, resposta sem lista, itens fora do formato,
+//    teto de 20 páginas com a última cheia). Nada é gravado neste ciclo.
+//  - completa=false: o fim da lista NÃO foi comprovado. O NEX não informa total e a regra de paginação não está
+//    documentada no projeto, então uma página vazia ou curta pode ser fim legítimo OU corte. Com completa=false
+//    os ZERAMENTOS automáticos ficam suspensos; ajustes com valor informado pelo próprio NEX continuam.
+export type ListaNex = { itens: Nex[]; integra: boolean; completa: boolean; motivo: string | null; motivoIncompleta: string | null };
+const MOTIVO_FIM = "o NEX não informa total de produtos e a regra de paginação não está documentada no projeto";
+const ehProduto = (o: any) => !!o && typeof o === "object" && ("ProductCode" in o || "ProductName" in o);
+function encontraArray(j: any): boolean {
+  if (Array.isArray(j)) return true;
+  return !!j && typeof j === "object" && Object.values(j).some(encontraArray);
+}
+// Arrays não vazios de objetos, em qualquer profundidade da resposta.
+function arraysDeObjetos(j: any, acc: any[][] = []): any[][] {
+  if (Array.isArray(j)) { if (j.some(x => x && typeof x === "object")) acc.push(j); j.forEach(x => arraysDeObjetos(x, acc)); }
+  else if (j && typeof j === "object") Object.values(j).forEach(v => arraysDeObjetos(v, acc));
+  return acc;
+}
+// Lista de produtos da página: o maior array que contém produtos. Arrays auxiliares sem produtos são ignorados.
+// formatoOk=false quando há objetos de array que não são produtos (ou um produto sem os campos esperados).
+function listaDePagina(j: any): { produtos: any[]; formatoOk: boolean } {
+  const todos = arraysDeObjetos(j);
+  const candidatos = todos.filter(a => a.some(ehProduto));
+  if (!candidatos.length) return { produtos: [], formatoOk: todos.length === 0 };
+  const principal = candidatos.reduce((m, a) => (a.length > m.length ? a : m));
+  return { produtos: principal, formatoOk: principal.every(ehProduto) };
+}
+async function nexTodos(cfg: Record<string, string>, stockControl: boolean): Promise<ListaNex> {
+  const cru: any[] = [];
+  const recebidos = new Set<string>();
+  let motivo: string | null = null;
   for (let page = 1; page <= 20; page++) {
     const c = new AbortController(), t = setTimeout(() => c.abort(), 30000);
     let r: Response; try {
       r = await fetch(cfg.nex_url, { method: "POST", signal: c.signal, headers: { "Content-Type": "application/json", "shop-code": cfg.nex_shop_code, client: cfg.nex_client, token: cfg.nex_token },
         body: JSON.stringify({ filter: { category: "", subCategory: "", search: "", lowStock: false, stockControl, sort: { ProductName: 1 }, page, perPage: 600, onlyPromo: false, sortFilter: "" } }) });
     } finally { clearTimeout(t); }
-    if (!r.ok) throw new Error(`Nex respondeu ${r.status}`);
-    const lista = extrair(await r.json()); out.push(...lista);
-    if (lista.length < 600) break;
+    if (!r.ok) throw new Error(`Nex respondeu ${r.status} na página ${page}`);
+    const json: any = await r.json();
+    if (json === null || typeof json !== "object") throw new Error(`Nex devolveu resposta inválida na página ${page}`);
+    if (!encontraArray(json)) throw new Error(`Nex devolveu a página ${page} sem lista de produtos`);
+    const { produtos, formatoOk } = listaDePagina(json);
+    if (!formatoOk) { motivo = `página ${page} com itens fora do formato esperado (sem ProductCode/ProductName)`; break; }
+    const chaves = produtos.map(o => String(o.ProductCode ?? "") + "|" + String(o.ProductName ?? ""));
+    const repetidos = chaves.filter(k => recebidos.has(k)).length;
+    if (repetidos > 0) { motivo = `página ${page} repete ${repetidos} itens já recebidos`; break; }
+    chaves.forEach(k => recebidos.add(k));
+    cru.push(...produtos);
+    if (produtos.length < 600) break;   // fim visto, mas NÃO comprovado (ver completa=false)
+    if (page === 20) motivo = "chegou ao limite de 20 páginas com a última cheia; a lista pode estar cortada";
   }
-  CRU = out;
+  CRU = cru;
   const vistos = new Set<string>(); const res: Nex[] = [];
-  for (const o of out) {
+  for (const o of cru) {
     if (!estaNoCatalogoOnline(o, cfg)) continue;
     const n = lerNex(o); if (!n) continue;
     const k = n.code + "|" + n.nome; if (vistos.has(k)) continue; vistos.add(k); res.push(n);
   }
-  return res;
+  const integra = motivo === null;
+  return { itens: res, integra, completa: false, motivo, motivoIncompleta: integra ? MOTIVO_FIM : null };
 }
 
 export const LIMITE_SEM_PAR = 60;   // mais que isso sem par = algo errado na lista do Nex: trava em vez de zerar
-type Prod = { id: string; name: string; ean: string | null; stock: number; price: number; promo_price: number | null; is_active: boolean };
+type Prod = { id: string; site_product_id?: string; name: string; ean: string | null; stock: number; price: number; promo_price: number | null; is_active: boolean };
 type Par = { nex: Nex; prod: Prod; metodo: "ean" | "nome" | "nome~"; score?: number };
 export function ligar(nex: Nex[], prods: Prod[]) {
   const pares: Par[] = [], conflitos: any[] = [], usadoP = new Map<string, number>(), usadoN = new Set<number>();
@@ -138,6 +187,7 @@ function candidatosParaImportacao(nex: Nex[], prods: any[], conflitos: any[]) {
   const nomesConflito = new Set(conflitos.map(c => normaliza(c.nex)));
   const vistos = new Set<string>();
   return nex.filter(n => {
+    if (n.estoque === null) return false;   // estoque desconhecido não vira produto novo com zero
     if (!n.code || nomesConflito.has(normaliza(n.nome)) || nomesSite.has(normaliza(n.nome))) return false;
     if (n.eans.some(e => eansSite.has(e)) || chavesSite.has("nex-" + n.code) || skusSite.has(n.code) || vistos.has(n.code)) return false;
     vistos.add(n.code);
@@ -173,7 +223,9 @@ export async function handler(req: Request): Promise<Response> {
   const acao = String(body?.action || "");
   if (acao === "list-unmatched" || acao === "import-unmatched") {
     try {
-      const nexAtual = await nexTodos(cfg, false);
+      const listaAtual = await nexTodos(cfg, false);
+      if (!listaAtual.integra) return json({ ok: false, erro: "Lista do Nex incompleta (" + listaAtual.motivo + "). Nada foi listado." }, 502);
+      const nexAtual = listaAtual.itens;
       const prodsAtual: any[] = await sbGet("products?select=id,name,ean,stock,price,promo_price,is_active,site_product_id,sku&limit=5000");
       const ligados = ligar(nexAtual, prodsAtual);
       const candidatos = candidatosParaImportacao(nexAtual, prodsAtual, ligados.conflitos);
@@ -219,7 +271,7 @@ export async function handler(req: Request): Promise<Response> {
   const log: any = { origem, modo, ok: true };
   try {
     if (url.searchParams.get("explorar")) {
-      const a = await nexTodos(cfg, true), b = await nexTodos(cfg, false);
+      const a = (await nexTodos(cfg, true)).itens, b = (await nexTodos(cfg, false)).itens;
       const z = (l: Nex[]) => l.filter(x => x.estoque === 0).length;
       const amostras = CRU.slice(0, 40);
       const campos = new Set<string>();
@@ -244,17 +296,23 @@ export async function handler(req: Request): Promise<Response> {
         dica: "Procure um campo booleano/string que indique se o produto está publicado no Catálogo Online. Pode ser Online, Published, ShowOnline, etc. Depois configure sync_config.nex_online_field (e opcionalmente nex_online_value)."
       });
     }
-    const nex = await nexTodos(cfg, lista === "estoque");
-    const prods: Prod[] = await sbGet("products?select=id,name,ean,stock,price,promo_price,is_active&limit=5000");
+    const listaNex = await nexTodos(cfg, lista === "estoque");
+    const nex = listaNex.itens;
+    // F3: manuais adm-* saem ANTES da ligação. Assim não casam por EAN nem por nome e não entram em "sem par".
+    const prods: Prod[] = (await sbGet("products?select=id,site_product_id,name,ean,stock,price,promo_price,is_active&limit=5000"))
+      .filter((p: Prod) => !String(p.site_product_id ?? "").startsWith("adm-"));
     const { pares, conflitos, semParNex, semParSite } = ligar(nex, prods);
     const ultimo = (await sbGet("nex_sync_log?select=nex_total&ok=eq.true&modo=eq.real&order=id.desc&limit=1"))[0]?.nex_total ?? 0;
     const avisos: string[] = [];
+    // integridade: lista não comprovadamente completa => nenhuma gravação neste ciclo (a checagem de "avisos" bloqueia o modo real)
+    if (!listaNex.integra) avisos.push(`lista do Nex não comprovadamente completa (${listaNex.motivo})`);
     if (nex.length < 50) avisos.push(`Nex devolveu só ${nex.length} produtos`);
     if (ultimo && nex.length < ultimo * 0.5) avisos.push(`Nex devolveu ${nex.length} (na última vez eram ${ultimo})`);
     if (pares.length < 100) avisos.push(`só ${pares.length} produtos foram ligados`);
     // REGRA: o site nunca mostra mais estoque que o Nex (o Nex é a fonte da verdade; tudo é AJUSTE, nunca entrada/saída).
     const suspeitos: any[] = [], aplicar: any[] = [];
-    for (const p of pares) {
+    // casou mas o Nex não informou estoque utilizável: não altera nada (nem estoque, nem preço, nem zera)
+    for (const p of pares.filter(x => x.nex.estoque !== null)) {
       const a = Number(p.prod.price), b = p.nex.preco;
       const promoSite = p.prod.promo_price == null ? null : Number(p.prod.promo_price);
       if (b > 0 && a > 0 && (b / a > 3 || b / a < 0.33)) {
@@ -265,15 +323,25 @@ export async function handler(req: Request): Promise<Response> {
       }
       if (p.prod.stock !== p.nex.estoque || (b > 0 && a !== b) || promoSite !== p.nex.promo) aplicar.push({ p, item: { id: p.prod.id, stock: p.nex.estoque, price: b > 0 ? b : null, promo: p.nex.promo } });
     }
-    const zeram = aplicar.filter(x => x.p.nex.estoque <= 0 && x.p.prod.stock > 0);
-    // ativo no site, com estoque, sem par confiável no Nex (sem par ou em conflito): estoque 0 até ligar (EAN/nome)
-    const ligados = new Set(pares.map(p => p.prod.id));
+    const zeram = aplicar.filter(x => x.p.nex.estoque === 0 && x.p.prod.stock > 0);
+    // Sem par zera SOMENTE produto nex-* (identificado estruturalmente pelo código). Legado (pNN) e manual (adm-*)
+    // sem correspondência mantêm o saldo, porque ausência de correspondência não é prova de estoque zero.
+    const ligados = new Set(pares.map(p => p.prod.id));   // inclui os casados sem estoque informado: não viram "sem par"
     const semPar = prods.filter(p => p.is_active && p.stock > 0 && !ligados.has(p.id));
-    const muitosSemPar = semPar.length > LIMITE_SEM_PAR;   // só trava o ZERAR; o resto da sincronização segue
-    const zerarSemPar = muitosSemPar ? [] : semPar.map(p => ({ id: p.id, stock: 0, price: null, promo: p.promo_price == null ? null : Number(p.promo_price) }));
-    const alertaSemPar = muitosSemPar ? `${semPar.length} produtos ativos sem par no Nex (limite ${LIMITE_SEM_PAR}): não zerei nenhum, confira a ligação` : null;
+    const ehNex = (p: Prod) => String(p.site_product_id ?? "").startsWith("nex-");
+    const semParZeravel = semPar.filter(ehNex);
+    const semParPreservado = semPar.filter(p => !ehNex(p));
+    const muitosSemPar = semParZeravel.length > LIMITE_SEM_PAR;   // só trava o ZERAR; o resto da sincronização segue
+    // ZERAMENTO AUTOMÁTICO SÓ COM FIM DE LISTA COMPROVADO (listaNex.completa). Hoje não há como comprovar o fim
+    // (sem total informado pelo NEX e sem regra de paginação documentada): os zeramentos sem par ficam suspensos.
+    // Ajustes com valor informado pelo próprio NEX continuam, porque não dependem do fim da lista.
+    const motivoZeragem = !listaNex.completa ? `fim da lista não comprovado (${listaNex.motivoIncompleta ?? "lista com erro"})` : muitosSemPar ? `limite ${LIMITE_SEM_PAR} excedido` : null;
+    const podeZerar = listaNex.completa && !muitosSemPar;
+    const zerarSemPar = podeZerar ? semParZeravel.map(p => ({ id: p.id, stock: 0, price: null, promo: p.promo_price == null ? null : Number(p.promo_price) })) : [];
+    const alertaSemPar = semParZeravel.length && motivoZeragem ? `${semParZeravel.length} produtos nex-* ativos sem par no Nex: zeragem suspensa (${motivoZeragem})` : null;
+    const semEstoqueNex = pares.filter(p => p.nex.estoque === null);
     const resumo: any = { lista, nex_total: nex.length, site_total: prods.length, casados: pares.length, por_ean: pares.filter(p => p.metodo === "ean").length, por_nome: pares.filter(p => p.metodo !== "ean").length,
-      sem_par_nex: semParNex.length, sem_par_site: semParSite.length, conflitos: conflitos.length, suspeitos: suspeitos.length, mudariam: aplicar.length, vao_zerar: zeram.length, sem_par_zerar: semPar.length };
+      sem_par_nex: semParNex.length, sem_par_site: semParSite.length, conflitos: conflitos.length, suspeitos: suspeitos.length, mudariam: aplicar.length, vao_zerar: zeram.length, sem_par_zerar: semParZeravel.length, sem_par_preservados: semParPreservado.length, casados_sem_estoque_nex: semEstoqueNex.length, zeragem_suspensa: motivoZeragem };
     const amostra = {
       nome_aproximado: pares.filter(p => p.metodo === "nome~").slice(0, 40).map(p => `${p.score} | Nex: ${p.nex.nome} ⇄ Site: ${p.prod.name}`),
       sem_par_nex: semParNex.slice(0, 60).map(n => `${n.code} ${n.nome} (est ${n.estoque}, ${brl(n.preco)}${n.eans.length ? ", ean " + n.eans[0] : ""})`),
@@ -281,7 +349,8 @@ export async function handler(req: Request): Promise<Response> {
       suspeitos: suspeitos.slice(0, 30), conflitos: conflitos.slice(0, 30),
       maiores_mudancas_de_estoque: aplicar.map(x => ({ n: x.p.nex.nome, de: x.p.prod.stock, para: x.p.nex.estoque })).sort((a, b) => Math.abs(b.de - b.para) - Math.abs(a.de - a.para)).slice(0, 25),
       vao_zerar: zeram.slice(0, 80).map(x => `${x.p.prod.name} (era ${x.p.prod.stock}${x.p.nex.combo ? ", COMBO no Nex" : ""})`),
-      sem_par_zerados: semPar.slice(0, 80).map(p => `${p.name} (era ${p.stock}${p.ean ? ", ean " + p.ean : ""})`),
+      sem_par_zerados: semParZeravel.slice(0, 80).map(p => `${p.name} (era ${p.stock}${p.ean ? ", ean " + p.ean : ""})`),
+      sem_par_preservados: semParPreservado.slice(0, 80).map(p => `${p.name} (mantido ${p.stock}, ${p.site_product_id})`),
     };
     let aplicado: any = null;
     if (modo === "real") {

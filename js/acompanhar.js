@@ -1,6 +1,6 @@
 /* Acompanhe seu pedido (estilo iFood) — pedidos pagos online (Pix pelo site).
    Recebemos seu pedido → Pagamento confirmado → Saiu para entrega → Pedido entregue      (entrega feita pela loja)
-   Recebemos seu pedido → Pagamento confirmado → Motoboy já retirou seu pedido           (cliente chama Uber Flash/99)
+   Recebemos seu pedido → Pagamento confirmado → Entregador já retirou seu pedido           (cliente chama Uber Flash/99)
    Onde aparece: 1) abre sozinho depois do pagamento; 2) atalho fixo no topo da loja enquanto o pedido está em andamento;
    3) link /?pedido=<id> nas mensagens de WhatsApp. Os dados vêm de checkout?acao=status (só o necessário, sem endereço/telefone).
    Carregado depois do script principal: usa esc, R, ic, toast, WHATS quando existirem. */
@@ -97,8 +97,8 @@ function topo(a){
   if(a.status==="expirado"||exp)return["clock","Pix expirado","O código venceu antes do pagamento e nada foi cobrado.","off"];
   if(a.status==="aguardando_pagamento")return["pix","Aguardando o pagamento","Assim que o Pix cair, a gente começa a separar.","vivo"];
   if(a.status==="concluido")return a.tipo==="entrega"?["check","Pedido entregue!","Obrigado pela preferência. Bom proveito! 🔥","ok"]:["check","Pedido concluído!","Obrigado pela preferência. Bom proveito! 🔥","ok"];
-  if(a.saiu)return a.tipo==="entrega"?["moto","Saiu para entrega","Seu pedido está a caminho. Fique de olho no portão 😉","vivo"]:["moto","Motorista coletou o pedido","O entregador do app está levando até você.","vivo"];
-  if(a.corrida)return["moto","Link da corrida recebido","A equipe está aguardando o motorista chegar para coletar.","vivo"];
+  if(a.saiu)return a.tipo==="entrega"?["bag","Saiu para entrega","Seu pedido está a caminho. Fique de olho no portão 😉","vivo"]:["bag","Motorista coletou o pedido","O entregador do app está levando até você.","vivo"];
+  if(a.corrida)return["bag","Link da corrida recebido","A equipe está aguardando o motorista chegar para coletar.","vivo"];
   if(a.reserva)return["clock","Pagamento confirmado","A loja estava fechada: separamos seu pedido assim que abrir.","vivo"];
   return a.tipo==="entrega"?["bag","Pagamento confirmado","Estamos separando seu pedido. Avisamos quando sair para entrega.","vivo"]
     :["bag","Pedido em separação","Já pode pedir o Uber Flash ou 99 para o endereço abaixo. Depois, mande o link da corrida pra gente no WhatsApp.","vivo"];
@@ -106,7 +106,6 @@ function topo(a){
 var IC={
   pix:'<path style="fill:#32BCAD;stroke:none" d="M5.283 18.36a3.505 3.505 0 0 0 2.493-1.032l3.6-3.6a.684.684 0 0 1 .946 0l3.613 3.613a3.504 3.504 0 0 0 2.493 1.032h.71l-4.56 4.56a3.647 3.647 0 0 1-5.156 0L4.85 18.36ZM18.428 5.627a3.505 3.505 0 0 0-2.493 1.032l-3.613 3.614a.67.67 0 0 1-.946 0l-3.6-3.6A3.505 3.505 0 0 0 5.283 5.64h-.434l4.573-4.572a3.646 3.646 0 0 1 5.156 0l4.559 4.559ZM1.068 9.422 3.79 6.699h1.492a2.483 2.483 0 0 1 1.744.722l3.6 3.6a1.73 1.73 0 0 0 2.443 0l3.614-3.613a2.482 2.482 0 0 1 1.744-.723h1.767l2.737 2.737a3.646 3.646 0 0 1 0 5.156l-2.736 2.736h-1.768a2.482 2.482 0 0 1-1.744-.722l-3.613-3.613a1.77 1.77 0 0 0-2.444 0l-3.6 3.6a2.483 2.483 0 0 1-1.744.722H3.791l-2.723-2.723a3.646 3.646 0 0 1 0-5.156"/>',
   bag:'<path d="M6 7h12l1 13H5Z"/><path d="M9 7a3 3 0 0 1 6 0"/><path d="m9.5 13 1.8 1.8L15 11"/>',
-  moto:'<circle cx="5.5" cy="17" r="2.5"/><circle cx="18.5" cy="17" r="2.5"/><path d="M8 17h7l2-5h-4l-2-3H8"/><path d="M15 7h2l1.5 5"/>',
   check:'<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16.5 9.5"/>',
   clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   x:'<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>',
@@ -145,7 +144,7 @@ function html(a,id){
       return'<li class="'+(e.ok?"ok":"")+(e.atual?" atual":"")+'"><span class="ac-dot" aria-hidden="true"></span><span class="ac-tx"><b>'+_esc(e.t)+'</b>'+(e.s?'<small>'+_esc(e.s)+'</small>':"")+'</span><time>'+_esc(e.ok?hora(e.h):"")+'</time></li>'}).join("")+'</ol>')
    +(a.tipo==="cliente"&&a.status==="pago"&&!a.saiu&&!a.corrida?'<div class="ac-coleta">'+svg("pin")+'<div><b>Peça o Uber Flash / 99 para este endereço</b><span>'+_esc(END_LOJA)+'</span></div><button type="button" class="ac-copia" data-acomp-copiar>'+svg("copy")+'<span>Copiar endereço</span></button>'
      +'<a class="ac-corrida" target="_blank" rel="noopener" href="https://wa.me/'+_whats()+'?text='+encodeURIComponent("Oi! Segue o link da corrida do pedido #"+a.numero+": ")+'">'+waIc()+'<span>Enviar link da corrida</span></a>'
-     +'<small class="ac-dica">No app, toque em “Compartilhar corrida” e mande o link pra gente acompanhar o motoboy.</small></div>':"")
+     +'<small class="ac-dica">No app, toque em “Compartilhar corrida” e mande o link pra gente acompanhar o entregador.</small></div>':"")
    +'<div class="ac-itens"><b>Seu pedido</b>'+(a.itens||[]).map(function(i){return'<span><em>'+_esc(i.qtd)+'×</em> '+_esc(i.nome)+'</span>'}).join("")
      +(Number(a.taxa_entrega)>0?'<span class="ac-tx2">Entrega <em>'+_R(a.taxa_entrega)+'</em></span>':"")+'<span class="ac-tot">Total <em>'+_R(a.total)+'</em></span></div>'
    +'<div class="ac-acoes"><a class="ac-wa"'+(falta(id,a)?" data-acomp-concluir":"")+' target="_blank" rel="noopener" href="https://wa.me/'+_whats()+'?text='+encodeURIComponent(msgLoja)+'">'+waIc()+'<span>Falar com a loja</span></a><button type="button" class="ac-volta" data-acomp-fechar>Voltar</button></div>'
