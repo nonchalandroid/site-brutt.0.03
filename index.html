@@ -332,6 +332,10 @@ button.ia-wa{width:100%;border:0;cursor:pointer;font-family:inherit}
 @media(max-width:360px){.pg-total>b{font-size:28px}.pg-cnpj{font-size:14px}.pg-espera{font-size:12px}}
 @media(max-height:700px){.pg-qr img{width:min(132px,38vw)}.pg-passos{display:none}.pg-pix{gap:6px;padding-top:8px}.pg-ticket{margin-top:6px}.pg-curto{padding:8px 12px}.pg-curto .pg-total>b{font-size:24px}}
 @media(prefers-reduced-motion:reduce){.pg-espera i::after{animation:none}}
+/* Pix confirmado no celular: contagem antes de abrir o WhatsApp da loja sozinho (js/acompanhar.js, autoWaTalvez) */
+.ac-auto{margin:10px 0 0;font-size:14px;color:var(--ink);text-align:center}
+.ac-auto b{font-family:var(--mono);color:var(--ok-txt)}
+.ac-auto button{margin-left:6px;min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font:600 13px var(--body);cursor:pointer}
 </style>
 <style id="ajustes">
 /* ── Auditoria visual: correções de alinhamento e responsividade ── */
@@ -902,7 +906,7 @@ function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox
 <script src="/js/desempenho.js?v=20261013a" defer></script>
 <script src="/js/avaliacoes.js?v=20261013a" defer></script>
 <script src="/js/checkout-mp.js?v=20261018f" defer></script>
-<script src="/js/acompanhar.js?v=20261013a" defer></script>
+<script src="/js/acompanhar.js?v=20261018a" defer></script>
 <script src="/js/sons.js?v=20261018a" defer></script>
 </body>
 </html>
