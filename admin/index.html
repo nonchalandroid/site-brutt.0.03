@@ -1539,6 +1539,11 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
 @media(max-width:480px){.eq-term .eq-chip svg{display:none}}
 @media(max-width:480px){.eq-sim label{flex-direction:column;align-items:flex-start;gap:2px}.eq-sv{font-size:20px}}
 @media(prefers-reduced-motion:reduce){.eq-relogio i{animation:none}.eq-term .eq-graf::after{transition:none}.eq-term .eq-cp{transition:none}.od-r{transition:none}.eq-revela.anima,.eq-onda,.odo-delta{animation:none}.eq-onda{display:none}}
+/* pedido aberto por uma notificação (#/pedidos?ped=<id>): anel dourado que pulsa 2 vezes (só opacidade) */
+.ped-card.foco{position:relative}
+.ped-card.foco::after{content:"";position:absolute;inset:-4px;border-radius:inherit;border:2px solid var(--ouro,#c8902a);pointer-events:none;animation:pedFoco 1.2s ease-in-out 2 both}
+@keyframes pedFoco{0%,100%{opacity:0}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.ped-card.foco::after{animation:none;opacity:1}}
 </style>
 </head>
 <body>
@@ -1606,7 +1611,9 @@ const PAPEL = { owner:"Dono", admin:"Administrador", atendente:"Atendente" };
 const ehGestor = () => !state.staff?.role || ["owner","admin"].includes(state.staff.role);   // sem papel = cadastro antigo (o banco decide de verdade)
 const ROTAS_ATENDENTE = ["pedidos"];
 const podeRota = r => ehGestor() || ROTAS_ATENDENTE.includes(r);
-function rotaAtual(){ const h = location.hash.replace(/^#\/?/, ""), r = ROUTES[h] ? h : "home"; return podeRota(r) ? r : "pedidos"; }
+function rotaAtual(){ const h = location.hash.replace(/^#\/?/, "").split("?")[0], r = ROUTES[h] ? h : "home"; return podeRota(r) ? r : "pedidos"; }
+/* parâmetro depois da rota (#/pedidos?ped=<id>): o toque numa notificação abre o pedido certo */
+const hashParam = n => new URLSearchParams(location.hash.split("?")[1] || "").get(n);
 /* troca de tela animada: com View Transitions (Chrome/Edge/Safari 18) a tela antiga sai, a nova entra deslizando
    (para cima ou para baixo conforme a posição no menu), o menu lateral e o topo ficam parados e o destaque do item
    ativo escorrega até o novo. Espera os dados da tela nova até 260 ms (se chegarem antes, entra pronta; senão entra
@@ -1918,21 +1925,26 @@ function sinoAbrir(abrir){
 async function sinoLista(){
   const box = $("#sinoLista"); if(!box) return;
   const desde = new Date(Date.now() - 72 * 3600e3).toISOString(), agora = new Date();
-  const { data, error } = await sb.from("pedidos").select("id,numero,status,cliente_nome,total,created_at,pago_em,visto_em,pix_expira_em,mp_payment_id,concluido_em,saiu_em")
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,cliente_nome,total,created_at,pago_em,visto_em,pix_expira_em,mp_payment_id,concluido_em,saiu_em,corrida_link_em,entrega")
     .gte("created_at", desde).order("created_at", { ascending:false }).limit(20);
   if(!$("#sinoLista")) return;
   if(error){ box.innerHTML = `<div class="sino-vazio">Não deu para carregar os avisos agora.</div>`; return; }
+  /* a última etapa de cada pedido, com o que falta fazer (o mesmo texto das notificações do celular) */
   const itens = (data || []).map(p => {
-    const nome = esc(String(p.cliente_nome || "Cliente").split(" ")[0]), val = brl(p.total), num = esc(p.numero);
-    if(p.status === "pago") return { cls: p.visto_em ? "pago" : "pago novo", ic: "✅", t: `Pedido PAGO #${num}`, s: `${nome} · ${val} · ${p.saiu_em ? "saiu para entrega" : "a concluir"}`, h: p.pago_em || p.created_at };
-    if(p.status === "aguardando_pagamento" && p.mp_payment_id && p.pix_expira_em && new Date(p.pix_expira_em) > agora)
-      return { cls: "pix", ic: "⚠️", t: `Pix gerado #${num}`, s: `${nome} · ${val} · aguardando pagamento`, h: p.created_at };
-    if(p.status === "concluido") return { cls: "feito", ic: "✔", t: `Concluído #${num}`, s: `${nome} · ${val}`, h: p.concluido_em || p.created_at };
+    const nome = esc(String(p.cliente_nome || "Cliente").split(" ")[0]), val = brl(p.total), num = esc(p.numero), daLoja = p.entrega?.tipo === "entrega";
+    const it = (cls, ic, t, s, h) => ({ id: p.id, cls, ic, t: `${t} #${num}`, s: `${nome} · ${val}` + (s ? ` · 👉 ${s}` : ""), h });
+    if(p.status === "pago" && p.saiu_em) return daLoja ? it("pago", "🛵", "Saiu para entrega", "tocar em Pedido entregue", p.saiu_em) : it("pago", "🛵", "Motoboy retirou", "tocar em Concluir pedido", p.saiu_em);
+    if(p.status === "pago" && p.corrida_link_em) return it("pago", "🔗", "Link da corrida", "tocar em Motoboy retirou", p.corrida_link_em);
+    if(p.status === "pago") return it(p.visto_em ? "pago" : "pago novo", "✅", "Pedido PAGO", daLoja ? "separar e tocar em Saiu para entrega" : "separar; o cliente chama o Uber/99", p.pago_em || p.created_at);
+    if(p.status === "aguardando_pagamento" && p.mp_payment_id && p.pix_expira_em && new Date(p.pix_expira_em) > agora) return it("pix", "⚠️", "Pix gerado", "", p.created_at);
+    if(p.status === "expirado" || p.status === "aguardando_pagamento" && p.mp_payment_id && p.pix_expira_em) return it("feito", "⌛", "Pix vencido", "dá para cancelar", p.pix_expira_em || p.created_at);
+    if(p.status === "recusado") return it("feito", "❌", "Pagamento recusado", "dá para cancelar", p.created_at);
+    if(p.status === "concluido") return it("feito", "✔", "Concluído", "", p.concluido_em || p.created_at);
     return null;
   }).filter(Boolean);
-  box.innerHTML = itens.length ? itens.map(x => `<button type="button" class="sino-it ${x.cls}" data-sino-ir><span class="sino-e" aria-hidden="true">${x.ic}</span><span class="sino-tx"><b>${x.t}</b><small>${x.s}</small></span><time>${esc(haQuanto(x.h))}</time></button>`).join("")
+  box.innerHTML = itens.length ? itens.map(x => `<button type="button" class="sino-it ${x.cls}" data-sino-ir="${esc(x.id)}"><span class="sino-e" aria-hidden="true">${x.ic}</span><span class="sino-tx"><b>${x.t}</b><small>${x.s}</small></span><time>${esc(haQuanto(x.h))}</time></button>`).join("")
     : `<div class="sino-vazio">Nenhum pedido nas últimas 72 horas.</div>`;
-  box.querySelectorAll("[data-sino-ir]").forEach(b => b.onclick = () => { sinoAbrir(false); go("pedidos"); });
+  box.querySelectorAll("[data-sino-ir]").forEach(b => b.onclick = () => { sinoAbrir(false); go("pedidos?ped=" + b.dataset.sinoIr); });
 }
 /* mesmo critério da tela "Estoque baixo" (ativos com menos de LOW_STOCK_LIMIT, sem destilados/vinho/Red Bull) */
 function filtroEstoqueBaixo(q){
@@ -4310,6 +4322,21 @@ async function renderPedidos(){
     });
   };
   desenha();
+  /* veio de uma notificação (#/pedidos?ped=<id>): mostra o pedido, destaca e põe o foco no botão da próxima ação */
+  const foco = hashParam("ped");
+  if(foco){
+    history.replaceState(null, "", "#/pedidos");
+    const p = data.find(x => x.id === foco);
+    if(p){
+      if(!FILTROS.find(f => f[0] === pedFiltro)[2](p)){ pedFiltro = "todos"; desenha(); }
+      const c = el.querySelector(`[data-ped="${CSS.escape(foco)}"]`);
+      if(c){
+        c.classList.add("foco"); c.scrollIntoView({ block:"center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        const b = c.querySelector("[data-etapa],.ped-avisa,[data-cancelar]"); if(b) setTimeout(() => b.focus({ preventScroll:true }), 400);
+        setTimeout(() => c.classList.remove("foco"), 4000);
+      }
+    } else toast("Esse pedido não está entre os 60 mais recentes.");
+  }
 }
 
 /* ---------------- visão geral: o que precisa de atenção agora (só dados reais, consultas leves) ---------------- */
