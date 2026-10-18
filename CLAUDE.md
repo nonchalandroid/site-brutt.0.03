@@ -20,8 +20,7 @@ Leia antes de alterar qualquer arquivo.
 │   ├── sons.js           # window.SOM: sons das ações da loja + botão de som no topo (#somBtn)
 │   ├── desempenho.js     # mede se o aparelho aguenta (fx-alto/fx-leve) e pré-carrega fotos das próximas seções
 │   ├── topo-fogo*.js     # fundo animado do topo: controle (topo-fogo.js) + motor + worker (OffscreenCanvas)
-│   ├── menu-carrossel.js # menu do topo como letreiro sem fim (Web Animation)
-│   └── ia-voa.js, ia-dica.js # SEM USO desde 18/10/2026 (a IA ficou sem balão "Assistente" e sem voo): nenhum <script> carrega; podem ser apagados
+│   └── menu-carrossel.js # menu do topo como letreiro sem fim (Web Animation)
 ├── vendor/lenis.min.js   # Lenis 1.3.26 servido localmente (sem CDN)
 ├── vendor/fonts/         # DejaVu Sans Mono (woff2, recorte Latin) para var(--mono)
 ├── sons/                 # sons de interface (mp3) + LEIA-ME.md com a tabela ação → arquivo
