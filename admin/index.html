@@ -5892,7 +5892,7 @@ async function renderSiteCms(){
       </section>
       <section class="cms-g" id="cmsEfeitos"><header><h3>Efeitos e navegação</h3><p>Peso dos efeitos visuais da loja e o encaixe da rolagem nas seções.</p></header>
         <div class="cms-f2"><div class="cms-f"><label for="siteCmsEffectsMode">Efeitos visuais</label><select id="siteCmsEffectsMode" class="input"><option value="auto" ${S.effects.mode==="auto"?"selected":""}>Automático (recomendado)</option><option value="alto" ${S.effects.mode==="alto"?"selected":""}>Completo</option><option value="leve" ${S.effects.mode==="leve"?"selected":""}>Leve (mais desempenho)</option></select></div>
-          <label class="cms-liga"><span class="switch"><input id="siteCmsSnap" type="checkbox" ${S.effects.scrollSnap?"checked":""}><span class="track"></span></span><span>Encaixar a rolagem nas seções</span></label></div>
+          <label class="cms-liga"><span class="switch"><input id="siteCmsSnap" type="checkbox" ${S.effects.scrollSnap?"checked":""}><span class="track"></span></span><span>Roda do mouse anda uma seção por vez <small style="display:block;font-weight:500;color:var(--muted)">Só no computador. No celular a rolagem é livre (o encaixe travava o menu no iPhone).</small></span></label></div>
       </section>
     </div>
     <div class="cms-save2" id="cmsSaveBar"><span class="cms-st" id="cmsSt"><i aria-hidden="true"></i><span>Tudo salvo</span></span><button type="button" class="btn-gold" id="siteCmsSave">${ic("check")} Salvar alterações</button></div>`;
