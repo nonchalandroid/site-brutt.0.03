@@ -1669,6 +1669,10 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
   --ouro-cl:#573800;--accent:#5e3d00;--bronze-cl:#47250b;--petroleo-cl:#073c43;--terracota-cl:#6e2406;--salvia-cl:#1a3d0b;--ok:#104714;--danger:#7c1006}
 body{font-weight:500}
 b,strong,h1,h2,h3,h4{font-weight:700}
+/* ORIGEM DO PRODUTO (19/10/2026): etiqueta Nex (petróleo) ou Manual (bronze) na lista de produtos */
+.gr-meta .tag.orig{font-weight:600}
+.gr-meta .tag.orig.nex{color:var(--petroleo-cl);border-color:color-mix(in srgb,var(--petroleo-cl) 35%,transparent);background:var(--petroleo-es)}
+.gr-meta .tag.orig.man{color:var(--bronze-cl);border-color:color-mix(in srgb,var(--bronze-cl) 35%,transparent);background:var(--bronze-es)}
 </style>
 </head>
 <body>
@@ -3494,6 +3498,9 @@ let bulkSelecionados = new Set();
 let gestaoFiltro = { parentId: null, busca: "", falta: "" };
 let gestaoSeq = 0;   /* descarta resposta velha se o usuário já digitou de novo ou saiu da tela */
 
+/* origem do produto: adm-* = cadastrado no painel (a sincronização do Nex não mexe no estoque nem no preço); o resto vem do Nex */
+function ehManual(p){ return String(p.site_product_id||"").startsWith("adm-"); }
+function origemTag(p){ return ehManual(p) ? `<span class="tag orig man" title="Cadastrado no painel: o Nex não mexe no estoque nem no preço">✎ Manual</span>` : `<span class="tag orig nex" title="Estoque e preço vêm do Nex a cada 15 min">⟳ Nex</span>`; }
 async function renderGestaoRapida(){
   const meu = ++gestaoSeq;
   const { parentId, busca, falta } = gestaoFiltro;
@@ -3572,9 +3579,9 @@ async function renderGestaoRapida(){
       <button type="button" class="gr-ph ${imgByProduct[p.id]?'':'vazio'}" data-thumb title="Trocar ou atualizar a foto" aria-label="Trocar foto">${imgByProduct[p.id] ? `<img src="${esc(imgByProduct[p.id])}" alt="" loading="lazy">` : esc(p.icon||"📦")}<span class="cam">📷</span></button>
       <div class="gr-id">
         <input type="text" class="gr-name" data-name maxlength="140" autocomplete="off" value="${esc(p.name)}" aria-label="Nome do produto" title="Clique para editar o nome">
-        <div class="gr-meta"><button type="button" class="gr-dtog" data-dtog aria-expanded="false">✎ descrição${(p.description||"").trim()?"":" (vazia)"}</button><button type="button" class="gr-open" data-abrir title="Abrir a ficha completa (Sommelier, ficha técnica, estoque)">↗ ficha</button><span class="tag ${p.is_active?'on':'off'}" data-pub>${p.is_active?'Publicado':'Despublicado'}</span>${p.ean?`<code>${esc(p.ean)}</code>`:""}<span data-mg></span></div>
+        <div class="gr-meta"><button type="button" class="gr-dtog" data-dtog aria-expanded="false">✎ descrição${(p.description||"").trim()?"":" (vazia)"}</button><button type="button" class="gr-open" data-abrir title="Abrir a ficha completa (Sommelier, ficha técnica, estoque)">↗ ficha</button><span class="tag ${p.is_active?'on':'off'}" data-pub>${p.is_active?'Publicado':'Despublicado'}</span>${origemTag(p)}${p.ean?`<code>${esc(p.ean)}</code>`:""}<span data-mg></span></div>
       </div>
-      <div class="gr-stock ${nivel}" title="Estoque (o Nex atualiza sozinho a cada 15 min)"><b>${est}</b><span>${est<=0?"sem estoque":est===1?"unidade":"unidades"}</span></div>
+      <div class="gr-stock ${nivel}" title="${ehManual(p)?"Estoque manual: cadastrado no painel, o Nex não mexe":"Estoque (o Nex atualiza sozinho a cada 15 min)"}"><b>${est}</b><span>${est<=0?"sem estoque":est===1?"unidade":"unidades"}</span></div>
       <div class="gr-prices">
         <div class="f"><label>Preço</label><div class="money"><input type="text" inputmode="decimal" autocomplete="off" data-f="price" value="${fmtNum(p.price)}"></div></div>
         <div class="f"><label>Custo</label><div class="money"><input type="text" inputmode="decimal" autocomplete="off" data-f="cost_price" value="${fmtNum(p.cost_price)}"></div></div>
