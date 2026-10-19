@@ -2020,7 +2020,7 @@ function sinoAbrir(abrir){
 async function sinoLista(){
   const box = $("#sinoLista"); if(!box) return;
   const desde = new Date(Date.now() - 72 * 3600e3).toISOString(), agora = new Date();
-  const { data, error } = await sb.from("pedidos").select("id,numero,status,cliente_nome,total,created_at,pago_em,visto_em,pix_expira_em,mp_payment_id,concluido_em,saiu_em,corrida_link_em,entrega")
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,cliente_nome,cliente_whats,total,created_at,pago_em,visto_em,pix_expira_em,mp_payment_id,concluido_em,saiu_em,corrida_link_em,entrega")
     .gte("created_at", desde).order("created_at", { ascending:false }).limit(20);
   if(!$("#sinoLista")) return;
   if(error){ box.innerHTML = `<div class="sino-vazio">Não deu para carregar os avisos agora.</div>`; return; }
@@ -4304,6 +4304,16 @@ const pedCancelavel = p => ["aguardando_pagamento", "expirado", "recusado"].incl
 /* próxima etapa de um pedido pago: entrega da loja = "Saiu para entrega" → "Pedido entregue"; Uber/99 = "Motoboy retirou" → "Concluir pedido" */
 const PED_ETAPA_OK = { link:"link da corrida recebido", saiu:"saiu para entrega", entregue:"pedido entregue", retirou:"motoboy retirou", concluir:"pedido concluído" };
 const pedAvisa = {};   /* link do WhatsApp com a mensagem pronta (quando o robô do WhatsApp não está ligado) */
+/* "Mandar mensagem ao cliente": link wa.me com o texto do momento do pedido (abre o WhatsApp da equipe; a equipe confere e envia) */
+function pedMsgCliente(p){
+  const ent = (p.entrega || {}).tipo === "entrega", nome = String(p.cliente_nome || "").trim().split(/\s+/)[0] || "tudo bem", base = `Oi, ${nome}! Seu pedido #${p.numero} `;
+  const txt = p.status === "aguardando_pagamento" ? base + "está aguardando o pagamento do Pix. Qualquer dúvida é só responder."
+    : ["cancelado","estornado","expirado","recusado"].includes(p.status) ? base + "foi cancelado. Qualquer dúvida é só responder."
+    : p.status === "concluido" ? base + "foi concluído. Obrigado pela preferência!"
+    : ent ? (p.saiu_em ? base + "saiu para entrega e logo chega aí." : base + "foi pago e está sendo separado. Avisamos quando sair para entrega.")
+    : (p.saiu_em ? base + "já foi retirado. Obrigado!" : base + "foi pago e está sendo separado. Avisamos quando sair!");
+  return `https://wa.me/${String(p.cliente_whats || "").replace(/\D/g, "")}?text=${encodeURIComponent(txt)}`;
+}
 function pedBotao(p){
   if(p.status !== "pago") return "";
   const b = (q, t) => `<button class="btn-gold btn-sm" data-etapa="${q}" data-pid="${esc(p.id)}">${t}</button>`;
@@ -4363,6 +4373,7 @@ async function renderPedidos(){
       ${pedLinha(p)}
       <div class="ped-f"><b>${brl(p.total)}</b>
         <span class="ped-bts">${pedBotao(p)}${pedCancelavel(p) ? `<button class="btn-ghost btn-sm" data-cancelar="${esc(p.id)}">Cancelar pedido</button>` : ""}</span></div>
+      ${p.cliente_whats ? `<a class="ped-avisa ped-msg" href="${esc(pedMsgCliente(p))}" target="_blank" rel="noopener">${ic("ext")}Mandar mensagem ao cliente</a>` : `<p class="ped-nota">Sem WhatsApp no pedido: o cliente não deixou número (fale pelo nome ou pelo pedido no WhatsApp da loja).</p>`}
       ${pedAvisa[p.id] ? `<a class="ped-avisa" data-avisa="${esc(p.id)}" href="${esc(pedAvisa[p.id])}" target="_blank" rel="noopener">${ic("ext")}Avisar no WhatsApp</a>` : ""}
       ${nota ? `<p class="ped-nota">${nota}</p>` : ""}
       ${novo ? `<p class="ped-novo-dica">Toque no pedido para parar o alerta.</p>` : ""}

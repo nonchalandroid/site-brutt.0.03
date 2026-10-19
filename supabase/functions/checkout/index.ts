@@ -48,15 +48,15 @@ export const LOJA = { nome: "Tabacaria Brutt", endereco: "Rua 18, 145 - Campo Gr
 /** Link da tela "Acompanhe seu pedido" (o id do pedido é um UUID: só quem tem o link vê) */
 export const linkAcomp = (ped: any) => `${LOJA.site}/?pedido=${ped.id}`;
 const evolutionOk = () => !!(env("EVOLUTION_API_URL") && env("EVOLUTION_API_KEY") && env("EVOLUTION_INSTANCE"));
-// R$ 5,00 até 3 km de rota; acima, + R$ 1,50 por km (fração de km conta como km inteiro); sem limite de raio; teto R$ 8,00.
-export const ENTREGA_LOJA = { lat: -22.8814745, lng: -43.6137391, raioMaxKm: 999, taxaBase: 5, baseAteKm: 3, porKmExtra: 1.5, taxaMaxima: 8 };
+// R$ 5,00 até 2 km de rota; acima, + R$ 2,00 por km rodado, proporcional (fração de km conta na medida exata); sem teto e sem limite de raio.
+export const ENTREGA_LOJA = { lat: -22.8814745, lng: -43.6137391, raioMaxKm: 999, taxaBase: 5, baseAteKm: 2, porKmExtra: 2 };
 export const PEDIDO_MINIMO = 20;
 export const PIX_MINUTOS = 30;
 const INTERVALO_MSG_MS = 3000;
 
 export function taxaEntrega(km: number) {
-  const E = ENTREGA_LOJA, extra = Math.ceil(Math.round((km - E.baseAteKm) * 100) / 100);
-  const t = km <= E.baseAteKm ? E.taxaBase : Math.min(E.taxaBase + extra * E.porKmExtra, E.taxaMaxima);
+  const E = ENTREGA_LOJA, extra = Math.round((km - E.baseAteKm) * 100) / 100;
+  const t = km <= E.baseAteKm ? E.taxaBase : E.taxaBase + extra * E.porKmExtra;
   return cent(t);
 }
 export function haversineKm(la1: number, lo1: number, la2: number, lo2: number) {
