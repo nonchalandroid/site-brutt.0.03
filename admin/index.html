@@ -2020,7 +2020,7 @@ function sinoAbrir(abrir){
 async function sinoLista(){
   const box = $("#sinoLista"); if(!box) return;
   const desde = new Date(Date.now() - 72 * 3600e3).toISOString(), agora = new Date();
-  const { data, error } = await sb.from("pedidos").select("id,numero,status,cliente_nome,total,created_at,pago_em,visto_em,pix_expira_em,mp_payment_id,concluido_em,saiu_em,corrida_link_em,entrega")
+  const { data, error } = await sb.from("pedidos").select("id,numero,status,cliente_nome,cliente_whats,total,created_at,pago_em,visto_em,pix_expira_em,mp_payment_id,concluido_em,saiu_em,corrida_link_em,entrega")
     .gte("created_at", desde).order("created_at", { ascending:false }).limit(20);
   if(!$("#sinoLista")) return;
   if(error){ box.innerHTML = `<div class="sino-vazio">Não deu para carregar os avisos agora.</div>`; return; }
@@ -4373,7 +4373,7 @@ async function renderPedidos(){
       ${pedLinha(p)}
       <div class="ped-f"><b>${brl(p.total)}</b>
         <span class="ped-bts">${pedBotao(p)}${pedCancelavel(p) ? `<button class="btn-ghost btn-sm" data-cancelar="${esc(p.id)}">Cancelar pedido</button>` : ""}</span></div>
-      ${p.cliente_whats ? `<a class="ped-avisa ped-msg" href="${esc(pedMsgCliente(p))}" target="_blank" rel="noopener">${ic("ext")}Mandar mensagem ao cliente</a>` : ""}
+      ${p.cliente_whats ? `<a class="ped-avisa ped-msg" href="${esc(pedMsgCliente(p))}" target="_blank" rel="noopener">${ic("ext")}Mandar mensagem ao cliente</a>` : `<p class="ped-nota">Sem WhatsApp no pedido: o cliente não deixou número (fale pelo nome ou pelo pedido no WhatsApp da loja).</p>`}
       ${pedAvisa[p.id] ? `<a class="ped-avisa" data-avisa="${esc(p.id)}" href="${esc(pedAvisa[p.id])}" target="_blank" rel="noopener">${ic("ext")}Avisar no WhatsApp</a>` : ""}
       ${nota ? `<p class="ped-nota">${nota}</p>` : ""}
       ${novo ? `<p class="ped-novo-dica">Toque no pedido para parar o alerta.</p>` : ""}
