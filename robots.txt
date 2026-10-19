@@ -1,2 +1,6 @@
 User-agent: *
 Disallow: /admin/
+Disallow: /pedido/
+Disallow: /assets/
+
+Sitemap: https://tabacariabrutt.com.br/sitemap.xml
