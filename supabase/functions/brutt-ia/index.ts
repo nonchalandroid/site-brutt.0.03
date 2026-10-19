@@ -11,8 +11,8 @@
 
 // ---------- MESMAS REGRAS DO SITE (ENTREGA_LOJA / HORARIOS / MIN) ----------
 const LOJA = { lat: -22.8814745, lng: -43.6137391 };
-// mesma tabela do site e do checkout: R$ 5,00 até 2 km; + R$ 2,00 por km fracionado; sem limite de raio; teto R$ 8,00
-const RAIO_MAX_KM = 999, TAXA_BASE = 5.00, BASE_ATE_KM = 2, POR_KM_EXTRA = 2.00, TAXA_MAXIMA = 8.00;
+// mesma tabela do site e do checkout: R$ 5,00 até 2 km; + R$ 2,00 por km rodado, proporcional; sem teto e sem limite de raio
+const RAIO_MAX_KM = 999, TAXA_BASE = 5.00, BASE_ATE_KM = 2, POR_KM_EXTRA = 2.00;
 const MIN_PEDIDO = 20;
 const LOJA_ENDERECO = "Rua Dezoito, 145 — Conjunto Campinho, Campo Grande, Rio de Janeiro — RJ, 23067-030";   // a loja é DO Conjunto Campinho (sub-bairro de Campo Grande)
 type Horario = { d: number; n: string; a: number | null; b?: number };
@@ -31,7 +31,7 @@ const MODELOS = () => { const p = env("GEMINI_MODEL"); const padrao = ["gemini-f
 
 // ---------- utilidades (iguais às do site) ----------
 export const R = (v: number) => "R$ " + v.toFixed(2).replace(".", ",");
-export const taxaEntrega = (km: number) => km <= BASE_ATE_KM ? TAXA_BASE : Math.min(TAXA_BASE + Math.ceil(Math.round((km - BASE_ATE_KM) * 100) / 100) * POR_KM_EXTRA, TAXA_MAXIMA);
+export const taxaEntrega = (km: number) => km <= BASE_ATE_KM ? TAXA_BASE : Math.round((TAXA_BASE + Math.round((km - BASE_ATE_KM) * 100) / 100 * POR_KM_EXTRA) * 100) / 100;
 const semAcento = (s: unknown) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 const hhmm = (m: number) => { m = ((m % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); };
 function haversineKm(la1: number, lo1: number, la2: number, lo2: number) {
