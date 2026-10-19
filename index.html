@@ -8,8 +8,26 @@
 <script>/* link /?pedido=<id> (WhatsApp): guarda antes que a navegação por seções reescreva o endereço */try{var __u=new URLSearchParams(location.search);window.__PEDIDO_URL=__u.get("pedido");window.__PEDIDO_EQUIPE=__u.get("equipe")==="1"}catch(e){}</script>
 <script>(function(){try{/* recarregou ou voltou: começa do topo (o endereço guarda a seção em que a pessoa estava rolando; só link novo pula para a seção) */var nv=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0];window.__RECARGA=/[?&]rl=1/.test(location.search)||!!(nv&&nv.type!=="navigate");try{history.scrollRestoration="manual"}catch(e){}var m=location.search.match(/[?&]r=([^&]*)/);if(m){history.replaceState(null,"","/"+decodeURIComponent(m[1]).replace(/^\/+|\/+$/g,""))}else if(location.pathname.length>1&&/\/$/.test(location.pathname)){history.replaceState(null,"",location.pathname.replace(/\/+$/,"")+location.search+location.hash)}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Tabacaria Brutt | Catálogo Online</title>
+<title>Tabacaria Brutt · Catálogo Oficial | Tabacaria em Campo Grande RJ</title>
+<meta name="description" content="Catálogo oficial da Tabacaria Brutt, no Conjunto Campinho em Campo Grande (RJ): narguile, essências, sedas, tabacos, charutos e bebidas. Peça online com Pix e entrega.">
+<link rel="canonical" href="https://tabacariabrutt.com.br/">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Tabacaria Brutt">
+<meta property="og:title" content="Tabacaria Brutt · Catálogo Oficial">
+<meta property="og:description" content="Catálogo oficial da Tabacaria Brutt, no Conjunto Campinho em Campo Grande (RJ): narguile, essências, sedas, tabacos, charutos e bebidas. Peça online com Pix e entrega.">
+<meta property="og:url" content="https://tabacariabrutt.com.br/">
+<meta property="og:image" content="https://tabacariabrutt.com.br/imagens/og-brutt.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="geo.region" content="BR-RJ">
+<meta name="geo.placename" content="Campo Grande, Rio de Janeiro">
+<meta name="geo.position" content="-22.8814745;-43.6137391">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Store","@id":"https://tabacariabrutt.com.br/#loja","name":"Tabacaria Brutt","alternateName":["Brutt Smoke Shop","Tabacaria Brutt Campo Grande"],"description":"Tabacaria e smoke shop no Conjunto Campinho, em Campo Grande (RJ): narguile, essências, sedas, tabacos, charutos, isqueiros e bebidas. Catálogo oficial com pedido online, Pix e entrega.","url":"https://tabacariabrutt.com.br/","logo":"https://tabacariabrutt.com.br/favicon/android-chrome-512x512.png","image":"https://tabacariabrutt.com.br/imagens/og-brutt.jpg","telephone":"+55 21 99660-0243","priceRange":"R$","currenciesAccepted":"BRL","paymentAccepted":"Pix, dinheiro, cartão","address":{"@type":"PostalAddress","streetAddress":"Rua 18, 145 - Conjunto Campinho","addressLocality":"Rio de Janeiro","addressRegion":"RJ","addressCountry":"BR"},"areaServed":"Campo Grande, Rio de Janeiro - RJ","geo":{"@type":"GeoCoordinates","latitude":-22.8814745,"longitude":-43.6137391},"hasMap":"https://www.google.com/maps/search/?api=1&query=Tabacaria+Brutt+Campo+Grande","sameAs":["https://www.instagram.com/tabacariabrutt/"],"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Tuesday","Wednesday","Thursday"],"opens":"14:00","closes":"23:30"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Friday","opens":"11:30","closes":"23:59"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Saturday","opens":"00:00","closes":"01:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Saturday","opens":"12:00","closes":"23:59"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Sunday","opens":"00:00","closes":"01:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Sunday","opens":"12:00","closes":"23:59"}]},{"@context":"https://schema.org","@type":"WebSite","@id":"https://tabacariabrutt.com.br/#site","url":"https://tabacariabrutt.com.br/","name":"Tabacaria Brutt","alternateName":"Catálogo oficial da Tabacaria Brutt","inLanguage":"pt-BR","publisher":{"@id":"https://tabacariabrutt.com.br/#loja"}}]</script>
 <link rel="icon" href="/favicon/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon/favicon-48x48.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
@@ -762,6 +780,11 @@ html.snap-on{scroll-snap-type:none}
   header .bar .logo img{height:36px}
   header .bar a.ico[href*="wa.me"],header .bar #goMapa{width:32px;height:32px}
 }
+/* SOBRE A LOJA no rodapé (19/10/2026, SEO): texto de verdade com o que a loja vende e onde fica, para o Google entender o site */
+.sobre-loja{max-width:760px;margin:8px auto 18px;padding:0 4px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6}
+.sobre-loja h2{margin:0 0 8px;font:700 15px/1.3 var(--body);color:var(--ink);letter-spacing:0;text-transform:none}
+.sobre-loja p{margin:0 0 8px}
+.sobre-loja b{color:var(--ink);font-weight:600}
 /* SELO DE PREÇO (19/10/2026): "R$ 100,00" quebrava em duas linhas nos cards do celular (narguiles de R$ 100 a 400) */
 .price{flex-wrap:wrap;row-gap:2px}
 .price .pv{white-space:nowrap}
@@ -860,6 +883,11 @@ html.snap-on{scroll-snap-type:none}
     </section>
 
     <footer>
+      <section class="sobre-loja" aria-labelledby="sobreT">
+        <h2 id="sobreT">Tabacaria em Campo Grande, Rio de Janeiro</h2>
+        <p>A <b>Tabacaria Brutt</b> é a tabacaria e smoke shop do <b>Conjunto Campinho, em Campo Grande (RJ)</b>. Este é o nosso <b>catálogo oficial</b>: estoque e preços atualizados, pedido online com Pix e entrega pela loja ou por Uber/99.</p>
+        <p>Aqui você encontra <b>narguile</b> e acessórios (rosh, mangueira, carvão de coco, alumínio), <b>essências</b> para narguile, <b>sedas</b>, piteiras, cuias, dichavadores e bongs do headshop, <b>tabacos</b> para enrolar, <b>charutos</b> e cigarrilhas, cigarros de palha, <b>isqueiros</b> e <b>bebidas</b> geladas.</p>
+      </section>
       <div class="ft">
         <a class="ig" href="https://www.instagram.com/tabacariabrutt/" target="_blank" rel="noopener" aria-label="Instagram @tabacariabrutt"><span data-ic="insta"></span><span>@tabacariabrutt</span></a>
         <p>© Tabacaria Brutt · Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ · Venda proibida para menores de 18 anos. Fumar faz mal à saúde.</p>
