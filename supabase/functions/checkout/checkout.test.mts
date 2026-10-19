@@ -14,7 +14,7 @@ const realTimeout = globalThis.setTimeout;
 (globalThis as any).setTimeout = (fn: any, ms: number) => realTimeout(fn, ms >= 3000 && ms < 5000 ? 1 : ms); // pula as pausas de 3 s
 
 // ── banco em memória ──
-const db: Record<string, any[]> = { staff: [{ user_id: "u-staff", active: true }], pedidos: [], wa_notificacoes: [], wa_contatos: [], mp_eventos: [], push_config: [], push_assinaturas: [] };
+const db: Record<string, any[]> = { staff: [{ user_id: "u-staff", active: true }], pedidos: [], wa_notificacoes: [], wa_contatos: [], mp_eventos: [], push_config: [], push_assinaturas: [], sync_config: [{ key: "sync_secret", value: "seg-teste" }] };
 const products = [
   { site_product_id: "ess-1", name: "Essência Ziggy Menta", price: 25, promo_price: null, stock: 5, is_active: true },
   { site_product_id: "car-1", name: "Carvão 1kg", price: 30, promo_price: 19.9, stock: 1, is_active: true },
@@ -462,5 +462,29 @@ await t("um aviso por etapa, com o que fazer; quem fez a etapa não recebe o avi
   await call("etapa", { pedido_id: id, etapa: "saiu" }, equipe); await flush();
   assert.equal((await doOutro()).length, 4, "repetir a etapa não avisa de novo");
   db.staff.pop();
+});
+await t("lembrete de pedido parado: 20 e 45 min sem sair, 1 h depois de sair; reserva fica de fora; exige o segredo", async () => {
+  const min = (m: number) => new Date(Date.now() - m * 60e3).toISOString();
+  const base0 = { status: "pago", reserva: false, entrega: { tipo: "entrega" } };
+  const d = C.lembretesDevidos([{ ...base0, id: "a", pago_em: min(10) }, { ...base0, id: "b", pago_em: min(25) }, { ...base0, id: "c", pago_em: min(50) },
+    { ...base0, id: "d", pago_em: min(90), saiu_em: min(30) }, { ...base0, id: "e", pago_em: min(120), saiu_em: min(70) }, { ...base0, id: "f", reserva: true, pago_em: min(60) }, { ...base0, id: "g", status: "concluido", pago_em: min(60) }]);
+  assert.deepEqual(d.map(x => x.ped.id + ":" + x.tipo), ["b:lembrete_pago", "c:lembrete_pago2", "e:lembrete_saiu"]);
+  const l = C.avisoEquipe({ id: "x", numero: "BR-000900", total: 30, cliente_nome: "Rui", pago_em: min(25), entrega: { tipo: "entrega" } }, "lembrete_pago");
+  assert.match(l.title, /⏰ Pago há 25 min e parado #BR-000900/); assert.match(l.body, /👉 A fazer: separar e tocar em 🛵 Saiu para entrega/); assert.equal(l.fixo, true);
+  const r401 = await C.handler(new Request(`${F}?acao=lembretes`, { method: "POST", body: "{}" }));
+  assert.equal(r401.status, 401);
+  const r = await C.handler(new Request(`${F}?acao=lembretes`, { method: "POST", headers: { "x-sync-secret": "seg-teste" }, body: "{}" }));
+  assert.equal(r.status, 200); assert.equal((await r.json()).ok, true);
+});
+await t("contato opcional: e-mail e WhatsApp válidos são guardados; promoções só com a caixa e algum contato", async () => {
+  const { whats: _w, ...semWhats } = base;
+  const c1 = await call("criar", { ...semWhats, email: "Ana@Ex.com", whats: "21988887777", promos: true, entrega: { tipo: "cliente" } });
+  assert.equal(c1.status, 200); let p = db.pedidos.find(x => x.id === c1.j.pedido_id);
+  assert.equal(p.cliente_email, "ana@ex.com"); assert.equal(p.cliente_whats, "5521988887777"); assert.equal(p.aceita_promos, true);
+  const c2 = await call("criar", { ...semWhats, promos: true, entrega: { tipo: "cliente" } });
+  p = db.pedidos.find(x => x.id === c2.j.pedido_id); assert.equal(p.aceita_promos, false, "sem contato não vale a caixa");
+  const c3 = await call("criar", { ...semWhats, whats: "21988887777", entrega: { tipo: "cliente" } });
+  p = db.pedidos.find(x => x.id === c3.j.pedido_id); assert.equal(p.aceita_promos, false, "sem marcar a caixa = não aceita");
+  assert.equal((await call("criar", { ...semWhats, email: "nao-e-email", entrega: { tipo: "cliente" } })).status, 400);
 });
 console.log(`\n${ok} testes passaram`);
