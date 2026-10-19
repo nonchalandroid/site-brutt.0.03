@@ -1607,11 +1607,23 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
 .cms-ban-f{display:grid;gap:12px}
 .cms-prev{margin:0;position:sticky;top:130px}
 .cms-prev figcaption{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 6px}
-.cms-prev-b{position:relative;display:flex;gap:14px;align-items:center;padding:18px;border-radius:16px;background:linear-gradient(140deg,#1c120c,#0e0806);border:1px solid rgba(227,172,61,.45);color:#f3e4c8;min-height:120px;overflow:hidden}
+.cms-prev-b{--bc:#e3ac3d;--bct:#2a1810;position:relative;display:flex;gap:14px;align-items:center;padding:18px;border-radius:16px;background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--bc) 18%,#0e0806),#110a07 70%);border:1px solid color-mix(in srgb,var(--bc) 55%,transparent);color:#f3e4c8;min-height:120px;overflow:hidden}
+.cms-prev-b>div{padding-left:12px;border-left:3px solid var(--bc)}
 .cms-prev-b img{width:84px;height:84px;object-fit:cover;border-radius:12px;flex:none}
-.cms-prev-b b{display:block;font:400 22px/1.1 Anton,Impact,sans-serif;text-transform:uppercase;color:#efc25e}
+.cms-prev-b b{display:block;font:400 22px/1.1 Anton,Impact,sans-serif;text-transform:uppercase;color:#f3e4c8}
 .cms-prev-b p{margin:6px 0 0;font-size:13px;line-height:1.4;color:#d8c4a4}
-.cms-prev-btn{display:inline-block;margin-top:10px;padding:7px 14px;border-radius:10px;background:#e3ac3d;color:#2a1810;font-size:13px;font-weight:700}
+.cms-prev-btn{display:inline-block;margin-top:10px;padding:7px 14px;border-radius:10px;background:var(--bc);color:var(--bct);font-size:13px;font-weight:700}
+.cms-cores{display:grid;gap:8px}
+.cms-cores-t{font-size:12px;font-weight:600;color:var(--muted)}
+.cms-cores-t small{font-weight:400}
+.cms-cores-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.cms-cor{display:grid;gap:3px;justify-items:start;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--bg);text-align:left;cursor:pointer;min-height:0}
+.cms-cor[aria-checked=true]{border-color:var(--marrom,#5a3a1a);box-shadow:0 0 0 2px var(--marrom,#5a3a1a)}
+.cms-cor-am{position:relative;display:flex;align-items:center;justify-content:flex-end;width:100%;height:34px;padding:0 6px;border-radius:8px;background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--c) 22%,#0e0806),#110a07 70%);border:1px solid color-mix(in srgb,var(--c) 55%,transparent)}
+.cms-cor-am i{position:absolute;left:8px;top:8px;bottom:8px;width:3px;border-radius:2px;background:var(--c)}
+.cms-cor-am b{padding:2px 7px;border-radius:6px;background:var(--c);color:var(--ct);font-size:11px;font-weight:800}
+.cms-cor-n{font-size:13px;font-weight:700;color:var(--ink)}
+.cms-cor small{font-size:11px;line-height:1.3;color:var(--muted)}
 .cms-prev-b.off>*:not(em){opacity:.35}
 .cms-prev-b em{position:absolute;inset:auto 10px 8px auto;font-size:11px;font-style:normal;color:#d8c4a4}
 .cms-save2{position:sticky;bottom:12px;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:-74px;padding:10px 10px 10px 16px;border:1px solid var(--line);border-radius:16px;background:var(--surface);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(60,40,20,.12)}
@@ -1639,6 +1651,12 @@ svg.v-pago .eq-cruza .eq-pt{transform:scale(1.7)}
   .cms-ord button+button{border-top:0;border-left:1px solid var(--line)}
   .cms-save2 .btn-gold{flex:none}
 }
+.som-pn{display:grid;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.som-pn b{font-size:13px;color:var(--ink)}
+.som-pn-g{display:flex;flex-wrap:wrap;gap:6px}
+.som-pn small{font-size:12px;line-height:1.4;color:var(--muted)}
+/* sininho com muitos avisos: as linhas não encolhem (antes se sobrepunham), a lista rola */
+.sino-it{flex:none}
 </style>
 </head>
 <body>
@@ -1881,13 +1899,30 @@ function vigiaNovos(n, pix){
   if(novoPago || novoPix){ const r = rotaAtual(); if(r === "pedidos") renderPedidos(); else if(r === "visao") renderVisao(); }
   novosAntes = n; pixAntes = pix;
 }
-function bipe(leve){
+/* Som do painel aberto (pedido pago = toca 2 vezes; Pix gerado = 1 vez, mais baixo). Escolhido no sininho e guardado
+   neste aparelho (localStorage brutt_painel_som). Sons gerados na hora (sem arquivo): os graves combinam com a loja.
+   O som das notificações com o painel FECHADO é o do celular/PC (Android: Configurações → Apps → Chrome → Notificações). */
+const SONS_PAINEL = {
+  gota:     ["Gota grave", (ctx, t, v) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.setValueAtTime(330, t); o.frequency.exponentialRampToValueAtTime(150, t + .22);
+              g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.5 * v, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + .32); o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + .34); return .36; }],
+  sino:     ["Sino", (ctx, t, v) => { [[660, .3], [990, .16], [1320, .08]].forEach(([f, a]) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = f;
+              g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(a * v, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + 1.1); o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 1.15); }); return .5; }],
+  madeira:  ["Madeira", (ctx, t, v) => { [0, .09].forEach((d, i) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "triangle"; o.frequency.value = i ? 520 : 390;
+              g.gain.setValueAtTime(.0001, t + d); g.gain.exponentialRampToValueAtTime(.45 * v, t + d + .005); g.gain.exponentialRampToValueAtTime(.0001, t + d + .12); o.connect(g).connect(ctx.destination); o.start(t + d); o.stop(t + d + .14); }); return .3; }],
+  moeda:    ["Moeda", (ctx, t, v) => { [[1320, 0], [1760, .07]].forEach(([f, d]) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "square"; o.frequency.value = f;
+              g.gain.setValueAtTime(.0001, t + d); g.gain.exponentialRampToValueAtTime(.08 * v, t + d + .005); g.gain.exponentialRampToValueAtTime(.0001, t + d + .25); o.connect(g).connect(ctx.destination); o.start(t + d); o.stop(t + d + .27); }); return .35; }],
+  classico: ["Bipe clássico", (ctx, t, v) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = 880;
+              g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.25 * v, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + .18); o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + .2); return .22; }],
+  mudo:     ["Sem som", () => 0],
+};
+const somPainel = () => { try{ const k = localStorage.getItem("brutt_painel_som"); return SONS_PAINEL[k] ? k : "gota"; }catch(_){ return "gota"; } };
+function bipe(leve, qual){
   try{
+    const k = qual || somPainel(); if(k === "mudo") return;
     const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
-    const ctx = bipe.ctx || (bipe.ctx = new C()), t = ctx.currentTime;
-    (leve ? [0] : [0, .22]).forEach(d => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = 880;
-      g.gain.setValueAtTime(.0001, t + d); g.gain.exponentialRampToValueAtTime(.25, t + d + .02); g.gain.exponentialRampToValueAtTime(.0001, t + d + .18);
-      o.connect(g).connect(ctx.destination); o.start(t + d); o.stop(t + d + .2); });
+    const ctx = bipe.ctx || (bipe.ctx = new C()); if(ctx.state === "suspended") ctx.resume();
+    const toca = SONS_PAINEL[k][1], t0 = ctx.currentTime + .02, dur = toca(ctx, t0, leve ? .6 : 1);
+    if(!leve) toca(ctx, t0 + dur + .12, 1);
   }catch(_){}
 }
 function ligaVigia(){
@@ -1992,6 +2027,12 @@ async function desenhaNotif(){
   acao("ntfAtv", async () => { await ntfAtivar(); await ntfTestar().catch(() => {}); }, "Pronto! Mandei uma notificação de teste.");
   acao("ntfTeste", ntfTestar, "Notificação de teste enviada. Deve chegar em segundos.");
   acao("ntfDes", ntfDesativar, "Notificações desligadas neste aparelho.");
+  /* som com o painel aberto (pedido pago / Pix gerado) */
+  const atual = somPainel();
+  box.insertAdjacentHTML("beforeend", `<div class="som-pn"><b>Som com o painel aberto</b><div class="som-pn-g" role="radiogroup" aria-label="Som do painel">${Object.entries(SONS_PAINEL).map(([k, [n]]) =>
+    `<button type="button" class="chip${k === atual ? " active" : ""}" role="radio" aria-checked="${k === atual}" data-som-pn="${k}">${n}</button>`).join("")}</div><small>Toque para ouvir e escolher. Vale para este aparelho. Com o painel fechado, quem decide o som é o celular/PC.</small></div>`);
+  box.querySelectorAll("[data-som-pn]").forEach(b => b.onclick = () => { try{ localStorage.setItem("brutt_painel_som", b.dataset.somPn); }catch(_){}
+    box.querySelectorAll("[data-som-pn]").forEach(x => { const on = x === b; x.classList.toggle("active", on); x.setAttribute("aria-checked", String(on)); }); bipe(false, b.dataset.somPn); });
 }
 /* ---------------- sininho (canto superior direito) ----------------
    Os mesmos avisos que chegam no celular ("✅ Pedido PAGO" e "⚠️ Pix gerado"), dos pedidos das últimas 72 h, e embaixo o
@@ -5760,6 +5801,18 @@ const CMS_DEFAULT_SECTIONS = [
 ["outros","Outros Itens","Outros itens úteis"]
 ];
 let cmsSiteDraft = null;
+/* cores do banner que combinam com a loja (escuro + dourado); a mesma lista está em index.html (BANNER_CORES).
+   [chave, nome, cor, texto do botão, quando usar] — contraste do botão conferido (≥ 5:1). */
+const CMS_CORES = [
+  ["dourado","Dourado da loja","#e3ac3d","#2a1810","padrão, combina com tudo"],
+  ["brasa","Brasa","#e8833a","#1f0f05","promoção, carvão, novidade quente"],
+  ["cobre","Cobre","#cf8b5f","#1f0f05","charutos, tabacos, linha premium"],
+  ["vinho","Vinho","#c2414f","#ffffff","bebidas, datas especiais"],
+  ["oliva","Oliva","#a9b45a","#15170a","headshop, natural, palha"],
+  ["menta","Menta","#6fd3a0","#0b2016","essências geladas, frescor"],
+  ["fumaca","Fumaça","#e9dcc3","#2a1810","aviso discreto, institucional"],
+  ["azul","Azul gelo","#7fb0d9","#0c1622","bebida gelada, verão"],
+];
 async function renderSiteCms(){
   app.innerHTML = `${topbarHTML("CMS do site")}<div class="pg">
     <div class="pg-h"><div><h2 class="pg-t">CMS do site</h2><p class="pg-d">Organize a página inicial e edite os textos sem mexer em preço ou estoque.</p></div><button class="btn-ghost btn-sm" id="siteCmsRefresh">${ic("sync")} Atualizar</button></div>
@@ -5771,10 +5824,10 @@ async function renderSiteCms(){
   if(rotaAtual()!=="site-cms"||!area)return;
   if(error){area.innerHTML=`<div class="err">Não foi possível carregar o CMS: ${esc(error.message)}</div>`;return;}
   const saved=data?.config||{},byId=Object.fromEntries((Array.isArray(saved.sections)?saved.sections:[]).map(x=>[x.id,x]));
-  cmsSiteDraft={sections:CMS_DEFAULT_SECTIONS.map(([id,title,subtitle])=>{const x=byId[id]||{};return{id,title:x.title==null?title:x.title,subtitle:x.subtitle==null?subtitle:x.subtitle,visible:x.visible!==false,order:Number.isFinite(Number(x.order))?Number(x.order):CMS_DEFAULT_SECTIONS.findIndex(y=>y[0]===id)}}).sort((x,y)=>x.order-y.order),banner:{visible:saved.banner?.visible===true,title:saved.banner?.title||"",text:saved.banner?.text||"",buttonText:saved.banner?.buttonText||"Saiba mais",url:saved.banner?.url||"",imageUrl:saved.banner?.imageUrl||""},site:{heroTitle:saved.site?.heroTitle??"Tudo de melhor pra sua sessão.",heroSubtitle:saved.site?.heroSubtitle??"Tabacaria e Smokeshop · Campo Grande RJ · Conjunto Campinho",footerText:saved.site?.footerText??"© Tabacaria Brutt · Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ · Venda proibida para menores de 18 anos. Fumar faz mal à saúde.",instagramUrl:saved.site?.instagramUrl??"https://www.instagram.com/tabacariabrutt/",hotTitle:saved.site?.hotTitle??"VENDENDO MUITO!",hotSubtitle:saved.site?.hotSubtitle??"Os queridinhos da Brutt, direto da vitrine",categoriesTitle:saved.site?.categoriesTitle??"Categorias",categoriesSubtitle:saved.site?.categoriesSubtitle??"Escolha o que você procura",locationTitle:saved.site?.locationTitle??"Como chegar",locationSubtitle:saved.site?.locationSubtitle??"Tabacaria Brutt · Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ · Conjunto Campinho",reviewsTitle:saved.site?.reviewsTitle??"Avaliações no Google"},menuItems:[["em-alta","Em alta"],["essencias","Essências"],["narguile","Narguile"],["headshop","Headshop"],["tabacos","Tabacos"],["charutos","Charutos"],["cigarros","Cigarros"],["isqueiros","Isqueiros"],["bebidas","Bebidas"],["mais","Mais"]].map(([id,label])=>{const x=(saved.menuItems||[]).find(y=>y.id===id)||{};return{id,label:x.label??label,visible:x.visible!==false}}),effects:{mode:["auto","alto","leve"].includes(saved.effects?.mode)?saved.effects.mode:"auto",scrollSnap:saved.effects?.scrollSnap!==false}};
+  cmsSiteDraft={sections:CMS_DEFAULT_SECTIONS.map(([id,title,subtitle])=>{const x=byId[id]||{};return{id,title:x.title==null?title:x.title,subtitle:x.subtitle==null?subtitle:x.subtitle,visible:x.visible!==false,order:Number.isFinite(Number(x.order))?Number(x.order):CMS_DEFAULT_SECTIONS.findIndex(y=>y[0]===id)}}).sort((x,y)=>x.order-y.order),banner:{visible:saved.banner?.visible===true,title:saved.banner?.title||"",text:saved.banner?.text||"",buttonText:saved.banner?.buttonText||"Saiba mais",url:saved.banner?.url||"",imageUrl:saved.banner?.imageUrl||"",cor:CMS_CORES.some(c=>c[0]===saved.banner?.cor)?saved.banner.cor:"dourado"},site:{heroTitle:saved.site?.heroTitle??"Tudo de melhor pra sua sessão.",heroSubtitle:saved.site?.heroSubtitle??"Tabacaria e Smokeshop · Campo Grande RJ · Conjunto Campinho",footerText:saved.site?.footerText??"© Tabacaria Brutt · Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ · Venda proibida para menores de 18 anos. Fumar faz mal à saúde.",instagramUrl:saved.site?.instagramUrl??"https://www.instagram.com/tabacariabrutt/",hotTitle:saved.site?.hotTitle??"VENDENDO MUITO!",hotSubtitle:saved.site?.hotSubtitle??"Os queridinhos da Brutt, direto da vitrine",categoriesTitle:saved.site?.categoriesTitle??"Categorias",categoriesSubtitle:saved.site?.categoriesSubtitle??"Escolha o que você procura",locationTitle:saved.site?.locationTitle??"Como chegar",locationSubtitle:saved.site?.locationSubtitle??"Tabacaria Brutt · Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ · Conjunto Campinho",reviewsTitle:saved.site?.reviewsTitle??"Avaliações no Google"},menuItems:[["em-alta","Em alta"],["essencias","Essências"],["narguile","Narguile"],["headshop","Headshop"],["tabacos","Tabacos"],["charutos","Charutos"],["cigarros","Cigarros"],["isqueiros","Isqueiros"],["bebidas","Bebidas"],["mais","Mais"]].map(([id,label])=>{const x=(saved.menuItems||[]).find(y=>y.id===id)||{};return{id,label:x.label??label,visible:x.visible!==false}}),effects:{mode:["auto","alto","leve"].includes(saved.effects?.mode)?saved.effects.mode:"auto",scrollSnap:saved.effects?.scrollSnap!==false}};
   const sync=()=>{cmsSiteDraft.sections.forEach(x=>{const t=area.querySelector(`[data-title="${x.id}"]`),s=area.querySelector(`[data-subtitle="${x.id}"]`),v=area.querySelector(`[data-visible="${x.id}"]`);if(t)x.title=t.value.trim();if(s)x.subtitle=s.value.trim();if(v)x.visible=v.checked;});const get=id=>area.querySelector("#"+id);const t=get("siteCmsHeroTitle"),s=get("siteCmsHeroSubtitle"),f=get("siteCmsFooterText"),ig=get("siteCmsInstagram"),mode=get("siteCmsEffectsMode"),snap=get("siteCmsSnap");if(t)cmsSiteDraft.site.heroTitle=t.value.trim();if(s)cmsSiteDraft.site.heroSubtitle=s.value.trim();if(f)cmsSiteDraft.site.footerText=f.value.trim();if(ig)cmsSiteDraft.site.instagramUrl=ig.value.trim();for(const [key,id] of [["hotTitle","siteCmsHotTitle"],["hotSubtitle","siteCmsHotSubtitle"],["categoriesTitle","siteCmsCategoriesTitle"],["categoriesSubtitle","siteCmsCategoriesSubtitle"],["locationTitle","siteCmsLocationTitle"],["locationSubtitle","siteCmsLocationSubtitle"],["reviewsTitle","siteCmsReviewsTitle"]]){const el=get(id);if(el)cmsSiteDraft.site[key]=el.value.trim();}cmsSiteDraft.menuItems.forEach(x=>{const l=area.querySelector(`[data-menu-label="${x.id}"]`),v=area.querySelector(`[data-menu-visible="${x.id}"]`);if(l)x.label=l.value.trim()||x.label;if(v)x.visible=v.checked;});if(mode)cmsSiteDraft.effects.mode=mode.value;if(snap)cmsSiteDraft.effects.scrollSnap=snap.checked;};
   const save=async()=>{
-    sync();const b={visible:$("#siteCmsBannerVisible").checked,title:$("#siteCmsBannerTitle").value.trim(),text:$("#siteCmsBannerText").value.trim(),buttonText:$("#siteCmsBannerButton").value.trim()||"Saiba mais",url:$("#siteCmsBannerUrl").value.trim(),imageUrl:$("#siteCmsBannerImage").value.trim()};const site={heroTitle:$("#siteCmsHeroTitle").value.trim(),heroSubtitle:$("#siteCmsHeroSubtitle").value.trim(),footerText:$("#siteCmsFooterText").value.trim(),instagramUrl:$("#siteCmsInstagram").value.trim(),hotTitle:$("#siteCmsHotTitle").value.trim(),hotSubtitle:$("#siteCmsHotSubtitle").value.trim(),categoriesTitle:$("#siteCmsCategoriesTitle").value.trim(),categoriesSubtitle:$("#siteCmsCategoriesSubtitle").value.trim(),locationTitle:$("#siteCmsLocationTitle").value.trim(),locationSubtitle:$("#siteCmsLocationSubtitle").value.trim(),reviewsTitle:$("#siteCmsReviewsTitle").value.trim()};const menuItems=cmsSiteDraft.menuItems.map(x=>({id:x.id,label:area.querySelector(`[data-menu-label="${x.id}"]`).value.trim()||x.label,visible:area.querySelector(`[data-menu-visible="${x.id}"]`).checked}));const effects={mode:$("#siteCmsEffectsMode").value,scrollSnap:$("#siteCmsSnap").checked};
+    sync();const b={visible:$("#siteCmsBannerVisible").checked,title:$("#siteCmsBannerTitle").value.trim(),text:$("#siteCmsBannerText").value.trim(),buttonText:$("#siteCmsBannerButton").value.trim()||"Saiba mais",url:$("#siteCmsBannerUrl").value.trim(),imageUrl:$("#siteCmsBannerImage").value.trim(),cor:(area.querySelector("[data-cms-cor][aria-checked=true]")?.dataset.cmsCor)||"dourado"};const site={heroTitle:$("#siteCmsHeroTitle").value.trim(),heroSubtitle:$("#siteCmsHeroSubtitle").value.trim(),footerText:$("#siteCmsFooterText").value.trim(),instagramUrl:$("#siteCmsInstagram").value.trim(),hotTitle:$("#siteCmsHotTitle").value.trim(),hotSubtitle:$("#siteCmsHotSubtitle").value.trim(),categoriesTitle:$("#siteCmsCategoriesTitle").value.trim(),categoriesSubtitle:$("#siteCmsCategoriesSubtitle").value.trim(),locationTitle:$("#siteCmsLocationTitle").value.trim(),locationSubtitle:$("#siteCmsLocationSubtitle").value.trim(),reviewsTitle:$("#siteCmsReviewsTitle").value.trim()};const menuItems=cmsSiteDraft.menuItems.map(x=>({id:x.id,label:area.querySelector(`[data-menu-label="${x.id}"]`).value.trim()||x.label,visible:area.querySelector(`[data-menu-visible="${x.id}"]`).checked}));const effects={mode:$("#siteCmsEffectsMode").value,scrollSnap:$("#siteCmsSnap").checked};
     if(b.url&&!/^(https:\/\/|\/(?![\/\\])|#)/i.test(b.url)){toast("O link precisa ser HTTPS, caminho do site ou âncora.");return;}
     if(b.imageUrl&&!/^https:\/\//i.test(b.imageUrl)){toast("A imagem precisa usar HTTPS.");return;}if(site.instagramUrl&&!/^https:\/\//i.test(site.instagramUrl)){toast("O Instagram precisa usar um endereço HTTPS.");return;}if(!site.heroTitle||!site.heroSubtitle){toast("Preencha o título e o subtítulo principal.");return;}
     const btn=$("#siteCmsSave");btn.disabled=true;btn.classList.add("is-busy");
@@ -5822,6 +5875,8 @@ async function renderSiteCms(){
             <div class="cms-f2"><div class="cms-f"><label for="siteCmsBannerButton">Botão</label><input class="input" id="siteCmsBannerButton" maxlength="40" value="${esc(B.buttonText)}"></div>
               <div class="cms-f"><label for="siteCmsBannerUrl">Link do botão</label><input class="input" id="siteCmsBannerUrl" maxlength="500" value="${esc(B.url)}" placeholder="https://… ou /categoria"></div></div>
             <div class="cms-f"><label for="siteCmsBannerImage">Imagem (opcional, https)</label><input class="input" id="siteCmsBannerImage" maxlength="1000" value="${esc(B.imageUrl)}" placeholder="https://…"></div>
+          <div class="cms-cores"><span class="cms-cores-t">Cor do banner <small>· todas combinam com o escuro e o dourado da loja</small></span>
+            <div class="cms-cores-g" role="radiogroup" aria-label="Cor do banner">${CMS_CORES.map(([k,n,c,t,uso])=>`<button type="button" class="cms-cor" role="radio" aria-checked="${B.cor===k}" data-cms-cor="${k}" style="--c:${c};--ct:${t}"><span class="cms-cor-am" aria-hidden="true"><i></i><b>Aa</b></span><span class="cms-cor-n">${n}</span><small>${uso}</small></button>`).join("")}</div></div>
           </div>
           <figure class="cms-prev" aria-label="Prévia do banner na loja"><figcaption>Prévia na loja</figcaption><div class="cms-prev-b" id="cmsPrev"></div></figure>
         </div>
@@ -5832,8 +5887,9 @@ async function renderSiteCms(){
       </section>
     </div>
     <div class="cms-save2" id="cmsSaveBar"><span class="cms-st" id="cmsSt"><i aria-hidden="true"></i><span>Tudo salvo</span></span><button type="button" class="btn-gold" id="siteCmsSave">${ic("check")} Salvar alterações</button></div>`;
-    const prev=()=>{const v=id=>(area.querySelector("#"+id)?.value||"").trim(),on=area.querySelector("#siteCmsBannerVisible")?.checked,img=v("siteCmsBannerImage");const el=area.querySelector("#cmsPrev");if(!el)return;
+    const prev=()=>{const v=id=>(area.querySelector("#"+id)?.value||"").trim(),on=area.querySelector("#siteCmsBannerVisible")?.checked,img=v("siteCmsBannerImage");const el=area.querySelector("#cmsPrev");if(!el)return;const ck=area.querySelector("[data-cms-cor][aria-checked=true]")?.dataset.cmsCor||"dourado",cc=CMS_CORES.find(x=>x[0]===ck)||CMS_CORES[0];el.style.setProperty("--bc",cc[2]);el.style.setProperty("--bct",cc[3]);
       el.classList.toggle("off",!on);el.innerHTML=`${/^https:\/\//i.test(img)?`<img src="${esc(img)}" alt="" loading="lazy">`:""}<div><b>${esc(v("siteCmsBannerTitle")||"Título do banner")}</b><p>${esc(v("siteCmsBannerText")||"Texto do banner")}</p>${v("siteCmsBannerUrl")?`<span class="cms-prev-btn">${esc(v("siteCmsBannerButton")||"Saiba mais")}</span>`:""}</div>${on?"":'<em>Desligado: não aparece na loja</em>'}`;};
+    area.querySelectorAll("[data-cms-cor]").forEach(b=>b.onclick=()=>{area.querySelectorAll("[data-cms-cor]").forEach(x=>x.setAttribute("aria-checked",String(x===b)));prev();window._cmsSujo&&window._cmsSujo(true);});
     prev();
     const sujo=on=>{const st=$("#cmsSt");if(!st)return;st.classList.toggle("sujo",on);st.querySelector("span").textContent=on?"Alterações não salvas":"Tudo salvo";};
     area.addEventListener("input",e=>{sujo(true);if(e.target.closest("#siteCmsBanner"))prev();});

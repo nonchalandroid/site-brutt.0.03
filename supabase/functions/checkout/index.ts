@@ -549,7 +549,7 @@ export async function chavesPush() {
 }
 // Um aviso por etapa do pedido, sempre com o que falta fazer ("👉"). O toque abre Pedidos já no pedido certo
 // (#/pedidos?ped=<id>), com o botão da próxima ação em destaque. Mesmo pedido = mesma "tag": a etapa nova substitui a anterior.
-export type TipoAviso = "pix" | "pago" | "link" | "saiu" | "concluido" | "expirado" | "recusado" | "teste";
+export type TipoAviso = "pix" | "pago" | "link" | "saiu" | "concluido" | "expirado" | "recusado" | "lembrete_pago" | "lembrete_pago2" | "lembrete_saiu" | "teste";
 export function avisoEquipe(ped: any, tipo: TipoAviso) {
   if (tipo === "teste") return { title: "✅ Notificações ligadas", body: "Este aparelho vai receber um aviso a cada etapa dos pedidos.", tag: "teste", url: "/admin/#/pedidos", tipo };
   const nome = String(ped?.cliente_nome || "").trim().slice(0, 40), daLoja = ped?.entrega?.tipo === "entrega";
@@ -564,6 +564,13 @@ export function avisoEquipe(ped: any, tipo: TipoAviso) {
       ? a(`🛵 Saiu para entrega #${n}`, `${base}.\n👉 A fazer: quando entregar, tocar em Pedido entregue.`)
       : a(`🛵 Motoboy retirou #${n}`, `${base}.\n👉 A fazer: tocar em ✅ Concluir pedido.`);
     case "concluido": return a(`✔ Pedido concluído #${n}`, `${base}.\nNada mais a fazer.`);
+    case "lembrete_pago": case "lembrete_pago2": {
+      const min = Math.max(1, Math.round((Date.now() - Date.parse(ped.pago_em || ped.created_at)) / 60000));
+      return a(`⏰ Pago há ${min} min e parado #${n}`, `${base} · ainda não saiu.\n👉 A fazer: ${daLoja ? "separar e tocar em 🛵 Saiu para entrega" : "separar; quando o motoboy retirar, tocar em 🛵 Motoboy retirou"}.`, true);
+    }
+    case "lembrete_saiu": return daLoja
+      ? a(`⏰ Saiu há mais de 1 h #${n}`, `${base}.\n👉 Se já entregou, toque em Pedido entregue.`, true)
+      : a(`⏰ Motoboy retirou há mais de 1 h #${n}`, `${base}.\n👉 Toque em ✅ Concluir pedido.`, true);
     case "expirado": return a(`⌛ Pix vencido #${n}`, `${base} · nada foi cobrado.\n👉 Se o cliente não voltar, dá para cancelar o pedido.`);
     default: return a(`❌ Pagamento recusado #${n}`, `${base}.\n👉 Se o cliente não tentar de novo, dá para cancelar o pedido.`);
   }
@@ -608,6 +615,33 @@ export async function pushTeste(req: Request, body: any) {
   return ok ? { ok: true } : { erro: "O serviço de notificações do aparelho recusou. Desative e ative de novo.", status: 502 };
 }
 
+// ─────────── lembrete de pedido parado (pg_cron a cada 5 min → acao=lembretes, com x-sync-secret) ───────────
+// Pago e sem sair: avisa aos 20 min e de novo aos 45. Saiu e não foi concluído: avisa com 1 h. Cada lembrete vai
+// 1 vez por pedido (wa_notificacoes push_lembrete_*). Reserva (loja fechada) fica de fora: a equipe só separa ao abrir.
+export const LEMBRETE = { pagoMin: 20, pago2Min: 45, saiuMin: 60 };
+export function lembretesDevidos(peds: any[], agora = Date.now()) {
+  const min = (iso: string) => (agora - Date.parse(iso)) / 60000, out: { ped: any; tipo: "lembrete_pago" | "lembrete_pago2" | "lembrete_saiu" }[] = [];
+  for (const p of peds || []) {
+    if (p?.status !== "pago" || p.reserva) continue;
+    if (!p.saiu_em) {
+      const m = min(p.pago_em || p.created_at);
+      if (m >= LEMBRETE.pago2Min) out.push({ ped: p, tipo: "lembrete_pago2" });
+      else if (m >= LEMBRETE.pagoMin) out.push({ ped: p, tipo: "lembrete_pago" });
+    } else if (min(p.saiu_em) >= LEMBRETE.saiuMin) out.push({ ped: p, tipo: "lembrete_saiu" });
+  }
+  return out;
+}
+async function lembretes(req: Request) {
+  const [cfg] = await sbGet("sync_config?key=eq.sync_secret&select=value");
+  const seg = req.headers.get("x-sync-secret");
+  if (!cfg?.value || seg !== cfg.value) return { erro: "não autorizado", status: 401 };
+  const desde = new Date(Date.now() - 24 * 3600e3).toISOString();
+  const peds = await sbGet(`pedidos?status=eq.pago&pago_em=gte.${encodeURIComponent(desde)}&select=*`);
+  let enviados = 0;
+  for (const { ped, tipo } of lembretesDevidos(peds)) enviados += await avisarEquipe(ped, tipo);
+  return { ok: true, pedidos: peds.length, enviados };
+}
+
 // ───────────────────────────── roteador ─────────────────────────────
 export async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -628,6 +662,7 @@ export async function handler(req: Request): Promise<Response> {
     if (acao === "etapa") return resp(await etapa(req, body));
     if (acao === "push_chave") return resp(await pushChave(req));
     if (acao === "push_teste") return resp(await pushTeste(req, body));
+    if (acao === "lembretes") return resp(await lembretes(req));
     return json({ erro: "ação desconhecida" }, 404);
   } catch (e) {
     console.error("checkout", acao, e);
