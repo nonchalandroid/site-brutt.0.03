@@ -25,7 +25,9 @@ function mascara(v){var d=dig(v).slice(0,11);if(d.length<3)return d;if(d.length<
 try{whatsVal=JSON.parse(localStorage.getItem("brutt_whats")||'""')||"";emailVal=JSON.parse(localStorage.getItem("brutt_email")||'""')||""}catch(e){}
 function whatsInvalido(){return!!dig(whatsVal)&&!whatsOk()}
 function emailInvalido(){return!!String(emailVal||"").trim()&&!emailOk()}
-function whatsHTML(){if(!ativo())return"";return'<div class="ctt"><p class="ctt-t">Quer acompanhar o pedido e receber novidades? <small>Opcional</small></p>'
+/* entrega=true ("Entrega pela loja"): mostra por que vale deixar o WhatsApp; a dica liga/desliga em marcarEntrega (#cttDica) */
+function whatsHTML(entrega){if(!ativo())return"";return'<div class="ctt"><p class="ctt-t">Quer acompanhar o pedido e receber novidades? <small>Opcional</small></p>'
+  +'<p class="ctt-dica" id="cttDica"'+(entrega?"":" hidden")+'>Deixe seu WhatsApp para o entregador te chamar quando chegar.</p>'
   +'<div class="ctt-g"><div><label class="field" for="whats">WhatsApp</label><input class="t" id="whats" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" maxlength="16" value="'+esc(mascara(whatsVal))+'"></div>'
   +'<div><label class="field" for="email">E-mail</label><input class="t" id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="voce@email.com" maxlength="120" value="'+esc(emailVal)+'"></div></div>'
   +'<label class="ctt-ok"><input type="checkbox" id="promos"'+(promosVal?" checked":"")+'><span>Quero receber promoções e cupons de desconto da Brutt</span></label></div>'}

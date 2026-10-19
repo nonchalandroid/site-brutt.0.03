@@ -360,7 +360,7 @@ button.ia-wa{width:100%;border:0;cursor:pointer;font-family:inherit}
 .ctt-g{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ctt-g .field{margin-top:0}
 .ctt-g .t{width:100%}
-.ctt-ok{display:flex;align-items:flex-start;gap:10px;margin-top:10px;font-size:13px;line-height:1.4;color:var(--muted);cursor:pointer}
+.ctt-dica{margin:-2px 0 10px;font-size:13px;line-height:1.4;color:var(--gold)}.ctt-dica[hidden]{display:none}.ctt-ok{display:flex;align-items:flex-start;gap:10px;margin-top:10px;font-size:13px;line-height:1.4;color:var(--muted);cursor:pointer}
 .ctt-ok input{flex:none;width:18px;height:18px;margin-top:1px;accent-color:var(--gold)}
 @media(max-width:420px){.ctt-g{grid-template-columns:1fr}}
 </style>
@@ -857,9 +857,9 @@ function dlvAvancar(){if(_dlvEstado!=="ok"||!dlvPend){if(_dlvEstado==="vazio")dl
     <div class="dlv-line"><i aria-hidden="true">📍</i><span>Bairro</span><b>${esc(e.bairro)} · ${esc(e.cidade)}/${esc(e.uf)}</b></div>
     <div class="dlv-line"><i aria-hidden="true">🚚</i><span>Taxa</span><b>${R(entrega.taxa)}<small>já incluída no total</small></b></div>${avisoLonge(entrega.distKm)}
   </div><button type="button" class="dlv-open ghost" data-dlv-open>${ic("pin")}Alterar endereço</button>`}function clienteBoxHTML(){if(window.MPX)return MPX.clienteHTML();return`<div class="cli-box"><div class="cli-pin"><button type="button" class="pin-copy" data-copy="end" aria-label="Copiar o endereço da loja">${ic("pin")}</button></div><p class="cli-note">Clique no pin para copiar o endereço da loja e cole no aplicativo de entrega (Uber Flash ou 99).</p></div>`}
-function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox");if(!f||!e)return;f.classList.toggle("sel",ship==="frete");e.classList.toggle("sel",ship==="entrega");if(eb)eb.innerHTML=ship==="entrega"?entregaBoxHTML():"";}function drawCheckout(){reservarPedido();const t=total()+taxaAtual();const nomeInit=nomeVal!==null?nomeVal:"";$("#dBody").innerHTML=`<button class="chip" data-back>‹ Voltar ao carrinho</button>
+function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox");if(!f||!e)return;const cd=$("#cttDica");if(cd)cd.hidden=ship!=="entrega";f.classList.toggle("sel",ship==="frete");e.classList.toggle("sel",ship==="entrega");if(eb)eb.innerHTML=ship==="entrega"?entregaBoxHTML():"";}function drawCheckout(){reservarPedido();const t=total()+taxaAtual();const nomeInit=nomeVal!==null?nomeVal:"";$("#dBody").innerHTML=`<button class="chip" data-back>‹ Voltar ao carrinho</button>
     <p class="pixnote lojafechada" id="lojaFechadaNote" role="status"${statusLoja().aberto?" hidden":""}>🕐 <span>${textoFechado()}</span></p>
-    <label class="field" for="nome">Seu nome</label><input class="t" id="nome" placeholder="Como devemos te chamar?" value="${esc(nomeInit)}">${window.MPX?MPX.whatsHTML():""}
+    <label class="field" for="nome">Seu nome</label><input class="t" id="nome" placeholder="Como devemos te chamar?" value="${esc(nomeInit)}">${window.MPX?MPX.whatsHTML(ship==="entrega"):""}
     <div class="field">Como você quer receber?</div>
     <div class="entrega">
       <button type="button" class="eopt eloja ${ship==="entrega"?"sel":""}" id="eEntrega" data-ship="entrega">${ic("car")}<b>Entrega pela loja</b></button>
@@ -954,7 +954,7 @@ function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox
 <script src="/js/ia-sugestoes.js?v=20261012a" defer></script>
 <script src="/js/desempenho.js?v=20261013a" defer></script>
 <script src="/js/avaliacoes.js?v=20261013a" defer></script>
-<script src="/js/checkout-mp.js?v=20261019a" defer></script>
+<script src="/js/checkout-mp.js?v=20261019b" defer></script>
 <script src="/js/acompanhar.js?v=20261018b" defer></script>
 <script src="/js/sons.js?v=20261018a" defer></script>
 </body>
