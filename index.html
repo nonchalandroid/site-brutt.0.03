@@ -530,17 +530,14 @@ svg{scrollbar-gutter:auto}
 nav ul{width:max-content;max-width:none;margin-inline:auto}
 /* menu do topo: enquanto desliza até a seção, todas as seções são desenhadas (content-visibility) para o destino não mudar no caminho */
 html.nav-indo .sec{content-visibility:visible}
-/* Brutt IA no celular: abre e fecha como página de revista (gira presa na borda esquerda);
-   "Esconder" (minimizar pra bolinha) voa até a bolinha (js/ia-voa.js), igual no PC. Só transform/opacity. */
+/* Brutt IA no celular (19/10/2026): abre e fecha igual às gavetas do site (carrinho, Finalizar pedido): sobe de baixo
+   e desce de volta, mesma curva (--ease-out) e tempo (.42 s abrindo / .38 s fechando). Antes girava como página de revista (3D).
+   Só transform/opacity. */
 @media (max-width:640px) and (prefers-reduced-motion:no-preference){
-  .ia-panel{transform-origin:0 50%;transform:perspective(1300px) rotateY(-100deg);opacity:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
-    transition:transform .6s cubic-bezier(.55,.05,.7,.4),opacity .22s ease .38s,visibility 0s .6s}
-  .ia[data-state=open] .ia-panel{transform:perspective(1300px) rotateY(0deg);opacity:1;
-    transition:transform .72s cubic-bezier(.18,.9,.28,1.06),opacity .18s ease,visibility 0s}
-  /* sombra da dobra: escurece enquanto a página está virada */
-  .ia-panel::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:5;
-    background:linear-gradient(90deg,rgba(0,0,0,.05),rgba(0,0,0,.55));opacity:1;transition:opacity .55s ease}
-  .ia[data-state=open] .ia-panel::after{opacity:0;transition:opacity .6s ease .1s}
+  .ia-panel{transform:translateY(calc(100% + 24px));opacity:1;
+    transition:transform .38s var(--ease-out),visibility 0s .38s}
+  .ia[data-state=open] .ia-panel{transform:none;
+    transition:transform .42s var(--ease-out),visibility 0s}
 }
 /* Brutt IA: sugestões de entrada (js/ia-sugestoes.js) entram em cascata; "Outras ideias" mais discreto */
 #iaIntro .ia-chips .ia-chip{animation:iaMsg .36s var(--ia-ease) both;animation-delay:calc(var(--i,0) * 45ms)}
