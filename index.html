@@ -716,6 +716,21 @@ html.snap-on{scroll-snap-type:none}
   html.fx-alto .card:active::after{opacity:1;transition-duration:.18s}
   .nv:active::after{transform:scaleX(1)}
 }
+/* logo do cabeçalho (com a brasa girando em volta) volta no celular (19/10/2026): tinha sido escondida em 17/10 para caber a barra.
+   Só a logo de baixo do título (.hero-logo) sai no celular. */
+/* WhatsApp e Como chegar menores no celular para caber a logo; o carrinho fica do tamanho de sempre (pedido do dono) */
+@media(max-width:640px){
+  header .bar .logo{display:flex}
+  header .bar .logo img{height:40px}
+  header .bar a.ico[href*="wa.me"],header .bar #goMapa{width:34px;height:34px}
+  header .bar a.ico[href*="wa.me"] svg{width:17px;height:17px}
+  header .bar #goMapa .gmaps{width:13px;height:19px}
+}
+@media(max-width:380px){
+  header .bar{gap:6px}
+  header .bar .logo img{height:36px}
+  header .bar a.ico[href*="wa.me"],header .bar #goMapa{width:32px;height:32px}
+}
 </style>
 </head>
 <body>
