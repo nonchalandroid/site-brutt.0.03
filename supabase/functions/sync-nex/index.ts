@@ -114,6 +114,7 @@ function listaDePagina(j: any): { produtos: any[]; formatoOk: boolean } {
 async function nexTodos(cfg: Record<string, string>, stockControl: boolean): Promise<ListaNex> {
   const cru: any[] = [];
   const recebidos = new Set<string>();
+  let ultimaPagina = "";
   let motivo: string | null = null;
   for (let page = 1; page <= 20; page++) {
     const c = new AbortController(), t = setTimeout(() => c.abort(), 30000);
@@ -129,7 +130,11 @@ async function nexTodos(cfg: Record<string, string>, stockControl: boolean): Pro
     if (!formatoOk) { motivo = `página ${page} com itens fora do formato esperado (sem ProductCode/ProductName)`; break; }
     const chaves = produtos.map(o => String(o.ProductCode ?? "") + "|" + String(o.ProductName ?? ""));
     const repetidos = chaves.filter(k => recebidos.has(k)).length;
+    // O Nex ignora o número da página: a página 2 volta IGUAL à 1 (visto em 19/10/2026, 600 itens). Repetição inteira da
+    // página anterior = fim da lista (a lista é a que já veio); repetição parcial continua sendo erro de integridade.
+    if (repetidos > 0 && repetidos === chaves.length && chaves.join("\n") === ultimaPagina) break;
     if (repetidos > 0) { motivo = `página ${page} repete ${repetidos} itens já recebidos`; break; }
+    ultimaPagina = chaves.join("\n");
     chaves.forEach(k => recebidos.add(k));
     cru.push(...produtos);
     if (produtos.length < 600) break;   // fim visto, mas NÃO comprovado (ver completa=false)

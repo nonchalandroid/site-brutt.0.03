@@ -90,15 +90,27 @@ assert.deepEqual(itensDe("Sync Nex").find(x => x.id === "p0"), { id: "p0", stock
 assert.equal(idsDe("Sync Nex: sem par no Nex").includes("semPar"), false, "página vazia após 600 não autoriza zerar nex-*");
 ok("fim ambíguo (página vazia após 600): ajustes continuam, zeramento suspenso");
 
-// 4) página repetida: nada é gravado, nem o ajuste válido nem o zeramento
+// 4a) o Nex ignora a página e devolve a MESMA lista de novo: é o fim da lista (ajustes seguem, zeramento suspenso)
 base(); nexLista[0].CurrentStock = 2;
 prods.push({ id: "semPar", site_product_id: "nex-semPar", name: "Sem par", ean: null, stock: 50, price: 8, promo_price: null, is_active: true });
 const repetida = pagina600();
-nexResposta = (p) => (p <= 2 ? pagina(repetida) : pagina([]));
+nexResposta = (p) => pagina(repetida);
 r = await roda();
-assert.equal(r.ok, false); assert.equal(rpcs.length, 0, "página repetida: zero gravações");
+assert.equal(r.ok, true, "página igual à anterior = fim da lista, não erro");
+assert.equal(r.resumo.nex_total, 600);
+assert.deepEqual(itensDe("Sync Nex").find(x => x.id === "p0"), { id: "p0", stock: 2, price: 10, promo: null }, "ajuste com valor do Nex continua");
+assert.equal(idsDe("Sync Nex: sem par no Nex").includes("semPar"), false, "lista repetida não autoriza zerar nex-*");
+ok("Nex ignora a página (página 2 = página 1): ajustes continuam, zeramento suspenso");
+
+// 4b) repetição PARCIAL: nada é gravado, nem o ajuste válido nem o zeramento
+base(); nexLista[0].CurrentStock = 2;
+prods.push({ id: "semPar", site_product_id: "nex-semPar", name: "Sem par", ean: null, stock: 50, price: 8, promo_price: null, is_active: true });
+const p1r = pagina600(), p2r = [...p1r.slice(0, 10), ...cru(590, "R", 3)];
+nexResposta = (p) => (p === 1 ? pagina(p1r) : p === 2 ? pagina(p2r) : pagina([]));
+r = await roda();
+assert.equal(r.ok, false); assert.equal(rpcs.length, 0, "página parcialmente repetida: zero gravações");
 assert.match(logs[logs.length - 1].erro, /repete/);
-ok("página repetida: nenhuma gravação, nem ajuste nem zeramento");
+ok("página parcialmente repetida: nenhuma gravação, nem ajuste nem zeramento");
 
 // 5) falha HTTP na página 3: páginas anteriores não são gravadas
 base(); nexLista[0].CurrentStock = 2;
