@@ -530,6 +530,9 @@ svg{scrollbar-gutter:auto}
 nav ul{width:max-content;max-width:none;margin-inline:auto}
 /* menu do topo: enquanto desliza até a seção, todas as seções são desenhadas (content-visibility) para o destino não mudar no caminho */
 html.nav-indo .sec{content-visibility:visible}
+/* menu do topo no celular (19/10/2026): sem Lenis (só no mouse), o imã das seções (html.snap-on, scroll-snap-stop:always)
+   segurava a rolagem do menu no iPhone e a página voltava para a seção de onde saiu. Desliga o imã só durante a ida. */
+html.nav-indo{scroll-snap-type:none!important}
 /* Brutt IA no celular (19/10/2026): abre e fecha igual às gavetas do site (carrinho, Finalizar pedido): sobe de baixo
    e desce de volta, mesma curva (--ease-out) e tempo (.42 s abrindo / .38 s fechando). Antes girava como página de revista (3D).
    Só transform/opacity. */
