@@ -142,6 +142,10 @@ export async function criarPedido(body: any, ip = "") {
   // Se vier, tem que ser válido.
   const whatsBruto = String(body?.whats ?? "").trim(), whats = whatsBruto ? normalizaWhats(whatsBruto) : null;
   if (whatsBruto && !whats) return { erro: "Digite um WhatsApp válido com DDD.", status: 400 };
+  // e-mail também é opcional (comprovante/novidades); promoções só com a caixa marcada E algum contato (LGPD)
+  const emailBruto = texto(body?.email, 120).toLowerCase(), email = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailBruto) ? emailBruto : null;
+  if (emailBruto && !email) return { erro: "Digite um e-mail válido ou deixe em branco.", status: 400 };
+  const promos = body?.promos === true && !!(whats || email);
   if ((ip && freioIp(ip)) || (whats && await freioWhats(whats))) return { erro: "Muitos pedidos seguidos. Finalize o que já está aberto ou fale com a gente no WhatsApp.", status: 429 };
   const brutos: ItemIn[] = Array.isArray(body?.itens) ? body.itens : [];
   const qtd = new Map<string, number>();
@@ -191,7 +195,7 @@ export async function criarPedido(body: any, ip = "") {
   const n = await sbRpc("proximo_numero_pedido");
   const numero = "BR-" + String(n).padStart(6, "0");
   const total = cent(subtotal + taxa);
-  const [ped] = await sbInsert("pedidos", { numero, reserva: body?.reserva === true, cliente_nome: nome, cliente_whats: whats, itens, subtotal, taxa_entrega: taxa, total, entrega });
+  const [ped] = await sbInsert("pedidos", { numero, reserva: body?.reserva === true, cliente_nome: nome, cliente_whats: whats, ...(email ? { cliente_email: email } : {}), aceita_promos: promos, itens, subtotal, taxa_entrega: taxa, total, entrega });
   return { ok: true, pedido_id: ped.id, numero, itens, subtotal, taxa_entrega: taxa, total, km: entrega.km ?? null, public_key: env("MP_PUBLIC_KEY") };
 }
 

@@ -7,7 +7,7 @@ window.MPX=(function(){
 var CFG=window.__MP||{},S=window.__SUPA||{};
 var FN=(S.url||"")+"/functions/v1/checkout";
 var LOJA_CEP="23067-030";            /* o mesmo do link "Como chegar" do site */
-var metodo="pix",whatsVal="",pedido=null,brick=null,poll=null,emailVal="",_avisoTimer=null;
+var metodo="pix",whatsVal="",pedido=null,brick=null,poll=null,emailVal="",promosVal=false,_avisoTimer=null;
 /* 18/10/2026: o checkout pede só o NOME (e-mail e WhatsApp travavam compras). O contato chega quando o cliente manda o
    pedido no WhatsApp da loja. O Mercado Pago recebe um e-mail interno do pedido (servidor); o comprovante do Mercado Pago
    chega ao cliente no e-mail da conta dele, por isso a tela só avisa, sem pedir e-mail. */
@@ -20,7 +20,15 @@ function whatsOk(){var d=dig(whatsVal);if(d.length===12||d.length===13)d=d.repla
 function mascara(v){var d=dig(v).slice(0,11);if(d.length<3)return d;if(d.length<7)return"("+d.slice(0,2)+") "+d.slice(2);if(d.length<11)return"("+d.slice(0,2)+") "+d.slice(2,6)+"-"+d.slice(6);return"("+d.slice(0,2)+") "+d.slice(2,7)+"-"+d.slice(7)}
 
 /* ───────── partes do formulário de checkout ───────── */
-function whatsHTML(){return""}
+/* Contato OPCIONAL (19/10/2026): WhatsApp e e-mail para o andamento do pedido, comprovante e, só se marcar a caixa
+   (que vem desmarcada: consentimento explícito, LGPD), promoções e cupons. Nada aqui trava a compra. */
+try{whatsVal=JSON.parse(localStorage.getItem("brutt_whats")||'""')||"";emailVal=JSON.parse(localStorage.getItem("brutt_email")||'""')||""}catch(e){}
+function whatsInvalido(){return!!dig(whatsVal)&&!whatsOk()}
+function emailInvalido(){return!!String(emailVal||"").trim()&&!emailOk()}
+function whatsHTML(){if(!ativo())return"";return'<div class="ctt"><p class="ctt-t">Quer acompanhar o pedido e receber novidades? <small>Opcional</small></p>'
+  +'<div class="ctt-g"><div><label class="field" for="whats">WhatsApp</label><input class="t" id="whats" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" maxlength="16" value="'+esc(mascara(whatsVal))+'"></div>'
+  +'<div><label class="field" for="email">E-mail</label><input class="t" id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="voce@email.com" maxlength="120" value="'+esc(emailVal)+'"></div></div>'
+  +'<label class="ctt-ok"><input type="checkbox" id="promos"'+(promosVal?" checked":"")+'><span>Quero receber promoções e cupons de desconto da Brutt</span></label></div>'}
 var PIN='<svg class="pin-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.1-7-12a7 7 0 0 1 14 0c0 5.9-7 12-7 12Z"/><circle cx="12" cy="10" r="2.6"/></svg>';
 /* "Prefiro eu mesmo solicitar a entrega": o cliente chama o Uber/99 dele, então aqui não aparece valor nenhum.
    Pin copia o endereço da loja (ponto de coleta); botões abrem os apps. Uber = logotipo oficial (simple-icons, CC0),
@@ -58,6 +66,10 @@ function pagamentoHTML(){
    +OPT.map(function(o){var on=o[0]===metodo;return'<button type="button" class="popt'+(on?" sel":"")+'" role="radio" aria-checked="'+on+'" data-pay="'+o[0]+'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+(o[0]==="pix"?PAY_IC.pix:PAY_IC.cartao)+'</svg><b>'+o[1]+'</b><small>'+o[2]+'</small></button>'}).join("")
    +'</div><p class="pay-safe"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></svg><span>Pix instantâneo, processado com segurança pelo <b>Mercado Pago</b>. Não aceitamos cartão digitado no site.</span></p>';
 }
+document.addEventListener("input",function(e){var t=e.target;if(!t)return;
+  if(t.id==="whats"){var v=mascara(t.value);if(v!==t.value)t.value=v;whatsVal=v;try{localStorage.setItem("brutt_whats",JSON.stringify(v))}catch(_){}}
+  else if(t.id==="email"){emailVal=t.value.trim();try{localStorage.setItem("brutt_email",JSON.stringify(emailVal))}catch(_){}}});
+document.addEventListener("change",function(e){if(e.target&&e.target.id==="promos")promosVal=e.target.checked});
 document.addEventListener("click",function(e){
   var b=e.target.closest&&e.target.closest("[data-pay],[data-pin-copy],[data-mp-voltar],[data-mp-copiar],[data-mp-tentar],[data-mp-whats],[data-mp-gerar],[data-mp-cnpj]");if(!b)return;
   if(b.dataset.pay){metodo=b.dataset.pay;document.querySelectorAll(".popt").forEach(function(x){var on=x.dataset.pay===metodo;x.classList.toggle("sel",on);x.setAttribute("aria-checked",String(on))})}
@@ -105,7 +117,7 @@ function iniciar(o){
   var sig=assinatura(o.nome,o.reserva);
   /* mesmo carrinho/endereço/contato de antes: reaproveita o pedido já criado (não gera pedido duplicado) */
   if(pedido&&pedido._sig===sig&&Date.now()-pedido._t<20*60e3)return mostrarEtapa();
-  var corpo={nome:o.nome,whats:whatsVal,reserva:!!o.reserva,
+  var corpo={nome:o.nome,whats:whatsOk()?whatsVal:"",email:emailOk()?String(emailVal).trim():"",promos:!!promosVal&&(whatsOk()||emailOk()),reserva:!!o.reserva,
     itens:Object.keys(cart).map(function(id){return{id:id,q:cart[id]}}),
     entrega:ship==="entrega"?{tipo:"entrega",endereco:entrega.endereco,geo:entrega.geo}:{tipo:"cliente"}};
   api("criar",corpo).then(function(j){
@@ -317,5 +329,5 @@ function deIA(co){
 }
 function voltar(){clearTimeout(poll);clearInterval(_tempo);clearTimeout(_avisoTimer);desmontar();drawCart("checkout")}
 
-return{deIA:deIA,ativo:ativo,pagamentoLinha:pagamentoLinha,emailOk:emailOk,whatsOk:whatsOk,whatsHTML:whatsHTML,clienteHTML:clienteHTML,pagamentoHTML:pagamentoHTML,iniciar:iniciar,selosHTML:selosHTML};
+return{deIA:deIA,ativo:ativo,whatsInvalido:whatsInvalido,emailInvalido:emailInvalido,pagamentoLinha:pagamentoLinha,emailOk:emailOk,whatsOk:whatsOk,whatsHTML:whatsHTML,clienteHTML:clienteHTML,pagamentoHTML:pagamentoHTML,iniciar:iniciar,selosHTML:selosHTML};
 })();
