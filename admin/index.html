@@ -959,6 +959,9 @@ html,body{overflow-x:clip}
 input:focus,select:focus,textarea:focus{border-color:var(--petroleo-cl);box-shadow:0 0 0 3px rgba(127,208,216,.16)}
 .cli-card:focus-visible,.eq-card:focus-visible{border-color:var(--petroleo-cl);box-shadow:0 0 0 3px rgba(127,208,216,.16)}
 .ped-ver{color:var(--petroleo-cl)}
+.ped-linha span.ped-ver{display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;border:0;padding:0;background:none;margin-left:auto}
+.ped-ver a{color:var(--petroleo-cl)}
+.ped-cp{min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--petroleo-cl);background:transparent;color:var(--petroleo-cl);font:600 12px var(--font);cursor:pointer}
 /* visão geral: cada indicador com o seu tom (ícone e filete); o número segue o estado (bom/alerta/ruim) */
 .ov-kpi{position:relative;overflow:hidden}
 .ov-kpi::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--kc,transparent);opacity:.9}
@@ -4378,8 +4381,15 @@ function pedLinha(p){
   if(ent){ passos.push(["Saiu", p.saiu_em, !!p.saiu_em || p.status === "concluido"]); passos.push(["Entregue", p.concluido_em, p.status === "concluido"]); }
   else { passos.push(["Link recebido", p.corrida_link_em, !!p.corrida_link_em || p.status === "concluido"]); passos.push(["Motoboy retirou", p.saiu_em, !!p.saiu_em || p.status === "concluido"]); passos.push(["Concluído", p.concluido_em, p.status === "concluido"]); }
   return `<div class="ped-linha">${passos.map(([t, iso, ok]) => `<span class="${ok ? "ok" : ""}">${t}${ok && iso ? ` <time>${h(iso)}</time>` : ""}</span>`).join("")}
-    <a class="ped-ver" href="/?pedido=${esc(p.id)}&equipe=1" target="_blank" rel="noopener" title="Abrir a tela que o cliente vê">ver como o cliente vê ↗</a></div>`;
+    <span class="ped-ver"><button type="button" class="ped-cp" data-ped-link="${esc(pedLink(p))}" title="Copiar o link da página do pedido para mandar ao cliente">Copiar link do cliente</button><a href="${esc(pedLink(p))}" target="_blank" rel="noopener" title="Abrir a página do pedido que o cliente vê">ver como o cliente vê ↗</a></span></div>`;
 }
+/* link da página do pedido para o cliente (pedido/index.html), salvo pelo banco em pedidos.link_cliente */
+const pedLink = p => p.link_cliente || `${location.origin}/pedido/?id=${p.id}`;
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-ped-link]"); if(!b) return;
+  try { await navigator.clipboard.writeText(b.dataset.pedLink); const t = b.textContent; b.textContent = "Link copiado ✓"; setTimeout(() => b.textContent = t, 1800); }
+  catch(_) { prompt("Copie o link do pedido:", b.dataset.pedLink); }
+});
 let pedFiltro = "todos";
 async function renderPedidos(){
   app.innerHTML = `${topbarHTML("Pedidos online")}
@@ -4390,7 +4400,7 @@ async function renderPedidos(){
       <div id="pedLista"><div class="loading">Carregando…</div></div>
     </div>`;
   bindTopbar(); desenhaNotif();
-  const { data, error } = await sb.from("pedidos").select("id,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,separacao_em,corrida_link_em,saiu_em,concluido_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em").order("created_at", { ascending:false }).limit(60);
+  const { data, error } = await sb.from("pedidos").select("id,link_cliente,numero,status,reserva,cliente_nome,cliente_whats,itens,total,taxa_entrega,entrega,metodo,created_at,pago_em,separacao_em,corrida_link_em,saiu_em,concluido_em,visto_em,mp_status,mp_status_detail,mp_payment_id,pix_expira_em").order("created_at", { ascending:false }).limit(60);
   const el = $("#pedLista");
   if(!el) return;
   if(error){ el.innerHTML = `<div class="err">Não foi possível carregar os pedidos (${esc(error.message)}).</div>`; return; }
