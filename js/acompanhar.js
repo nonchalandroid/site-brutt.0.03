@@ -94,7 +94,7 @@ function etapas(a){
   var L=[{t:"Recebemos seu pedido",s:"Pedido #"+a.numero,h:a.criado,ok:true},
     {t:"Pagamento confirmado",s:pago?"Pix aprovado pelo Mercado Pago":"Aguardando o Pix",h:a.pago,ok:pago}];
   if(a.tipo==="entrega"){
-    L.push({t:"Saiu para entrega",s:a.bairro?"A caminho de "+a.bairro:"A caminho do seu endereço",h:a.saiu,ok:!!a.saiu||fim});
+    L.push({t:"Saiu para entrega",s:"Indo até você",h:a.saiu,ok:!!a.saiu||fim});
     L.push({t:"Pedido entregue",s:"Bom proveito!",h:a.concluido,ok:fim});
   }else{                                                              /* o cliente chama o Uber Flash / 99 */
     L.push({t:"Aguardando você pedir Uber / 99",s:"Peça a corrida para o endereço da loja",h:a.pago,ok:!!a.pago});

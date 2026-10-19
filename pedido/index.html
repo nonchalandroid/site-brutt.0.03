@@ -102,7 +102,7 @@ function final(a){return a.status==="concluido"||a.status==="cancelado"||a.statu
 function etapas(a){
   var pago=!!a.pago||a.status==="pago"||a.status==="concluido",fim=a.status==="concluido";
   var L=[{t:"Recebemos seu pedido",s:"Pedido #"+a.numero,h:a.criado,ok:true},{t:"Pagamento confirmado",s:pago?"Pix aprovado pelo Mercado Pago":"Aguardando o Pix",h:a.pago,ok:pago}];
-  if(a.tipo==="entrega"){L.push({t:"Saiu para entrega",s:a.bairro?"A caminho de "+a.bairro:"A caminho do seu endereço",h:a.saiu,ok:!!a.saiu||fim});L.push({t:"Pedido entregue",s:"Bom proveito!",h:a.concluido,ok:fim})}
+  if(a.tipo==="entrega"){L.push({t:"Saiu para entrega",s:"Indo até você",h:a.saiu,ok:!!a.saiu||fim});L.push({t:"Pedido entregue",s:"Bom proveito!",h:a.concluido,ok:fim})}
   else{L.push({t:"Aguardando você pedir Uber / 99",s:"Peça a corrida para o endereço da loja",h:a.pago,ok:!!a.pago});L.push({t:"Link da corrida recebido",s:a.corrida?"A equipe já recebeu o link":"Mande o link da corrida pelo WhatsApp",h:a.corrida,ok:!!a.corrida});L.push({t:"Motorista coletou o pedido",s:"A caminho com o entregador do app",h:a.saiu,ok:!!a.saiu||fim})}
   var atual=-1;L.forEach(function(e,i){if(e.ok)atual=i});L.forEach(function(e,i){e.atual=!final(a)&&i===atual+1});return L;
 }
