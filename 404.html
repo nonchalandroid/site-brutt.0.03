@@ -9,7 +9,10 @@
    (ex.: /essencias, /doces, /essencia-ziggy-morango-tropical).
    Ele manda o visitante pro site principal levando o caminho; o site recoloca o endereço
    bonito na barra e abre a página certa. */
-location.replace("/?r=" + encodeURIComponent(location.pathname.replace(/^\//, "") + location.search + location.hash));
+/* recarregar/voltar (não é link novo): avisa o site para começar do topo em vez de pular para a seção do endereço */
+var _nv = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+var _rl = _nv && _nv.type !== "navigate" ? "&rl=1" : "";
+location.replace("/?r=" + encodeURIComponent(location.pathname.replace(/^\//, "") + location.search + location.hash) + _rl);
 </script>
 <noscript><meta http-equiv="refresh" content="0;url=/"></noscript>
 </head>
