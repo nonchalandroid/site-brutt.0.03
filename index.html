@@ -928,13 +928,13 @@ function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox
     <label class="field" for="nome">Seu nome</label><input class="t" id="nome" placeholder="Como devemos te chamar?" value="${esc(nomeInit)}">${window.MPX?MPX.whatsHTML(ship==="entrega"):""}
     <div class="field">Como você quer receber?</div>
     <div class="entrega">
-      <button type="button" class="eopt eloja ${ship==="entrega"?"sel":""}" id="eEntrega" data-ship="entrega">${ic("car")}<b>Entrega pela loja</b></button>
-      <div id="entregaBox">${ship==="entrega"?entregaBoxHTML():""}</div>
-      <div class="ou"><span>ou</span></div>
       <div class="eopt ${ship==="frete"?"sel":""}" id="eFrete">
         <button type="button" class="eh" data-ship="frete">${ic("phone")}<b>Prefiro eu mesmo solicitar a entrega</b><small class="eh-sub rec">Recomendado</small></button>
         ${clienteBoxHTML()}
       </div>
+      <div class="ou"><span>ou</span></div>
+      <button type="button" class="eopt eloja ${ship==="entrega"?"sel":""}" id="eEntrega" data-ship="entrega">${ic("car")}<b>Entrega pela loja</b></button>
+      <div id="entregaBox">${ship==="entrega"?entregaBoxHTML():""}</div>
     </div>
     ${window.MPX&&MPX.ativo()?MPX.pagamentoHTML():`<p class="pixnote">${ic("card")}<span>Pagamento somente por <b>Pix</b>. Enviamos a chave no WhatsApp assim que recebermos o pedido.</span></p>`}
     
