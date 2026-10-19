@@ -46,7 +46,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // ── Regras da loja (as mesmas do site: ENTREGA_LOJA e MIN em index.html) ──
 export const LOJA = { nome: "Tabacaria Brutt", endereco: "Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ", site: "https://tabacariabrutt.com.br" };
 /** Link da tela "Acompanhe seu pedido" (o id do pedido é um UUID: só quem tem o link vê) */
-export const linkAcomp = (ped: any) => `${LOJA.site}/?pedido=${ped.id}`;
+// página do pedido para o cliente (pedido/index.html), fora da loja; o mesmo link fica salvo em pedidos.link_cliente (coluna gerada)
+export const linkAcomp = (ped: any) => `${LOJA.site}/pedido/?id=${ped.id}`;
 const evolutionOk = () => !!(env("EVOLUTION_API_URL") && env("EVOLUTION_API_KEY") && env("EVOLUTION_INSTANCE"));
 // R$ 5,00 até 2 km de rota; acima, + R$ 2,00 por km rodado, proporcional (fração de km conta na medida exata); sem teto e sem limite de raio.
 export const ENTREGA_LOJA = { lat: -22.8814745, lng: -43.6137391, raioMaxKm: 999, taxaBase: 5, baseAteKm: 2, porKmExtra: 2 };

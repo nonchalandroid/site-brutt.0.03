@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Seu pedido · Tabacaria Brutt</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0e0806">
+<link rel="icon" href="/favicon/favicon-32x32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Página do pedido do cliente (19/10/2026): link próprio, fora da loja, para mandar ao cliente.
+     Endereço: /pedido/?id=<uuid do pedido>. Os dados vêm de checkout?acao=status (só o necessário: sem endereço,
+     telefone ou dados de pagamento). Atualiza sozinha a cada 20 s até o pedido terminar. As etapas são as mesmas da
+     tela "Acompanhe seu pedido" da loja (js/acompanhar.js): mudou lá, mude aqui. -->
+<style>
+:root{--bg:#0e0806;--surface:#170f0a;--ink:#f3e4c8;--muted:#b8a184;--line:#2c1d14;--gold:#e3ac3d;--brand-2:#efc25e;--hot:#d6392b;
+  --ok:#1f7a4d;--ok-txt:#6fd3a0;--ok-line:#3fbf7f;--head:"Anton","Bebas Neue",Impact,sans-serif;--body:"Inter",system-ui,sans-serif;
+  --mono:"DejaVu Sans Mono",ui-monospace,Consolas,monospace;--ease-app:cubic-bezier(.16,1,.3,1)}
+@font-face{font-family:"DejaVu Sans Mono";src:url(/vendor/fonts/dejavu-sans-mono-400.woff2) format("woff2");font-display:swap}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+body{min-height:100vh;background:radial-gradient(120% 60% at 50% -10%,rgba(227,120,43,.18),transparent 60%),var(--bg)}
+a{color:inherit}
+.wrap{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 18px) 16px calc(env(safe-area-inset-bottom,0px) + 28px)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.top a.marca{display:flex;align-items:center;gap:10px;text-decoration:none}
+.top img{width:44px;height:44px}
+.top b{font:400 20px/1 var(--head);letter-spacing:.04em;text-transform:uppercase}
+.top small{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+.loja{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid rgba(227,172,61,.5);color:var(--brand-2);font:600 14px var(--body);text-decoration:none}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
+.num{font:500 13px var(--mono);color:var(--muted)}
+.st{display:flex;gap:12px;align-items:flex-start;margin-top:8px}
+.st .ic{flex:none;width:44px;height:44px;padding:10px;border-radius:50%;background:rgba(227,172,61,.14);color:var(--gold);fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.st.ok .ic{background:rgba(63,191,127,.15);color:var(--ok-line)}
+.st.off .ic{background:rgba(217,208,196,.12);color:#d9d0c4}
+.st h1{margin:0;font:400 26px/1.1 var(--head);text-transform:uppercase;letter-spacing:.02em}
+.st p{margin:6px 0 0;color:var(--muted);font-size:15px}
+.st.vivo .ic{animation:pulsa 2.4s var(--ease-app) infinite}
+@keyframes pulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+ol.et{list-style:none;margin:0;padding:0}
+ol.et li{position:relative;display:grid;grid-template-columns:22px 1fr auto;gap:12px;padding:0 0 18px}
+ol.et li:last-child{padding-bottom:0}
+ol.et li::before{content:"";position:absolute;left:10px;top:22px;bottom:-2px;width:2px;background:var(--line)}
+ol.et li:last-child::before{display:none}
+ol.et li.ok::before{background:var(--ok-line)}
+ol.et i{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);background:var(--bg);margin-top:1px}
+ol.et li.ok i{border-color:var(--ok-line);background:var(--ok-line);box-shadow:inset 0 0 0 4px var(--surface)}
+ol.et li.atual i{border-color:var(--gold);animation:pulsa 1.8s var(--ease-app) infinite}
+ol.et b{display:block;font-size:15px}
+ol.et li:not(.ok):not(.atual) b{color:var(--muted)}
+ol.et small{display:block;color:var(--muted);font-size:13px;margin-top:1px}
+ol.et time{font:500 13px var(--mono);color:var(--muted);white-space:nowrap}
+h2{margin:0 0 12px;font:400 18px/1 var(--head);letter-spacing:.04em;text-transform:uppercase;color:var(--brand-2)}
+.it{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:15px}
+.it:last-child{border-bottom:0}
+.it span:last-child,.tot b{font-family:var(--mono);white-space:nowrap}
+.tot{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:12px;border-top:1px dashed rgba(227,172,61,.35)}
+.tot b{font:400 26px/1 var(--head);color:var(--gold)}
+.sub{color:var(--muted);font-size:13px}
+.acoes{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:4px}
+.wa{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 22px;border-radius:999px;background:#25D366;color:#fff;font:700 16px var(--body);text-decoration:none}
+.wa svg{width:22px;height:22px;fill:#fff}
+.end{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:12px;border-radius:12px;background:rgba(227,172,61,.08);border:1px solid rgba(227,172,61,.35);font-size:14px}
+.end button{flex:none;min-height:40px;padding:0 14px;border-radius:999px;border:0;background:var(--gold);color:#241705;font:700 14px var(--body);cursor:pointer}
+.msg{text-align:center;color:var(--muted);padding:40px 10px}
+.msg b{display:block;color:var(--ink);font-size:18px;margin-bottom:6px}
+.att{margin-top:14px;text-align:center;font-size:12px;color:var(--muted)}
+.esq{background:linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.09),rgba(255,255,255,.04));border-radius:10px;height:18px;margin:8px 0}
+@media(prefers-reduced-motion:reduce){.st.vivo .ic,ol.et li.atual i{animation:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <a class="marca" href="/" aria-label="Tabacaria Brutt"><img src="/favicon/selo-brutt.webp" alt="" width="44" height="44"><span><b>Tabacaria Brutt</b><small>Acompanhe seu pedido</small></span></a>
+    <a class="loja" href="/">Ver a loja</a>
+  </header>
+  <div id="app"><div class="card"><div class="esq" style="width:40%"></div><div class="esq" style="width:80%;height:28px"></div><div class="esq" style="width:60%"></div></div></div>
+</main>
+<script>
+(function(){
+"use strict";
+var SUPA={url:"https://vedlxtljilsanykmddtj.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlZGx4dGxqaWxzYW55a21kZHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NjYzNzUsImV4cCI6MjEwNjE0MjM3NX0.JlUPvGdomBHLlu5ei5dEb1qFR4FZ2nC45JTZUJ-IN6g"};
+var WHATS="5521996600243",END_LOJA="Rua 18, 145 - Campo Grande, Rio de Janeiro - RJ";
+var UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+var app=document.getElementById("app"),t=null;
+var q=new URLSearchParams(location.search),id=q.get("id")||q.get("pedido")||"";
+var esc=function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
+var R=function(v){return(Number(v)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})};
+var hora=function(iso){if(!iso)return"";try{return new Date(iso).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit",timeZone:"America/Sao_Paulo"})}catch(_){return""}};
+var dia=function(iso){try{return new Date(iso).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",timeZone:"America/Sao_Paulo"})}catch(_){return""}};
+var IC={pix:'<path d="M7 7l5-5 5 5-5 5zM7 17l5-5 5 5-5 5z"/>',bag:'<path d="M6 7h12l1 13H5Z"/><path d="M9 7a3 3 0 0 1 6 0"/><path d="m9.5 13 1.8 1.8L15 11"/>',
+  check:'<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16.5 9.5"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  x:'<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>',back:'<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>'};
+var svg=function(n){return'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+(IC[n]||"")+"</svg>"};
+var WA='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>';
+function final(a){return a.status==="concluido"||a.status==="cancelado"||a.status==="expirado"||a.status==="recusado"}
+/* mesmas etapas e textos de js/acompanhar.js */
+function etapas(a){
+  var pago=!!a.pago||a.status==="pago"||a.status==="concluido",fim=a.status==="concluido";
+  var L=[{t:"Recebemos seu pedido",s:"Pedido #"+a.numero,h:a.criado,ok:true},{t:"Pagamento confirmado",s:pago?"Pix aprovado pelo Mercado Pago":"Aguardando o Pix",h:a.pago,ok:pago}];
+  if(a.tipo==="entrega"){L.push({t:"Saiu para entrega",s:a.bairro?"A caminho de "+a.bairro:"A caminho do seu endereço",h:a.saiu,ok:!!a.saiu||fim});L.push({t:"Pedido entregue",s:"Bom proveito!",h:a.concluido,ok:fim})}
+  else{L.push({t:"Aguardando você pedir Uber / 99",s:"Peça a corrida para o endereço da loja",h:a.pago,ok:!!a.pago});L.push({t:"Link da corrida recebido",s:a.corrida?"A equipe já recebeu o link":"Mande o link da corrida pelo WhatsApp",h:a.corrida,ok:!!a.corrida});L.push({t:"Motorista coletou o pedido",s:"A caminho com o entregador do app",h:a.saiu,ok:!!a.saiu||fim})}
+  var atual=-1;L.forEach(function(e,i){if(e.ok)atual=i});L.forEach(function(e,i){e.atual=!final(a)&&i===atual+1});return L;
+}
+function topo(a){
+  var exp=a.status==="aguardando_pagamento"&&a.expira&&new Date(a.expira)<new Date();
+  if(a.estornado)return["back","Pagamento devolvido","O Mercado Pago devolveu o valor do pedido. Qualquer dúvida, fale com a loja.","off"];
+  if(a.status==="cancelado")return["x","Pedido cancelado","Nada foi cobrado. Se quiser, é só fazer o pedido de novo.","off"];
+  if(a.status==="recusado")return["x","Pagamento não aprovado","Nada foi cobrado. Você pode tentar de novo pelo site.","off"];
+  if(a.status==="expirado"||exp)return["clock","Pix expirado","O código venceu antes do pagamento e nada foi cobrado.","off"];
+  if(a.status==="aguardando_pagamento")return["pix","Aguardando o pagamento","Assim que o Pix cair, a gente começa a separar.","vivo"];
+  if(a.status==="concluido")return[ "check",a.tipo==="entrega"?"Pedido entregue!":"Pedido concluído!","Obrigado pela preferência. Bom proveito! 🔥","ok"];
+  if(a.saiu)return a.tipo==="entrega"?["bag","Saiu para entrega","Seu pedido está a caminho. Fique de olho no portão 😉","vivo"]:["bag","Motorista coletou o pedido","O entregador do app está levando até você.","vivo"];
+  if(a.corrida)return["bag","Link da corrida recebido","A equipe está aguardando o motorista chegar para coletar.","vivo"];
+  if(a.reserva)return["clock","Pagamento confirmado","A loja estava fechada: separamos seu pedido assim que abrir.","vivo"];
+  return a.tipo==="entrega"?["bag","Pagamento confirmado","Estamos separando seu pedido. Avisamos quando sair para entrega.","vivo"]:["bag","Pedido em separação","Já pode pedir o Uber Flash ou 99 para o endereço abaixo. Depois, mande o link da corrida pra gente no WhatsApp.","vivo"];
+}
+function erro(t,s){app.innerHTML='<div class="card msg"><b>'+esc(t)+'</b>'+esc(s)+'</div><div class="acoes"><a class="wa" href="https://wa.me/'+WHATS+'?text='+encodeURIComponent("Olá! Quero saber do meu pedido.")+'" target="_blank" rel="noopener">'+WA+'Falar com a loja</a></div>'}
+function desenha(a){
+  var tp=topo(a),et=etapas(a),uber=a.tipo!=="entrega"&&(a.status==="pago")&&!a.saiu;
+  document.title="Pedido #"+a.numero+" · Tabacaria Brutt";
+  var waTxt="Olá! Sobre o meu pedido #"+a.numero+(a.nome?" ("+a.nome+")":"")+": "+location.href;
+  app.innerHTML=
+   '<section class="card"><div class="num">Pedido #'+esc(a.numero)+(a.criado?' · '+esc(dia(a.criado))+' às '+esc(hora(a.criado)):"")+'</div>'+
+   '<div class="st '+tp[3]+'">'+svg(tp[0])+'<div><h1>'+esc(tp[1])+'</h1><p>'+esc(tp[2])+'</p></div></div>'+
+   (uber?'<div class="end"><span>Coleta: <b>'+esc(END_LOJA)+'</b></span><button type="button" id="cp">Copiar</button></div>':"")+'</section>'+
+   (tp[3]==="off"?"":'<section class="card"><h2>Andamento</h2><ol class="et">'+et.map(function(e){return'<li class="'+(e.ok?"ok":e.atual?"atual":"")+'"><i aria-hidden="true"></i><span><b>'+esc(e.t)+'</b><small>'+esc(e.s)+'</small></span><time>'+(e.ok&&e.h?esc(hora(e.h)):"")+'</time></li>'}).join("")+'</ol></section>')+
+   '<section class="card"><h2>Itens</h2>'+(a.itens||[]).map(function(i){return'<div class="it"><span>'+esc(i.qtd)+'× '+esc(i.nome)+'</span><span>'+(i.subtotal!=null?esc(R(i.subtotal)):"")+'</span></div>'}).join("")+
+   (a.tipo==="entrega"&&Number(a.taxa_entrega)>0?'<div class="it sub"><span>Entrega pela loja'+(a.bairro?" · "+esc(a.bairro):"")+'</span><span>'+esc(R(a.taxa_entrega))+'</span></div>':"")+
+   '<div class="tot"><span>Total</span><b>'+esc(R(a.total))+'</b></div></section>'+
+   '<div class="acoes"><a class="wa" href="https://wa.me/'+WHATS+'?text='+encodeURIComponent(waTxt)+'" target="_blank" rel="noopener">'+WA+'Falar com a loja</a></div>'+
+   (final(a)?"":'<p class="att">Esta página se atualiza sozinha.</p>');
+  var cp=document.getElementById("cp");if(cp)cp.onclick=function(){(navigator.clipboard?navigator.clipboard.writeText(END_LOJA):Promise.reject()).then(function(){cp.textContent="Copiado ✓"},function(){cp.textContent="Copie acima"})};
+}
+function buscar(){
+  fetch(SUPA.url+"/functions/v1/checkout?acao=status&pedido="+encodeURIComponent(id),{headers:{apikey:SUPA.key,Authorization:"Bearer "+SUPA.key}})
+  .then(function(r){return r.json().then(function(j){return[r.status,j]})})
+  .then(function(x){var j=x[1];if(x[0]===404||!j||!j.acomp){erro("Pedido não encontrado","Confira o link ou fale com a loja pelo WhatsApp.");return}desenha(j.acomp);clearTimeout(t);if(!final(j.acomp))t=setTimeout(buscar,20000)})
+  .catch(function(){clearTimeout(t);t=setTimeout(buscar,20000)});
+}
+if(!UUID.test(id))erro("Link incompleto","Abra o link do pedido que a loja mandou no WhatsApp.");else buscar();
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&UUID.test(id))buscar()});
+})();
+</script>
+</body>
+</html>

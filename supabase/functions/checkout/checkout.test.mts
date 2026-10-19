@@ -316,7 +316,7 @@ await t("etapa 'saiu para entrega': só equipe, só entrega da loja, 1 vez, com 
   whats.length = 0;
   const r = await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe);
   assert.equal(r.status, 200); assert.ok(r.j.saiu_em);
-  assert.match(decodeURIComponent(r.j.whats.link), /saiu para entrega[\s\S]*Rua A, 10[\s\S]*\?pedido=/);
+  assert.match(decodeURIComponent(r.j.whats.link), /saiu para entrega[\s\S]*Rua A, 10[\s\S]*\/pedido\/\?id=/);
   assert.ok(r.j.whats.link.startsWith("https://wa.me/5521955554444?text="));
   assert.equal(r.j.whats.auto, true);                                                // Evolution configurada no teste
   assert.equal(whats.filter(w => /saiu para entrega/.test(w.text)).length, 1);
@@ -337,10 +337,10 @@ await t("cliente que chama Uber/99: pago (pede a corrida) → motoboy retirou �
   assert.match(pago.text, /pedir o Uber Flash ou 99[\s\S]*Rua 18, 145[\s\S]*link da corrida/);
   const link = await call("etapa", { pedido_id: c.j.pedido_id, etapa: "link" }, equipe);
   assert.equal(link.status, 200); assert.ok(link.j.corrida_link_em);
-  assert.match(decodeURIComponent(link.j.whats.link), /Link da corrida recebido[\s\S]*\?pedido=/);
+  assert.match(decodeURIComponent(link.j.whats.link), /Link da corrida recebido[\s\S]*\/pedido\/\?id=/);
   const r = await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe);
   assert.equal(r.status, 200); assert.ok(r.j.saiu_em);
-  assert.match(decodeURIComponent(r.j.whats.link), /Entregador já retirou seu pedido[\s\S]*\?pedido=/);
+  assert.match(decodeURIComponent(r.j.whats.link), /Entregador já retirou seu pedido[\s\S]*\/pedido\/\?id=/);
   assert.equal(whats.filter(w => /Entregador já retirou/.test(w.text)).length, 1);
   await call("etapa", { pedido_id: c.j.pedido_id, etapa: "saiu" }, equipe);
   assert.equal(whats.filter(w => /Entregador já retirou/.test(w.text)).length, 1);                // 1 vez só
