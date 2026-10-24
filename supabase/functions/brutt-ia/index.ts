@@ -88,6 +88,16 @@ export function conhecimentoTexto(lista: any[]): string {
   return out.trim();
 }
 let CON_CACHE: { t: number; txt: string } | null = null;
+// Entrega pela loja ligada/desligada no CMS do painel (site_cms_config.config.entrega.loja; 24/10/2026). Desligada = só Uber/99.
+// Sem leitura vale ligada (como antes do botão existir); o checkout confere de novo na hora de criar o pedido.
+let ENTREGA_CACHE: { t: number; on: boolean } | null = null;
+export async function entregaLojaLigada(): Promise<boolean> {
+  if (ENTREGA_CACHE && Date.now() - ENTREGA_CACHE.t < 30_000) return ENTREGA_CACHE.on;
+  try { const r = await sbGet("site_cms_config?select=config&id=eq.homepage"); const on = r?.[0]?.config?.entrega?.loja !== false; ENTREGA_CACHE = { t: Date.now(), on }; return on; }
+  catch { return true; }
+}
+export function _limpaEntregaCache() { ENTREGA_CACHE = null; }   // testes
+const PAUSADA_IA = "HOJE A ENTREGA PELA LOJA ESTÁ PAUSADA (a equipe desligou no painel): estamos enviando SOMENTE por Uber ou 99. Não ofereça nem calcule entrega pela loja (não chame definir_entrega); para receber em casa, o cliente pede o Uber Flash ou 99 com a loja como ponto de coleta (frete da loja R$ 0,00). Se ele pedir entrega da loja, explique com gentileza e ofereça o Uber/99.";
 async function conhecimentoLoja(): Promise<string> {
   if (CON_CACHE && Date.now() - CON_CACHE.t < 60000) return CON_CACHE.txt;
   try { const txt = conhecimentoTexto(await sbGet("ia_conhecimento?ativo=eq.true&select=titulo,texto&order=ordem.asc,created_at.asc")); CON_CACHE = { t: Date.now(), txt }; return txt; }
@@ -369,7 +379,7 @@ const FERRAMENTAS = [{ functionDeclarations: [
     parameters: { type: "object", properties: { nome: { type: "string", description: "Nome do cliente" }, reserva: { type: "boolean", description: "true = o cliente aceitou RESERVAR o pedido com a loja fechada. Nunca use true sem ele ter dito que sim." } }, required: ["nome"] } },
 ] }];
 
-type Ctx = { draft: Draft; usadas: string[]; mudouPedido: boolean; whatsapp: string | null; numero: string | null; session: string; loja?: any; reserva?: boolean; perguntouAntes?: boolean; confirmouReserva?: boolean; falas?: string; finalErro?: string; humano?: boolean; sug?: Atalho[] | null; perdeu?: boolean; pagOnline?: boolean };
+type Ctx = { draft: Draft; usadas: string[]; mudouPedido: boolean; whatsapp: string | null; numero: string | null; session: string; loja?: any; reserva?: boolean; perguntouAntes?: boolean; confirmouReserva?: boolean; falas?: string; finalErro?: string; humano?: boolean; sug?: Atalho[] | null; perdeu?: boolean; pagOnline?: boolean; entregaPausada?: boolean };
 
 async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
   const d = c.draft; a = a && typeof a === "object" ? a : {};
@@ -428,6 +438,7 @@ async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
     else {
       if (!r.minimo.ok) sug.push({ t: "Ver mais produtos", q: "Quais outros produtos vocês têm?" });
       else if (d.entrega) sug.push({ t: "Fechar pedido", q: "Pode fechar o pedido" });
+      else if (c.entregaPausada) sug.push({ t: "Pedir Uber/99", q: "Vou solicitar a entrega pelo Uber ou 99" });
       else sug.push({ t: "Entrega pela loja", q: "Quero entrega pela loja" }, { t: "Eu mesmo peço Uber/99", q: "Prefiro eu mesmo solicitar a entrega pelo Uber ou 99" });
       if (sug.length < 3) sug.push({ t: "Ver promoções", q: "Quais produtos estão em promoção?" });
       c.sug = sug.slice(0, 3);
@@ -435,6 +446,7 @@ async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
     return { itens: r.linhas.map((l: any) => ({ id: l.id, nome: l.nome, qtd: l.qtd, preco_unit: l.preco, total: l.total })), subtotal: r.subtotal, minimo: r.minimo, ...(r.taxa ? { taxa_entrega: r.taxa, total: r.total } : {}), ...(comp.length ? { complementos: comp } : {}), avisos: [...avisos, ...r.problemas] };
   }
   if (nome === "definir_entrega") {
+    if (c.entregaPausada) return { ok: false, erro: "entrega_pausada", mensagem: PAUSADA_IA };
     const rua = limpaTexto(a.rua, 80), numeroDig = limpaTexto(a.numero, 12), numero = /\d/.test(numeroDig) ? numeroDig : "";
     const bairroDig = limpaTexto(a.bairro, 50), subOficial = SUBBAIRROS[semAcento(bairroDig)];
     const faltando: string[] = []; if (!rua) faltando.push("o nome da rua"); if (!numero) faltando.push("o número da casa/prédio");
@@ -485,6 +497,7 @@ async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
     const primeiro = semAcento(nomeC).split(/[^a-z0-9]+/).filter(w => w.length >= 2)[0] ?? "";
     const disseONome = !!primeiro && (new RegExp("\\b" + primeiro + "\\b").test(semAcento(c.falas ?? "")) || semAcento(d.nome ?? "").split(/[^a-z0-9]+/).includes(primeiro));   // o nome tem que ter vindo DO CLIENTE (o modelo não pode inventar)
     if (nomeC.length < 2 || !disseONome) { c.finalErro = "falta_nome"; return { ok: false, erro: "falta_nome", mensagem: "O cliente ainda não disse o nome. Pergunte: \"Qual é o seu nome?\" e espere a resposta dele. Nunca invente o nome." }; }
+    if (c.entregaPausada && d.entrega?.modo === "entrega") { c.finalErro = "entrega_pausada"; return { ok: false, erro: "entrega_pausada", mensagem: PAUSADA_IA + " O endereço que ele passou não serve para a entrega da loja hoje: pergunte se ele pode pedir o Uber/99 e, se sim, chame escolher_uber_99 antes de fechar." }; }
     const r = await resumoPedido(d);
     if (!r.linhas.length) return { ok: false, erro: "sem_itens", mensagem: "O pedido está vazio." };
     if (r.problemas.length) return { ok: false, erro: "estoque", problemas: r.problemas, mensagem: "Ajuste os itens com atualizar_pedido antes de fechar." };
@@ -586,13 +599,14 @@ async function gemini(contents: any[], system: string, modelo: string, limiteMs:
 
 async function rodaAgente(c: Ctx, historico: any[], mensagem: string, tempos: Tempos): Promise<string> {
   const status = statusLoja(_deps.now(), await horariosLoja()); c.loja = status;
+  c.entregaPausada = !(await entregaLojaLigada());
   const r0 = await resumoPedido(c.draft);
   const resumo = c.draft.pedido ? `pedido #${c.draft.pedido.numero} JÁ ENVIADO (se o cliente quiser outro, comece um novo)`
     : [r0.linhas.length ? "itens: " + r0.linhas.map((l: any) => `${l.qtd}x ${l.nome} (${R(l.preco)})`).join("; ") + `; subtotal ${R(r0.subtotal)}` : "vazio",
        c.draft.entrega?.modo === "entrega" ? `entrega em ${c.draft.entrega.rua}, ${c.draft.entrega.numero} (${c.draft.entrega.km} km, taxa ${R(c.draft.entrega.taxa)})` : c.draft.entrega?.modo === "fora" ? `endereço FORA do raio (${c.draft.entrega.local}) — ofereça Uber/99` : c.draft.entrega?.modo === "frete" ? "cliente mesmo vai solicitar a entrega (Uber Flash/99), frete da loja R$ 0,00" : "ainda não escolheu como receber"].join(" | ")
       + (!status.aberto && c.draft.reservaPerguntada && !c.draft.pedido ? " | JÁ PERGUNTEI se ele quer reservar: se a mensagem dele agora for um sim, chame finalizar_pedido com reserva=true" : "");
   const ultimosTxt = c.draft.ultimos?.length ? c.draft.ultimos.map((u, i) => `${i + 1}) ${u.nome} (id ${u.id})`).join("; ") : "nenhum ainda";
-  const system = promptSistema(status, resumo, ultimosTxt, !!c.pagOnline, await conhecimentoLoja());
+  const system = promptSistema(status, resumo, ultimosTxt, !!c.pagOnline, await conhecimentoLoja()) + (c.entregaPausada ? "\n\n" + PAUSADA_IA : "");
   const prazo = Date.now() + PRAZO_TOTAL_MS;
 
   /** uma conversa completa com UM modelo (as "assinaturas de pensamento" só valem pro modelo que as gerou: por isso, ao trocar de modelo, recomeça do zero) */

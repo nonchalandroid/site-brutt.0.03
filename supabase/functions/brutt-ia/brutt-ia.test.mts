@@ -24,8 +24,10 @@ const R=(o:any,s=200)=>new Response(JSON.stringify(o),{status:s});
   if(p==="rpc/ia_cota") { cotaChamadas.push(body); return R({ok:cotaOk,total:1,ip:1}); }
   if(p==="rpc/ia_buscar_produtos") return R([]);
   if(p==="ia_conhecimento") return R(conhecimento);
+  if(p==="site_cms_config") return R(cmsConfig);
   return R([],201);
 };
+let cmsConfig:any[]=[];
 let conhecimento:any[]=[{titulo:"Estacionamento",texto:"Tem vaga na rua em frente à loja."},{titulo:"",texto:"  "}];
 let cotaOk=true; const cotaChamadas:any[]=[]; let geoMapa:any[]=[]; let rotaM=500;
 const M=await import(new URL("./index.ts", import.meta.url).href);
@@ -74,3 +76,16 @@ console.log("IA: 'eu mesmo peço' sem endereço, fechamento com checkout e promp
   assert.ok(prompts.at(-1)!.includes("CONJUNTO CAMPINHO"));
   assert.ok(prompts.at(-1)!.includes("ONDE FICA A LOJA") && prompts.at(-1)!.includes("Rua Dezoito, 145 — Conjunto Campinho, Campo Grande"), "a loja é do Conjunto Campinho, em Campo Grande");
   geoMapa=[]; rotaM=500; console.log("IA: Conjunto Campinho = taxa mínima; casa achada longe soma por km; homônima não engana — OK"); }
+
+// entrega pela loja desligada no CMS: prompt avisa, definir_entrega recusa, atalho só do Uber/99, fechamento com endereço da loja é barrado
+{ cmsConfig=[{config:{entrega:{loja:false}}}]; M._limpaEntregaCache();
+  roteiro=[[{functionCall:{name:"definir_entrega",args:{rua:"Rua 5",numero:"120",bairro:"Campo Grande"}}}],[{text:"Hoje só Uber/99."}]];
+  const n=ferramentasResp.length; const j=await chama("quero entrega na Rua 5, 120",false);
+  const r=ferramentasResp.slice(n).find((f:any)=>f.name==="definir_entrega")?.response?.output;
+  assert.equal(r.ok,false); assert.equal(r.erro,"entrega_pausada");
+  assert.ok(prompts.at(-1)!.includes("ENTREGA PELA LOJA ESTÁ PAUSADA"),"prompt avisa a pausa");
+  assert.ok(!(j.sugestoes||[]).some((x:any)=>x.t==="Entrega pela loja"),"sem atalho de entrega da loja: "+JSON.stringify(j.sugestoes));
+  cmsConfig=[{config:{entrega:{loja:true}}}]; M._limpaEntregaCache();
+  roteiro=[[{text:"oi"}]]; await chama("oi",false);
+  assert.ok(!prompts.at(-1)!.includes("ENTREGA PELA LOJA ESTÁ PAUSADA"),"religada: sem aviso");
+  cmsConfig=[]; M._limpaEntregaCache(); console.log("IA: entrega pela loja desligada no painel = só Uber/99 — OK"); }

@@ -134,6 +134,21 @@ async function freioWhats(whats: string) {
   return abertos >= LIMITE.whatsAbertosHora || ped.length >= LIMITE.whatsDia;
 }
 
+// Entrega pela loja ligada/desligada no CMS do painel (site_cms_config.config.entrega.loja; 24/10/2026).
+// Desligada = só Uber/99. Sem leitura (erro de rede/banco) vale ligada, como era antes do botão existir.
+let ENTREGA_CACHE: { t: number; on: boolean } | null = null;
+export async function entregaLojaLigada(): Promise<boolean> {
+  if (ENTREGA_CACHE && Date.now() - ENTREGA_CACHE.t < 30_000) return ENTREGA_CACHE.on;
+  try {
+    const r = await sbGet("site_cms_config?select=config&id=eq.homepage");
+    const on = r?.[0]?.config?.entrega?.loja !== false;
+    ENTREGA_CACHE = { t: Date.now(), on };
+    return on;
+  } catch { return true; }
+}
+export function _limpaEntregaCache() { ENTREGA_CACHE = null; }   // testes
+export const ENTREGA_PAUSADA_MSG = "Hoje a entrega pela loja está pausada: estamos enviando somente por Uber ou 99. Escolha “Prefiro eu mesmo solicitar a entrega”.";
+
 // ───────────────────────────── criar pedido ─────────────────────────────
 type ItemIn = { id: string; q: number };
 export async function criarPedido(body: any, ip = "") {
@@ -175,6 +190,7 @@ export async function criarPedido(body: any, ip = "") {
 
   let entrega: any, taxa = 0;
   if (body?.entrega?.tipo === "entrega") {
+    if (!(await entregaLojaLigada())) return { erro: ENTREGA_PAUSADA_MSG, status: 409 };
     const g = body.entrega.geo, e = body.entrega.endereco || {};
     const lat = Number(g?.lat), lng = Number(g?.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return { erro: "Confirme o endereço de entrega de novo.", status: 400 };
