@@ -487,4 +487,15 @@ await t("contato opcional: e-mail e WhatsApp válidos são guardados; promoçõe
   p = db.pedidos.find(x => x.id === c3.j.pedido_id); assert.equal(p.aceita_promos, false, "sem marcar a caixa = não aceita");
   assert.equal((await call("criar", { ...semWhats, email: "nao-e-email", entrega: { tipo: "cliente" } })).status, 400);
 });
+await t("entrega pela loja desligada no CMS: recusa a entrega da loja e aceita Uber/99", async () => {
+  const ent = { tipo: "entrega", geo: { lat: -22.9, lng: -43.6 }, endereco: { rua: "Rua A", numero: "10", cidade: "Rio de Janeiro", uf: "RJ", bairro: "Campo Grande" } };
+  db.site_cms_config = [{ id: "homepage", config: { entrega: { loja: false } } }]; C._limpaEntregaCache();
+  let r = await call("criar", { ...base, entrega: ent });
+  assert.equal(r.status, 409); assert.match(r.j.erro, /Uber ou 99/);
+  r = await call("criar", { ...base, entrega: { tipo: "cliente" } }); assert.equal(r.status, 200, "Uber/99 continua");
+  db.site_cms_config = [{ id: "homepage", config: { entrega: { loja: true } } }]; C._limpaEntregaCache();
+  r = await call("criar", { ...base, entrega: ent }); assert.equal(r.status, 200, "religada volta a aceitar");
+  delete db.site_cms_config; C._limpaEntregaCache();
+  r = await call("criar", { ...base, entrega: ent }); assert.equal(r.status, 200, "sem ler o CMS vale ligada (como antes do botão)");
+});
 console.log(`\n${ok} testes passaram`);
