@@ -16,3 +16,6 @@ ddg-ziggy.html 200 text/html; charset=UTF-8 https://html.duckduckgo.com/html/?q=
 ddg-nay.html 202 text/html; charset=UTF-8 https://html.duckduckgo.com/html/?q=nay+ess%C3%AAncia+narguile+site+oficial
 ddg-onix.html 202 text/html; charset=UTF-8 https://html.duckduckgo.com/html/?q=onix+ess%C3%AAncia+narguile+site+oficial
 ddg-rb.html 202 text/html; charset=UTF-8 https://html.duckduckgo.com/html/?q=red+bull+logo+svg+official+brand
+sadhu-logo.png 200 image/png https://images.tcdn.com.br/img/img_prod/1244487/1792788616_664f9824eb8b75fc.png
+redbull-logo.png 200 image/png https://assets.redbullshop.com/content/RB%20SHOP%20BANNERS/Navigation%20Logos/nav_redbullcom-logo.png
+redbull-logo-meta.png 200 image/png https://assets.redbullshop.com/t_meta-og/content/RB%20SHOP%20BANNERS/Navigation%20Logos/nav_redbullcom-logo.png
