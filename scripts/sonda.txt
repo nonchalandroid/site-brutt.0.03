@@ -1,0 +1,9 @@
+rb-home.html https://www.redbull.com/br-pt/
+rb-energy.html https://www.redbull.com/br-pt/energydrink
+rb-int.html https://www.redbull.com/int-en/
+sadhu1.html https://www.sadhu.com.br/
+sadhu2.html https://sadhuoficial.com.br/
+sadhu3.html https://www.sadhuheadshop.com/
+sadhu4.html https://www.lojasadhu.com/
+sadhu-ddg.html https://html.duckduckgo.com/html/?q=sadhu+headshop+bolador
+sadhu-bing.html https://www.bing.com/search?q=sadhu+headshop+bolador+dichavador
