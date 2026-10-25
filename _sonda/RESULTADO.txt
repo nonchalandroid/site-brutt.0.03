@@ -7,3 +7,12 @@ sadhu3.html 000  https://www.sadhuheadshop.com/falhou
 sadhu4.html 000  https://www.lojasadhu.com/falhou
 sadhu-ddg.html 200 text/html; charset=UTF-8 https://html.duckduckgo.com/html/?q=sadhu+headshop+bolador
 sadhu-bing.html 200 text/html; charset=utf-8 https://www.bing.com/search?q=sadhu+headshop+bolador+dichavador
+sadhu.html 200 text/html; charset=ISO-8859-1 https://www.sadhupaper.com.br/
+rbshop.html 200 text/html; charset=utf-8 https://www.redbullshop.com/en-int/
+rbpool.html 200 text/html https://www.redbullcontentpool.com/
+rbmh.html 200 text/html; charset=utf-8 https://www.redbullmediahouse.com/en/
+rbcom.html 403 text/html http://www.redbull.com/br/pt
+ddg-ziggy.html 200 text/html; charset=UTF-8 https://html.duckduckgo.com/html/?q=ziggy+ess%C3%AAncia+narguile+site+oficial
+ddg-nay.html 202 text/html; charset=UTF-8 https://html.duckduckgo.com/html/?q=nay+ess%C3%AAncia+narguile+site+oficial
+ddg-onix.html 202 text/html; charset=UTF-8 https://html.duckduckgo.com/html/?q=onix+ess%C3%AAncia+narguile+site+oficial
+ddg-rb.html 202 text/html; charset=UTF-8 https://html.duckduckgo.com/html/?q=red+bull+logo+svg+official+brand
