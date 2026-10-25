@@ -5,16 +5,15 @@
    [slug, nome, largura do arquivo] — a altura é sempre 120. */
 (() => {
   const MARCAS = [
-    ["zomo", "Zomo", 272], ["lion-rolling-circus", "Lion Rolling Circus", 126], ["bem-bolado", "Bem Bolado", 355],
+    ["zomo", "Zomo", 272], ["bem-bolado", "Bem Bolado", 355],
     ["johnnie-walker", "Johnnie Walker", 858], ["ocb", "OCB", 370], ["ballantines", "Ballantine's", 442],
-    ["smoking", "Smoking", 315], ["jack-daniels", "Jack Daniel's", 177], ["baly", "Baly", 640],
-    ["chivas", "Chivas Regal", 155], ["kaloud", "Kaloud", 531], ["smirnoff", "Smirnoff", 377],
+    ["smoking", "Smoking", 315], ["baly", "Baly", 640],
+    ["kaloud", "Kaloud", 531], ["smirnoff", "Smirnoff", 377],
     ["zengaz", "Zengaz", 904], ["jameson", "Jameson", 503], ["a-piteira", "A Piteira", 355],
     ["tanqueray", "Tanqueray", 320], ["beefeater", "Beefeater", 371],
-    ["bombaco", "Bombaco", 440], ["bombay-sapphire", "Bombay Sapphire", 581], ["clipper", "Clipper", 232],
-    ["buchanans", "Buchanan's", 600], ["sampoerna", "Sampoerna", 169], ["heineken", "Heineken", 233],
-    ["corona", "Corona", 221], ["coca-cola", "Coca-Cola", 307],
-  ];
+    ["bombay-sapphire", "Bombay Sapphire", 581],
+    ["buchanans", "Buchanan's", 600], ["heineken", "Heineken", 233],
+    ["corona", "Corona", 221], ["coca-cola", "Coca-Cola", 307] ];
   const box = document.getElementById("marcas");
   if (!box) return;
   // mesma "área" para todas: logo comprida fica mais baixa, logo quadrada mais alta (equilíbrio visual)

@@ -7,20 +7,14 @@ Marca sem logo oficial encontrada NÃO entra (nada de texto ou logo inventada no
 | Arquivo | Marca | Categoria | Fonte oficial |
 |---|---|---|---|
 | zomo.webp | Zomo | Essências / carvão | zomoofficial.com (logotipo-roxa.png) |
-| lion-rolling-circus.webp | Lion Rolling Circus | Headshop | lionrollingcircus.com (img/logo.svg) |
 | bem-bolado.webp | Bem Bolado | Headshop | bembolado.com.br (logo-bembolado.svg) |
 | ocb.webp | OCB | Sedas e filtros | ocb.net (logoOCB.svg) |
 | smoking.webp | Smoking | Sedas | smokingpaper.com (smoking-logo.svg) |
 | a-piteira.webp | A Piteira | Piteiras | apiteira.com.br (logo-transparente.png) |
 | zengaz.webp | Zengaz | Maçaricos | zengaz.com (zengaz-logo.png) |
-| clipper.webp | Clipper | Isqueiros | clipper.com (Logo_Clipper_fondo_amarillo.png, sem o fundo amarelo) |
 | kaloud.webp | Kaloud | Narguile | kaloud.com (logo horizontal) |
-| bombaco.webp | Bombaco | Tabaco | bombaco.shop (logotipo do site) |
-| sampoerna.webp | Sampoerna | Cigarros | sampoerna.com (sampoerna_logo.png) |
 | johnnie-walker.webp | Johnnie Walker (Red e Black Label) | Whisky | johnniewalker.com (jw-logo.svg) |
-| jack-daniels.webp | Jack Daniel's | Whisky | jackdaniels.com (footer-logo.svg) |
 | ballantines.webp | Ballantine's | Whisky | pernod-ricard.com (Ballantines_logo_600.png) |
-| chivas.webp | Chivas Regal | Whisky | pernod-ricard.com (chivas_logo_600.png) |
 | jameson.webp | Jameson | Whisky | pernod-ricard.com (jameson_logo_600.png) |
 | buchanans.webp | Buchanan's | Whisky | buchananswhisky.com (buchanans-logo.png) |
 | smirnoff.webp | Smirnoff | Vodka | diageo.com (logo-smirnoff_2023.svg) |
@@ -32,7 +26,7 @@ Marca sem logo oficial encontrada NÃO entra (nada de texto ou logo inventada no
 | corona.webp | Corona | Cerveja | corona.com (corona_logo_white.png) |
 | coca-cola.webp | Coca-Cola | Refrigerante | coca-cola.com/br (Coca-Cola-original-logo-co.svg) |
 
-BIC saiu a pedido do dono (25/10/2026).
+BIC saiu a pedido do dono (25/10/2026). Também saíram por ficarem ilegíveis no tamanho do carrossel (detalhe fino demais): Lion Rolling Circus, Jack Daniel's, Chivas, Bombaco, Sampoerna e Clipper.
 
 ## Pendentes (sem logo oficial encontrada ou site bloqueia robôs)
 Ziggy, Nay, Onix, Sadhu, Guru Spirit, Crazy Dogs, Papelito, Elements, Red Bull, Monster, Gordon's, White Horse,
