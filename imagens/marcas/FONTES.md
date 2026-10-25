@@ -21,6 +21,8 @@ Marca sem logo oficial encontrada NÃO entra (nada de texto ou logo inventada no
 | tanqueray.webp | Tanqueray | Gin | tanqueray.com (logo-white-stacked.png) |
 | beefeater.webp | Beefeater | Gin | pernod-ricard.com (beefeater-logo_600.png) |
 | bombay-sapphire.webp | Bombay Sapphire | Gin | bombaysapphire.com (BS_Primary_Signature_White_RGB.png) |
+| sadhu.webp | Sadhu | Headshop | sadhupaper.com.br (site oficial do Sadhu Group, logo do topo) |
+| red-bull.webp | Red Bull | Energético | redbullshop.com (loja oficial: nav_redbullcom-logo.png; sem o sol amarelo e sem a palavra SHOP, para a forma branca ficar legível) |
 | baly.webp | Baly | Energético | balybrasil.com.br (baly-logo.svg) |
 | heineken.webp | Heineken | Cerveja | heineken.com (nav_logo_heineken.png) |
 | corona.webp | Corona | Cerveja | corona.com (corona_logo_white.png) |
@@ -29,7 +31,7 @@ Marca sem logo oficial encontrada NÃO entra (nada de texto ou logo inventada no
 BIC saiu a pedido do dono (25/10/2026). Também saíram por ficarem ilegíveis no tamanho do carrossel (detalhe fino demais): Lion Rolling Circus, Jack Daniel's, Chivas, Bombaco, Sampoerna e Clipper.
 
 ## Pendentes (sem logo oficial encontrada ou site bloqueia robôs)
-Ziggy, Nay, Onix, Sadhu, Guru Spirit, Crazy Dogs, Papelito, Elements, Red Bull, Monster, Gordon's, White Horse,
+Ziggy (site oficial achado: ziggyoficialbr.com, ainda não usado), Nay, Onix, Guru Spirit, Crazy Dogs, Papelito, Elements, Monster, Gordon's, White Horse,
 Lucky Strike, Rothmans, Carlton/Dunhill, Marlboro, Gudang Garam, charutos (Alonso Menendez, Dona Flor, Phillies…),
 cervejas Ambev (Brahma, Antarctica, Spaten, Stella), Del Valle e as marcas menores do catálogo.
 Para incluir: salvar a logo oficial (PNG transparente ou SVG) branca em 120 px de altura aqui e acrescentar em MARCAS (js/marcas.js).
