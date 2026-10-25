@@ -1,7 +1,2 @@
-a-piteira
-smirnoff
 bombaco
-ballantines
-jameson
-beefeater
-chivas
+del-valle
