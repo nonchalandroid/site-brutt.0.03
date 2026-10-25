@@ -1677,6 +1677,14 @@ b,strong,h1,h2,h3,h4{font-weight:700}
 .cms-ent-st{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;color:var(--salvia-cl,#2f5a3a);background:var(--salvia-es,#e3efe2);border:1px solid color-mix(in srgb,var(--salvia-cl,#2f5a3a) 30%,transparent)}
 .cms-ent.off{border-color:color-mix(in srgb,var(--terracota-cl,#8a3a1c) 45%,transparent)}
 .cms-ent.off .cms-ent-st{color:var(--terracota-cl,#8a3a1c);background:var(--terracota-es,#f6e2d6);border-color:color-mix(in srgb,var(--terracota-cl,#8a3a1c) 35%,transparent)}
+/* PERFIL DE SABOR manual (25/10/2026): barras de arrastar na ficha do produto, nas cores das barras da loja */
+.pf-eixos{display:grid;gap:10px}
+.pf-eixo{display:grid;grid-template-columns:132px minmax(0,1fr) 26px;align-items:center;gap:10px;font-weight:600}
+.pf-eixo span{white-space:nowrap}
+.pf-eixo input[type=range]{width:100%;accent-color:var(--pf,#b07a3a)}
+.pf-eixo b{text-align:right;font-family:var(--mono);color:var(--bronze-cl)}
+.pf-citrico{--pf:#d96500}.pf-tropical{--pf:#b58f00}.pf-doce{--pf:#d6337f}.pf-mentolado{--pf:#0f9a55}
+@media(max-width:420px){.pf-eixo{grid-template-columns:122px minmax(0,1fr) 22px;gap:8px}}
 </style>
 </head>
 <body>
@@ -2441,6 +2449,8 @@ function closeDrawer(){
 
 /* ===================== Sommelier IA: ficha de QUALQUER produto ===================== */
 const SOM_EIXOS = [["citrico","🍊","Cítrico"],["tropical","🏝️","Tropical"],["doce","🍓","Adocicado"],["mentolado","🍃","Mentolado"]];
+/* perfil de sabor "vazio" = sem perfil OU tudo zero (a IA às vezes grava 0,0,0,0 e a loja mostrava as barras vazias) */
+const perfilVazio = f => !f || !SOM_EIXOS.some(([k]) => Number(f[k]) > 0);
 const SOM_DESC_MAX = 170;            /* o site corta com "…" tudo que passar disso */
 const SOM_PESQUISAR_PADRAO = true;   /* pesquisa na internet LIGADA (o projeto do Gemini agora tem faturamento). Se a pesquisa for recusada, a função segue sem ela e avisa na tela. */
 const SOM_WHISKY = [["origem","País/Região"],["tipo","Tipo"],["destilaria","Destilaria"],["composicao","Composição"],["barril","Barril"],["idade","Idade"],["abv","ABV"],["cor","Cor"],["intro","Introdução"],["nariz","Nariz"],["paladar","Paladar"],["finalizacao","Finalização"],["perfil","Perfil"],["sugestao","Sugestão de consumo"],["obs","Observação"]];
@@ -2480,7 +2490,7 @@ function somFiltraFalta(rows, falta){
       case "desc": return d <= 80;
       case "cortada": return d > SOM_DESC_MAX;
       case "ficha": return f <= 2;
-      case "perfil": return info.essencia && !p.flavor_profile;
+      case "perfil": return info.essencia && perfilVazio(p.flavor_profile);
       case "whisky": return info.whisky && !p.whisky_details;
       case "emestoque": case "semfoto": return (Number(p.stock)||0) > 0;   /* só o que tem unidades no Nex */
       default: return true;
@@ -2493,7 +2503,7 @@ function somResumoTxt(p, info){
     d===0 ? "Descrição: "+r("faltando") : d<=80 ? "Descrição: "+r(`rasa (${d} car.)`) : d>SOM_DESC_MAX ? "Descrição: "+r(`cortada no site (${d} car.)`) : "Descrição: "+g(`ok (${d} car.)`),
     "Ficha: " + (f>2 ? g(f+" itens") : r(f+(f===1?" item":" itens")))
   ];
-  if(info.essencia) partes.push("Perfil de sabor: " + (p.flavor_profile ? g("ok") : r("faltando")));
+  if(info.essencia) partes.push("Perfil de sabor: " + (!perfilVazio(p.flavor_profile) ? g("ok") : r("faltando")));
   if(info.whisky) partes.push("Whisky: " + (p.whisky_details ? g("ok") : r("sem detalhes")));
   return partes.join(" · ");
 }
@@ -2638,6 +2648,13 @@ async function openProduct(id){
       <div class="save-row"><button class="btn-gold" id="saveBtn">Salvar</button></div>
     </div>
 
+    ${somCatInfo(p.category_id).essencia || !perfilVazio(p.flavor_profile) ? `<div class="section" id="perfilSec">
+      <h3>Perfil de sabor</h3>
+      <p class="t" style="font-size:12.5px;line-height:1.5;margin:0 0 10px">As barras que aparecem no produto, na loja. De 0 a 10; a maior fica em destaque. Ajuste aqui quando a IA errar. Tudo em 0 = as barras não aparecem.</p>
+      <div class="pf-eixos">${SOM_EIXOS.map(([k,emo,lbl])=>{ const v=Math.max(0,Math.min(10,parseInt((p.flavor_profile||{})[k],10)||0)); return `<label class="pf-eixo pf-${k}"><span>${emo} ${lbl}</span><input type="range" min="0" max="10" step="1" value="${v}" data-pf="${k}" aria-label="${lbl}"><b data-pfv>${v}</b></label>`; }).join("")}</div>
+      <div class="save-row"><button type="button" class="btn-ghost btn-sm" id="pfZerar">Zerar</button><button type="button" class="btn-gold" id="pfSalvar">Salvar perfil</button></div>
+    </div>` : ""}
+
     <div class="section" id="somSec">
       <h3>✨ Sommelier: ficha do produto</h3>
       <p class="t" id="somResumo" style="font-size:12.5px;line-height:1.5;margin:0 0 8px"></p>
@@ -2663,6 +2680,21 @@ async function openProduct(id){
   $("#mvBtn").onclick = () => registerMovement(p.id);
 
   $("#saveBtn").onclick = () => saveProduct(p.id);
+  if($("#perfilSec")){
+    const sec = $("#perfilSec");
+    sec.querySelectorAll("[data-pf]").forEach(r => r.addEventListener("input", () => { r.parentElement.querySelector("[data-pfv]").textContent = r.value; }));
+    $("#pfZerar").onclick = () => sec.querySelectorAll("[data-pf]").forEach(r => { r.value = 0; r.dispatchEvent(new Event("input")); });
+    $("#pfSalvar").onclick = async () => {
+      const f = {}; sec.querySelectorAll("[data-pf]").forEach(r => f[r.dataset.pf] = Math.max(0, Math.min(10, parseInt(r.value, 10) || 0)));
+      const btn = $("#pfSalvar"); btn.disabled = true;
+      const { error } = await sb.from("products").update({ flavor_profile: perfilVazio(f) ? null : f }).eq("id", p.id);
+      btn.disabled = false;
+      if(error){ toast("Não foi possível salvar o perfil: " + error.message); return; }
+      p.flavor_profile = perfilVazio(f) ? null : f; if(state.current && state.current.id === p.id) state.current.flavor_profile = p.flavor_profile;
+      toast(perfilVazio(f) ? "Perfil zerado: as barras não aparecem na loja." : "Perfil de sabor salvo. A loja mostra ao ser aberta de novo.");
+      const rs = $("#somResumo"); if(rs) rs.innerHTML = somResumoTxt(p, somCatInfo(p.category_id));
+    };
+  }
   somIniciaNoEditor(p);
 }
 
@@ -5497,7 +5529,7 @@ const SM_GENERICAS = ["headshop-outros", "doces-outros", "bebidas-bebidas"];
 const SM_LOTES = [
   ["desc", "Descrição faltando, rasa ou cortada", p => { const d = (p.description||"").trim().length; return d <= 80 || d > SOM_DESC_MAX; }],
   ["ficha", "Ficha técnica curta (até 2 itens)", p => (p.specs||[]).length <= 2],
-  ["perfil", "Essências sem perfil de sabor", p => somCatInfo(p.category_id).essencia && !p.flavor_profile],
+  ["perfil", "Essências sem perfil de sabor", p => somCatInfo(p.category_id).essencia && perfilVazio(p.flavor_profile)],
   ["whisky", "Whisky sem detalhes", p => somCatInfo(p.category_id).whisky && !p.whisky_details],
   ["generica", "Categoria genérica (Outros)", p => SM_GENERICAS.includes((state.categories.find(c => c.id === p.category_id)||{}).slug)],
   ["incompletos", "Qualquer coisa faltando", null],
@@ -5515,7 +5547,7 @@ function smDecide(p, d, o){
   const upd = {}, info = somCatInfo(p.category_id), dl = (p.description||"").trim().length, nSpecs = (p.specs||[]).length, tudo = o.modo === "reescrever";
   if(o.desc && (d.description||"").length >= 40 && (tudo || dl <= 80 || dl > SOM_DESC_MAX) && d.description.trim() !== (p.description||"").trim()) upd.description = d.description.trim();
   if(o.ficha && (d.specs||[]).length >= 2 && (tudo ? true : nSpecs <= 2 && d.specs.length > nSpecs)) upd.specs = d.specs;
-  if(o.perfil && info.essencia && d.flavor_profile && (tudo || !p.flavor_profile)) upd.flavor_profile = d.flavor_profile;
+  if(o.perfil && info.essencia && !perfilVazio(d.flavor_profile) && (tudo || perfilVazio(p.flavor_profile))) upd.flavor_profile = d.flavor_profile;
   if(o.whisky && info.whisky && d.whisky_details && (tudo || !p.whisky_details)) upd.whisky_details = d.whisky_details;
   if(o.cat && d.categoria_sugerida && d.confianca === "alta" && d.categoria_sugerida !== smCatSlug(p.category_id)){
     const c = state.categories.find(x => x.slug === d.categoria_sugerida); if(c && c.parent_id) upd.category_id = c.id;
