@@ -1,0 +1,63 @@
+/* Páginas por categoria (SEO, 25/10/2026). Mesmos tokens da loja (index.html :root). Geradas por scripts/gerar-categorias.py */
+:root{--bg:#0e0806;--surface:#170f0a;--ink:#f3e4c8;--muted:#b8a184;--line:#2c1d14;--brand:#e3ac3d;--brand-2:#efc25e;--gold:#e3ac3d;--hot:#d6392b;--head:"Anton","Bebas Neue",Impact,sans-serif;--body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--ease-app:cubic-bezier(.16,1,.3,1)}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--body)}
+a{color:inherit}
+.wrap{max-width:1200px;margin:0 auto;padding:0 16px}
+.topo{position:sticky;top:0;z-index:5;background:rgba(14,8,6,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topo .wrap{display:flex;align-items:center;gap:12px;min-height:60px}
+.topo .logo{display:flex;align-items:center;gap:10px;text-decoration:none;font:700 15px var(--body)}
+.topo .logo img{width:40px;height:40px;object-fit:contain}
+.topo .ir{margin-left:auto;display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border-radius:999px;background:var(--gold);color:#241705;font:700 14px var(--body);text-decoration:none;white-space:nowrap}
+.migalha{margin:18px 0 6px;font-size:13px;color:var(--muted)}
+.migalha ol{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.migalha li+li::before{content:"›";margin-right:6px;color:var(--line)}
+.migalha a{color:var(--muted);text-decoration:none}
+.migalha a:hover{color:var(--brand-2)}
+h1{margin:4px 0 10px;font:400 clamp(28px,5vw,34px)/1.1 var(--head);text-transform:uppercase;letter-spacing:.3px;color:var(--ink)}
+.intro{max-width:760px;margin:0 0 6px;color:var(--muted);font-size:15px}
+.intro b{color:var(--ink);font-weight:600}
+.subs{display:flex;gap:8px;overflow-x:auto;margin:16px -16px 0;padding:2px 16px 6px;scrollbar-width:none}
+.subs::-webkit-scrollbar{display:none}
+.subs a{flex:none;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font:600 13px var(--body);text-decoration:none;white-space:nowrap}
+.subs a:hover{border-color:var(--gold);color:var(--brand-2)}
+.grupo{margin:28px 0 0;scroll-margin-top:76px}
+.grupo h2{margin:0 0 12px;font:400 22px/1.2 var(--head);text-transform:uppercase;letter-spacing:.3px}
+.grupo h2 small{margin-left:8px;font:500 13px var(--body);color:var(--muted);text-transform:none;letter-spacing:0}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.pc{position:relative;display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--surface);text-decoration:none;transition:transform .35s var(--ease-app)}
+.pc::after{content:"";position:absolute;inset:-1px;border-radius:inherit;border:1px solid var(--gold);opacity:0;transition:opacity .35s var(--ease-app);pointer-events:none}
+@media(hover:hover) and (pointer:fine){.pc:hover{transform:translateY(-3px)}.pc:hover::after{opacity:.6}}
+.pc .ft{aspect-ratio:1;border-radius:10px;background:#f2e4c9;display:grid;place-items:center;overflow:hidden;font-size:42px}
+.pc .ft img{width:100%;height:100%;object-fit:contain}
+.pc h3{margin:0;font:600 13px/1.3 var(--body);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pc .pr{align-self:flex-start;margin-top:auto;padding:4px 9px;border-radius:7px;background:#f6ead2;color:#160d08;font:700 16px/1.1 var(--body);white-space:nowrap}
+.pc .pr small{font-size:.68em;margin-right:2px}
+.pc .old{font:500 12px var(--body);color:var(--muted);text-decoration:line-through}
+.pc.esg{opacity:.55}
+.pc .tag{position:absolute;top:16px;left:16px;padding:2px 8px;border-radius:999px;background:rgba(14,8,6,.85);font:700 11px var(--body);color:var(--muted)}
+.carrega,.vazio{margin:24px 0;color:var(--muted)}
+.como{margin:36px 0 0;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.como h2{margin:0 0 8px;font:700 16px var(--body)}
+.como ol{margin:0;padding-left:20px;color:var(--muted)}
+.como li{margin:4px 0}
+.cta{display:inline-flex;align-items:center;margin-top:14px;min-height:44px;padding:0 20px;border-radius:12px;background:var(--gold);color:#241705;font:700 15px var(--body);text-decoration:none}
+.outras{margin:28px 0 0}
+.outras h2{margin:0 0 10px;font:700 15px var(--body);color:var(--muted)}
+.outras ul{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.outras a{display:inline-block;padding:8px 14px;border:1px solid var(--line);border-radius:999px;font:600 13px var(--body);text-decoration:none}
+.outras a:hover{border-color:var(--gold);color:var(--brand-2)}
+footer{margin:40px 0 0;padding:20px 0 32px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;text-align:center}
+footer a{color:var(--brand-2)}
+.idade{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;background:rgba(8,4,3,.92)}
+.idade[hidden]{display:none}
+.idade div{max-width:360px;padding:24px;border:1px solid var(--line);border-radius:18px;background:var(--surface);text-align:center}
+.idade b{display:block;font:400 34px var(--head);color:var(--gold)}
+.idade h2{margin:8px 0;font:700 18px var(--body)}
+.idade p{margin:0 0 16px;color:var(--muted);font-size:14px}
+.idade button{min-height:44px;padding:0 22px;border:0;border-radius:12px;background:var(--gold);color:#241705;font:700 15px var(--body);cursor:pointer}
+.topo .ir .lg{margin-left:.3em}
+@media(max-width:480px){.topo .ir .lg{display:none}.topo .logo{font-size:14px}}
+@media(max-width:380px){.grade{grid-template-columns:repeat(2,minmax(0,1fr))}.topo .logo span{display:none}}
+@media(prefers-reduced-motion:reduce){.pc,.pc::after{transition:none}}
