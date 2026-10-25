@@ -22,12 +22,12 @@ const R=(o:any,s=200)=>new Response(JSON.stringify(o),{status:s});
   if(p==="ia_sessoes"&&init.method==="POST"){sessoes[body.session_id]=body.draft;return R({},201)}
   if(p==="ia_sessoes") {const sid=u.searchParams.get("session_id")!.slice(3);return R(sessoes[sid]?[{draft:sessoes[sid]}]:[])}
   if(p==="rpc/ia_cota") { cotaChamadas.push(body); return R({ok:cotaOk,total:1,ip:1}); }
-  if(p==="rpc/ia_buscar_produtos") return R([]);
+  if(p==="rpc/ia_buscar_produtos") return R(buscaRes);
   if(p==="ia_conhecimento") return R(conhecimento);
   if(p==="site_cms_config") return R(cmsConfig);
   return R([],201);
 };
-let cmsConfig:any[]=[];
+let cmsConfig:any[]=[]; let buscaRes:any[]=[];
 let conhecimento:any[]=[{titulo:"Estacionamento",texto:"Tem vaga na rua em frente à loja."},{titulo:"",texto:"  "}];
 let cotaOk=true; const cotaChamadas:any[]=[]; let geoMapa:any[]=[]; let rotaM=500;
 const M=await import(new URL("./index.ts", import.meta.url).href);
@@ -97,3 +97,12 @@ console.log("IA: 'eu mesmo peço' sem endereço, fechamento com checkout e promp
   assert.ok(!JSON.stringify(j.sugestoes).includes("promo"),"sem atalho de promoção");
   assert.ok(prompts.at(-1)!.includes("SOMMELIER DA SESSÃO")&&prompts.at(-1)!.includes("Nunca suponha que é narguile"));
   console.log("IA: kit sem tipo definido pergunta o tipo de sessão primeiro (narguile, seda/tabaco, charuto, bebida) — OK"); }
+
+// promoção: a loja não tem nenhuma → devolve as opções mais em conta entre as mais vendidas, avisando que não há promoção
+{ buscaRes=[{id:"a",nome:"Seda Cara",secao:"headshop",preco:12,estoque:3},{id:"b",nome:"Seda Barata",secao:"headshop",preco:4,estoque:9},{id:"c",nome:"Seda Média",secao:"headshop",preco:7,estoque:5}];
+  roteiro=[[{functionCall:{name:"buscar_produtos",args:{promocao:true,texto:"seda"}}}],[{text:"Não temos promoção agora, mas olha as mais em conta."}]];
+  const n=ferramentasResp.length; await chama("tem promoção de seda?",false);
+  const r=ferramentasResp.slice(n).find((f:any)=>f.name==="buscar_produtos")?.response?.output;
+  assert.equal(r.sem_promocao,true); assert.match(r.dica,/NÃO tem promoção/);
+  assert.deepEqual(r.resultados.map((x:any)=>x.nome),["Seda Barata","Seda Média","Seda Cara"],"mais barato primeiro");
+  buscaRes=[]; console.log("IA: sem promoção na loja = avisa e mostra as opções mais em conta — OK"); }

@@ -364,7 +364,7 @@ const FERRAMENTAS = [{ functionDeclarations: [
       secao: { type: "string", description: "essencias, narguile, headshop, tabacos, charutos, palha, cigarrilhas, cigarros, isqueiros, incensos, doces, bebidas, conveniencia — ou subcategoria como narguile-carvao, bebidas-cervejas, tabacos-pacotes, tabacos-bolados." },
       perfil: { type: "string", enum: ["refrescante", "mentolado", "citrico", "tropical", "doce"], description: "Só para essências: filtra pelo perfil de sabor." },
       preco_max: { type: "number", description: "Preço máximo por unidade, em reais." },
-      promocao: { type: "boolean", description: "true = só produtos em promoção (ignora texto e seção)." },
+      promocao: { type: "boolean", description: "true = o cliente pediu promoção/oferta/algo em conta. Devolve as promoções ativas; se não houver nenhuma (o normal na loja), devolve as opções MAIS EM CONTA entre as mais vendidas (respeitando texto e secao, se vierem)." },
       limite: { type: "integer", description: "Quantos resultados (1 a 8). Padrão 8." } } } },
   { name: "chamar_humano", description: "Chama a equipe da loja no WhatsApp (aparece um botão para o cliente). Use quando o cliente pedir um atendente/pessoa, reclamar, ou quando você não conseguir resolver depois de tentar.",
     parameters: { type: "object", properties: { motivo: { type: "string", description: "Em poucas palavras, por que o cliente precisa de uma pessoa." } } } },
@@ -394,10 +394,17 @@ async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
     let texto = String(a.texto ?? "").slice(0, 80).trim(), secao = semAcento(String(a.secao ?? "").slice(0, 60));
     const perfil = String(a.perfil ?? "").slice(0, 20), pmax = Number.isFinite(+a.preco_max) && +a.preco_max > 0 ? +a.preco_max : null, promo = a.promocao === true;
     if (!secao && !promo) { const s = secaoDoTexto(texto); if (s) { secao = s; texto = ""; } }       // "tabaco" sozinho = a seção inteira
-    let rows: any[];
+    let rows: any[], semPromo = false;
     if (promo) {
       const r = await sbGet("products?select=site_product_id,name,brand,price,promo_price,stock&is_active=eq.true&stock=gt.0&promo_price=gt.0&order=sales_count.desc.nullslast&limit=40");
       rows = r.filter((p: any) => Number(p.promo_price) > 0 && Number(p.promo_price) < Number(p.price)).slice(0, lim).map((p: any) => ({ id: p.site_product_id, nome: p.name, marca: p.brand, secao: "promocao", preco: p.promo_price, preco_original: p.price, estoque: p.stock }));
+      // a loja quase nunca tem promoção (25/10/2026, pedido do dono): sem nenhuma, mostra as opções mais em conta entre as mais vendidas (da seção, se pedida)
+      if (!rows.length) {
+        if (!secao) { const s2 = secaoDoTexto(texto); if (s2) { secao = s2; texto = ""; } }
+        const base = await sbRpc("ia_buscar_produtos", { p_texto: texto || null, p_secao: secao || null, p_perfil: perfil || null, p_preco_max: pmax, p_limite: 10 });
+        rows = (Array.isArray(base) ? base : []).sort((x: any, y: any) => Number(x.preco) - Number(y.preco)).slice(0, lim);
+        semPromo = true;
+      }
     } else rows = await sbRpc("ia_buscar_produtos", { p_texto: texto || null, p_secao: secao || null, p_perfil: perfil || null, p_preco_max: pmax, p_limite: lim });
     if (!rows.length) { c.sug = ATALHOS_VITRINE; return { resultados: [], dica: promo ? "Não há promoções ativas agora." : "Nada encontrado. Tente outras palavras ou outra seção." }; }
     const out = rows.map((p: any) => ({ id: p.id, nome: p.nome, marca: p.marca || undefined, secao: p.secao, preco: Number(p.preco), de: Number(p.preco_original) > Number(p.preco) ? Number(p.preco_original) : undefined, estoque: p.estoque, perfil: p.perfil || undefined, descricao: p.descricao ? String(p.descricao).slice(0, 110) : undefined }));
@@ -412,6 +419,7 @@ async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
     c.sug = subcategorias && subcategorias.length > 1
       ? subcategorias.slice(0, 3).map((s: any) => ({ t: `${corta(s.nome, 24)} (${s.itens})`, q: `Mostra ${s.nome} de ${secao}` }))
       : out.slice(0, 3).map((p: any) => atalhoProduto(String(p.nome)));
+    if (semPromo) return { resultados: out, mostrando: out.length, sem_promocao: true, dica: "A loja NÃO tem promoção ativa agora. Diga isso com sinceridade, numa frase, sem inventar desconto, e apresente estes itens como as opções mais em conta (entre os mais vendidos). Nunca chame de promoção nem de oferta." };
     return { resultados: out, mostrando: out.length, ...(total ? { total_na_secao: total, subcategorias, ...(total > out.length ? { aviso: "Esta lista NÃO é completa: há mais itens na seção. Resuma as subcategorias e pergunte qual o cliente quer ver." } : {}) } : {}) };
   }
   if (nome === "atualizar_pedido") {
@@ -532,7 +540,7 @@ COMO TRABALHAR
 - Português, curto e simpático (no máximo 3 frases por resposta; ao resumir uma seção pode usar uma lista curta). Pode usar **negrito** em nomes de produtos e valores. EXCEÇÃO: tutorial de narguile (montar, preparar, acender, manter) e guia de compra de narguile podem ter uma lista numerada de até 8 passos curtos (uma linha cada).
 - Só ofereça produtos que buscar_produtos devolver. NUNCA invente produto, preço, estoque, taxa ou prazo. Todo número (preço, subtotal, taxa, total) vem das ferramentas: você NUNCA faz conta nem estima. NUNCA diga ao cliente a distância em km (pode sair errada quando o mapa não acha a rua): fale só a taxa de entrega.
 - GÍRIAS DA LOJA: "panelinha", "chapinha", "acendedor" ou "esquentador" de carvão = FOGAREIRO (o que acende o carvão do narguilé): busque por "fogareiro". Se o cliente usar uma palavra que você não conhece, BUSQUE no catálogo (buscar_produtos) antes de achar que é outro assunto ou dizer que não tem.
-- SOMMELIER DA SESSÃO (vale para TODO tipo de cliente): quando ele pedir um kit, "monta pra mim", resenha, rolê, festa ou presente SEM dizer o que fuma, a PRIMEIRA pergunta é o tipo de sessão, numa frase só, com as opções: narguile, seda e tabaco (headshop), charuto/cigarrilha ou bebida (pode ser mais de uma). Pergunte também quantas pessoas, se ele não disse. Só depois monte o kit daquele tipo: narguile = o fluxo do MESTRE DO NARGUILE; seda e tabaco = seda, piteira, tabaco ou bolado, isqueiro e, se fizer sentido, dichavador ou cuia; charuto = charutos/cigarrilhas e isqueiro; bebida = bebidas geladas e gelo saborizado. Nunca suponha que é narguile. Não fale de promoção se o cliente não perguntar.
+- SOMMELIER DA SESSÃO (vale para TODO tipo de cliente): quando ele pedir um kit, "monta pra mim", resenha, rolê, festa ou presente SEM dizer o que fuma, a PRIMEIRA pergunta é o tipo de sessão, numa frase só, com as opções: narguile, seda e tabaco (headshop), charuto/cigarrilha ou bebida (pode ser mais de uma). Pergunte também quantas pessoas, se ele não disse. Só depois monte o kit daquele tipo: narguile = o fluxo do MESTRE DO NARGUILE; seda e tabaco = seda, piteira, tabaco ou bolado, isqueiro e, se fizer sentido, dichavador ou cuia; charuto = charutos/cigarrilhas e isqueiro; bebida = bebidas geladas e gelo saborizado. Nunca suponha que é narguile. Não fale de promoção se o cliente não perguntar; se ele pedir promoção/oferta/desconto, chame buscar_produtos com promocao=true: hoje a loja não tem promoção, então diga isso com sinceridade e mostre as opções mais em conta que voltarem.
 - MESTRE DO NARGUILE: você entende tudo de narguilé (narguile, nargui, hookah, shisha) e ensina com segurança e paciência. Primeiro entenda a INTENÇÃO e, se não der pra saber, pergunte em uma frase: (A) o cliente quer APRENDER a montar/preparar/usar o narguile dele, ou (B) quer COMPRAR um narguile.
   (A) MONTAR E PREPARAR (passo a passo, dicas no fim):
    1. Vaso: lave e coloque água gelada até a ponta do stem ficar uns 2 a 3 cm submersa (pouca água = fumaça quente e áspera; muita = puxada pesada). Pode pôr gelo.
