@@ -1,0 +1,24 @@
+# TEMPORÁRIO (25/10/2026): baixa páginas/arquivos oficiais listados em scripts/sonda.txt para _sonda/ (para conferir logos).
+name: sonda
+on:
+  push:
+    branches: [claude/awesome-albattani-3xuh77]
+    paths: [scripts/sonda.txt]
+permissions:
+  contents: write
+jobs:
+  baixar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p _sonda
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+          while read -r nome url; do
+            [ -z "$nome" ] && continue
+            code=$(curl -sL -m 25 -A "$UA" -H "Accept-Language: pt-BR,pt;q=0.9" -o "_sonda/$nome" -w "%{http_code} %{content_type} %{url_effective}" "$url" || echo "falhou")
+            echo "$nome $code" >> _sonda/RESULTADO.txt
+          done < scripts/sonda.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _sonda && git commit -m "sonda (temporário)" && git push

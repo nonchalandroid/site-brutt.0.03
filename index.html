@@ -381,6 +381,21 @@ button.ia-wa{width:100%;border:0;cursor:pointer;font-family:inherit}
 .ctt-dica{margin:-2px 0 10px;font-size:13px;line-height:1.4;color:var(--gold)}.ctt-dica[hidden]{display:none}.ctt-ok{display:flex;align-items:flex-start;gap:10px;margin-top:10px;font-size:13px;line-height:1.4;color:var(--muted);cursor:pointer}
 .ctt-ok input{flex:none;width:18px;height:18px;margin-top:1px;accent-color:var(--gold)}
 @media(max-width:420px){.ctt-g{grid-template-columns:1fr}}
+/* Carrossel de marcas (25/10/2026, js/marcas.js): faixa preta, logos oficiais brancas andando sem parar.
+   Duas listas iguais lado a lado; a pista anda metade (-50%) e recomeça sem emenda. Só transform anima. */
+.marcas{margin:14px 0 4px;padding:14px 0 18px;background:#000;border:1px solid var(--line);border-radius:14px;overflow:hidden;-webkit-user-select:none;user-select:none}
+.marcas[hidden]{display:none}
+.marcas-t{margin:0 0 12px;text-align:center;font:600 12px/1.2 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.marcas-janela{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+.marcas-pista{display:flex;width:max-content;animation:marcasAnda var(--marcas-dur,60s) linear infinite;will-change:transform}
+.marcas-lista{display:flex;align-items:center;gap:56px;margin:0;padding:0 28px;list-style:none;min-height:50px}
+.marcas-lista li{flex:none;display:flex;align-items:center}
+.marcas img{display:block;height:var(--h,34px);width:auto;max-width:none;opacity:.88;pointer-events:none;-webkit-user-drag:none}
+.marcas.parado .marcas-pista{animation-play-state:paused}
+@media (hover:hover) and (pointer:fine){.marcas:hover .marcas-pista{animation-play-state:paused}}
+@keyframes marcasAnda{to{transform:translate3d(-50%,0,0)}}
+@media(max-width:640px){.marcas{padding:12px 0 14px}.marcas-t{margin-bottom:10px;font-size:11px}.marcas-lista{gap:38px;padding:0 19px;min-height:40px}.marcas img{height:calc(var(--h,34px)*.78)}}
+@media(prefers-reduced-motion:reduce){.marcas-pista{animation:none;transform:none}.marcas-janela{overflow-x:auto;-webkit-mask-image:none;mask-image:none;scrollbar-width:none}.marcas-janela::-webkit-scrollbar{display:none}.marcas-lista[aria-hidden]{display:none}}
 </style>
 <style id="ajustes">
 /* ── Auditoria visual: correções de alinhamento e responsividade ── */
@@ -874,6 +889,7 @@ html.snap-on{scroll-snap-type:none}
         <div class="perk"><b><span data-ic="sofa"></span>Espaço confortável</b><span>E a música que você quiser! Passa aqui, conhece a loja e garante seu kit.</span></div>
         <div class="perk"><b><span data-ic="grid"></span>Variedade de produtos</b><span>Mais de <span id="perkN">600</span> produtos: narguile, essências, headshop, tabacos, charutos, bebidas e muito mais.</span></div>
       </div>
+      <div class="marcas" id="marcas" role="region" aria-label="Marcas que a Brutt vende" hidden></div>
     </section>
 
     <section class="sec" id="como-chegar">
@@ -1121,6 +1137,7 @@ function marcarEntrega(){const f=$("#eFrete"),e=$("#eEntrega"),eb=$("#entregaBox
 <script src="/js/ia-sugestoes.js?v=20261012a" defer></script>
 <script src="/js/desempenho.js?v=20261013a" defer></script>
 <script src="/js/avaliacoes.js?v=20261013a" defer></script>
+<script src="/js/marcas.js?v=20261025c" defer></script>
 <script src="/js/checkout-mp.js?v=20261019b" defer></script>
 <script src="/js/acompanhar.js?v=20261019a" defer></script>
 <script src="/js/sons.js?v=20261018a" defer></script>
