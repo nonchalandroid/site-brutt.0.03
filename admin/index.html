@@ -2867,7 +2867,7 @@ function processarFotoQuadrada(file, ladoMax = 1024, qualidade = 0.9){
   });
 }
 
-/* Buscar foto na internet (função buscar-foto): o servidor acha as fotos (loja do fabricante, revendas, Open Food Facts),
+/* Buscar foto na internet (função buscar-foto): o servidor acha as fotos (Bing Imagens, Open Food Facts; reserva: Google via Gemini),
    a equipe toca na melhor e ela entra pelo mesmo recorte/compressão do "Trocar foto". */
 async function fotoWebChamar(body){
   const { data:{ session } } = await sb.auth.getSession();
@@ -2886,13 +2886,13 @@ async function fotoWebBuscar(p){
     const cs = (j.candidatos || []).filter(c => /^https:\/\//.test(c.url));
     if(!cs.length){ out.innerHTML = `<p class="fw-msg">${esc(j.aviso || "Não achei fotos desse produto.")}</p>`; return; }
     out.innerHTML = `<p class="fw-msg">Toque na foto certa. Ela abre no recorte e você confirma antes de entrar no site.</p>
-      <div class="fw-grid">${cs.map((c, i) => `<button type="button" class="fw-it" data-fw="${i}" title="${esc(c.site || "")}"><img src="${esc(c.url)}" alt="" loading="lazy" referrerpolicy="no-referrer"><small>${esc(c.site || "")}</small></button>`).join("")}</div>`;
+      <div class="fw-grid">${cs.map((c, i) => `<button type="button" class="fw-it" data-fw="${i}" title="${esc(c.site || "")}"><img src="${esc(/^https:\/\//.test(c.thumb || "") ? c.thumb : c.url)}" alt="" loading="lazy" referrerpolicy="no-referrer"><small>${esc(c.site || "")}</small></button>`).join("")}</div>`;
     out.querySelectorAll(".fw-it img").forEach(im => im.addEventListener("error", () => im.closest(".fw-it").remove()));
     out.querySelectorAll("[data-fw]").forEach(b => b.onclick = async () => {
       const c = cs[+b.dataset.fw]; if(!c || b.classList.contains("baixando")) return;
       b.classList.add("baixando");
       try{
-        const d = await fotoWebChamar({ acao:"baixar", url:c.url });
+        const d = await fotoWebChamar({ acao:"baixar", url:c.url, reserva:c.reserva || "" });   /* reserva = cópia grande do Bing, se o site da foto bloquear */
         const bin = atob(d.b64), u8 = new Uint8Array(bin.length); for(let k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
         uploadPhoto(p.id, new Blob([u8], { type: d.tipo }));
       }catch(e){ toast("Não consegui usar essa foto: " + e.message); }
