@@ -263,7 +263,8 @@ export function secaoDoTexto(texto: string): string | null {
 type Atalho = { t: string; q: string };                                              // t = rótulo do botão · q = o que o cliente "diz" ao tocar
 const corta = (s: string, n: number) => { s = String(s ?? ""); return s.length > n ? s.slice(0, n - 1).trimEnd() + "…" : s; };
 const atalhoProduto = (nome: string): Atalho => ({ t: "+ " + corta(nome, 30), q: `Quero ${nome}` });
-const ATALHOS_VITRINE: Atalho[] = [{ t: "Ver essências", q: "Quais essências vocês têm?" }, { t: "Ver tabacos", q: "Qual tabaco vocês têm?" }, { t: "Ver promoções", q: "Quais produtos estão em promoção?" }];
+// atalhos de quem ainda não escolheu nada: o TIPO de sessão primeiro (25/10/2026, pedido do dono; "Ver promoções" saiu: tirava o foco e quase não há promoção)
+const ATALHOS_VITRINE: Atalho[] = [{ t: "Sessão de narguile", q: "É pra uma sessão de narguile" }, { t: "Seda e tabaco", q: "É pra fumar seda e tabaco, quero reabastecer o headshop" }, { t: "Charutos", q: "Quero charutos" }];
 export function atalhosValidos(a: any): Atalho[] {
   return (Array.isArray(a) ? a : []).filter((x: any) => x && typeof x.t === "string" && typeof x.q === "string" && x.t.trim() && x.q.trim()).slice(0, 3).map((x: any) => ({ t: corta(x.t.trim(), 40), q: corta(x.q.trim(), 120) }));
 }
@@ -440,7 +441,6 @@ async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
       else if (d.entrega) sug.push({ t: "Fechar pedido", q: "Pode fechar o pedido" });
       else if (c.entregaPausada) sug.push({ t: "Pedir Uber/99", q: "Vou solicitar a entrega pelo Uber ou 99" });
       else sug.push({ t: "Entrega pela loja", q: "Quero entrega pela loja" }, { t: "Eu mesmo peço Uber/99", q: "Prefiro eu mesmo solicitar a entrega pelo Uber ou 99" });
-      if (sug.length < 3) sug.push({ t: "Ver promoções", q: "Quais produtos estão em promoção?" });
       c.sug = sug.slice(0, 3);
     }
     return { itens: r.linhas.map((l: any) => ({ id: l.id, nome: l.nome, qtd: l.qtd, preco_unit: l.preco, total: l.total })), subtotal: r.subtotal, minimo: r.minimo, ...(r.taxa ? { taxa_entrega: r.taxa, total: r.total } : {}), ...(comp.length ? { complementos: comp } : {}), avisos: [...avisos, ...r.problemas] };
@@ -532,6 +532,7 @@ COMO TRABALHAR
 - Português, curto e simpático (no máximo 3 frases por resposta; ao resumir uma seção pode usar uma lista curta). Pode usar **negrito** em nomes de produtos e valores. EXCEÇÃO: tutorial de narguile (montar, preparar, acender, manter) e guia de compra de narguile podem ter uma lista numerada de até 8 passos curtos (uma linha cada).
 - Só ofereça produtos que buscar_produtos devolver. NUNCA invente produto, preço, estoque, taxa ou prazo. Todo número (preço, subtotal, taxa, total) vem das ferramentas: você NUNCA faz conta nem estima. NUNCA diga ao cliente a distância em km (pode sair errada quando o mapa não acha a rua): fale só a taxa de entrega.
 - GÍRIAS DA LOJA: "panelinha", "chapinha", "acendedor" ou "esquentador" de carvão = FOGAREIRO (o que acende o carvão do narguilé): busque por "fogareiro". Se o cliente usar uma palavra que você não conhece, BUSQUE no catálogo (buscar_produtos) antes de achar que é outro assunto ou dizer que não tem.
+- SOMMELIER DA SESSÃO (vale para TODO tipo de cliente): quando ele pedir um kit, "monta pra mim", resenha, rolê, festa ou presente SEM dizer o que fuma, a PRIMEIRA pergunta é o tipo de sessão, numa frase só, com as opções: narguile, seda e tabaco (headshop), charuto/cigarrilha ou bebida (pode ser mais de uma). Pergunte também quantas pessoas, se ele não disse. Só depois monte o kit daquele tipo: narguile = o fluxo do MESTRE DO NARGUILE; seda e tabaco = seda, piteira, tabaco ou bolado, isqueiro e, se fizer sentido, dichavador ou cuia; charuto = charutos/cigarrilhas e isqueiro; bebida = bebidas geladas e gelo saborizado. Nunca suponha que é narguile. Não fale de promoção se o cliente não perguntar.
 - MESTRE DO NARGUILE: você entende tudo de narguilé (narguile, nargui, hookah, shisha) e ensina com segurança e paciência. Primeiro entenda a INTENÇÃO e, se não der pra saber, pergunte em uma frase: (A) o cliente quer APRENDER a montar/preparar/usar o narguile dele, ou (B) quer COMPRAR um narguile.
   (A) MONTAR E PREPARAR (passo a passo, dicas no fim):
    1. Vaso: lave e coloque água gelada até a ponta do stem ficar uns 2 a 3 cm submersa (pouca água = fumaça quente e áspera; muita = puxada pesada). Pode pôr gelo.

@@ -89,3 +89,11 @@ console.log("IA: 'eu mesmo peço' sem endereço, fechamento com checkout e promp
   roteiro=[[{text:"oi"}]]; await chama("oi",false);
   assert.ok(!prompts.at(-1)!.includes("ENTREGA PELA LOJA ESTÁ PAUSADA"),"religada: sem aviso");
   cmsConfig=[]; M._limpaEntregaCache(); console.log("IA: entrega pela loja desligada no painel = só Uber/99 — OK"); }
+
+// sommelier da sessão: sem tipo definido, os atalhos perguntam o TIPO de sessão (sem "Ver promoções") e o prompt manda perguntar antes de montar o kit
+{ roteiro=[[{text:"É pra narguile, seda e tabaco, charuto ou bebida?"}]];
+  const j=await M.handler(new Request("https://x/brutt-ia",{method:"POST",body:JSON.stringify({message:"monta um kit pra resenha",session:"sessao-sommelier-1",history:[]})})).then(r=>r.json());
+  assert.deepEqual(j.sugestoes.map((x:any)=>x.t),["Sessão de narguile","Seda e tabaco","Charutos"]);
+  assert.ok(!JSON.stringify(j.sugestoes).includes("promo"),"sem atalho de promoção");
+  assert.ok(prompts.at(-1)!.includes("SOMMELIER DA SESSÃO")&&prompts.at(-1)!.includes("Nunca suponha que é narguile"));
+  console.log("IA: kit sem tipo definido pergunta o tipo de sessão primeiro (narguile, seda/tabaco, charuto, bebida) — OK"); }
