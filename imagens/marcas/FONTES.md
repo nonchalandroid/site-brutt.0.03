@@ -14,7 +14,6 @@ Marca sem logo oficial encontrada NÃO entra (nada de texto ou logo inventada no
 | a-piteira.webp | A Piteira | Piteiras | apiteira.com.br (logo-transparente.png) |
 | zengaz.webp | Zengaz | Maçaricos | zengaz.com (zengaz-logo.png) |
 | clipper.webp | Clipper | Isqueiros | clipper.com (Logo_Clipper_fondo_amarillo.png, sem o fundo amarelo) |
-| bic.webp | BIC | Isqueiros | bic.com (img/black_logo.svg) |
 | kaloud.webp | Kaloud | Narguile | kaloud.com (logo horizontal) |
 | bombaco.webp | Bombaco | Tabaco | bombaco.shop (logotipo do site) |
 | sampoerna.webp | Sampoerna | Cigarros | sampoerna.com (sampoerna_logo.png) |
@@ -32,6 +31,8 @@ Marca sem logo oficial encontrada NÃO entra (nada de texto ou logo inventada no
 | heineken.webp | Heineken | Cerveja | heineken.com (nav_logo_heineken.png) |
 | corona.webp | Corona | Cerveja | corona.com (corona_logo_white.png) |
 | coca-cola.webp | Coca-Cola | Refrigerante | coca-cola.com/br (Coca-Cola-original-logo-co.svg) |
+
+BIC saiu a pedido do dono (25/10/2026).
 
 ## Pendentes (sem logo oficial encontrada ou site bloqueia robôs)
 Ziggy, Nay, Onix, Sadhu, Guru Spirit, Crazy Dogs, Papelito, Elements, Red Bull, Monster, Gordon's, White Horse,

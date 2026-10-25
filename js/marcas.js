@@ -10,7 +10,7 @@
     ["smoking", "Smoking", 315], ["jack-daniels", "Jack Daniel's", 177], ["baly", "Baly", 640],
     ["chivas", "Chivas Regal", 155], ["kaloud", "Kaloud", 531], ["smirnoff", "Smirnoff", 377],
     ["zengaz", "Zengaz", 904], ["jameson", "Jameson", 503], ["a-piteira", "A Piteira", 355],
-    ["tanqueray", "Tanqueray", 320], ["bic", "BIC", 420], ["beefeater", "Beefeater", 371],
+    ["tanqueray", "Tanqueray", 320], ["beefeater", "Beefeater", 371],
     ["bombaco", "Bombaco", 440], ["bombay-sapphire", "Bombay Sapphire", 581], ["clipper", "Clipper", 232],
     ["buchanans", "Buchanan's", 600], ["sampoerna", "Sampoerna", 169], ["heineken", "Heineken", 233],
     ["corona", "Corona", 221], ["coca-cola", "Coca-Cola", 307],
