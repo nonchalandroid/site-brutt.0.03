@@ -55,6 +55,34 @@ assert.equal(b.j.candidatos[1].site, "loja-a.com.br");
 assert.equal(b.j.candidatos[2].site, "loja-b.com");
 assert.ok(!pedidos.some((u) => u.includes("192.168")), "não pode acessar endereço interno");
 
+// 4b) Bing Imagens: link da foto original, miniatura e reserva grande do Bing, site da loja; com 4+ fotos o Gemini nem é chamado
+const mBing = (murl: string, purl: string, turl = "https://tse1.mm.bing.net/th/id/OIP.abc?pid=Api") =>
+  ` m="${JSON.stringify({ murl, purl, turl, t: "x" }).replace(/"/g, "&quot;").replace(/&(?!quot;)/g, "&amp;")}"`;
+const htmlBing = `<div><a class="iusc"${mBing("https://loja1.com.br/monster.jpg", "https://www.loja1.com.br/p/monster")}></a>
+<a class="iusc"${mBing("http://semhttps.com/foto.jpg", "http://semhttps.com/p")}></a>
+<a class="iusc"${mBing("https://loja2.com/a.png?x=1&y=2", "https://loja2.com/p")}></a>
+<a class="iusc"${mBing("https://loja1.com.br/monster.jpg", "https://www.loja1.com.br/p/monster")}></a>
+<a class="iusc"${mBing("https://loja3.com/b.webp", "https://loja3.com/p")}></a>
+<a class="iusc"${mBing("https://loja4.com/c.jpg", "https://loja4.com/p")}></a></div>`;
+const bs = m.extraiBing(htmlBing);
+assert.deepEqual(bs.map((c: any) => c.url), ["https://loja1.com.br/monster.jpg", "https://tse1.mm.bing.net/th/id/OIP.abc?pid=Api&w=1000&h=1000&c=7", "https://loja2.com/a.png?x=1&y=2", "https://loja3.com/b.webp", "https://loja4.com/c.jpg"]);
+assert.equal(bs[0].site, "loja1.com.br"); assert.equal(bs[0].thumb, "https://tse1.mm.bing.net/th/id/OIP.abc?pid=Api");
+assert.equal(bs[0].reserva, "https://tse1.mm.bing.net/th/id/OIP.abc?pid=Api&w=1000&h=1000&c=7");
+assert.equal(bs[1].reserva, undefined, "foto sem https já usa a cópia do Bing");
+rotas = { "https://www.bing.com/images/search": () => resp(htmlBing, 200, { "content-type": "text/html" }),
+  "https://generativelanguage.googleapis.com/": () => { throw new Error("não devia chamar o Gemini"); } };
+pedidos = [];
+const bb = await chama({ name: "Energético Monster Mango Loco 473 ml", brand: "Monster" });
+assert.equal(bb.j.candidatos.length, 5);
+assert.ok(pedidos.some(u => u.includes("bing.com/images/search?q=Energ")), "marca já no nome não repete");
+assert.ok(!pedidos.some(u => u.includes("generativelanguage")));
+
+// 6b) baixar com reserva: o site da foto bloqueia (403) e entra a cópia do Bing
+rotas = { "https://bloqueia.com/f.jpg": () => resp("no", 403, { "content-type": "text/plain" }), "https://tse1.mm.bing.net/": () => resp(new Uint8Array([1, 2, 3]), 200, { "content-type": "image/jpeg" }) };
+const rv = await chama({ acao: "baixar", url: "https://bloqueia.com/f.jpg", reserva: "https://tse1.mm.bing.net/th?id=1&w=1000" });
+assert.equal(rv.status, 200); assert.equal(rv.j.tipo, "image/jpeg");
+assert.equal((await chama({ acao: "baixar", url: "https://bloqueia.com/f.jpg", reserva: "https://127.0.0.1/x.jpg" })).status, 502);
+
 // 5) nada achado: aviso
 rotas = { "https://generativelanguage.googleapis.com/": () => resp({ candidates: [{}] }) };
 const v = await chama({ name: "Produto inexistente" });
