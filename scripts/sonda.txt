@@ -1,9 +1,3 @@
-sadhu.html https://www.sadhupaper.com.br/
-rbshop.html https://www.redbullshop.com/
-rbpool.html https://www.redbullcontentpool.com/
-rbmh.html https://www.redbullmediahouse.com/
-rbcom.html https://www.redbull.com.br/
-ddg-ziggy.html https://html.duckduckgo.com/html/?q=ziggy+ess%C3%AAncia+narguile+site+oficial
-ddg-nay.html https://html.duckduckgo.com/html/?q=nay+ess%C3%AAncia+narguile+site+oficial
-ddg-onix.html https://html.duckduckgo.com/html/?q=onix+ess%C3%AAncia+narguile+site+oficial
-ddg-rb.html https://html.duckduckgo.com/html/?q=red+bull+logo+svg+official+brand
+sadhu-logo.png https://images.tcdn.com.br/img/img_prod/1244487/1792788616_664f9824eb8b75fc.png
+redbull-logo.png https://assets.redbullshop.com/content/RB%20SHOP%20BANNERS/Navigation%20Logos/nav_redbullcom-logo.png
+redbull-logo-meta.png https://assets.redbullshop.com/t_meta-og/content/RB%20SHOP%20BANNERS/Navigation%20Logos/nav_redbullcom-logo.png
