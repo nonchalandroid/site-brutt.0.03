@@ -1,0 +1,9 @@
+rb-home.html 403 text/html https://www.redbull.com/br-pt/
+rb-energy.html 403 text/html https://www.redbull.com/br-pt/energydrink
+rb-int.html 403 text/html https://www.redbull.com/int-en/
+sadhu1.html 000  https://www.sadhu.com.br/falhou
+sadhu2.html 000  https://sadhuoficial.com.br/falhou
+sadhu3.html 000  https://www.sadhuheadshop.com/falhou
+sadhu4.html 000  https://www.lojasadhu.com/falhou
+sadhu-ddg.html 200 text/html; charset=UTF-8 https://html.duckduckgo.com/html/?q=sadhu+headshop+bolador
+sadhu-bing.html 200 text/html; charset=utf-8 https://www.bing.com/search?q=sadhu+headshop+bolador+dichavador
