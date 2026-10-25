@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Brutt · Admin</title>
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://vedlxtljilsanykmddtj.supabase.co; media-src 'self' blob: data:; connect-src 'self' https://vedlxtljilsanykmddtj.supabase.co wss://vedlxtljilsanykmddtj.supabase.co; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: data:; connect-src 'self' https://vedlxtljilsanykmddtj.supabase.co wss://vedlxtljilsanykmddtj.supabase.co; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="no-referrer">
 <!-- anti-clickjacking: o GitHub Pages não manda X-Frame-Options; se o painel for aberto dentro de um iframe de outro site, ele não aparece -->
 <style id="antiFrame">html{display:none!important}</style>
@@ -339,6 +339,13 @@ details.manual .toolbar{margin:12px 0 2px}
 .photo-box .ph{width:88px;height:88px;border-radius:12px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;flex:none}
 .photo-box .ph:not(:has(img)){background:var(--surface-2)}
 .photo-box .ph img{width:100%;height:100%;object-fit:cover}
+.fw-msg{font-size:12.5px;line-height:1.5;margin:10px 0 8px;color:var(--muted)}
+.fw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.fw-it{display:flex;flex-direction:column;gap:4px;padding:6px;border-radius:12px;background:#fff;border:1px solid var(--line);min-height:0;cursor:pointer;text-align:center}
+.fw-it img{width:100%;aspect-ratio:1;object-fit:contain;border-radius:8px;background:#fff}
+.fw-it small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fw-it:hover,.fw-it:focus-visible{border-color:var(--accent)}
+.fw-it.baixando{opacity:.5;pointer-events:none}
 .stock-now{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
 .stock-now .n{font-size:34px;font-weight:650;color:var(--ink);font-family:var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .mv-tabs{display:flex;gap:4px;margin-bottom:10px;padding:4px;background:var(--field);border:1px solid var(--line);border-radius:var(--r)}
@@ -2610,8 +2617,10 @@ async function openProduct(id){
           <button class="btn-ghost btn-sm" id="photoBtn">Trocar foto</button>
           ${img ? `<button class="btn-ghost btn-sm" id="reajustarBtn">🔧 Reajustar</button>` : ""}
           <input type="file" id="photoFile" accept="image/*" hidden>
+          <button class="btn-sec btn-sm" id="fwBtn">🔎 Buscar na internet</button>
         </div>
       </div>
+      <div id="fwOut"></div>
     </div>
 
     <div class="section">
@@ -2677,6 +2686,7 @@ async function openProduct(id){
     };
   }
 
+  $("#fwBtn").onclick = () => fotoWebBuscar(p);
   $("#mvBtn").onclick = () => registerMovement(p.id);
 
   $("#saveBtn").onclick = () => saveProduct(p.id);
@@ -2850,6 +2860,41 @@ function processarFotoQuadrada(file, ladoMax = 1024, qualidade = 0.9){
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Não consegui abrir esse arquivo como imagem.")); };
     img.src = url;
   });
+}
+
+/* Buscar foto na internet (função buscar-foto): o servidor acha as fotos (loja do fabricante, revendas, Open Food Facts),
+   a equipe toca na melhor e ela entra pelo mesmo recorte/compressão do "Trocar foto". */
+async function fotoWebChamar(body){
+  const { data:{ session } } = await sb.auth.getSession();
+  const r = await fetch(`${SUPA_URL}/functions/v1/buscar-foto`, { method:"POST",
+    headers:{ "Content-Type":"application/json", apikey:SUPA_KEY, Authorization:"Bearer " + session.access_token }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok) throw new Error(j.erro || ("busca indisponível (" + r.status + ")"));
+  return j;
+}
+async function fotoWebBuscar(p){
+  const out = $("#fwOut"), btn = $("#fwBtn"); if(!out || !btn) return;
+  btn.disabled = true; btn.textContent = "Buscando…";
+  out.innerHTML = `<p class="fw-msg">Procurando fotos de <b>${esc(p.name)}</b> na internet… leva uns 10 a 20 segundos.</p>`;
+  try{
+    const j = await fotoWebChamar({ name: ($("#fName")?.value || p.name).trim(), brand: p.brand || "", ean: p.ean || "" });
+    const cs = (j.candidatos || []).filter(c => /^https:\/\//.test(c.url));
+    if(!cs.length){ out.innerHTML = `<p class="fw-msg">${esc(j.aviso || "Não achei fotos desse produto.")}</p>`; return; }
+    out.innerHTML = `<p class="fw-msg">Toque na foto certa. Ela abre no recorte e você confirma antes de entrar no site.</p>
+      <div class="fw-grid">${cs.map((c, i) => `<button type="button" class="fw-it" data-fw="${i}" title="${esc(c.site || "")}"><img src="${esc(c.url)}" alt="" loading="lazy" referrerpolicy="no-referrer"><small>${esc(c.site || "")}</small></button>`).join("")}</div>`;
+    out.querySelectorAll(".fw-it img").forEach(im => im.addEventListener("error", () => im.closest(".fw-it").remove()));
+    out.querySelectorAll("[data-fw]").forEach(b => b.onclick = async () => {
+      const c = cs[+b.dataset.fw]; if(!c || b.classList.contains("baixando")) return;
+      b.classList.add("baixando");
+      try{
+        const d = await fotoWebChamar({ acao:"baixar", url:c.url });
+        const bin = atob(d.b64), u8 = new Uint8Array(bin.length); for(let k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
+        uploadPhoto(p.id, new Blob([u8], { type: d.tipo }));
+      }catch(e){ toast("Não consegui usar essa foto: " + e.message); }
+      finally{ b.classList.remove("baixando"); }
+    });
+  }catch(e){ out.innerHTML = `<p class="fw-msg">Não deu para buscar agora: ${esc(e.message)}</p>`; }
+  finally{ btn.disabled = false; btn.textContent = "🔎 Buscar de novo"; }
 }
 
 async function uploadPhoto(productId, file, opts = {}){
