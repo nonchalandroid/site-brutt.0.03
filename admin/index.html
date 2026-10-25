@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Brutt · Admin</title>
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://vedlxtljilsanykmddtj.supabase.co; media-src 'self' blob: data:; connect-src 'self' https://vedlxtljilsanykmddtj.supabase.co wss://vedlxtljilsanykmddtj.supabase.co; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: data:; connect-src 'self' https://vedlxtljilsanykmddtj.supabase.co wss://vedlxtljilsanykmddtj.supabase.co; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="no-referrer">
 <!-- anti-clickjacking: o GitHub Pages não manda X-Frame-Options; se o painel for aberto dentro de um iframe de outro site, ele não aparece -->
 <style id="antiFrame">html{display:none!important}</style>
@@ -339,6 +339,13 @@ details.manual .toolbar{margin:12px 0 2px}
 .photo-box .ph{width:88px;height:88px;border-radius:12px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;flex:none}
 .photo-box .ph:not(:has(img)){background:var(--surface-2)}
 .photo-box .ph img{width:100%;height:100%;object-fit:cover}
+.fw-msg{font-size:12.5px;line-height:1.5;margin:10px 0 8px;color:var(--muted)}
+.fw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.fw-it{display:flex;flex-direction:column;gap:4px;padding:6px;border-radius:12px;background:#fff;border:1px solid var(--line);min-height:0;cursor:pointer;text-align:center}
+.fw-it img{width:100%;aspect-ratio:1;object-fit:contain;border-radius:8px;background:#fff}
+.fw-it small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fw-it:hover,.fw-it:focus-visible{border-color:var(--accent)}
+.fw-it.baixando{opacity:.5;pointer-events:none}
 .stock-now{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
 .stock-now .n{font-size:34px;font-weight:650;color:var(--ink);font-family:var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .mv-tabs{display:flex;gap:4px;margin-bottom:10px;padding:4px;background:var(--field);border:1px solid var(--line);border-radius:var(--r)}
@@ -1240,6 +1247,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .cf-res{font:500 12px var(--mono);color:var(--muted-2)}
 .cf-dica{font-size:13px;color:var(--muted);margin:-4px 0 12px}
 .cf-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.cf-nome-top{display:flex;justify-content:flex-end;margin:0 0 10px}
+.cf-row.cf-nome .cf-nm s{display:block;font-size:12px;color:var(--muted);text-decoration:line-through;overflow-wrap:anywhere}
+.cf-row.cf-nome .cf-nm b{overflow-wrap:anywhere;white-space:normal;overflow:visible;text-overflow:clip}
 .cf-row.inativo .cf-nm b{color:var(--muted)}
 .cf-nm{min-width:0;display:flex;flex-direction:column;gap:2px}
 .cf-nm b{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1250,6 +1260,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .cf-nums i{font:500 11px var(--font);font-style:normal;color:var(--muted-2)}
 .cf-nums em{font-style:normal}.cf-nums em.neg{color:var(--danger)}.cf-nums em.baixa{color:var(--terracota-cl)}.cf-nums em.ok{color:var(--ok)}
 @media (max-width:760px){.cf-row{grid-template-columns:minmax(0,1fr) auto}.cf-nums{grid-column:1/-1;grid-row:2;grid-template-columns:repeat(4,minmax(0,1fr))}.cf-nums span{text-align:left}.cf-row .btn-sm{grid-column:2;grid-row:1}.cf-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.cf-row.cf-nome{grid-template-columns:minmax(0,1fr) auto auto}.cf-row.cf-nome .btn-sm{grid-column:auto;grid-row:auto}}
+@media (max-width:420px){.cf-row.cf-nome{grid-template-columns:1fr 1fr}.cf-row.cf-nome .cf-nm{grid-column:1/-1}}
 /* Giro e reposição (#/giro) + período do relatório em Mais vendidos */
 .bv-per{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 14px;margin:0 0 12px}
 .bv-per label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
@@ -1677,6 +1689,14 @@ b,strong,h1,h2,h3,h4{font-weight:700}
 .cms-ent-st{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;color:var(--salvia-cl,#2f5a3a);background:var(--salvia-es,#e3efe2);border:1px solid color-mix(in srgb,var(--salvia-cl,#2f5a3a) 30%,transparent)}
 .cms-ent.off{border-color:color-mix(in srgb,var(--terracota-cl,#8a3a1c) 45%,transparent)}
 .cms-ent.off .cms-ent-st{color:var(--terracota-cl,#8a3a1c);background:var(--terracota-es,#f6e2d6);border-color:color-mix(in srgb,var(--terracota-cl,#8a3a1c) 35%,transparent)}
+/* PERFIL DE SABOR manual (25/10/2026): barras de arrastar na ficha do produto, nas cores das barras da loja */
+.pf-eixos{display:grid;gap:10px}
+.pf-eixo{display:grid;grid-template-columns:132px minmax(0,1fr) 26px;align-items:center;gap:10px;font-weight:600}
+.pf-eixo span{white-space:nowrap}
+.pf-eixo input[type=range]{width:100%;accent-color:var(--pf,#b07a3a)}
+.pf-eixo b{text-align:right;font-family:var(--mono);color:var(--bronze-cl)}
+.pf-citrico{--pf:#d96500}.pf-tropical{--pf:#b58f00}.pf-doce{--pf:#d6337f}.pf-mentolado{--pf:#0f9a55}
+@media(max-width:420px){.pf-eixo{grid-template-columns:122px minmax(0,1fr) 22px;gap:8px}}
 </style>
 </head>
 <body>
@@ -2441,6 +2461,8 @@ function closeDrawer(){
 
 /* ===================== Sommelier IA: ficha de QUALQUER produto ===================== */
 const SOM_EIXOS = [["citrico","🍊","Cítrico"],["tropical","🏝️","Tropical"],["doce","🍓","Adocicado"],["mentolado","🍃","Mentolado"]];
+/* perfil de sabor "vazio" = sem perfil OU tudo zero (a IA às vezes grava 0,0,0,0 e a loja mostrava as barras vazias) */
+const perfilVazio = f => !f || !SOM_EIXOS.some(([k]) => Number(f[k]) > 0);
 const SOM_DESC_MAX = 170;            /* o site corta com "…" tudo que passar disso */
 const SOM_PESQUISAR_PADRAO = true;   /* pesquisa na internet LIGADA (o projeto do Gemini agora tem faturamento). Se a pesquisa for recusada, a função segue sem ela e avisa na tela. */
 const SOM_WHISKY = [["origem","País/Região"],["tipo","Tipo"],["destilaria","Destilaria"],["composicao","Composição"],["barril","Barril"],["idade","Idade"],["abv","ABV"],["cor","Cor"],["intro","Introdução"],["nariz","Nariz"],["paladar","Paladar"],["finalizacao","Finalização"],["perfil","Perfil"],["sugestao","Sugestão de consumo"],["obs","Observação"]];
@@ -2480,7 +2502,7 @@ function somFiltraFalta(rows, falta){
       case "desc": return d <= 80;
       case "cortada": return d > SOM_DESC_MAX;
       case "ficha": return f <= 2;
-      case "perfil": return info.essencia && !p.flavor_profile;
+      case "perfil": return info.essencia && perfilVazio(p.flavor_profile);
       case "whisky": return info.whisky && !p.whisky_details;
       case "emestoque": case "semfoto": return (Number(p.stock)||0) > 0;   /* só o que tem unidades no Nex */
       default: return true;
@@ -2493,7 +2515,7 @@ function somResumoTxt(p, info){
     d===0 ? "Descrição: "+r("faltando") : d<=80 ? "Descrição: "+r(`rasa (${d} car.)`) : d>SOM_DESC_MAX ? "Descrição: "+r(`cortada no site (${d} car.)`) : "Descrição: "+g(`ok (${d} car.)`),
     "Ficha: " + (f>2 ? g(f+" itens") : r(f+(f===1?" item":" itens")))
   ];
-  if(info.essencia) partes.push("Perfil de sabor: " + (p.flavor_profile ? g("ok") : r("faltando")));
+  if(info.essencia) partes.push("Perfil de sabor: " + (!perfilVazio(p.flavor_profile) ? g("ok") : r("faltando")));
   if(info.whisky) partes.push("Whisky: " + (p.whisky_details ? g("ok") : r("sem detalhes")));
   return partes.join(" · ");
 }
@@ -2600,8 +2622,10 @@ async function openProduct(id){
           <button class="btn-ghost btn-sm" id="photoBtn">Trocar foto</button>
           ${img ? `<button class="btn-ghost btn-sm" id="reajustarBtn">🔧 Reajustar</button>` : ""}
           <input type="file" id="photoFile" accept="image/*" hidden>
+          <button class="btn-sec btn-sm" id="fwBtn">🔎 Buscar na internet</button>
         </div>
       </div>
+      <div id="fwOut"></div>
     </div>
 
     <div class="section">
@@ -2638,6 +2662,13 @@ async function openProduct(id){
       <div class="save-row"><button class="btn-gold" id="saveBtn">Salvar</button></div>
     </div>
 
+    ${somCatInfo(p.category_id).essencia || !perfilVazio(p.flavor_profile) ? `<div class="section" id="perfilSec">
+      <h3>Perfil de sabor</h3>
+      <p class="t" style="font-size:12.5px;line-height:1.5;margin:0 0 10px">As barras que aparecem no produto, na loja. De 0 a 10; a maior fica em destaque. Ajuste aqui quando a IA errar. Tudo em 0 = as barras não aparecem.</p>
+      <div class="pf-eixos">${SOM_EIXOS.map(([k,emo,lbl])=>{ const v=Math.max(0,Math.min(10,parseInt((p.flavor_profile||{})[k],10)||0)); return `<label class="pf-eixo pf-${k}"><span>${emo} ${lbl}</span><input type="range" min="0" max="10" step="1" value="${v}" data-pf="${k}" aria-label="${lbl}"><b data-pfv>${v}</b></label>`; }).join("")}</div>
+      <div class="save-row"><button type="button" class="btn-ghost btn-sm" id="pfZerar">Zerar</button><button type="button" class="btn-gold" id="pfSalvar">Salvar perfil</button></div>
+    </div>` : ""}
+
     <div class="section" id="somSec">
       <h3>✨ Sommelier: ficha do produto</h3>
       <p class="t" id="somResumo" style="font-size:12.5px;line-height:1.5;margin:0 0 8px"></p>
@@ -2660,9 +2691,25 @@ async function openProduct(id){
     };
   }
 
+  $("#fwBtn").onclick = () => fotoWebBuscar(p);
   $("#mvBtn").onclick = () => registerMovement(p.id);
 
   $("#saveBtn").onclick = () => saveProduct(p.id);
+  if($("#perfilSec")){
+    const sec = $("#perfilSec");
+    sec.querySelectorAll("[data-pf]").forEach(r => r.addEventListener("input", () => { r.parentElement.querySelector("[data-pfv]").textContent = r.value; }));
+    $("#pfZerar").onclick = () => sec.querySelectorAll("[data-pf]").forEach(r => { r.value = 0; r.dispatchEvent(new Event("input")); });
+    $("#pfSalvar").onclick = async () => {
+      const f = {}; sec.querySelectorAll("[data-pf]").forEach(r => f[r.dataset.pf] = Math.max(0, Math.min(10, parseInt(r.value, 10) || 0)));
+      const btn = $("#pfSalvar"); btn.disabled = true;
+      const { error } = await sb.from("products").update({ flavor_profile: perfilVazio(f) ? null : f }).eq("id", p.id);
+      btn.disabled = false;
+      if(error){ toast("Não foi possível salvar o perfil: " + error.message); return; }
+      p.flavor_profile = perfilVazio(f) ? null : f; if(state.current && state.current.id === p.id) state.current.flavor_profile = p.flavor_profile;
+      toast(perfilVazio(f) ? "Perfil zerado: as barras não aparecem na loja." : "Perfil de sabor salvo. A loja mostra ao ser aberta de novo.");
+      const rs = $("#somResumo"); if(rs) rs.innerHTML = somResumoTxt(p, somCatInfo(p.category_id));
+    };
+  }
   somIniciaNoEditor(p);
 }
 
@@ -2820,6 +2867,41 @@ function processarFotoQuadrada(file, ladoMax = 1024, qualidade = 0.9){
   });
 }
 
+/* Buscar foto na internet (função buscar-foto): o servidor acha as fotos (loja do fabricante, revendas, Open Food Facts),
+   a equipe toca na melhor e ela entra pelo mesmo recorte/compressão do "Trocar foto". */
+async function fotoWebChamar(body){
+  const { data:{ session } } = await sb.auth.getSession();
+  const r = await fetch(`${SUPA_URL}/functions/v1/buscar-foto`, { method:"POST",
+    headers:{ "Content-Type":"application/json", apikey:SUPA_KEY, Authorization:"Bearer " + session.access_token }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok) throw new Error(j.erro || ("busca indisponível (" + r.status + ")"));
+  return j;
+}
+async function fotoWebBuscar(p){
+  const out = $("#fwOut"), btn = $("#fwBtn"); if(!out || !btn) return;
+  btn.disabled = true; btn.textContent = "Buscando…";
+  out.innerHTML = `<p class="fw-msg">Procurando fotos de <b>${esc(p.name)}</b> na internet… leva uns 10 a 20 segundos.</p>`;
+  try{
+    const j = await fotoWebChamar({ name: ($("#fName")?.value || p.name).trim(), brand: p.brand || "", ean: p.ean || "" });
+    const cs = (j.candidatos || []).filter(c => /^https:\/\//.test(c.url));
+    if(!cs.length){ out.innerHTML = `<p class="fw-msg">${esc(j.aviso || "Não achei fotos desse produto.")}</p>`; return; }
+    out.innerHTML = `<p class="fw-msg">Toque na foto certa. Ela abre no recorte e você confirma antes de entrar no site.</p>
+      <div class="fw-grid">${cs.map((c, i) => `<button type="button" class="fw-it" data-fw="${i}" title="${esc(c.site || "")}"><img src="${esc(c.url)}" alt="" loading="lazy" referrerpolicy="no-referrer"><small>${esc(c.site || "")}</small></button>`).join("")}</div>`;
+    out.querySelectorAll(".fw-it img").forEach(im => im.addEventListener("error", () => im.closest(".fw-it").remove()));
+    out.querySelectorAll("[data-fw]").forEach(b => b.onclick = async () => {
+      const c = cs[+b.dataset.fw]; if(!c || b.classList.contains("baixando")) return;
+      b.classList.add("baixando");
+      try{
+        const d = await fotoWebChamar({ acao:"baixar", url:c.url });
+        const bin = atob(d.b64), u8 = new Uint8Array(bin.length); for(let k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
+        uploadPhoto(p.id, new Blob([u8], { type: d.tipo }));
+      }catch(e){ toast("Não consegui usar essa foto: " + e.message); }
+      finally{ b.classList.remove("baixando"); }
+    });
+  }catch(e){ out.innerHTML = `<p class="fw-msg">Não deu para buscar agora: ${esc(e.message)}</p>`; }
+  finally{ btn.disabled = false; btn.textContent = "🔎 Buscar de novo"; }
+}
+
 async function uploadPhoto(productId, file, opts = {}){
   if(!file) return null;
   let processada;
@@ -2936,7 +3018,7 @@ function openNewProduct(){
   };
 
   $("#nSave").onclick = async () => {
-    const name = $("#nName").value.trim();
+    const name = normalizaNome($("#nName").value);
     if(!name){ toast("O nome é obrigatório."); return; }
     const site_product_id = "adm-" + crypto.randomUUID().slice(0,8);
     const payload = {
@@ -3492,9 +3574,48 @@ function checaPrecos(v, antigo){
   }
   return { erros, avisos, campos };
 }
+/* Nome em CAIXA ALTA (como vem do Nex) → padrão da loja: "ENERGETICO MONSTER 473ML" → "Energético Monster 473 ml".
+   Só troca maiúscula/minúscula, o acento de palavras conhecidas e o espaço antes da medida. Confere com a mesma
+   normalização da sync-nex (normaliza): se o nome mudasse para ela, o produto poderia perder o par no Nex, então fica como está.
+   Mesma função em supabase/functions/sync-nex/index.ts (produtos importados do Nex já entram formatados). */
+const NOME_MIN = new Set(["de","da","do","das","dos","e","em","com","para","por","sem","na","no","nas","nos","ou"]);
+const NOME_ACENTO = { energetico:"energético", energeticos:"energéticos", aluminio:"alumínio", agua:"água", essencia:"essência", essencias:"essências", carvao:"carvão", ceramica:"cerâmica", acrilico:"acrílico", metalico:"metálico", copao:"copão", limao:"limão", maracuja:"maracujá", melao:"melão", pessego:"pêssego", tonabe:"tonabê", eletrico:"elétrico", eletronico:"eletrônico" };
+const NOME_UN = { ml:"ml", l:"L", lt:"L", lts:"L", kg:"kg", g:"g", mm:"mm", cm:"cm", mah:"mAh" };
+const nomeChaveNex = s => { let t = String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/['’`´]/g, "").replace(/\(\s*sem\s+preco\s*\)/g, " ").replace(/[^a-z0-9]+/g, " ").trim();
+  t = t.replace(/red bull/g, "redbull").replace(/\bsave now\b/g, " ").replace(/(\d)\s+(kg|g|ml|l|lt|lts|litro|litros|mah|cm|mm)\b/g, "$1$2").replace(/(\d)(lts?|litros?)\b/g, "$1l");
+  return t.replace(/\s+/g, " ").trim(); };
+function nomeCaixaAlta(n){
+  const l = String(n || "").replace(/[^A-Za-zÀ-ÿ]/g, ""); if(l.length < 4) return false;
+  return l.replace(/[^A-ZÀ-Þ]/g, "").length / l.length >= .8;
+}
+function nomeBonito(n){
+  const orig = String(n || "").replace(/\s+/g, " ").trim(); if(!nomeCaixaAlta(orig)) return orig;
+  let dentroPar = false, prevNum = false;
+  const fmt = (w0, i) => {
+    const m0 = w0.match(/^([("'“]*)(.*?)([)"'”,.;:!?]*)$/), pre = m0 ? m0[1] : "", pos = m0 ? m0[3] : "", w = m0 ? m0[2] : w0;
+    if(pre.includes("(")) dentroPar = true;
+    const lo = w.toLowerCase(); let out, m;
+    if(!w) out = w;
+    else if((m = lo.match(/^(\d+(?:[.,]\d+)?(?:x\d+(?:[.,]\d+)?)?)(ml|lts?|l|kg|g|mm|cm|mah)$/))) out = m[1] + " " + NOME_UN[m[2]];   /* 473ML → 473 ml */
+    else if(prevNum && NOME_UN[lo]) out = NOME_UN[lo];                                    /* 750 ML → 750 ml */
+    else if(/^\d/.test(lo) || ["c/","s/","p/"].includes(lo)) out = lo;                     /* 6X32 → 6x32, C/ → c/ */
+    else if(/\./.test(w) && /^[A-Z.]+$/.test(w)) out = w;                                 /* sigla com ponto: L.A */
+    else if(w.length <= 4 && !/[aeiouyáéíóúâêôãõ]/i.test(w)) out = w.toUpperCase();         /* sigla sem vogal: QN */
+    else if(["og","rgb","led","usb","ipa"].includes(lo)) out = lo.toUpperCase();
+    else if(dentroPar || (i > 0 && NOME_MIN.has(lo))) out = NOME_ACENTO[lo] || lo;        /* (unidade), de, com… */
+    else out = lo.split("-").map(x => { const a = NOME_ACENTO[x] || x; return a.charAt(0).toUpperCase() + a.slice(1); }).join("-");
+    if(pos.includes(")")) dentroPar = false;
+    prevNum = /^\d+([.,]\d+)?$/.test(w);
+    return pre + out + pos;
+  };
+  const novo = orig.split(" ").map(fmt).join(" ");
+  return nomeChaveNex(novo) === nomeChaveNex(orig) ? novo : orig;
+}
+
 function normalizaNome(s){                    /* espaços sobrando, pontuação solta, primeira letra */
   let t = String(s ?? "").replace(/\s+/g, " ").trim().replace(/^[\-–—.,;:|\/\\]+|[\-–—,;:|\/\\]+$/g, "").trim();
   t = t.replace(/\s+([,.;:!?])/g, "$1").replace(/([!?]){2,}/g, "$1");
+  t = nomeBonito(t);   /* digitado/colado em CAIXA ALTA entra no padrão */
   return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
 }
 
@@ -4617,6 +4738,7 @@ const CONF_REGRAS = [
   ["sem-categoria","Sem categoria",            "info",   "Não aparece em nenhuma seção da loja.",                  p => !p.category_id],
   ["sem-ean",     "Sem código de barras (EAN)","info",   "Sem EAN o Nex liga só pelo nome (pode errar).",          p => !String(p.ean || "").trim()],
   ["sem-desc",    "Sem descrição",             "info",   "Descrição curta ou vazia (o Sommelier em massa resolve).", p => String(p.description || "").trim().length < 20],
+  ["caixa-alta",  "Nome em CAIXA ALTA",        "alerta", "Fica diferente dos outros na loja. “Arrumar” deixa no padrão (ex.: ENERGETICO 473ML → Energético 473 ml); a ligação com o Nex continua.", p => nomeBonito(p.name) !== String(p.name || "").replace(/\s+/g, " ").trim()],
   ["duplicado",   "Nome repetido",             "info",   "Mais de um produto com o mesmo nome.",                   (p, x) => (x.nomes.get(normNome(p.name)) || 0) > 1],
 ];
 const vendaDe = p => Number(p.promo_price) > 0 ? Number(p.promo_price) : Number(p.price);
@@ -4658,6 +4780,24 @@ async function renderConferencia(){
         <div class="cf-nums"><span><i>Preço</i>${v > 0 ? brlM(v) : "—"}</span><label class="cf-custo"><i>Custo</i><span class="lc-in"><i>R$</i><input type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" data-cf-custo="${esc(p.id)}" value="${c > 0 ? String(c.toFixed(2)).replace(".", ",") : ""}" aria-label="Custo de ${esc(p.name)}"></span></label><span><i>Margem</i><em class="${mg == null ? "" : mg < 0 ? "neg" : mg < 20 ? "baixa" : "ok"}">${mg == null ? "—" : pctBR(mg)}</em></span><span><i>Estoque</i>${Number(p.stock) || 0}</span></div>
         <button type="button" class="btn-ghost btn-sm" data-cf-abrir="${esc(p.id)}">Abrir</button></div>`; }).join("") + (g.itens.length > 400 ? `<p class="cf-dica">Mostrando 400 de ${g.itens.length}.</p>` : "")
       : `<div class="empty">Nada aqui. Tudo certo!</div>`;
+    if(id === "caixa-alta" && g.itens.length){
+      $("#cfLista").innerHTML = `<div class="cf-nome-top"><button type="button" class="btn-gold btn-sm" id="cfNomeTodos">Arrumar todos (${g.itens.length})</button></div>` + g.itens.slice(0, 400).map(p =>
+        `<div class="cf-row cf-nome${p.is_active ? "" : " inativo"}"><div class="cf-nm"><s>${esc(p.name)}</s><b>${esc(nomeBonito(p.name))}</b></div>
+        <button type="button" class="btn-ghost btn-sm" data-cf-nome="${esc(p.id)}">Arrumar</button><button type="button" class="btn-ghost btn-sm" data-cf-abrir="${esc(p.id)}">Abrir</button></div>`).join("");
+      const arruma = async lista => {
+        let ok = 0, erro = "";
+        for(const p of lista){
+          const novo = nomeBonito(p.name); if(novo === p.name) continue;
+          const { error } = await sb.from("products").update({ name: novo }).eq("id", p.id);
+          if(error){ erro = error.message; break; }
+          p.name = novo; ok++;
+        }
+        toast(erro ? `Arrumei ${ok}; parou com erro: ${erro}` : ok === 1 ? `Nome arrumado: ${lista[0].name}` : `${ok} nomes arrumados.`);
+        conta(); mostra("caixa-alta");
+      };
+      $("#cfNomeTodos").onclick = e => { e.target.disabled = true; e.target.textContent = "Arrumando…"; arruma(g.itens.slice()); };
+      $("#cfLista").querySelectorAll("[data-cf-nome]").forEach(b => b.onclick = () => { b.disabled = true; const p = todos.find(y => y.id === b.dataset.cfNome); if(p) arruma([p]); });
+    }
     $("#cfLista").querySelectorAll("[data-cf-abrir]").forEach(b => b.onclick = () => openProduct(b.dataset.cfAbrir));
     /* custo digitado aqui mesmo: Enter ou sair do campo grava; a lista e os números se refazem na hora */
     $("#cfLista").querySelectorAll("[data-cf-custo]").forEach(inp => {
@@ -5497,7 +5637,7 @@ const SM_GENERICAS = ["headshop-outros", "doces-outros", "bebidas-bebidas"];
 const SM_LOTES = [
   ["desc", "Descrição faltando, rasa ou cortada", p => { const d = (p.description||"").trim().length; return d <= 80 || d > SOM_DESC_MAX; }],
   ["ficha", "Ficha técnica curta (até 2 itens)", p => (p.specs||[]).length <= 2],
-  ["perfil", "Essências sem perfil de sabor", p => somCatInfo(p.category_id).essencia && !p.flavor_profile],
+  ["perfil", "Essências sem perfil de sabor", p => somCatInfo(p.category_id).essencia && perfilVazio(p.flavor_profile)],
   ["whisky", "Whisky sem detalhes", p => somCatInfo(p.category_id).whisky && !p.whisky_details],
   ["generica", "Categoria genérica (Outros)", p => SM_GENERICAS.includes((state.categories.find(c => c.id === p.category_id)||{}).slug)],
   ["incompletos", "Qualquer coisa faltando", null],
@@ -5515,7 +5655,7 @@ function smDecide(p, d, o){
   const upd = {}, info = somCatInfo(p.category_id), dl = (p.description||"").trim().length, nSpecs = (p.specs||[]).length, tudo = o.modo === "reescrever";
   if(o.desc && (d.description||"").length >= 40 && (tudo || dl <= 80 || dl > SOM_DESC_MAX) && d.description.trim() !== (p.description||"").trim()) upd.description = d.description.trim();
   if(o.ficha && (d.specs||[]).length >= 2 && (tudo ? true : nSpecs <= 2 && d.specs.length > nSpecs)) upd.specs = d.specs;
-  if(o.perfil && info.essencia && d.flavor_profile && (tudo || !p.flavor_profile)) upd.flavor_profile = d.flavor_profile;
+  if(o.perfil && info.essencia && !perfilVazio(d.flavor_profile) && (tudo || perfilVazio(p.flavor_profile))) upd.flavor_profile = d.flavor_profile;
   if(o.whisky && info.whisky && d.whisky_details && (tudo || !p.whisky_details)) upd.whisky_details = d.whisky_details;
   if(o.cat && d.categoria_sugerida && d.confianca === "alta" && d.categoria_sugerida !== smCatSlug(p.category_id)){
     const c = state.categories.find(x => x.slug === d.categoria_sugerida); if(c && c.parent_id) upd.category_id = c.id;

@@ -19,6 +19,38 @@ export const normaliza = (s: unknown) => {
   t = t.replace(/(\d)\s+(kg|g|ml|l|lt|lts|litro|litros|mah|cm|mm)\b/g, "$1$2").replace(/(\d)(lts?|litros?)\b/g, "$1l");
   return t.replace(/\s+/g, " ").trim();
 };
+// Nome em CAIXA ALTA do Nex → padrão da loja ("ENERGETICO MONSTER 473ML" → "Energético Monster 473 ml"), ao importar produto novo.
+// Mesma função do painel (admin/index.html, nomeBonito). Só vale se normaliza() não muda: o par por nome continua igual.
+const NOME_MIN = new Set(["de","da","do","das","dos","e","em","com","para","por","sem","na","no","nas","nos","ou"]);
+const NOME_ACENTO: Record<string, string> = { energetico:"energético", energeticos:"energéticos", aluminio:"alumínio", agua:"água", essencia:"essência", essencias:"essências", carvao:"carvão", ceramica:"cerâmica", acrilico:"acrílico", metalico:"metálico", copao:"copão", limao:"limão", maracuja:"maracujá", melao:"melão", pessego:"pêssego", tonabe:"tonabê", eletrico:"elétrico", eletronico:"eletrônico" };
+const NOME_UN: Record<string, string> = { ml:"ml", l:"L", lt:"L", lts:"L", kg:"kg", g:"g", mm:"mm", cm:"cm", mah:"mAh" };
+export function nomeCaixaAlta(n: unknown): boolean {
+  const l = String(n ?? "").replace(/[^A-Za-zÀ-ÿ]/g, ""); if (l.length < 4) return false;
+  return l.replace(/[^A-ZÀ-Þ]/g, "").length / l.length >= .8;
+}
+export function nomeBonito(n: unknown): string {
+  const orig = String(n ?? "").replace(/\s+/g, " ").trim(); if (!nomeCaixaAlta(orig)) return orig;
+  let dentroPar = false, prevNum = false;
+  const fmt = (w0: string, i: number) => {
+    const m0 = w0.match(/^([("'“]*)(.*?)([)"'”,.;:!?]*)$/), pre = m0 ? m0[1] : "", pos = m0 ? m0[3] : "", w = m0 ? m0[2] : w0;
+    if (pre.includes("(")) dentroPar = true;
+    const lo = w.toLowerCase(); let out: string, m: RegExpMatchArray | null;
+    if (!w) out = w;
+    else if ((m = lo.match(/^(\d+(?:[.,]\d+)?(?:x\d+(?:[.,]\d+)?)?)(ml|lts?|l|kg|g|mm|cm|mah)$/))) out = m[1] + " " + NOME_UN[m[2]];
+    else if (prevNum && NOME_UN[lo]) out = NOME_UN[lo];
+    else if (/^\d/.test(lo) || ["c/", "s/", "p/"].includes(lo)) out = lo;
+    else if (/\./.test(w) && /^[A-Z.]+$/.test(w)) out = w;
+    else if (w.length <= 4 && !/[aeiouyáéíóúâêôãõ]/i.test(w)) out = w.toUpperCase();
+    else if (["og", "rgb", "led", "usb", "ipa"].includes(lo)) out = lo.toUpperCase();
+    else if (dentroPar || (i > 0 && NOME_MIN.has(lo))) out = NOME_ACENTO[lo] || lo;
+    else out = lo.split("-").map(x => { const a = NOME_ACENTO[x] || x; return a.charAt(0).toUpperCase() + a.slice(1); }).join("-");
+    if (pos.includes(")")) dentroPar = false;
+    prevNum = /^\d+([.,]\d+)?$/.test(w);
+    return pre + out + pos;
+  };
+  const novo = orig.split(" ").map(fmt).join(" ");
+  return normaliza(novo) === normaliza(orig) ? novo : orig;
+}
 export const eans = (s: unknown) => [...new Set(String(s ?? "").split(/[,;\s/|]+/).map(x => x.replace(/\D/g, "")).filter(x => x.length >= 8))];
 const fichas = (s: string) => normaliza(s).split(" ").filter(w => w.length > 0).map(w => (w.length > 3 && w.endsWith("s") && !/^\d+$/.test(w)) ? w.slice(0, -1) : w);
 export function parecido(a: string, b: string): number {
@@ -256,7 +288,7 @@ export async function handler(req: Request): Promise<Response> {
         const slugBase = normaliza(n.nome).replace(/\s+/g, "-").replace(/^-+|-+$/g, "").slice(0, 75) || "produto";
         const payload = {
           site_product_id: "nex-" + code, sku: code, ean: n.eans[0] || null,
-          name: n.nome, brand: null, category_id, price: n.preco, promo_price: n.promo,
+          name: nomeBonito(n.nome), brand: null, category_id, price: n.preco, promo_price: n.promo,
           stock: n.estoque, description: null, specs: [], is_featured: false, sort_priority: 99,
           sales_count: 0, is_active: item.publish === true, icon: "📦", slug: slugBase + "-" + code.toLowerCase()
         };

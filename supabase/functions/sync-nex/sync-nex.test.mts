@@ -35,7 +35,7 @@ const resp = (b: unknown, status = 200) => new Response(JSON.stringify(b), { sta
   if (u.pathname === "/rest/v1/rpc/nex_aplicar") { eventos.push("rpc"); const b = JSON.parse(init.body); rpcs.push({ nota: b.p_nota, itens: b.p_itens }); return resp({ estoque_alterado: b.p_itens.length, preco_alterado: 0, zerados: 0 }); }
   throw new Error("fetch inesperado " + url);
 };
-const { handler, LIMITE_SEM_PAR, lerEstoque } = await import("./index.ts");
+const { handler, LIMITE_SEM_PAR, lerEstoque, nomeBonito, normaliza } = await import("./index.ts");
 const roda = async (modo = "real") => { const r = await handler(new Request(`https://f.test/sync-nex?modo=${modo}`, { method: "POST", headers: { "x-sync-secret": "seg" } })); return r.json(); };
 
 /** 120 produtos legados (pNN) ASSOCIADOS por EAN, todos já iguais ao Nex */
@@ -236,5 +236,22 @@ r = await roda("teste");
 assert.equal(r.resumo.nex_total, 101, "só conta os publicados online (+ o novo online)");
 assert.equal(r.resumo.casados, 101, "liga só os online");
 ok("filtro de Catálogo Online ignora produtos não publicados");
+
+// nome em CAIXA ALTA do Nex → padrão da loja, sem mudar a chave de ligação por nome
+{
+  const casos: [string, string][] = [
+    ["ENERGETICO MONSTER MANGO LOCO 473ML", "Energético Monster Mango Loco 473 ml"],
+    ["BOLINHA DE RESPIRO NARGUILÉ 6MM (UNIDADE)", "Bolinha de Respiro Narguilé 6 mm (unidade)"],
+    ["COMBO QN + ENERGÉTICO 2 L + 5 GELOS SABORIZADOS", "Combo QN + Energético 2 L + 5 Gelos Saborizados"],
+    ["FILTRO THE OG SLIM  6X22MM", "Filtro The OG Slim 6x22 mm"],
+    ["JACK PAIOLS GOLD PREMIUM C/ PITEIRA", "Jack Paiols Gold Premium c/ Piteira"],
+    ["WHISKY JAMERSON 750 ML", "Whisky Jamerson 750 ml"],
+    ["L.A MENTHOL", "L.A Menthol"],
+    ["Essência Ziggy Menta", "Essência Ziggy Menta"],          // já no padrão: não mexe
+    ["Copão 500 Jameson + RedBull + Gelo", "Copão 500 Jameson + RedBull + Gelo"],
+  ];
+  for (const [de, para] of casos) { assert.equal(nomeBonito(de), para, de); assert.equal(normaliza(nomeBonito(de)), normaliza(de), "chave do Nex igual: " + de); }
+  ok("nome em CAIXA ALTA vira o padrão da loja sem mudar a chave do Nex");
+}
 
 console.log(`${total} testes OK`);
