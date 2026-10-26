@@ -340,14 +340,9 @@ button.ia-wa{width:100%;border:0;cursor:pointer;font-family:inherit}
 @keyframes pgPulso{from{transform:scale(1);opacity:.6}to{transform:scale(2.6);opacity:0}}
 .pg-ou{align-self:stretch;display:flex;align-items:center;gap:10px;margin-top:2px;font-size:13px;color:var(--muted)}
 .pg-ou::before,.pg-ou::after{content:"";flex:1;height:1px;background:var(--line)}
-.pg-chave{align-self:stretch;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 6px 6px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
-.pg-cnpj{display:flex;flex-direction:column;gap:1px;font:600 16px var(--mono);color:var(--ink);white-space:nowrap}
-.pg-cnpj small{font:400 12px var(--body);color:var(--muted)}
-.pg-copiar{flex:none;min-height:40px;padding:0 16px;border:1px solid var(--gold);border-radius:10px;background:transparent;color:var(--brand-2);font:600 14px var(--body);cursor:pointer}
-.pg-copiar.done{border-color:var(--ok-line);color:var(--ok-txt)}
 .pg-nota,.pg-aviso{align-self:stretch;margin:0;text-align:center;font-size:12px;line-height:1.4;color:var(--muted)}
 .pg-nota a{color:var(--brand-2);text-decoration:underline;text-underline-offset:2px}
-@media(max-width:360px){.pg-total>b{font-size:28px}.pg-cnpj{font-size:14px}.pg-espera{font-size:12px}}
+@media(max-width:360px){.pg-total>b{font-size:28px}.pg-espera{font-size:12px}}
 @media(max-height:700px){.pg-qr img{width:min(132px,38vw)}.pg-passos{display:none}.pg-pix{gap:6px;padding-top:8px}.pg-ticket{margin-top:6px}.pg-curto{padding:8px 12px}.pg-curto .pg-total>b{font-size:24px}}
 @media(prefers-reduced-motion:reduce){.pg-espera i::after{animation:none}}
 /* Pix confirmado no celular: contagem antes de abrir o WhatsApp da loja sozinho (js/acompanhar.js, autoWaTalvez) */
@@ -400,7 +395,9 @@ button.ia-wa{width:100%;border:0;cursor:pointer;font-family:inherit}
 .pg-mail{display:flex;gap:8px;align-items:flex-start;align-self:stretch;margin:0;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(243,228,200,.04);text-align:left;font-size:13px;line-height:1.4;color:var(--ink)}
 .pg-mail .ic{flex:none;width:18px;height:18px;margin-top:1px;color:var(--brand-2)}
 .pg-mail b{color:var(--brand-2);overflow-wrap:anywhere}
-@media(max-height:700px){.pg-pix .pg-mail{padding:5px 10px;font-size:12px;line-height:1.3;gap:6px}.pg-pix .pg-mail .ic{width:15px;height:15px}}
+.pg-info{flex-direction:column;gap:6px}
+.pg-info .pg-linha{display:flex;gap:8px;align-items:flex-start}
+@media(max-height:760px){.pg-pix .pg-info{padding:6px 10px;font-size:12px;line-height:1.3;gap:4px}.pg-pix .pg-info .pg-linha{gap:6px}.pg-pix .pg-info .ic{width:15px;height:15px}}
 </style>
 <style id="ajustes">
 /* ── Auditoria visual: correções de alinhamento e responsividade ── */
@@ -1146,7 +1143,7 @@ function applySiteCms(cms){cms=cms||{};lerEntregaCms(cms);const site=cms.site||{
 <script src="/js/desempenho.js?v=20261013a" defer></script>
 <script src="/js/avaliacoes.js?v=20261013a" defer></script>
 <script src="/js/marcas.js?v=20261025d" defer></script>
-<script src="/js/checkout-mp.js?v=20261026c" defer></script>
+<script src="/js/checkout-mp.js?v=20261026d" defer></script>
 <script src="/js/acompanhar.js?v=20261019a" defer></script>
 <script src="/js/sons.js?v=20261018a" defer></script>
 </body>

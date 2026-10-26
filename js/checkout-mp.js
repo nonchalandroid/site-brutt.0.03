@@ -11,7 +11,6 @@ var metodo="pix",whatsVal="",pedido=null,brick=null,poll=null,emailVal="",promos
 /* 18/10/2026: o checkout pede só o NOME (e-mail e WhatsApp travavam compras). O contato chega quando o cliente manda o
    pedido no WhatsApp da loja. O Mercado Pago recebe um e-mail interno do pedido (servidor); o comprovante do Mercado Pago
    chega ao cliente no e-mail da conta dele, por isso a tela só avisa, sem pedir e-mail. */
-var CNPJ="68.325.560/0001-50";   /* chave Pix da loja: aparece formatada, copia só os números (o banco reconhece a chave) */
 
 function ativo(){return!!(CFG.publicKey&&S.url&&S.key)}
 function dig(s){return String(s||"").replace(/\D/g,"")}
@@ -73,7 +72,7 @@ document.addEventListener("input",function(e){var t=e.target;if(!t)return;
   else if(t.id==="email"){emailVal=t.value.trim();try{localStorage.setItem("brutt_email",JSON.stringify(emailVal))}catch(_){}}});
 document.addEventListener("change",function(e){if(e.target&&e.target.id==="promos")promosVal=e.target.checked});
 document.addEventListener("click",function(e){
-  var b=e.target.closest&&e.target.closest("[data-pay],[data-pin-copy],[data-mp-voltar],[data-mp-copiar],[data-mp-tentar],[data-mp-whats],[data-mp-gerar],[data-mp-cnpj]");if(!b)return;
+  var b=e.target.closest&&e.target.closest("[data-pay],[data-pin-copy],[data-mp-voltar],[data-mp-copiar],[data-mp-tentar],[data-mp-whats],[data-mp-gerar]");if(!b)return;
   if(b.dataset.pay){metodo=b.dataset.pay;document.querySelectorAll(".popt").forEach(function(x){var on=x.dataset.pay===metodo;x.classList.toggle("sel",on);x.setAttribute("aria-checked",String(on))})}
   else if(b.hasAttribute("data-pin-copy"))copiarPin(b);
   else if(b.hasAttribute("data-mp-voltar"))voltar();
@@ -81,7 +80,6 @@ document.addEventListener("click",function(e){
   else if(b.hasAttribute("data-mp-tentar"))montarBrick();
   else if(b.hasAttribute("data-mp-whats"))viaWhats();
   else if(b.hasAttribute("data-mp-gerar"))gerarPix();
-  else if(b.hasAttribute("data-mp-cnpj"))copiarCnpj(b);
 });
 function copiarTexto(t){
   if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(t).catch(function(){return fb(t)});
@@ -153,6 +151,14 @@ function resumoHTML(){
 /* aviso de segurança (26/10/2026, pedido do dono): só diz que o pagamento é controlado e protegido pelo Mercado Pago */
 var CADEADO_IC='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
 function avisoMp(){return '<p class="pg-mail">'+CADEADO_IC+'<span>Ambiente de pagamento controlado e protegido pelo <b>Mercado Pago</b>.</span></p>'}
+/* lembrete do acompanhamento (26/10/2026, pedido do dono): depois do Pix pago, MPX abre ACOMP.abrir (tela "Acompanhe seu pedido");
+   o cliente fica sabendo antes, no "Gerar Pix" e na tela do Pix, junto com o aviso de segurança */
+var ACOMP_IC='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>';
+function lembreteAcomp(noPix){return '<span class="pg-linha">'+ACOMP_IC+'<span>'+(noPix
+  ?'Pagou? Esta tela abre sozinha o <b>Acompanhe seu pedido</b>, para você ver cada etapa.'
+  :'Depois do pagamento abre a tela <b>Acompanhe seu pedido</b>, para você ver cada etapa.')+'</span></span>'}
+/* uma caixa só, duas linhas: lembrete do acompanhamento + segurança (cabe sem rolar no celular pequeno) */
+function infoPix(noPix){return '<div class="pg-mail pg-info">'+lembreteAcomp(noPix)+'<span class="pg-linha">'+CADEADO_IC+'<span>Ambiente de pagamento controlado e protegido pelo <b>Mercado Pago</b>.</span></span></div>'}
 function mostrarEtapa(){
   var nome={pix:"Pix",debito:"Cartão de débito",credito:"Cartão de crédito · à vista"}[metodo];
   $("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button>'+resumoHTML()
@@ -160,7 +166,7 @@ function mostrarEtapa(){
     +'<div id="mpArea"><div id="mpBrick"></div><div class="mp-load" id="mpLoad" role="status">'+spin()+'<span>Carregando o pagamento seguro…</span></div></div>';
   if(metodo==="pix"){
     $("#mpArea").innerHTML='<div class="pg-gerar"><button type="button" class="go pix-gera" data-mp-gerar><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+PAY_IC.pix+'</svg><span>Gerar Pix de '+R(pedido.total)+'</span></button>'
-      +'<p>O QR Code e o código copia e cola aparecem na hora e valem 30 minutos.</p>'+avisoMp()+selosHTML()+'</div>';
+      +'<p>O QR Code e o código copia e cola aparecem na hora e valem 30 minutos.</p>'+infoPix(false)+selosHTML()+'</div>';
     return;
   }
   montarBrick();
@@ -233,13 +239,11 @@ function mostrarPix(px){if(window.SOM)SOM.toca("pix");
     +'<button type="button" class="go pix-copy" data-mp-copiar>Copiar código Pix</button>'
     +'<p class="pg-passos">No app do banco: <b>Pix</b> → <b>Ler QR Code</b> ou <b>Copia e cola</b>.</p>'
     +'<div class="pg-espera" role="status"><i aria-hidden="true"></i><b>Aguardando o pagamento</b></div>'
-    +'<div class="pg-chave"><span class="pg-cnpj"><small>Ou pague pela chave CNPJ</small>'+CNPJ+'</span><button type="button" class="pg-copiar" data-mp-cnpj>Copiar</button></div>'
-    +avisoMp()+'</div>';
+    +infoPix(true)+'</div>';
   tempoPix(px.expira_em);
   if(window.ACOMP&&pedido)ACOMP.guarda(pedido.pedido_id,pedido.numero,msgLojaPedido(pedido.numero));   /* atalho "Acompanhar" + mensagem completa do pedido guardada JÁ AQUI: o celular pode recarregar a página enquanto o cliente paga no app do banco */
   acompanhar();
 }
-function copiarCnpj(b){copiarTexto(CNPJ.replace(/\D/g,"")).then(function(){b.textContent="Copiada!";b.classList.add("done");toast("Chave CNPJ copiada");setTimeout(function(){if(b.isConnected){b.textContent="Copiar";b.classList.remove("done")}},2500)})}
 function copiarPix(b){var c=$("#pixCode");if(!c)return;copiarTexto(c.value).then(function(){b.textContent="Código copiado";b.classList.add("done");toast("Código Pix copiado");setTimeout(function(){if(b.isConnected){b.textContent="Copiar código Pix";b.classList.remove("done")}},2500)})}
 var _tempo=null;
 function tempoPix(fim){
