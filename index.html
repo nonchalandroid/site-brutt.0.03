@@ -823,6 +823,9 @@ html.snap-on{scroll-snap-type:none}
 /* e-mail profissional no rodapé (26/10/2026): o endereço é longo, encolhe em tela estreita para não vazar */
 .ig-mail{font-size:15px}
 @media(max-width:420px){.ig-mail{font-size:13px;gap:8px}.ig-mail [data-ic]{width:36px;height:36px}.ig-mail [data-ic] .ic{width:18px;height:18px}}
+
+/* barra da Brutt IA menor no celular (26/10/2026, pedido do dono: ocupava muito espaço): 46 → 32 px de altura (−30%), letra e ícones menores */
+@media(max-width:640px){:root{--ia-h:32px}.ia-bar{border-radius:11px;gap:2px;padding:0 4px 0 2px}.ia-open{gap:7px;padding:0 6px;border-radius:10px}.ia-bar .ia-ic{width:16px;height:16px}.ia-bar .ia-ph{font-size:13px}.ia-bar .ia-x{width:28px;height:28px;border-radius:8px}.ia-bar .ia-x svg{width:16px;height:16px}}
 </style>
 </head>
 <body>
