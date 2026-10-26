@@ -7,6 +7,7 @@ const R=(o:any,s=200)=>new Response(JSON.stringify(o),{status:s});
 (globalThis as any).fetch=async(url:string,init:any={})=>{
   const u=new URL(url), body=init.body?JSON.parse(init.body):null;
   if(u.host==="generativelanguage.googleapis.com"){
+    if(geminiHook){const h=await geminiHook(u.pathname);if(h)return h}
     prompts.push(body.systemInstruction.parts[0].text);
     const ult=body.contents[body.contents.length-1]; if(ult.parts?.[0]?.functionResponse) ferramentasResp.push(...ult.parts.map((p:any)=>p.functionResponse));
     const passo=roteiro.shift(); return R({candidates:[{content:{role:"model",parts:passo}}]});
@@ -27,7 +28,7 @@ const R=(o:any,s=200)=>new Response(JSON.stringify(o),{status:s});
   if(p==="site_cms_config") return R(cmsConfig);
   return R([],201);
 };
-let cmsConfig:any[]=[]; let buscaRes:any[]=[];
+let geminiHook:any=null; let cmsConfig:any[]=[]; let buscaRes:any[]=[];
 let conhecimento:any[]=[{titulo:"Estacionamento",texto:"Tem vaga na rua em frente à loja."},{titulo:"",texto:"  "}];
 let cotaOk=true; const cotaChamadas:any[]=[]; let geoMapa:any[]=[]; let rotaM=500;
 const M=await import(new URL("./index.ts", import.meta.url).href);
@@ -106,3 +107,21 @@ console.log("IA: 'eu mesmo peço' sem endereço, fechamento com checkout e promp
   assert.equal(r.sem_promocao,true); assert.match(r.dica,/NÃO tem promoção/);
   assert.deepEqual(r.resultados.map((x:any)=>x.nome),["Seda Barata","Seda Média","Seda Cara"],"mais barato primeiro");
   buscaRes=[]; console.log("IA: sem promoção na loja = avisa e mostra as opções mais em conta — OK"); }
+
+// corrida (26/10/2026): modelo leve lento (Google sobrecarregado) = o 2º começa em 4 s e vale o que chegar primeiro
+{
+  const vistos:string[]=[]; const t0=Date.now();
+  geminiHook=async(path:string)=>{ vistos.push(path);
+    if(path.includes("flash-lite-latest")){ await new Promise(r=>setTimeout(r,6500)); return R({candidates:[{content:{role:"model",parts:[{text:"lento"}]}}]}); }
+    return R({candidates:[{content:{role:"model",parts:[{text:"rápido"}]}}]}); };
+  const r=await chama("oi",true); const ms=Date.now()-t0;
+  assert.equal(r.reply,"rápido"); assert.ok(ms>=3900&&ms<6000,"o 2º modelo entrou em ~4 s: "+ms);
+  assert.ok(vistos[0].includes("flash-lite-latest")&&vistos[1].includes("gemini-3.5-flash"));
+  // 503 no 1º = o 2º entra na hora, sem esperar os 4 s
+  vistos.length=0; const t1=Date.now();
+  geminiHook=async(path:string)=>{ vistos.push(path); return path.includes("flash-lite-latest")?R({error:{message:"high demand"}},503):R({candidates:[{content:{role:"model",parts:[{text:"ok 2"}]}}]}); };
+  const r2=await chama("oi",true);
+  assert.equal(r2.reply,"ok 2"); assert.ok(Date.now()-t1<1500,"503 não espera a corrida");
+  geminiHook=null;
+  console.log("IA: Gemini lento ou sobrecarregado = o modelo seguinte entra em 4 s (ou na hora, com 503) — OK");
+}
