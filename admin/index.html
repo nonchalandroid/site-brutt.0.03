@@ -2882,7 +2882,11 @@ async function fotoWebBuscar(p){
   btn.disabled = true; btn.textContent = "Buscando…";
   out.innerHTML = `<p class="fw-msg">Procurando fotos de <b>${esc(p.name)}</b> na internet… leva uns 10 a 20 segundos.</p>`;
   try{
-    const j = await fotoWebChamar({ name: ($("#fName")?.value || p.name).trim(), brand: p.brand || "", ean: p.ean || "" });
+    /* categoria vai junto: "ONIX LARANJA" sozinho trazia o carro; com ela a busca vira "essência narguile ONIX LARANJA" */
+    const cat = state.categories.find(c => c.id === (($("#fCat") && $("#fCat").value) || p.category_id));
+    const mae = cat && cat.parent_id ? state.categories.find(c => c.id === cat.parent_id) : cat;
+    const j = await fotoWebChamar({ name: ($("#fName")?.value || p.name).trim(), brand: p.brand || "", ean: p.ean || "",
+      categoria: mae?.slug || "", sub: cat && cat.parent_id ? cat.name || "" : "" });
     const cs = (j.candidatos || []).filter(c => /^https:\/\//.test(c.url));
     if(!cs.length){ out.innerHTML = `<p class="fw-msg">${esc(j.aviso || "Não achei fotos desse produto.")}</p>`; return; }
     out.innerHTML = `<p class="fw-msg">Toque na foto certa. Ela abre no recorte e você confirma antes de entrar no site.</p>

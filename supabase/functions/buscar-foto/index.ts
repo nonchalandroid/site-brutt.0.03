@@ -117,7 +117,7 @@ async function doBing(q: string): Promise<Cand[]> {
 /** Pesquisa do Google (via Gemini) para achar páginas que vendem exatamente o produto */
 async function paginasDoGoogle(apiKey: string, inp: any): Promise<string[]> {
   const q = ["Encontre páginas de lojas na internet (site oficial do fabricante, revendas, marketplaces, tabacarias) que vendem EXATAMENTE este produto, com foto.",
-    `Produto: ${inp.name}`, inp.brand ? `Marca: ${inp.brand}` : "", inp.ean ? `Código de barras (EAN): ${inp.ean}` : "",
+    `Produto: ${termoBusca(inp)}`, inp.brand ? `Marca: ${inp.brand}` : "", inp.ean ? `Código de barras (EAN): ${inp.ean}` : "",
     "Responda só com uma lista curta dos sites encontrados."].filter(Boolean).join("\n");
   for (const modelo of MODELOS) {
     try {
@@ -167,9 +167,37 @@ export async function baixar(url: string, reserva = "") {
   return b.erro ? a : b;
 }
 
+/** O que cada categoria-mãe acrescenta à pesquisa (26/10/2026): "ONIX LARANJA" sozinho trazia o carro Onix.
+ *  Entra só a parte que o nome ainda não tem. A subcategoria também entra (marca da essência, "Seda", "Gin"…). */
+const TIPO_CATEGORIA: Record<string, string> = {
+  essencias: "essência narguile", narguile: "narguile", headshop: "headshop", tabacos: "tabaco", charutos: "charuto",
+  cigarrilhas: "cigarrilha", cigarros: "cigarro", palha: "cigarro de palha", isqueiros: "", bebidas: "bebida",
+  doces: "", incensos: "incenso", conveniencia: "",
+};
+const semAcento = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const PALAVRA_VAZIA = new Set(["de", "da", "do", "e", "mai", "outro", "outra"]);   // "Incensos e mais", "Outros"
+const raiz = (w: string) => semAcento(w).replace(/(oes|aes|es|s)$/, "");
+/** Monta a pesquisa: tipo da categoria + subcategoria + marca + nome, sem repetir palavra que o nome já tem */
+export function termoBusca(inp: any): string {
+  const nome = String(inp.name || "").trim();
+  const temNoNome = new Set(semAcento(nome).split(/[^a-z0-9]+/).filter(Boolean).map(raiz));
+  const extra: string[] = [];
+  const poe = (t: string) => {
+    for (const w of String(t || "").trim().split(/\s+/)) {
+      if (!w || w.length < 2) continue;
+      const r = raiz(w);
+      if (PALAVRA_VAZIA.has(r) || temNoNome.has(r) || extra.some((x) => raiz(x) === r)) continue;
+      extra.push(w);
+    }
+  };
+  poe(TIPO_CATEGORIA[String(inp.categoria || "").toLowerCase()] ?? "");
+  poe(String(inp.sub || ""));
+  poe(String(inp.brand || ""));
+  return [...extra, nome].join(" ").replace(/\s+/g, " ").trim();
+}
+
 export async function buscar(inp: any, apiKey: string) {
-  const nome = String(inp.name || "").trim(), marca = String(inp.brand || "").trim();
-  const q = marca && !nome.toLowerCase().includes(marca.toLowerCase()) ? `${marca} ${nome}` : nome;
+  const q = termoBusca(inp);
   const [bing, off] = await Promise.all([doBing(q), deOpenFoodFacts(String(inp.ean || "").replace(/\D/g, ""))]);
   let daWeb: Cand[] = [], paginas: string[] = [];
   if (bing.length < 4 && apiKey) {   // reserva: só gasta a cota do Gemini quando o Bing não achou quase nada
@@ -190,7 +218,8 @@ export async function handler(req: Request): Promise<Response> {
     const inp = await req.json().catch(() => ({}));
     if (inp?.acao === "baixar") { const r: any = await baixar(String(inp.url || ""), String(inp.reserva || "")); return r.erro ? json({ erro: r.erro }, r.status) : json(r); }
     if (!inp?.name || !String(inp.name).trim()) return json({ erro: "Falta o nome do produto." }, 400);
-    return json(await buscar({ name: String(inp.name).slice(0, 140), brand: String(inp.brand || "").slice(0, 60), ean: String(inp.ean || "").slice(0, 20) }, env("GEMINI_API_KEY")));
+    return json(await buscar({ name: String(inp.name).slice(0, 140), brand: String(inp.brand || "").slice(0, 60), ean: String(inp.ean || "").slice(0, 20),
+      categoria: String(inp.categoria || "").slice(0, 40), sub: String(inp.sub || "").slice(0, 60) }, env("GEMINI_API_KEY")));
   } catch (e) { console.error("buscar-foto", e); return json({ erro: "Algo deu errado na busca. Tente de novo." }, 500); }
 }
 
