@@ -30,6 +30,7 @@ function whatsHTML(entrega){if(!ativo())return"";return'<div class="ctt"><p clas
   +'<p class="ctt-dica" id="cttDica"'+(entrega?"":" hidden")+'>Deixe seu WhatsApp para o entregador te chamar quando chegar.</p>'
   +'<div class="ctt-g"><div><label class="field" for="whats">WhatsApp</label><input class="t" id="whats" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" maxlength="16" value="'+esc(mascara(whatsVal))+'"></div>'
   +'<div><label class="field" for="email">E-mail</label><input class="t" id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="voce@email.com" maxlength="120" value="'+esc(emailVal)+'"></div></div>'
+  +'<p class="ctt-mail">Com e-mail, o Mercado Pago manda o comprovante do Pix para você.</p>'
   +'<label class="ctt-ok"><input type="checkbox" id="promos"'+(promosVal?" checked":"")+'><span>Quero receber promoções e cupons de desconto da Brutt</span></label></div>'}
 var PIN='<svg class="pin-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.1-7-12a7 7 0 0 1 14 0c0 5.9-7 12-7 12Z"/><circle cx="12" cy="10" r="2.6"/></svg>';
 /* "Prefiro eu mesmo solicitar a entrega": o cliente chama o Uber/99 dele, então aqui não aparece valor nenhum.
@@ -150,7 +151,15 @@ function resumoHTML(){
    +'<div class="pg-total"><span>Total a pagar</span><b>'+R(p.total)+'</b></div>'
    +(dif?'<p class="pg-dif">O total foi conferido com o estoque e a taxa de entrega de agora.</p>':"")+'</div>';
 }
-var AVISO_MP="O Mercado Pago também envia as informações da compra para o e-mail da sua conta.";
+/* aviso do comprovante (26/10/2026): o Mercado Pago só manda o e-mail quando o cliente digitou o e-mail (campo opcional);
+   sem ele, o pagamento vai com o e-mail interno da loja e o comprovante fica só no app do banco. Não prometer o que não acontece. */
+var MAIL_IC='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>';
+function avisoMp(noPix){
+  return '<p class="pg-mail">'+MAIL_IC+'<span>'+(emailOk()
+    ?'O Mercado Pago vai mandar o comprovante para <b>'+esc(String(emailVal).trim().toLowerCase())+'</b>. Confira também a caixa de spam.'
+    :noPix?'O comprovante do pagamento fica no app do seu banco.'
+    :'Sem e-mail, o comprovante fica no app do seu banco. Quer receber por e-mail? Volte e preencha o campo <b>E-mail</b>: o Mercado Pago manda para ele.')+'</span></p>';
+}
 function mostrarEtapa(){
   var nome={pix:"Pix",debito:"Cartão de débito",credito:"Cartão de crédito · à vista"}[metodo];
   $("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button>'+resumoHTML()
@@ -158,7 +167,7 @@ function mostrarEtapa(){
     +'<div id="mpArea"><div id="mpBrick"></div><div class="mp-load" id="mpLoad" role="status">'+spin()+'<span>Carregando o pagamento seguro…</span></div></div>';
   if(metodo==="pix"){
     $("#mpArea").innerHTML='<div class="pg-gerar"><button type="button" class="go pix-gera" data-mp-gerar><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+PAY_IC.pix+'</svg><span>Gerar Pix de '+R(pedido.total)+'</span></button>'
-      +'<p>O QR Code e o código copia e cola aparecem na hora e valem 30 minutos. '+AVISO_MP+'</p>'+selosHTML()+'</div>';
+      +'<p>O QR Code e o código copia e cola aparecem na hora e valem 30 minutos.</p>'+avisoMp()+selosHTML()+'</div>';
     return;
   }
   montarBrick();
@@ -232,7 +241,7 @@ function mostrarPix(px){if(window.SOM)SOM.toca("pix");
     +'<p class="pg-passos">No app do banco: <b>Pix</b> → <b>Ler QR Code</b> ou <b>Copia e cola</b>.</p>'
     +'<div class="pg-espera" role="status"><i aria-hidden="true"></i><b>Aguardando o pagamento</b></div>'
     +'<div class="pg-chave"><span class="pg-cnpj"><small>Ou pague pela chave CNPJ</small>'+CNPJ+'</span><button type="button" class="pg-copiar" data-mp-cnpj>Copiar</button></div>'
-    +'<p class="pg-aviso">'+AVISO_MP+'</p></div>';
+    +avisoMp(true)+'</div>';
   tempoPix(px.expira_em);
   if(window.ACOMP&&pedido)ACOMP.guarda(pedido.pedido_id,pedido.numero,msgLojaPedido(pedido.numero));   /* atalho "Acompanhar" + mensagem completa do pedido guardada JÁ AQUI: o celular pode recarregar a página enquanto o cliente paga no app do banco */
   acompanhar();
