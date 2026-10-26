@@ -22,7 +22,7 @@ const HORARIOS_PADRAO: Horario[] = [   // reserva: só é usado se o banco não 
   { d: 5, n: "Sexta", a: 11 * 60 + 30, b: 25 * 60 }, { d: 6, n: "Sábado", a: 12 * 60, b: 25 * 60 }, { d: 0, n: "Domingo", a: 12 * 60, b: 24 * 60 },
 ];
 const DIAS_MIN = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
-const MAX_ITERACOES = 6, MAX_LINHAS = 30, MAX_QTD = 99, PRAZO_TOTAL_MS = 40000;
+const MAX_ITERACOES = 6, MAX_LINHAS = 30, MAX_QTD = 99, PRAZO_TOTAL_MS = 40000, CORRIDA_MS = 4000;
 
 export const _deps = { now: () => new Date() };       // (só pra teste)
 const env = (k: string) => (globalThis as any).Deno?.env?.get(k) as string | undefined;
@@ -619,10 +619,12 @@ async function rodaAgente(c: Ctx, historico: any[], mensagem: string, tempos: Te
   const prazo = Date.now() + PRAZO_TOTAL_MS;
 
   /** uma conversa completa com UM modelo (as "assinaturas de pensamento" só valem pro modelo que as gerou: por isso, ao trocar de modelo, recomeça do zero) */
-  const volta = async (modelo: string, teto: number): Promise<string> => {
-    const contents: any[] = [...historico, { role: "user", parts: [{ text: mensagem }] }];
+  const limite = (teto: number) => Math.max(3000, Math.min(teto, prazo - Date.now()));
+  const inicio = (): any[] => [...historico, { role: "user", parts: [{ text: mensagem }] }];
+  const volta = async (modelo: string, teto: number, primeira?: any): Promise<string> => {
+    const contents: any[] = inicio();
     for (let i = 0; i < MAX_ITERACOES; i++) {
-      const resp = await gemini(contents, system, modelo, Math.max(3000, Math.min(teto, prazo - Date.now())), tempos);
+      const resp = i === 0 && primeira ? primeira : await gemini(contents, system, modelo, limite(teto), tempos);
       if (resp?.promptFeedback?.blockReason) return "Não consegui responder a isso. Posso ajudar com os produtos da loja?";
       const conteudo = resp?.candidates?.[0]?.content;
       const partes: any[] = conteudo?.parts ?? [];
@@ -645,12 +647,36 @@ async function rodaAgente(c: Ctx, historico: any[], mensagem: string, tempos: Te
     return fallbackTexto(c);
   };
 
-  const modelos = MODELOS(); let ultimo: any = null;
-  for (let k = 0; k < modelos.length; k++) {
-    try { const texto = await volta(modelos[k], k === 0 ? 14000 : 18000); tempos.modelo = modelos[k]; return texto; }
-    catch (e) { if (!(e instanceof Retentavel)) throw e; ultimo = e; if (prazo - Date.now() < 6000) break; }     // 503/429/tempo: próximo modelo da cadeia
+  const modelos = MODELOS(), teto = (m: string) => m === modelos[0] ? 14000 : 18000;
+  // 1ª resposta em corrida (26/10/2026: com o Google sobrecarregado o modelo leve levava 16–25 s e a cadeia
+  // esperava 14 + 18 + 8 s até desistir): se o modelo da vez não responde em CORRIDA_MS, o próximo começa junto
+  // e vale o que chegar primeiro. Só a 1ª chamada corre em paralelo: as ferramentas mexem no pedido, então a
+  // conversa segue com um modelo só.
+  const { modelo, resp } = await new Promise<{ modelo: string; resp: any }>((ok, falha) => {
+    let fim = false, pendentes = 0, prox = 0, ultimo: any = null, timer: any;
+    const acaba = (f: () => void) => { if (fim) return; fim = true; clearTimeout(timer); f(); };
+    const lanca = () => {
+      if (fim || prox >= modelos.length) return;
+      const m = modelos[prox++]; pendentes++;
+      clearTimeout(timer); if (prox < modelos.length) timer = setTimeout(lanca, CORRIDA_MS);
+      gemini(inicio(), system, m, limite(teto(m)), tempos).then(r => acaba(() => ok({ modelo: m, resp: r })), e => {
+        pendentes--;
+        if (!(e instanceof Retentavel)) return acaba(() => falha(e));
+        ultimo = e;                                                                // 503/429/tempo: próximo modelo da cadeia já
+        if (!pendentes) { if (prox < modelos.length && prazo - Date.now() >= 6000) lanca(); else acaba(() => falha(ultimo)); }
+      });
+    };
+    lanca();
+  });
+  let ultimo: any = null;
+  try { const texto = await volta(modelo, teto(modelo), resp); tempos.modelo = modelo; return texto; }
+  catch (e) { if (!(e instanceof Retentavel)) throw e; ultimo = e; }
+  for (const m of modelos.filter(x => x !== modelo)) {                           // caiu no meio da conversa: recomeça com outro modelo
+    if (prazo - Date.now() < 6000) break;
+    try { const texto = await volta(m, teto(m)); tempos.modelo = m; return texto; }
+    catch (e) { if (!(e instanceof Retentavel)) throw e; ultimo = e; }
   }
-  throw ultimo ?? new Error("Gemini indisponível");
+  throw ultimo;
 }
 function fallbackTexto(c: Ctx) {
   if (c.whatsapp && c.pagOnline) return "Pedido montado! Toque em **Pagar com Pix** abaixo para pagar com Pix (QR Code na hora).";
