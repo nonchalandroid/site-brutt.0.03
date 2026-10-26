@@ -2,5 +2,9 @@ User-agent: *
 Disallow: /admin/
 Disallow: /pedido/
 Disallow: /assets/
+# endereços que o Google tira de dentro do código (chamadas ao Supabase e ao ViaCEP), não são páginas do site
+Disallow: /functions/
+Disallow: /rest/
+Disallow: /json/
 
 Sitemap: https://tabacariabrutt.com.br/sitemap.xml
