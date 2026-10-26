@@ -97,4 +97,22 @@ assert.equal((await chama({ acao: "baixar", url: "https://cdn.x.com/p.html" })).
 assert.equal((await chama({ acao: "baixar", url: "https://127.0.0.1/a.png" })).status, 400);
 assert.equal((await chama({ acao: "baixar", url: "https://cdn.x.com/nao-existe.png" })).status, 502);
 
+// 7) pesquisa com o tipo da categoria: "ONIX LARANJA" sozinho trazia o carro Onix
+const T = m.termoBusca;
+assert.equal(T({ name: "ONIX LARANJA", categoria: "essencias", sub: "Onix" }), "essência narguile ONIX LARANJA");
+assert.equal(T({ name: "Essência Zomo Uva", categoria: "essencias", sub: "Zomo" }), "narguile Essência Zomo Uva", "não repete o que o nome já tem");
+assert.equal(T({ name: "Essencia Ziggy Menta", categoria: "essencias", sub: "Ziggy" }), "narguile Essencia Ziggy Menta", "sem acento também conta");
+assert.equal(T({ name: "Rosh Silicone", categoria: "narguile", sub: "Roshs" }), "narguile Rosh Silicone", "plural da subcategoria = palavra do nome");
+assert.equal(T({ name: "OCB Premium", categoria: "headshop", sub: "Sedas" }), "headshop Sedas OCB Premium");
+assert.equal(T({ name: "Tanqueray London Dry 750 ml", categoria: "bebidas", sub: "Gin", brand: "Tanqueray" }), "bebida Gin Tanqueray London Dry 750 ml");
+assert.equal(T({ name: "Incenso Satya", categoria: "incensos", sub: "Incensos e mais" }), "Incenso Satya", "sem 'e mais'");
+assert.equal(T({ name: "Bala Halls", categoria: "doces", sub: "Outros" }), "Bala Halls");
+assert.equal(T({ name: "Produto Sem Categoria" }), "Produto Sem Categoria", "sem categoria = só o nome (como antes)");
+assert.equal(T({ name: "Smirnoff 998 ml", brand: "Smirnoff" }), "Smirnoff 998 ml");
+rotas = { "https://www.bing.com/images/search": () => resp("", 200, { "content-type": "text/html" }), "https://generativelanguage.googleapis.com/": () => resp({ candidates: [{}] }) };
+pedidos = [];
+await chama({ name: "ONIX LARANJA", categoria: "essencias", sub: "Onix" });
+const qBing = pedidos.find((u) => u.startsWith("https://www.bing.com/"));
+assert.ok(qBing && decodeURIComponent(new URL(qBing).searchParams.get("q") || "") === "essência narguile ONIX LARANJA", "o Bing recebe a pesquisa com o tipo");
+
 console.log("buscar-foto: todos os testes passaram");
