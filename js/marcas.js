@@ -5,9 +5,9 @@
    [slug, nome, largura do arquivo] — a altura é sempre 120. */
 (() => {
   const MARCAS = [
-    ["zomo", "Zomo", 272], ["bem-bolado", "Bem Bolado", 355],
+    ["zomo", "Zomo", 272], ["sadhu", "Sadhu", 275], ["bem-bolado", "Bem Bolado", 355],
     ["johnnie-walker", "Johnnie Walker", 858], ["ocb", "OCB", 370], ["ballantines", "Ballantine's", 442],
-    ["smoking", "Smoking", 315], ["baly", "Baly", 640],
+    ["smoking", "Smoking", 315], ["red-bull", "Red Bull", 759], ["baly", "Baly", 640],
     ["kaloud", "Kaloud", 531], ["smirnoff", "Smirnoff", 377],
     ["zengaz", "Zengaz", 904], ["jameson", "Jameson", 503], ["a-piteira", "A Piteira", 355],
     ["tanqueray", "Tanqueray", 320], ["beefeater", "Beefeater", 371],
