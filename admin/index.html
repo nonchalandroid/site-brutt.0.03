@@ -4542,10 +4542,18 @@ function pixVenceu(p){
   if(p.reserva) return false;
   return p.status === "expirado" || (p.status === "aguardando_pagamento" && !!p.pix_expira_em && new Date(p.pix_expira_em) < new Date());
 }
-/* esquecido = Pix vencido nos últimos PIX_DIAS dias e o cliente não fez um pedido pago depois */
-function pixEsquecidos(lista){
+/* pedido de teste da equipe fica de fora: nome com "teste"/"claude", ou WhatsApp que já apareceu num pedido cancelado
+   pela equipe com o motivo "teste" (o número de quem testa é aprendido sozinho, sem guardar telefone no código).
+   Para tirar um teste da lista: Cancelar pedido → motivo "teste". */
+const pedEhTeste = (p, numerosTeste) => /\b(teste|claude)\b/i.test(String(p.cliente_nome || "")) || (!!p.cliente_whats && numerosTeste.has(p.cliente_whats));
+async function pedNumerosTeste(){
+  const { data, error } = await sb.from("pedidos").select("cliente_whats").ilike("mp_status_detail", "%teste%").not("cliente_whats", "is", null).limit(500);
+  return new Set(error ? [] : (data || []).map(r => r.cliente_whats));
+}
+/* esquecido = Pix vencido nos últimos PIX_DIAS dias, não é teste e o cliente não fez um pedido pago depois */
+function pixEsquecidos(lista, numerosTeste = new Set()){
   const desde = Date.now() - PIX_DIAS * 864e5;
-  return lista.filter(p => pixVenceu(p) && new Date(p.created_at).getTime() >= desde && !lista.some(o =>
+  return lista.filter(p => pixVenceu(p) && !pedEhTeste(p, numerosTeste) && new Date(p.created_at).getTime() >= desde && !lista.some(o =>
     ["pago", "concluido"].includes(o.status) && new Date(o.created_at) > new Date(p.created_at) &&
     ((p.cliente_whats && o.cliente_whats === p.cliente_whats) || (pedNomeChave(o.cliente_nome) && pedNomeChave(o.cliente_nome) === pedNomeChave(p.cliente_nome)))));
 }
@@ -4582,7 +4590,7 @@ async function renderPedidos(){
     ["estornado", "Estornados", p => pedSt(p) === "estornado"],
     ["outros", "Cancelados / expirados", p => ["recusado","expirado","cancelado"].includes(pedSt(p))],
   ];
-  const esquecidos = new Set(pixEsquecidos(data).map(p => p.id));
+  const esquecidos = new Set(pixEsquecidos(data, await pedNumerosTeste()).map(p => p.id));
   if(hashParam("f") === "esquecidos") pedFiltro = "esquecidos";
   if(!FILTROS.some(f => f[0] === pedFiltro)) pedFiltro = "todos";
   const cartao = p => {
@@ -4616,7 +4624,7 @@ async function renderPedidos(){
     fx.hidden = false;
     fx.innerHTML = FILTROS.map(([k, t, fn]) => `<button type="button" class="chip${k === pedFiltro ? " active" : ""}" data-pf="${k}" aria-pressed="${k === pedFiltro}">${t}<span class="n">${data.filter(fn).length}</span></button>`).join("");
     fx.querySelectorAll("[data-pf]").forEach(b => b.onclick = () => { pedFiltro = b.dataset.pf; desenha(); });
-    const resumoPix = pedFiltro === "esquecidos" && lista.length ? `<p class="ped-esq-res"><b>${lista.length} pedido${lista.length > 1 ? "s" : ""} · ${brl(lista.reduce((t, p) => t + Number(p.total || 0), 0))}</b> com Pix vencido nos últimos ${PIX_DIAS} dias, de quem não comprou depois. Um toque chama o cliente no WhatsApp com a mensagem pronta.</p>` : "";
+    const resumoPix = pedFiltro === "esquecidos" && lista.length ? `<p class="ped-esq-res"><b>${lista.length} pedido${lista.length > 1 ? "s" : ""} · ${brl(lista.reduce((t, p) => t + Number(p.total || 0), 0))}</b> com Pix vencido nos últimos ${PIX_DIAS} dias, de quem não comprou depois. Um toque chama o cliente no WhatsApp com a mensagem pronta. Pedidos de teste não entram; se aparecer um, cancele com o motivo “teste”.</p>` : "";
     el.innerHTML = lista.length ? resumoPix + lista.map(cartao).join("") : `<div class="empty">${pedFiltro === "esquecidos" ? `Nenhum Pix esquecido nos últimos ${PIX_DIAS} dias. 🎉` : "Nenhum pedido neste filtro."}</div>`;
     el.querySelectorAll("[data-recupera]").forEach(a => a.addEventListener("click", () => { pixMarcaChamado(a.dataset.recupera); setTimeout(desenha, 400); }));
     el.querySelectorAll(".ped-card.novo,.ped-card.pixnovo").forEach(c => c.addEventListener("click", async e => {
@@ -5426,7 +5434,7 @@ async function renderVisao(){
   $("#ovAtualiza").onclick = () => { navCont.t = 0; renderVisao(); };
 
   const cont = q => q.then(r => r.error ? null : (r.count || 0)).catch(() => null);
-  const [nPago, nAguard, nBaixo, nZero, nex, hor, ult, nNovo, prodsMg, perV, pedRec, vdUlt] = await Promise.all([
+  const [nPago, nAguard, nBaixo, nZero, nex, hor, ult, nNovo, prodsMg, perV, pedRec, vdUlt, numTeste] = await Promise.all([
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "pago")),
     cont(sb.from("pedidos").select("id", { count:"exact", head:true }).eq("status", "aguardando_pagamento")),
     cont(filtroEstoqueBaixo(sb.from("products").select("id", { count:"exact", head:true }))),
@@ -5439,6 +5447,7 @@ async function renderVisao(){
     sb.from("vendas_periodo").select("dias,fim").eq("id", 1).maybeSingle(),
     sb.from("pedidos").select("id,status,reserva,pix_expira_em,created_at,cliente_whats,cliente_nome,total").gte("created_at", new Date(Date.now() - (PIX_DIAS + 1) * 864e5).toISOString()).limit(300),
     sb.from("vendas_dia").select("dia").order("dia", { ascending:false }).limit(1),
+    pedNumerosTeste(),
   ]);
   if(rotaAtual() !== "visao" || !$("#ovKpis")) return;
   const mg = margemCatalogo(prodsMg.error ? [] : prodsMg.data);
@@ -5476,7 +5485,7 @@ async function renderVisao(){
   const nRepor = perV && perV.data && !prodsMg.error ? calcGiro(prodsMg.data, perV.data.dias).lista.filter(GIRO_FILTROS[0][4]).length : 0;
   if(nRepor) todo.push(it("giro", "gauge", "alerta", `${nRepor} produto${nRepor > 1 ? "s" : ""} acaba${nRepor > 1 ? "m" : ""} em até 7 dias`, "No ritmo de venda do período. Veja quanto comprar."));
   /* Pix esquecidos: Pix vencido sem compra depois (filtro próprio em Pedidos) */
-  const esq = pedRec && !pedRec.error ? pixEsquecidos(pedRec.data || []) : [];
+  const esq = pedRec && !pedRec.error ? pixEsquecidos(pedRec.data || [], numTeste) : [];
   if(esq.length) todo.push(it("pedidos?f=esquecidos", "bag", "alerta", `${esq.length} Pix esquecido${esq.length > 1 ? "s" : ""} · ${brl(esq.reduce((t, p) => t + Number(p.total || 0), 0))}`, `Cliente gerou o Pix e não pagou (últimos ${PIX_DIAS} dias). Chame no WhatsApp com a mensagem pronta.`));
   /* dados do Nex parados: o Financeiro e o Giro usam relatórios importados à mão */
   const diasDe = d => d ? Math.floor((Date.now() - new Date(d + "T12:00:00-03:00").getTime()) / 864e5) : null;
