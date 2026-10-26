@@ -30,7 +30,7 @@ function whatsHTML(entrega){if(!ativo())return"";return'<div class="ctt"><p clas
   +'<p class="ctt-dica" id="cttDica"'+(entrega?"":" hidden")+'>Deixe seu WhatsApp para o entregador te chamar quando chegar.</p>'
   +'<div class="ctt-g"><div><label class="field" for="whats">WhatsApp</label><input class="t" id="whats" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" maxlength="16" value="'+esc(mascara(whatsVal))+'"></div>'
   +'<div><label class="field" for="email">E-mail</label><input class="t" id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="voce@email.com" maxlength="120" value="'+esc(emailVal)+'"></div></div>'
-  +'<label class="ctt-ok"><input type="checkbox" id="promos"'+(promosVal?" checked":"")+'><span>Quero receber promoções e cupons de desconto da Brutt</span></label></div>'}
+    +'<label class="ctt-ok"><input type="checkbox" id="promos"'+(promosVal?" checked":"")+'><span>Quero receber promoções e cupons de desconto da Brutt</span></label></div>'}
 var PIN='<svg class="pin-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.1-7-12a7 7 0 0 1 14 0c0 5.9-7 12-7 12Z"/><circle cx="12" cy="10" r="2.6"/></svg>';
 /* "Prefiro eu mesmo solicitar a entrega": o cliente chama o Uber/99 dele, então aqui não aparece valor nenhum.
    Pin copia o endereço da loja (ponto de coleta); botões abrem os apps. Uber = logotipo oficial (simple-icons, CC0),
@@ -150,7 +150,9 @@ function resumoHTML(){
    +'<div class="pg-total"><span>Total a pagar</span><b>'+R(p.total)+'</b></div>'
    +(dif?'<p class="pg-dif">O total foi conferido com o estoque e a taxa de entrega de agora.</p>':"")+'</div>';
 }
-var AVISO_MP="O Mercado Pago também envia as informações da compra para o e-mail da sua conta.";
+/* aviso de segurança (26/10/2026, pedido do dono): só diz que o pagamento é controlado e protegido pelo Mercado Pago */
+var CADEADO_IC='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+function avisoMp(){return '<p class="pg-mail">'+CADEADO_IC+'<span>Ambiente de pagamento controlado e protegido pelo <b>Mercado Pago</b>.</span></p>'}
 function mostrarEtapa(){
   var nome={pix:"Pix",debito:"Cartão de débito",credito:"Cartão de crédito · à vista"}[metodo];
   $("#dBody").innerHTML='<button class="chip" data-mp-voltar>‹ Voltar</button>'+resumoHTML()
@@ -158,7 +160,7 @@ function mostrarEtapa(){
     +'<div id="mpArea"><div id="mpBrick"></div><div class="mp-load" id="mpLoad" role="status">'+spin()+'<span>Carregando o pagamento seguro…</span></div></div>';
   if(metodo==="pix"){
     $("#mpArea").innerHTML='<div class="pg-gerar"><button type="button" class="go pix-gera" data-mp-gerar><svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+PAY_IC.pix+'</svg><span>Gerar Pix de '+R(pedido.total)+'</span></button>'
-      +'<p>O QR Code e o código copia e cola aparecem na hora e valem 30 minutos. '+AVISO_MP+'</p>'+selosHTML()+'</div>';
+      +'<p>O QR Code e o código copia e cola aparecem na hora e valem 30 minutos.</p>'+avisoMp()+selosHTML()+'</div>';
     return;
   }
   montarBrick();
@@ -232,7 +234,7 @@ function mostrarPix(px){if(window.SOM)SOM.toca("pix");
     +'<p class="pg-passos">No app do banco: <b>Pix</b> → <b>Ler QR Code</b> ou <b>Copia e cola</b>.</p>'
     +'<div class="pg-espera" role="status"><i aria-hidden="true"></i><b>Aguardando o pagamento</b></div>'
     +'<div class="pg-chave"><span class="pg-cnpj"><small>Ou pague pela chave CNPJ</small>'+CNPJ+'</span><button type="button" class="pg-copiar" data-mp-cnpj>Copiar</button></div>'
-    +'<p class="pg-aviso">'+AVISO_MP+'</p></div>';
+    +avisoMp()+'</div>';
   tempoPix(px.expira_em);
   if(window.ACOMP&&pedido)ACOMP.guarda(pedido.pedido_id,pedido.numero,msgLojaPedido(pedido.numero));   /* atalho "Acompanhar" + mensagem completa do pedido guardada JÁ AQUI: o celular pode recarregar a página enquanto o cliente paga no app do banco */
   acompanhar();
