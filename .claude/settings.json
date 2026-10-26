@@ -3,5 +3,20 @@
     "allow": [
       "Bash(git rm *)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/testar-funcao.sh",
+            "timeout": 120,
+            "statusMessage": "Rodando os testes da função…"
+          }
+        ]
+      }
+    ]
   }
 }

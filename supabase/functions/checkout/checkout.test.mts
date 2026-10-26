@@ -446,7 +446,8 @@ await t("um aviso por etapa, com o que fazer; quem fez a etapa não recebe o avi
   const outro = await aparelho("/outro-celular", "u-outro"), meu = () => pushes.filter(x => x.path === "/meu-celular").length;
   const c = await call("criar", { ...base, nome: "Ana Etapas", entrega: { tipo: "cliente" } }), id = c.j.pedido_id;
   proximoMp = { status: "pending", status_detail: "pending_waiting_transfer" };
-  await call("pagar", { pedido_id: id, metodo: "pix", formData: { payment_method_id: "pix", payer: {} } });
+  // espera o aviso do Pix gerado (vai em segundo plano) antes de pagar; sem isso os dois avisos às vezes chegavam fora de ordem
+  await call("pagar", { pedido_id: id, metodo: "pix", formData: { payment_method_id: "pix", payer: {} } }); await flush();
   await C.processarPagamento({ ...mpPays.get(String(mpSeq)), status: "approved", status_detail: "accredited" }); await flush();
   const doOutro = async () => Promise.all(pushes.filter(x => x.path === "/outro-celular").map(x => abre(outro, x.corpo)));
   let av = await doOutro();

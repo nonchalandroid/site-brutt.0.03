@@ -278,6 +278,7 @@ Não há Storybook nem documentação de componentes além deste arquivo.
    - `node --experimental-strip-types supabase/functions/sync-nex/sync-nex.test.mts`
    - `node --experimental-strip-types supabase/functions/avaliacoes/avaliacoes.test.mts`
    - `node --experimental-strip-types supabase/functions/buscar-foto/buscar-foto.test.mts`
+   - **Automático (26/10/2026):** o hook `.claude/hooks/testar-funcao.sh` (em `.claude/settings.json`, depois de cada edição) roda sozinho os testes da função cujo arquivo foi editado em `supabase/functions/<nome>/`; teste vermelho volta para o Claude consertar. Para publicar uma função depois que o código chegou à `main`: skill **`/publicar-funcao <nome>`** (`.claude/skills/publicar-funcao/SKILL.md`: testes, troca do commit fixado, mantém o `verify_jwt`, confere a versão e os logs).
 7. Segurança: nada de token/segredo no front. Só a **Public Key** do Mercado Pago (`window.__MP`) e a chave **anon** do Supabase podem ficar no HTML.
 
 **Pix online ligado para todos** (desde 11/10/2026): `MP_PRODUCAO` em `index.html` tem a Public Key de produção. Para voltar ao pedido pelo WhatsApp, deixe `MP_PRODUCAO=""` (ver `supabase/CHECKOUT.md`).
