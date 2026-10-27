@@ -825,7 +825,11 @@ html.snap-on{scroll-snap-type:none}
 @media(max-width:420px){.ig-mail{font-size:13px;gap:8px}.ig-mail [data-ic]{width:36px;height:36px}.ig-mail [data-ic] .ic{width:18px;height:18px}}
 
 /* barra da Brutt IA menor no celular (26/10/2026, pedido do dono: ocupava muito espaço): 46 → 32 px de altura (−30%), letra e ícones menores */
-@media(max-width:640px){:root{--ia-h:32px}.ia-bar{border-radius:11px;gap:2px;padding:0 4px 0 2px}.ia-open{gap:7px;padding:0 6px;border-radius:10px}.ia-bar .ia-ic{width:16px;height:16px}.ia-bar .ia-ph{font-size:13px}.ia-bar .ia-x{width:28px;height:28px;border-radius:8px}.ia-bar .ia-x svg{width:16px;height:16px}}
+@media(max-width:640px){:root{--ia-h:38px}.ia-bar{border-radius:12px;gap:2px;padding:0 4px 0 2px}.ia-open{gap:8px;padding:0 7px;border-radius:10px}.ia-bar .ia-ic{width:18px;height:18px}.ia-bar .ia-ph{font-size:14px}.ia-bar .ia-x{width:32px;height:32px;border-radius:9px}.ia-bar .ia-x svg{width:17px;height:17px}}
+/* janela da Brutt IA menor no celular (27/10/2026, pedido do dono): no máx. 72% da tela (antes 86% na conversa e até a tela toda no início), atalhos mais compactos; "Nova conversa" vira só o ícone até 480 px (o texto empurrava o X de fechar para fora da tela) */
+@media(max-width:640px){.ia-panel{max-height:min(72vh,calc(var(--ia-vh,100vh) - 8px))}.ia-panel.conv:not(.full){height:min(72vh,calc(var(--ia-vh,100vh) - 8px))}#iaIntro .ia-chips{gap:6px}#iaIntro .ia-chip{font-size:14px;padding:7px 12px}}
+@media(max-width:480px){.ia-new span{display:none}.ia-new{padding:6px 8px}}
+@media(max-width:380px){.ia-hd{gap:4px;padding:12px 8px 6px 12px}.ia-hd .ia-x{width:32px;height:32px}.ia-hd b{font-size:16px}}
 </style>
 </head>
 <body>
