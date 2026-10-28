@@ -1825,6 +1825,42 @@ b,strong,h1,h2,h3,h4{font-weight:700}
 .eq3-card a{color:var(--t-cia)}
 .eq3-nota{margin:0;font-size:12px;color:var(--t-mut)}
 @media(max-width:760px){.eq3-cards{grid-template-columns:1fr}}
+
+/* ===== COMBOS DE DESENCALHE (aba de Compras, 28/10/2026) ===== */
+.cb-mods{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.cb-mod{display:grid;gap:3px;text-align:left;background:var(--r-card);color:var(--r-mut);border:0;border-radius:14px;padding:12px;font:inherit;box-shadow:var(--r-sh);cursor:pointer;min-height:44px;min-width:0}
+.cb-mod span{font-size:20px}.cb-mod b{color:var(--r-ink);font-size:14px}.cb-mod small{font-size:12px;line-height:1.35}
+.cb-mod.on{box-shadow:var(--r-in);outline:1px solid rgba(243,183,44,.5)}.cb-mod.on b{color:var(--r-ouro)}
+.cb-sug{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.cb-s{flex:0 0 auto;display:grid;gap:2px;text-align:left;max-width:260px;background:var(--r-card);color:var(--r-ink);border:0;border-radius:12px;padding:10px 12px;font:inherit;font-size:13px;box-shadow:var(--r-sh);cursor:pointer}
+.cb-s small{color:var(--r-mut);font-size:12px}.cb-s.on{box-shadow:var(--r-in);outline:1px solid #22d3ee}.cb-s.on b{color:var(--r-cia)}
+.cb-calc{display:grid;gap:12px}
+.cb-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.cb-nome{font-size:16px;color:var(--r-ouro)}
+.cb-selo{font-style:normal;font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px;border:1px solid currentColor}
+.cb-selo.ok{color:var(--r-ok);background:rgba(16,185,129,.12)}.cb-selo.neg{color:var(--r-neg);background:rgba(244,63,94,.12)}.cb-selo.am{color:var(--r-am);background:rgba(243,183,44,.10)}
+.cb-mot{margin:0;font-size:14px;line-height:1.5;color:var(--r-ink)}
+.cb-eq{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);align-items:stretch;gap:10px}
+.cb-prod,.cb-fim{display:grid;gap:4px;align-content:start;background:var(--r-bg);border-radius:12px;padding:10px 12px;box-shadow:var(--r-in);min-width:0}
+.cb-pap{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--r-mut)}
+.cb-prod b{font-size:14px;overflow-wrap:anywhere}.cb-prod small{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--r-mut)}
+.cb-prod .rop-abc{width:22px;height:22px;font-size:11px}
+.cb-pv{font-family:var(--mono);color:var(--r-ink);white-space:nowrap}
+.cb-op{align-self:center;font:700 22px/1 var(--mono);color:var(--r-ouro)}
+.cb-fim span{font-size:12px;color:var(--r-mut)}.cb-fim s{font-family:var(--mono);color:var(--r-mut);font-size:13px}
+.cb-fim b{font-family:var(--mono);font-size:24px;color:var(--r-ouro);white-space:nowrap}.cb-fim small{font-size:12px;color:var(--r-ok)}
+.cb-sl{display:grid;gap:6px;font-size:14px}.cb-sl small{color:var(--r-mut)}
+.cb-nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cb-nums>div{display:grid;gap:2px}.cb-nums span{font-size:12px;color:var(--r-mut)}
+.cb-nums b{font-family:var(--mono);font-size:18px;white-space:nowrap}.cb-nums b.ok{color:var(--r-ok)}.cb-nums b.neg{color:var(--r-neg)}
+.cb-barra{position:relative;height:10px;border-radius:999px;background:var(--r-bg);box-shadow:var(--r-in);overflow:visible}
+.cb-barra i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:linear-gradient(90deg,#10b981,#34d399)}
+.cb-barra.baixa i{background:linear-gradient(90deg,#f43f5e,#fb7185)}
+.cb-barra em{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--r-ouro);border-radius:2px}
+.cb-alerta{margin:0;font-size:14px;font-weight:600;color:var(--r-neg)}.cb-okm{margin:0;font-size:13px;color:var(--r-ok)}
+@media(max-width:900px){.cb-mods{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.cb-eq{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}.cb-eq .cb-op:nth-of-type(2){display:none}.cb-fim{grid-column:1/-1}}
+@media(max-width:420px){.cb-eq{grid-template-columns:1fr}.cb-op{justify-self:center}.cb-eq .cb-op:nth-of-type(2){display:block}.cb-nums b{font-size:16px}.cb-mod small{display:none}}
 </style>
 </head>
 <body>
@@ -4906,7 +4942,7 @@ async function iaPerguntar(){
    protegem o caixa (custos fixos do Financeiro), 11–20 é a janela principal, 21–31 só emergência da curva A.
    Combos: 1 puxador (curva A) + 1 encalhado, desconto de 5% a 25%, preço, custo, lucro, margem e frase para o balcão. */
 const COMPRAS_PADRAO = { lead: 3, seg: 2, fds: 60, lote: 10, cobertura: 30 };
-let comprasEstado = { aba: "rop", filtro: "comprar", busca: "", dia: null, puxador: null, encalhado: null, desc: 15 };
+let comprasEstado = { aba: "rop", filtro: "comprar", busca: "", dia: null, desc: 15, modelo: "mix", par: 0, livreA: null, livreB: null };
 function janelaCompra(dia, fixos){
   if(dia <= 10) return { cls: "vermelho", ic: "🛡️", t: "Janela de proteção de caixa ativa", s: `Foco total no pagamento dos custos fixos (${brl0(fixos)}). Não faça compras volumosas de estoque: só reponha o que acabou e é curva A.` };
   if(dia <= 20) return { cls: "verde", ic: "✅", t: "Janela principal de compras liberada", s: "Custos fixos honrados. Reponha as curvas A e B em caixas fechadas, pedindo prazo de pagamento para os dias 10 a 15 do mês que vem." };
@@ -4934,6 +4970,130 @@ function quandoComprar(r, g, jan){
   if(jan.cls === "amarelo") return g.abc === "A" ? "Hoje (emergência)" : "Dia 11";
   return g.abc === "A" && g.est === 0 ? "Hoje (acabou)" : "Dia 11";
 }
+
+/* ---------------- Combos de desencalhe (aba da tela Compras, 28/10/2026, pedido do dono) ----------------
+   Regras rígidas: todo combo = 1 PUXADOR (curva A da própria categoria, sai sozinho) + 1 ENCALHADO (curva B/C da
+   categoria, com estoque). Nunca C + C (ninguém compra dois encalhados) nem A + A (queima margem à toa). 4 modelos:
+   🍃 Mixologia: essência A gelada/mentolada (perfil de sabor mentolado ≥ 6) + essência encalhada frutada/cítrica/doce
+      (mentolado ≤ 3 e cítrico, tropical ou doce ≥ 5): a menta equilibra o doce no rosh.
+   💨 Kit sessão: carvão ou alumínio que mais vende (insumo indispensável) + essência encalhada.
+   🔧 Upgrade de rosh: rosh que mais vende + borracha/vedação ou alumínio de giro lento.
+   🏷️ Livre: quaisquer 2 produtos, com o selo da regra (A + B/C = estratégico; C + C ou A + A = alerta).
+   Preço do combo = o ,90 mais perto do preço com desconto (preço de balcão); margem < 25% = alerta vermelho. */
+const COMBO_MARGEM_MIN = 25;
+const COMBO_MODELOS = [
+  ["mix", "🍃", "Mixologia de essências", "Essência gelada que mais vende + essência frutada parada"],
+  ["sessao", "💨", "Kit sessão completa", "Carvão ou alumínio + essência parada"],
+  ["rosh", "🔧", "Upgrade de rosh", "Rosh + borracha ou alumínio"],
+  ["livre", "🏷️", "Combo livre", "Você escolhe os 2 produtos"],
+];
+/* preço de balcão: o ,90 mais perto do preço com desconto (o desconto real aparece no cartão) */
+const precoBalcao = v => { if(!(v > 1)) return Math.round(v * 100) / 100; const r1 = Math.floor(v) + .9, r0 = r1 - 1; return Math.round((Math.abs(r1 - v) <= Math.abs(v - r0) ? r1 : r0) * 100) / 100; };
+/* sabor curto do nome sem a marca ("Ziggy Melancia" → "Melancia"); nome comprido com o sabor entre parênteses usa o parêntese
+   ("Ziggy Yellow Starburst (maracujá)" → "maracujá") */
+const saborCurto = p => { const n = String(p.name || ""), m = n.match(/\(([^)]+)\)/), br = String(p.brand || "").trim();
+  let fora = n.replace(/\([^)]*\)/g, "").replace(/\s+/g, " ").trim(); if(br && fora.toLowerCase().startsWith(br.toLowerCase() + " ")) fora = fora.slice(br.length + 1);
+  fora = fora.replace(/^(Ziggy|Zomo|Nay|Onix|Sense|Predator)\s+/i, "");
+  return m && m[1].length <= 22 && fora.length > 8 ? m[1] : fora; };
+function desenhaCombos(cont, linhas, catSlug, catPai, redesenha){
+  const E = comprasEstado;
+  /* curva ABC DENTRO da categoria-mãe (essência contra essência, narguilé contra narguilé): na curva do catálogo inteiro
+     bebidas e copões puxam o faturamento e quase nenhuma essência seria A */
+  const abcLoc = new Map(), grupos = new Map();
+  linhas.forEach(x => { const k = catPai(x.g.p.category_id) || "-"; if(!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(x); });
+  grupos.forEach(l => { const v = l.filter(x => x.g.fat > 0).sort((a, b) => b.g.fat - a.g.fat), t = v.reduce((s2, x) => s2 + x.g.fat, 0); let a = 0;
+    v.forEach(x => { abcLoc.set(x.g.p.id, a < t * .8 ? "A" : a < t * .95 ? "B" : "C"); a += x.g.fat; }); });
+  const cls = x => abcLoc.get(x.g.p.id) || "C";
+  const com = linhas.filter(x => x.g.est > 0 && vendaDe(x.g.p) > 0);
+  const perfil = p => { const f = p.flavor_profile || {}; return { m: +f.mentolado || 0, c: +f.citrico || 0, t: +f.tropical || 0, d: +f.doce || 0 }; };
+  const ehEss = x => catPai(x.g.p.category_id) === "essencias", sub = x => catSlug(x.g.p.category_id);
+  const encalhado = x => cls(x) !== "A";
+  const parado = x => x.g.est * x.r.custo;
+  const porVenda = (a, b) => b.g.fat - a.g.fat, porParado = (a, b) => parado(b) - parado(a) || b.g.est - a.g.est;
+  /* pares sugeridos por modelo: cada encalhado aparece uma vez; o puxador roda entre os melhores */
+  const parear = (pux, enc, motivo, nome) => { const out = []; if(!pux.length) return out;
+    enc.slice(0, 8).forEach((c, i) => { const a = pux[i % Math.min(pux.length, 4)]; if(a.g.p.id !== c.g.p.id) out.push({ a, c, motivo: motivo(a, c), nome: nome(a, c) }); }); return out; };
+  let pares = [], vazio = "";
+  if(E.modelo === "mix"){
+    /* gelada de verdade: mentolado ≥ 6 e não sobremesa (doce ≥ 8, ex.: chocomenta, não "refresca" a fruta) */
+    const pux = com.filter(x => ehEss(x) && cls(x) === "A" && perfil(x.g.p).m >= 6 && perfil(x.g.p).d < 8).sort(porVenda);
+    const enc = com.filter(x => ehEss(x) && encalhado(x) && (pf => pf.m <= 3 && Math.max(pf.c, pf.t, pf.d) >= 5)(perfil(x.g.p))).sort(porParado);
+    pares = parear(pux, enc, (a, c) => { const pc = perfil(c.g.p), tipo = pc.c >= Math.max(pc.t, pc.d) ? "cítrico" : pc.t >= pc.d ? "tropical" : "doce";
+      return `A menta do ${a.g.p.name} equilibra o ${tipo} do ${c.g.p.name} no rosh: refresca sem apagar a fruta.`; },
+      (a, c) => `Mix Refrescante (${saborCurto(a.g.p)} + ${saborCurto(c.g.p)})`);
+    vazio = !pux.length ? "Nenhuma essência gelada/mentolada entre as que mais vendem tem estoque agora (confira o perfil de sabor na ficha do produto)." : "Nenhuma essência frutada/cítrica parada com estoque. 🎉";
+  } else if(E.modelo === "sessao"){
+    const pux = com.filter(x => ["narguile-carvao", "narguile-aluminio"].includes(sub(x)) && x.g.porDia > 0 && vendaDe(x.g.p) >= 5).sort(porVenda);
+    const enc = com.filter(x => ehEss(x) && encalhado(x)).sort(porParado);
+    pares = parear(pux, enc, (a, c) => `O cliente já veio comprar o ${a.g.p.name}; o desconto na essência faz o ${c.g.p.name} sair da prateleira.`,
+      (a, c) => `Pack Sessão Garantida (${saborCurto(a.g.p)} + ${saborCurto(c.g.p)})`);
+    vazio = !pux.length ? "Nenhum carvão ou alumínio vendendo com estoque." : "Nenhuma essência parada com estoque. 🎉";
+  } else if(E.modelo === "rosh"){
+    const pux = com.filter(x => sub(x) === "narguile-roshs" && x.g.porDia > 0).sort(porVenda);
+    const enc = com.filter(x => ["narguile-borrachas", "narguile-aluminio"].includes(sub(x)) && encalhado(x)).sort(porParado);
+    pares = parear(pux, enc, (a, c) => `Quem troca o rosh precisa vedar e cobrir: o ${c.g.p.name} completa o ${a.g.p.name}.`,
+      (a, c) => `Kit Upgrade de Rosh (${saborCurto(a.g.p)} + ${saborCurto(c.g.p)})`);
+    vazio = !pux.length ? "Nenhum rosh vendendo com estoque (curva A ou B)." : "Nenhuma borracha ou alumínio parado com estoque. 🎉";
+  }
+  /* par atual */
+  let A, C, motivo = "", nomeCombo = "";
+  if(E.modelo === "livre"){
+    const ord = com.slice().sort((a, b) => a.g.p.name.localeCompare(b.g.p.name, "pt-BR"));
+    if(!ord.find(x => x.g.p.id === E.livreA)) E.livreA = (com.slice().sort(porVenda)[0] || {}).g?.p.id;
+    if(!ord.find(x => x.g.p.id === E.livreB)) E.livreB = (com.filter(x => x.r.st === "travado").sort(porParado)[0] || ord[1] || {}).g?.p.id;
+    A = ord.find(x => x.g.p.id === E.livreA); C = ord.find(x => x.g.p.id === E.livreB);
+    if(A && C){ nomeCombo = `Combo ${saborCurto(A.g.p)} + ${saborCurto(C.g.p)}`; motivo = ""; }
+  } else { if(E.par >= pares.length) E.par = 0; const pr = pares[E.par]; if(pr){ A = pr.a; C = pr.c; motivo = pr.motivo; nomeCombo = pr.nome; } }
+  const selo = (a, c) => { const ka = cls(a), kc = cls(c);
+    if(a.g.p.id === c.g.p.id) return ["neg", "⚠️ Escolha dois produtos diferentes"];
+    if(ka === "C" && kc === "C") return ["neg", "⚠️ Atenção: dois produtos classe C dificilmente vendem juntos"];
+    if(ka === "A" && kc === "A") return ["am", "⚠️ Dois puxadores (A + A): queima margem à toa"];
+    if((ka === "A") !== (kc === "A")) return ["ok", "✅ Combo estratégico (puxador + encalhado)"];
+    return ["am", "⚠️ Sem puxador da curva A: o combo pode não girar"]; };
+  const mini = (x, papel) => `<div class="cb-prod"><span class="cb-pap">${papel}</span><b>${esc(x.g.p.name)}</b>
+      <small><em class="rop-abc ${cls(x).toLowerCase()}" title="curva ${cls(x)} dentro da categoria">${cls(x)}</em> ${x.g.est} un · ${fmtRitmo(x.g.porDia)}</small><span class="cb-pv">${brlM(vendaDe(x.g.p))}</span></div>`;
+  const opt = (x, sel) => `<option value="${esc(x.g.p.id)}"${x.g.p.id === sel ? " selected" : ""}>${esc(x.g.p.name)} · ${cls(x)} · ${x.g.est} un</option>`;
+  let corpo = "";
+  if(A && C){
+    const pa = vendaDe(A.g.p), pc = vendaDe(C.g.p), normal = pa + pc, alvo = normal * (1 - E.desc / 100), combo = precoBalcao(alvo);
+    const custo = (Number(A.g.p.cost_price) || 0) + (Number(C.g.p.cost_price) || 0), semCusto = !(Number(A.g.p.cost_price) > 0) || !(Number(C.g.p.cost_price) > 0);
+    const lucro = combo - custo, mg = combo > 0 ? lucro / combo * 100 : 0, baixa = !semCusto && mg < COMBO_MARGEM_MIN, desEf = (1 - combo / normal) * 100;
+    const mais = combo - pa, [sc, st] = selo(A, C);
+    const pitch = mais > 0
+      ? `Cliente, levando o ${A.g.p.name} hoje, por apenas mais ${brlM(mais)} você leva ${C.g.p.name}! O combo sai de ${brlM(normal)} por apenas ${brlM(combo)}.`
+      : `Cliente, levando o ${A.g.p.name} hoje, o ${C.g.p.name} vai junto no combo: de ${brlM(normal)} por apenas ${brlM(combo)}.`;
+    const barra = Math.max(0, Math.min(100, mg / 60 * 100));
+    corpo = `<div class="rop-card cb-calc">
+        <div class="cb-top"><b class="cb-nome">${esc(nomeCombo)}</b><em class="cb-selo ${sc}">${st}</em></div>
+        ${motivo ? `<p class="cb-mot">${esc(motivo)}</p>` : ""}
+        <div class="cb-eq">${mini(A, "Puxador")}<span class="cb-op" aria-hidden="true">+</span>${mini(C, "Encalhado")}<span class="cb-op" aria-hidden="true">=</span>
+          <div class="cb-fim"><span>Preço do combo</span><s>${brlM(normal)}</s><b>${brlM(combo)}</b><small>−${pctBR(desEf)} · economiza ${brlM(normal - combo)}</small></div></div>
+        <label class="rop-slider cb-sl"><span>Desconto <b id="cbDescV">${E.desc}%</b> <small>(preço arredondado para ,90)</small></span><input type="range" min="5" max="30" step="1" id="cbDesc" value="${E.desc}" aria-label="Desconto do combo em porcentagem"></label>
+        <div class="cb-nums">
+          <div><span>Custo dos 2</span><b>${custo > 0 ? brlM(custo) : "—"}</b>${semCusto ? `<small class="rop-av">falta custo cadastrado</small>` : ""}</div>
+          <div><span>Lucro do combo</span><b class="${lucro >= 0 && !baixa ? "ok" : "neg"}">${brlM(lucro)}</b></div>
+          <div><span>Margem</span><b class="${baixa || lucro < 0 ? "neg" : "ok"}">${pctBR(mg)}</b></div>
+        </div>
+        <div class="cb-barra${baixa || lucro < 0 ? " baixa" : ""}" role="meter" aria-valuemin="0" aria-valuemax="60" aria-valuenow="${Math.round(mg)}" aria-label="Margem do combo"><i style="width:${barra}%"></i><em style="left:${COMBO_MARGEM_MIN / 60 * 100}%" title="mínimo ${COMBO_MARGEM_MIN}%"></em></div>
+        ${baixa || lucro < 0 ? `<p class="cb-alerta" role="alert">⛔ Margem baixa! Reduza o desconto para não comprometer o caixa (mínimo ${COMBO_MARGEM_MIN}%).</p>` : semCusto ? "" : `<p class="cb-okm">Margem saudável (acima de ${COMBO_MARGEM_MIN}%).</p>`}
+      </div>
+      <div class="rop-card rop-pitch"><span class="rop-pt">🗣️ Dica para o atendente no balcão</span><p id="cpPitch">“${esc(pitch.replace(/R\$ /g, "R$ "))}”</p><button type="button" class="rop-btn" id="cpCopia">Copiar frase</button></div>
+      <p class="rop-nota">O encalhado tem ${C.g.est} un paradas (${brlM(parado(C))} pelo custo)${C.r.motivo ? ` · ${esc(C.r.motivo)}` : ""}.</p>`;
+  } else corpo = `<div class="rop-vazio">${E.modelo === "livre" ? "Sem produtos com estoque e preço." : esc(vazio)}</div>`;
+  cont.innerHTML = `<div class="cb-mods" role="tablist" aria-label="Modelo de combo">${COMBO_MODELOS.map(([k, i, t, d]) => `<button type="button" role="tab" class="cb-mod${E.modelo === k ? " on" : ""}" aria-selected="${E.modelo === k}" data-cbm="${k}"><span aria-hidden="true">${i}</span><b>${t}</b><small>${d}</small></button>`).join("")}</div>
+    ${E.modelo === "livre" ? `<div class="rop-card rop-combo">
+        <label><span>Produto 1 <small>(o puxador)</small></span><select id="cbA">${com.slice().sort((a, b) => a.g.p.name.localeCompare(b.g.p.name, "pt-BR")).map(x => opt(x, E.livreA)).join("")}</select></label>
+        <label><span>Produto 2 <small>(o encalhado)</small></span><select id="cbB">${com.slice().sort((a, b) => a.g.p.name.localeCompare(b.g.p.name, "pt-BR")).map(x => opt(x, E.livreB)).join("")}</select></label></div>`
+      : pares.length ? `<div class="cb-sug" role="list" aria-label="Combos sugeridos">${pares.map((pr, i) => `<button type="button" role="listitem" class="cb-s${i === E.par ? " on" : ""}" data-cbp="${i}" aria-pressed="${i === E.par}"><b>${esc(pr.nome)}</b><small>${brlM(parado(pr.c))} parados no encalhado</small></button>`).join("")}</div>` : ""}
+    ${corpo}`;
+  cont.querySelectorAll("[data-cbm]").forEach(b => b.onclick = () => { E.modelo = b.dataset.cbm; E.par = 0; redesenha(); });
+  cont.querySelectorAll("[data-cbp]").forEach(b => b.onclick = () => { E.par = +b.dataset.cbp; redesenha(); });
+  if($("#cbA")) $("#cbA").onchange = e => { E.livreA = e.target.value; redesenha(); };
+  if($("#cbB")) $("#cbB").onchange = e => { E.livreB = e.target.value; redesenha(); };
+  const sl = $("#cbDesc"); if(sl){ sl.oninput = () => { $("#cbDescV").textContent = sl.value + "%"; }; sl.onchange = () => { E.desc = Number(sl.value); redesenha(); }; }
+  const cp = $("#cpCopia"); if(cp) cp.onclick = () => { const t = $("#cpPitch").textContent.replace(/^“|”$/g, "");
+    (navigator.clipboard && window.isSecureContext ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("Frase copiada."), () => { const r = document.createRange(); r.selectNodeContents($("#cpPitch")); const s2 = getSelection(); s2.removeAllRanges(); s2.addRange(r); toast("Selecionei a frase: copie com Ctrl+C."); }); };
+}
 async function renderCompras(){
   app.innerHTML = `${topbarHTML("Compras e ponto de pedido")}
     <div class="pg">
@@ -4943,11 +5103,11 @@ async function renderCompras(){
   bindTopbar();
   const desde = new Date(Date.now() - 92 * 864e5).toISOString().slice(0, 10);
   const [pr, per, fin, vd, cats] = await Promise.all([
-    sb.from("products").select("id,name,brand,category_id,price,promo_price,cost_price,stock,sales_count,is_active").eq("is_active", true).limit(5000),
+    sb.from("products").select("id,name,brand,category_id,price,promo_price,cost_price,stock,sales_count,is_active,flavor_profile").eq("is_active", true).limit(5000),
     sb.from("vendas_periodo").select("inicio,fim,dias").eq("id", 1).maybeSingle(),
     sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),
     sb.from("vendas_dia").select("dia,faturamento").gte("dia", desde).limit(400),
-    sb.from("categories").select("id,name,parent_id").limit(1000),
+    sb.from("categories").select("id,name,slug,parent_id").limit(1000),
   ]);
   if(rotaAtual() !== "compras" || !$("#rop")) return;
   if(pr.error){ $("#rop").innerHTML = `<div class="rop-vazio">Não deu para ler os produtos: ${esc(pr.error.message)}</div>`; return; }
@@ -4957,6 +5117,7 @@ async function renderCompras(){
   /* peso REAL de sexta a domingo nas vendas dos últimos ~90 dias (vendas_dia, relatório Resumo do Nex) */
   let fdsReal = null; { let a = 0, t = 0; (vd.data || []).forEach(r => { const v = Number(r.faturamento) || 0, w = new Date(r.dia + "T12:00:00Z").getUTCDay(); t += v; if(w === 5 || w === 6 || w === 0) a += v; }); if(t > 0 && (vd.data || []).length >= 28) fdsReal = Math.round(a / t * 100); }
   const catNome = new Map((cats.data || []).map(c => [c.id, c.name]));
+  const catById = new Map((cats.data || []).map(c => [c.id, c])), catSlug = id => (catById.get(id) || {}).slug || "", catPai = id => { const c = catById.get(id); return c && c.parent_id ? (catById.get(c.parent_id) || {}).slug || "" : (c || {}).slug || ""; };
   const P = per.data, G = calcGiro(pr.data || [], P.dias);
   $("#cpDesc").innerHTML = `Vendas de <b>${esc(dataBR(P.inicio))}</b> a <b>${esc(dataBR(P.fim))}</b> (${esc(P.dias)} dias), as mesmas do <a href="#/giro">Giro e reposição</a>. Quando comprar, o que comprar e quanto, em caixas fechadas.`;
   const SP = spAgora(), D = new Date(SP.ano, SP.mes + 1, 0).getDate();
@@ -4971,8 +5132,6 @@ async function renderCompras(){
     const comprar = linhas.filter(x => x.r.st === "comprar"), ok = linhas.filter(x => x.r.st === "ok"), trav = linhas.filter(x => x.r.st === "travado");
     const totCx = comprar.reduce((t, x) => t + x.r.caixas, 0), totR = comprar.reduce((t, x) => t + x.r.valor, 0);
     const parado = trav.reduce((t, x) => t + x.g.est * x.r.custo, 0);
-    const puxadores = linhas.filter(x => x.g.abc === "A" && x.g.est > 0 && vendaDe(x.g.p) > 0).sort((a, b) => b.g.fat - a.g.fat);
-    const encalhados = trav.filter(x => x.g.est > 0 && vendaDe(x.g.p) > 0).sort((a, b) => b.g.est * b.r.custo - a.g.est * a.r.custo);
     const tip = t => `<span class="rop-tip" tabindex="0" role="note" aria-label="${esc(t)}" data-tip="${esc(t)}">i</span>`;
     const chip = (id, rot, n, cls) => `<button type="button" class="rop-chip ${cls}${comprasEstado.filtro === id ? " on" : ""}" data-cpf="${id}" aria-pressed="${comprasEstado.filtro === id}">${rot}<b>${n}</b></button>`;
     $("#rop").innerHTML = `
@@ -4980,7 +5139,7 @@ async function renderCompras(){
         <label class="rop-sim"><span>Dia ${dia === SP.dia ? "(hoje)" : "(simulado)"}</span><select id="cpDia" aria-label="Simular o dia do mês">${Array.from({ length: D }, (_, i) => `<option value="${i + 1}"${i + 1 === dia ? " selected" : ""}>${i + 1}</option>`).join("")}</select>${dia !== SP.dia ? `<button type="button" class="rop-link" id="cpHoje">voltar a hoje</button>` : ""}</label></div>
       <div class="rop-abas" role="tablist">
         <button type="button" role="tab" class="rop-aba${comprasEstado.aba === "rop" ? " on" : ""}" aria-selected="${comprasEstado.aba === "rop"}" data-cpaba="rop">🧮 Ponto de pedido</button>
-        <button type="button" role="tab" class="rop-aba${comprasEstado.aba === "combo" ? " on" : ""}" aria-selected="${comprasEstado.aba === "combo"}" data-cpaba="combo">⚡ Combos para encalhados</button>
+        <button type="button" role="tab" class="rop-aba${comprasEstado.aba === "combo" ? " on" : ""}" aria-selected="${comprasEstado.aba === "combo"}" data-cpaba="combo">⚡ Combos de desencalhe</button>
       </div>
       <div id="cpConteudo"></div>`;
     const cont = $("#cpConteudo");
@@ -5030,37 +5189,7 @@ async function renderCompras(){
       if($("#cpFdsReal")) $("#cpFdsReal").onclick = () => { cfg.fds = fdsReal; salvar(); desenha(); };
       cont.querySelectorAll("[data-cpf]").forEach(b => b.onclick = () => { comprasEstado.filtro = b.dataset.cpf; desenha(); });
       const bu = $("#cpBusca"); bu.oninput = () => { comprasEstado.busca = bu.value; clearTimeout(bu._t); bu._t = setTimeout(() => { desenha(); const n = $("#cpBusca"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
-    } else {
-      if(!puxadores.find(x => x.g.p.id === comprasEstado.puxador)) comprasEstado.puxador = puxadores[0] && puxadores[0].g.p.id;
-      if(!encalhados.find(x => x.g.p.id === comprasEstado.encalhado)) comprasEstado.encalhado = encalhados[0] && encalhados[0].g.p.id;
-      const A = puxadores.find(x => x.g.p.id === comprasEstado.puxador), C = encalhados.find(x => x.g.p.id === comprasEstado.encalhado);
-      const opt = (x, sel) => `<option value="${esc(x.g.p.id)}"${x.g.p.id === sel ? " selected" : ""}>${esc(x.g.p.name)} · ${brlM(vendaDe(x.g.p))} · ${x.g.est} un</option>`;
-      let res = `<div class="rop-vazio">${!puxadores.length ? "Nenhum produto da curva A com estoque." : "Nenhum produto encalhado com estoque. 🎉"}</div>`;
-      if(A && C){
-        const d = comprasEstado.desc / 100, normal = vendaDe(A.g.p) + vendaDe(C.g.p), combo = Math.round(normal * (1 - d) * 100) / 100;
-        const custo = (Number(A.g.p.cost_price) || 0) + (Number(C.g.p.cost_price) || 0), lucro = combo - custo, mg = combo > 0 ? lucro / combo * 100 : 0, econ = normal - combo;
-        const semCusto = !(Number(A.g.p.cost_price) > 0) || !(Number(C.g.p.cost_price) > 0);
-        const pitch = `Leva junto o ${C.g.p.name}? No combo com o ${A.g.p.name} sai por ${brlM(combo)} em vez de ${brlM(normal)}: você economiza ${brlM(econ)}. É por tempo limitado, enquanto durar o estoque.`.replace(/R\$ /g, "R$\u00a0");
-        res = `<div class="rop-combo-res">
-            <div class="rop-card rop-k"><span>Preço normal (soma)</span><b class="rop-risc">${brlM(normal)}</b></div>
-            <div class="rop-card rop-k ouro"><span>Preço do combo</span><b>${brlM(combo)}</b><small>−${comprasEstado.desc}% · cliente economiza ${brlM(econ)}</small></div>
-            <div class="rop-card rop-k"><span>Custo dos dois</span><b>${custo > 0 ? brlM(custo) : "—"}</b>${semCusto ? `<small class="rop-av">falta custo cadastrado</small>` : ""}</div>
-            <div class="rop-card rop-k ${lucro >= 0 ? "ok" : "comprar"}"><span>Lucro líquido do combo</span><b>${brlM(lucro)}</b><small>margem ${pctBR(mg)}${mg < 20 && !semCusto ? " · baixa" : ""}</small></div>
-          </div>
-          <div class="rop-card rop-pitch"><span class="rop-pt">💬 Frase para o balcão</span><p id="cpPitch">${esc(pitch)}</p><button type="button" class="rop-btn" id="cpCopia">Copiar frase</button></div>
-          <p class="rop-nota">O encalhado tem ${C.g.est} un paradas (${brlM(C.g.est * (Number(C.g.p.cost_price) || 0))} pelo custo)${C.r.motivo ? ` · ${esc(C.r.motivo)}` : ""}.</p>`;
-      }
-      cont.innerHTML = `<div class="rop-card rop-combo">
-          <label><span>1. Produto puxador <small>(curva A, sai rápido)</small></span><select id="cpA">${puxadores.map(x => opt(x, comprasEstado.puxador)).join("")}</select></label>
-          <label><span>2. Produto encalhado <small>(travado, maior dinheiro parado primeiro)</small></span><select id="cpC">${encalhados.map(x => opt(x, comprasEstado.encalhado)).join("")}</select></label>
-          <label class="rop-slider"><span>3. Desconto do combo <b id="cpDescV">${comprasEstado.desc}%</b></span><input type="range" min="5" max="25" step="1" id="cpDesc" value="${comprasEstado.desc}" aria-label="Desconto do combo em porcentagem"></label>
-        </div>${res}`;
-      if($("#cpA")) $("#cpA").onchange = e => { comprasEstado.puxador = e.target.value; desenha(); };
-      if($("#cpC")) $("#cpC").onchange = e => { comprasEstado.encalhado = e.target.value; desenha(); };
-      const sl = $("#cpDesc"); if(sl){ sl.oninput = () => { $("#cpDescV").textContent = sl.value + "%"; }; sl.onchange = () => { comprasEstado.desc = Number(sl.value); desenha(); }; }
-      const cp = $("#cpCopia"); if(cp) cp.onclick = () => { const t = $("#cpPitch").textContent;
-        (navigator.clipboard && window.isSecureContext ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("Frase copiada."), () => { const r = document.createRange(); r.selectNodeContents($("#cpPitch")); const s2 = getSelection(); s2.removeAllRanges(); s2.addRange(r); toast("Selecionei a frase: copie com Ctrl+C."); }); };
-    }
+    } else desenhaCombos(cont, linhas, catSlug, catPai, desenha);
     $("#cpDia").onchange = e => { comprasEstado.dia = Number(e.target.value); desenha(); };
     if($("#cpHoje")) $("#cpHoje").onclick = () => { comprasEstado.dia = SP.dia; desenha(); };
     $("#rop").querySelectorAll("[data-cpaba]").forEach(b => b.onclick = () => { comprasEstado.aba = b.dataset.cpaba; desenha(); });
