@@ -1796,6 +1796,35 @@ b,strong,h1,h2,h3,h4{font-weight:700}
 }
 @media(max-width:560px){.rop-cards{grid-template-columns:1fr}.rop-k b{font-size:22px}}
 @media(max-width:420px){.rop-combo-res{grid-template-columns:1fr}}
+
+/* ===== 3 MESES no terminal do ponto de equilíbrio (28/10/2026): faixas da janela de compras + 🛒 melhor dia ===== */
+.eq-3m{display:grid;gap:10px;margin-top:6px}
+.eq3-info{min-height:22px;font-size:14px;color:var(--t-ink)}.eq3-info b{white-space:nowrap}
+.eq3-info .up,.eq3-card .up{color:var(--t-ok)}.eq3-info .dn,.eq3-card .dn{color:var(--t-neg)}
+.eq3-leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--t-mut)}
+.eq3-leg span{display:inline-flex;align-items:center;gap:6px}
+.eq3-leg i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.eq3-leg i.jv,.eq3-jv{fill:rgba(251,113,133,.14);background:rgba(251,113,133,.45)}
+.eq3-leg i.jg,.eq3-jg{fill:rgba(52,211,153,.14);background:rgba(52,211,153,.5)}
+.eq3-leg i.ja,.eq3-ja{fill:rgba(245,158,11,.10);background:rgba(245,158,11,.45)}
+.eq3-g{width:100%;overflow:hidden;touch-action:pan-y}
+.eq3-g svg{display:block;width:100%;height:auto}
+.eq3-l{fill:none;stroke:#f59e0b;stroke-width:2.5;stroke-linecap:round}
+.eq3-l.proj{stroke-dasharray:6 5;opacity:.9}
+.eq3-mes{fill:var(--t-ink);font:700 12px var(--font);text-transform:uppercase;letter-spacing:.06em}
+.eq3-div{stroke:rgba(255,255,255,.25);stroke-width:1}
+.eq3-cart line{stroke:#34d399;stroke-width:1.5;stroke-dasharray:3 4}
+.eq3-cart circle{fill:#0d2a20;stroke:#34d399;stroke-width:1.5}
+.eq3-cart text{font-size:12px}
+.eq-3m .eq-cl{stroke:rgba(255,255,255,.55);stroke-width:1}
+.eq-3m .eq-cp{fill:#f59e0b;stroke:#140d1c;stroke-width:2}
+.eq3-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.eq3-card{display:grid;gap:4px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--t-line);font-size:13px;color:var(--t-mut);min-width:0}
+.eq3-card b{color:var(--t-ink);font-family:var(--mono);font-weight:600;white-space:nowrap}
+.eq3-card .eq3-cn{font-family:var(--font);color:var(--t-ouro);font-size:14px}.eq3-cn span{text-transform:capitalize}
+.eq3-card a{color:var(--t-cia)}
+.eq3-nota{margin:0;font-size:12px;color:var(--t-mut)}
+@media(max-width:760px){.eq3-cards{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -5152,22 +5181,33 @@ function margemCatalogo(lista){
   const ponderada = recP > 0;
   return { ativos, comCusto, ponderada, pct: ponderada ? lucP / recP * 100 : rec > 0 ? luc / rec * 100 : null };
 }
+/* margem real do Nex: soma do lucro bruto ÷ soma do faturamento dos últimos 90 dias importados (vendas_dia); precisa de 14+ dias */
+function margemNex(){
+  if(!FIN_DIAS.length) return null;
+  const ult = String(FIN_DIAS[FIN_DIAS.length - 1].dia).slice(0, 10), desde = new Date(Date.parse(ult + "T00:00Z") - 89 * 864e5).toISOString().slice(0, 10);
+  let fat = 0, luc = 0, dias = 0;
+  FIN_DIAS.forEach(r => { const d = String(r.dia).slice(0, 10), f = Number(r.faturamento) || 0; if(d >= desde && f > 0){ fat += f; luc += Number(r.lucro_bruto) || 0; dias++; } });
+  return dias >= 14 && fat > 0 && luc > 0 ? { pct: luc / fat * 100, dias } : null;
+}
 function desenhaLucro(fin, mg, erro){
   const box = $("#ovLucro"); if(!box) return;
   if(erro){ box.innerHTML = `<h3>Lucro do mês</h3><p class="lc-nota">Só o dono e os administradores veem os números de lucro.</p>`; return; }
   const f = fin || { custos: [], dia_a_dia: 0, faturamento: null };
   const custos = Array.isArray(f.custos) ? f.custos : [];
   const fixos = custos.reduce((t, c) => t + (Number(c.valor) || 0), 0), dia = Number(f.dia_a_dia) || 0, fat = Number(f.faturamento) || 0;
-  const m0 = mg.pct == null ? null : mg.pct / 100;   /* margem do catálogo: padrão enquanto o lucro bruto não for digitado */
+  /* margem padrão enquanto o lucro bruto não for digitado: a REAL do Nex (lucro bruto ÷ faturamento dos últimos 90 dias do
+     relatório Resumo, vendas_dia); sem esse histórico, a do catálogo (preço × custo cadastrado), que costuma sair diferente */
+  const mNex = margemNex(), m0 = mNex ? mNex.pct / 100 : mg.pct == null ? null : mg.pct / 100;
+  const nomeM0 = mNex ? `margem real do Nex (${pctBR(mNex.pct)}, ${mNex.dias} dias)` : "margem do catálogo";
   const brutoMan = f.lucro_bruto != null ? Number(f.lucro_bruto) : null, cmvMan = f.cmv != null ? Number(f.cmv) : null;
-  /* lucro bruto digitado tem prioridade; depois o custo das mercadorias digitado; senão a margem do catálogo */
+  /* lucro bruto digitado tem prioridade; depois o custo das mercadorias digitado; senão a margem padrão (Nex ou catálogo) */
   const bruto = fat && brutoMan != null ? brutoMan : fat && cmvMan != null ? fat - cmvMan : m0 == null ? null : fat * m0;
   const cmv = bruto == null ? null : fat - bruto, liquido = bruto == null ? null : bruto - fixos - dia;
   const m = fat > 0 && bruto != null ? bruto / fat : m0;   /* margem efetiva (a digitada, se houver): é ela que move o ponto de equilíbrio */
   const equilibrio = m ? (fixos + dia) / m : null;
   const campo = v => (v == null || !Number.isFinite(v) ? "" : String(Number(v).toFixed(2)).replace(".", ","));
   const origemCmv = cmvMan != null ? "digitado" : brutoMan != null ? "pelo lucro bruto digitado" : m0 == null ? "" : `automático: ${pctBR(100 - m0 * 100)} do faturamento`;
-  const origemBruto = brutoMan != null ? "digitado" : cmvMan != null ? "pelo custo digitado" : m0 == null ? "" : "automático: margem do catálogo";
+  const origemBruto = brutoMan != null ? "digitado" : cmvMan != null ? "pelo custo digitado" : m0 == null ? "" : "automático: " + nomeM0;
   const linha = (rot, v, cls = "", k = "") => `<div class="lc-l ${cls}"><span>${rot}</span><b${k ? ` data-odo="${k}"` : ""}>${v}</b></div>`;
   box.innerHTML = `<div class="ov-box-h"><h3>Lucro do mês <small>projeção</small></h3><button class="btn-ghost btn-sm" id="lcEditar">${ic("sheet")} Custos</button></div>
     <div class="lc-grid">
@@ -5331,11 +5371,12 @@ function graficoEquilibrio(o){
         <div class="eq-placar" aria-live="polite">
           <div class="eq-pb"><div class="eq-pc"><small class="eq-lv">Vendas · faturamento acumulado</small><b class="eq-pv"></b></div>
           <div class="eq-pc"><small class="eq-lr">Resultado · P&amp;L (lucro ou prejuízo)</small><b class="eq-pr"></b><span class="eq-pf"></span></div></div></div>
-        <div class="eq-zoom" role="group" aria-label="Período do gráfico">${[["mes","Mês"],["ate","Até hoje"],["dep","Daqui pra frente"]].map(([k, t]) => `<button type="button" data-eq-zoom="${k}" aria-pressed="${k === "mes"}">${t}</button>`).join("")}</div>
+        <div class="eq-zoom" role="group" aria-label="Período do gráfico">${[["mes","Mês"],["ate","Até hoje"],["dep","Daqui pra frente"],["meses","3 meses"]].map(([k, t]) => `<button type="button" data-eq-zoom="${k}" aria-pressed="${k === "mes"}">${t}</button>`).join("")}</div>
       </div>
       <div class="eq-chips"></div>
       <div class="eq-leg2" aria-hidden="true"><span><i class="l-v"></i>Vendas (faturamento)</span><span><i class="l-p"></i>P&amp;L (lucro / prejuízo)</span><span><i class="l-e"></i>Ponto de equilíbrio</span></div>
       <div class="eq-graf" role="img"></div>
+      <div class="eq-3m" hidden></div>
       <div class="eq-sim">
         <label for="eqSim"><span>Simular: vendas por dia${real ? " daqui pra frente" : ""}</span><b class="eq-sv"></b></label>
         <input type="range" id="eqSim" min="0" max="${Math.round(maxSim)}" step="${passoSim}" value="${Math.round(ritmoBase)}">
@@ -5445,6 +5486,70 @@ function graficoEquilibrio(o){
     hit.addEventListener("pointerleave", voltaAgora);
   };
 
+  /* "3 meses" (28/10/2026, pedido do dono): este mês + os 2 seguintes, para ver o caixa de novembro/dezembro e os melhores
+     dias de compra. Linha = resultado (P&L) acumulado de CADA mês (começa nos custos do mês e sobe com as vendas × margem).
+     Faixas = janela de compras da tela Compras e ponto de pedido (1–10 proteger o caixa, 11–20 comprar, 21+ só emergência).
+     🛒 = melhor dia de compra: o 1º dia da janela 11–20 com os custos do mês já pagos. Meses futuros: vendas por dia =
+     ritmo do simulador × peso do dia da semana (o Nex não tem novembro/dezembro de um ano inteiro de loja para comparar). */
+  const meses = () => {
+    const box3 = term.querySelector(".eq-3m");
+    const M = [0, 1, 2].map(j => { const dt = new Date(ano, mes + j, 1), y = dt.getFullYear(), mm = dt.getMonth(), Dm = new Date(y, mm + 1, 0).getDate();
+      const res = [-o.custo], vd = [0];
+      for(let k = 1; k <= Dm; k++){ const v = j === 0 ? acum(k) - acum(k - 1) : st.ritmo * PESO[new Date(Date.UTC(y, mm, k)).getUTCDay()]; vd[k] = vd[k - 1] + v; res[k] = vd[k] * o.m - o.custo; }
+      let eq = null; for(let k = 1; k <= Dm; k++) if(res[k] >= 0){ eq = k; break; }
+      const compra = eq != null && eq <= 20 ? Math.max(11, eq) : null;
+      const repo = vd[Dm] * (1 - o.m);
+      return { j, y, mm, Dm, res, vd, eq, compra, repo, nome: MES_L[mm] }; });
+    const N = M.reduce((t, m) => t + m.Dm, 0), off = [0]; M.forEach((m, i) => off[i + 1] = off[i] + m.Dm);
+    const W = Math.max(280, Math.round(box3.clientWidth || term.clientWidth - 28 || 600)), H = W < 520 ? 240 : 290, P = { l: 52, r: 12, t: 26, b: 28 };
+    const todos = M.flatMap(m => m.res), minY = Math.min(0, ...todos) * 1.15, maxY = Math.max(o.custo * .3, ...todos) * 1.15;
+    const x = i => P.l + (i / N) * (W - P.l - P.r), y = v => P.t + (maxY - v) / (maxY - minY) * (H - P.t - P.b), y0 = y(0);
+    const faixa = maxY - minY, passo = faixa > 80000 ? 20000 : faixa > 40000 ? 10000 : faixa > 20000 ? 5000 : faixa > 8000 ? 2000 : faixa > 3000 ? 1000 : 500, grade = [];
+    for(let v = Math.ceil(minY / passo) * passo; v <= maxY; v += passo) grade.push(v);
+    const hojeI = hoje - 1 + Math.min(1, Math.max(0, spAgora().frac - (hoje - 1)));
+    const faixas = M.map((m, i) => [[1, 10, "jv"], [11, 20, "jg"], [21, m.Dm, "ja"]].map(([d1, d2, c]) =>
+      `<rect class="eq3-${c}" x="${x(off[i] + d1 - 1)}" y="${P.t}" width="${x(off[i] + d2) - x(off[i] + d1 - 1)}" height="${H - P.t - P.b}"/>`).join("")).join("");
+    const linhas = M.map((m, i) => { const pts = m.res.map((v, k) => [x(off[i] + k), y(v)]);
+      const cortaReal = i === 0 ? Math.min(m.Dm, real ? L : hoje) : 0;
+      const cheio = i === 0 && cortaReal > 0 ? `<path class="eq3-l" d="${curvaSuave(pts.slice(0, cortaReal + 1))}"/>` : "";
+      const proj = `<path class="eq3-l proj" d="${curvaSuave(pts.slice(cortaReal))}"/>`;
+      return cheio + proj; }).join("");
+    const carrinhos = M.map((m, i) => m.compra ? `<g class="eq3-cart"><line x1="${x(off[i] + m.compra - .5)}" x2="${x(off[i] + m.compra - .5)}" y1="${P.t}" y2="${H - P.b}"/><circle cx="${x(off[i] + m.compra - .5)}" cy="${P.t + 2}" r="11"/><text x="${x(off[i] + m.compra - .5)}" y="${P.t + 6}" text-anchor="middle">🛒</text></g>` : "").join("");
+    const rotMes = M.map((m, i) => `<text class="eq3-mes" x="${x(off[i]) + 6}" y="${P.t - 9}">${esc(W < 520 ? MESES[m.mm] : m.nome)}</text>${i ? `<line class="eq3-div" x1="${x(off[i])}" x2="${x(off[i])}" y1="${P.t - 20}" y2="${H - P.b}"/>` : ""}`).join("");
+    box3.innerHTML = `<div class="eq3-info" aria-live="polite"></div>
+      <div class="eq3-leg" aria-hidden="true"><span><i class="jv"></i>1–10 proteger o caixa</span><span><i class="jg"></i>11–20 janela de compras</span><span><i class="ja"></i>21+ só emergência</span><span>🛒 melhor dia de compra</span></div>
+      <div class="eq3-g" role="img" aria-label="Resultado de cada mês e melhores dias de compra: ${M.map(m => `${m.nome}: ${m.compra ? "comprar a partir do dia " + m.compra : "custos não pagos até o dia 20"}, fecha com ${m.res[m.Dm] >= 0 ? "lucro" : "prejuízo"} de ${brl0(Math.abs(m.res[m.Dm]))}`).join("; ")}.">
+      <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
+        ${faixas}
+        ${grade.map(v => `<line class="eq-gr${v === 0 ? " eq-zero" : ""}" x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}"/><text class="eq-ax" x="${P.l - 8}" y="${y(v) + 4}" text-anchor="end">${v < 0 ? "−" : ""}${Math.abs(v) >= 1000 ? (Math.abs(v) / 1000).toLocaleString("pt-BR") + "k" : Math.abs(v)}</text>`).join("")}
+        ${rotMes}
+        ${M.map((m, i) => [1, 11, 21].map(d => `<text class="eq-ax" x="${x(off[i] + d - 1) + 2}" y="${H - 9}">${d}</text>`).join("")).join("")}
+        ${linhas}${carrinhos}
+        <line class="eq-hoje" x1="${x(hojeI)}" x2="${x(hojeI)}" y1="${P.t}" y2="${H - P.b}"/>
+        <g class="eq3-cruz" style="opacity:0"><line class="eq-cl" y1="${P.t}" y2="${H - P.b}"/><circle class="eq-cp" r="5"/></g>
+        <rect class="eq-hit" x="${P.l}" y="0" width="${W - P.l - P.r}" height="${H}"/>
+      </svg></div>
+      <div class="eq3-cards">${M.map(m => { const fim = m.res[m.Dm], rop = m.j === 0 && FIN_ROP;
+        return `<div class="eq3-card"><b class="eq3-cn"><span>${esc(m.nome)}</span>${m.j === 0 ? " · este mês" : " · projeção"}</b>
+          <span>Vendas <b>${brl0(m.vd[m.Dm])}</b></span>
+          <span>Custos pagos ${m.eq ? `<b>dia ${m.eq}</b>` : `<b class="dn">não empata</b>`}</span>
+          <span>🛒 Comprar ${m.compra ? `<b class="up">a partir do dia ${m.compra}</b>` : `<b class="dn">só emergência</b>`}</span>
+          <span>${rop ? `Ponto de pedido: <b>${brl0(rop.v)}</b> em ${rop.n} produto${rop.n === 1 ? "" : "s"} <a href="#/compras">ver</a>` : `Reposição ≈ <b>${brl0(m.repo)}</b> <small>(custo do que vende)</small>`}</span>
+          <span>Fecha com <b class="${fim >= 0 ? "up" : "dn"}">${fim >= 0 ? "▲ lucro " : "▼ prejuízo "}${brl0(Math.abs(fim))}</b></span></div>`; }).join("")}</div>
+      <p class="eq3-nota">Novembro e dezembro seguem o ritmo do simulador (${brl0(st.ritmo)}/dia) com o peso de cada dia da semana. Mexa no simulador para ver um mês fraco ou forte.</p>`;
+    const svg = box3.querySelector("svg"), cruz = svg.querySelector(".eq3-cruz"), cl = cruz.querySelector("line"), cp = cruz.querySelector("circle"), info = box3.querySelector(".eq3-info");
+    const JAN = d => d <= 10 ? "proteger o caixa" : d <= 20 ? "janela de compras" : "só emergência";
+    const mostra = i => { let mi = 0; while(mi < 2 && i >= off[mi + 1]) mi++; const m = M[mi], d = Math.min(m.Dm, Math.max(1, i - off[mi] + 1)), v = m.res[d];
+      const sem = SEM[new Date(Date.UTC(m.y, m.mm, d)).getUTCDay()];
+      info.innerHTML = `<b>${sem}, ${d} ${MESES[m.mm]}</b> · ${JAN(d)} · resultado do mês até aqui <b class="${v >= 0 ? "up" : "dn"}">${v >= 0 ? "▲ " : "▼ "}${brl0(Math.abs(v))}</b>${m.compra === d ? " · 🛒 melhor dia de compra" : ""}`;
+      cruz.style.opacity = ""; cl.setAttribute("x1", x(off[mi] + d)); cl.setAttribute("x2", x(off[mi] + d)); cp.setAttribute("cx", x(off[mi] + d)); cp.setAttribute("cy", y(v)); };
+    const resumo = () => { cruz.style.opacity = "0"; const c = M.filter(m => m.compra);
+      info.innerHTML = c.length ? `Melhores dias de compra: ${c.map(m => `<b>${m.compra} ${MESES[m.mm]}</b>`).join(" · ")}` : `<b class="dn">Nos próximos meses os custos não se pagam até o dia 20: compre só emergência.</b>`; };
+    const hit = svg.querySelector(".eq-hit"), ir = e => { const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * (W / r.width); mostra(Math.max(0, Math.min(N - 1, Math.floor((px - P.l) / (W - P.l - P.r) * N)))); };
+    hit.addEventListener("pointerdown", e => { ir(e); try { hit.setPointerCapture(e.pointerId); } catch(_){} });
+    hit.addEventListener("pointermove", ir); hit.addEventListener("pointerleave", resumo); hit.addEventListener("pointercancel", resumo);
+    resumo();
+  };
   /* tirou o mouse/dedo do gráfico: o placar SEMPRE volta para o total até agora (mesmo com Equilíbrio/Custos pagos
      destacados). Preso também na caixa do gráfico (não é redesenhada), então não se perde no redesenho de cada minuto. */
   function voltaAgora(){
@@ -5456,12 +5561,16 @@ function graficoEquilibrio(o){
   /* período (zoom) */
   term.querySelectorAll("[data-eq-zoom]").forEach(bt => bt.onclick = () => {
     st.zoom = bt.dataset.eqZoom; term.querySelectorAll("[data-eq-zoom]").forEach(x2 => x2.setAttribute("aria-pressed", x2 === bt));
+    const tres = st.zoom === "meses";
+    ["eq-graf", "eq-chips", "eq-leg2", "eq-placar"].forEach(c => term.querySelector("." + c).hidden = tres);
+    term.querySelector(".eq-3m").hidden = !tres;
+    if(tres){ meses(); return; }
     st.sel = "agora"; st.primeira = true; desenha(); placar(st.sel);
   });
   /* simulador: refaz tudo enquanto arrasta (leve: SVG pequeno), placar segue no dia escolhido */
   let raf = 0;
-  sim.addEventListener("input", () => { st.ritmo = Math.max(1, +sim.value); cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { textos(); desenha(); placar(st.sel); }); });
-  term.querySelector(".eq-sreset").onclick = () => { sim.value = Math.round(ritmoBase); st.ritmo = ritmoBase; textos(); desenha(); placar(st.sel); };
+  sim.addEventListener("input", () => { st.ritmo = Math.max(1, +sim.value); cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { textos(); desenha(); placar(st.sel); if(st.zoom === "meses") meses(); }); });
+  term.querySelector(".eq-sreset").onclick = () => { sim.value = Math.round(ritmoBase); st.ritmo = ritmoBase; textos(); desenha(); placar(st.sel); if(st.zoom === "meses") meses(); };
   textos(); desenha(); placar(st.sel);
   /* relógio de Brasília a cada segundo; a cada minuto a linha "agora" anda; virou o dia ou o mês: refaz tudo */
   const rel = term.querySelector(".eq-rel-t"), p2 = n => String(n).padStart(2, "0");
@@ -5471,10 +5580,11 @@ function graficoEquilibrio(o){
     const t = spAgora(), sem = SEM[new Date(Date.UTC(t.ano, t.mes, t.dia)).getUTCDay()];
     rel.textContent = `${sem}, ${t.dia} ${MESES[t.mes]} ${t.ano} · ${p2(t.h)}:${p2(t.m)}:${p2(t.s)}`;
     if(t.dia !== hoje || t.mes !== mes){ graficoEquilibrio(o); return; }
-    if(t.m !== minAnt){ minAnt = t.m; desenha(); if(st.sel === "agora") placar("agora"); }
+    if(t.m !== minAnt){ minAnt = t.m; if(st.zoom === "meses") return; desenha(); if(st.sel === "agora") placar("agora"); }
   };
   tic(); box._relogio = setInterval(tic, 1000);
-  if(window.ResizeObserver){ let t = 0, w0 = alvo.clientWidth; const ro = new ResizeObserver(() => { if(!alvo.isConnected){ ro.disconnect(); return; } if(Math.abs(alvo.clientWidth - w0) < 8) return; w0 = alvo.clientWidth; clearTimeout(t); t = setTimeout(desenha, 120); }); ro.observe(alvo); }
+  if(window.ResizeObserver){ let t = 0, w0 = alvo.clientWidth; const ro = new ResizeObserver(() => { if(!alvo.isConnected){ ro.disconnect(); return; } if(Math.abs(alvo.clientWidth - w0) < 8) return; w0 = alvo.clientWidth; clearTimeout(t); t = setTimeout(desenha, 120); }); ro.observe(alvo);
+    const b3 = term.querySelector(".eq-3m"); let w3 = 0, t3 = 0; const ro3 = new ResizeObserver(() => { if(!b3.isConnected){ ro3.disconnect(); return; } if(st.zoom !== "meses" || Math.abs(b3.clientWidth - w3) < 8) return; w3 = b3.clientWidth; clearTimeout(t3); t3 = setTimeout(meses, 120); }); ro3.observe(b3); }
 }
 /* ---------------- histórico de vendas (Financeiro): "gráfico de cripto" desde a abertura ----------------
    Tabela vendas_dia (relatório "Resumo" do Nex: dia, vendas, lucro bruto, faturamento). Período 1M · 3M · 6M · 1A · Tudo
@@ -5482,6 +5592,7 @@ function graficoEquilibrio(o){
    venda = loja fechada, 0); linha brilhante = média de 7 dias. Placar: total do período, lucro bruto e margem real do Nex,
    ▲▼ contra o período anterior do mesmo tamanho e P&L estimado (lucro bruto − custos de hoje). Arrastar mostra o dia. */
 let FIN_DIAS = [];
+let FIN_ROP = null;   /* {n, v}: produtos em "Comprar hoje" na tela Compras e ponto de pedido e o valor pelo custo (gráfico 3 meses) */
 const MES_C = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 const MES_L = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 const brlK = v => { const a = Math.abs(v); return (v < 0 ? "−" : "") + (a >= 1000 ? "R$ " + (Math.round(a / 100) / 10).toLocaleString("pt-BR") + "k" : "R$ " + Math.round(a)); };
@@ -5647,13 +5758,20 @@ async function renderFinanceiro(){
   bindTopbar();
   $("#fnAtualiza").onclick = () => renderFinanceiro();
   const [prodsMg, fin, dias] = await Promise.all([
-    sb.from("products").select("price,promo_price,cost_price,sales_count").eq("is_active", true).limit(5000),
+    sb.from("products").select("id,name,price,promo_price,cost_price,stock,sales_count").eq("is_active", true).limit(5000),
     sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),
     sb.from("vendas_dia").select("dia,vendas,faturamento,lucro_bruto").order("dia").limit(5000),
   ]);
+  const perR = await sb.from("vendas_periodo").select("dias").eq("id", 1).maybeSingle();
   if(rotaAtual() !== "financeiro" || !$("#ovLucro")) return;
   FIN_DIAS = dias && !dias.error ? dias.data || [] : [];
   const f = fin && !fin.error ? fin.data : null;
+  FIN_ROP = null;
+  if(perR && perR.data && !prodsMg.error){
+    const cfg = { ...COMPRAS_PADRAO, ...((f && f.compras) || {}) }, SPd = spAgora(), dow = new Date(SPd.ano, SPd.mes, SPd.dia).getDay();
+    let n = 0, v = 0; calcGiro(prodsMg.data || [], perR.data.dias).lista.forEach(g => { const r = ropCalc(g, cfg, dow); if(r.st === "comprar"){ n++; v += r.valor; } });
+    FIN_ROP = { n, v };
+  }
   desenhaLucro(f, margemCatalogo(prodsMg.error ? [] : prodsMg.data), !!(fin && fin.error));
   if(fin && fin.error){ $("#fnHist").remove(); return; }
   const custoMes = (Array.isArray(f?.custos) ? f.custos : []).reduce((t, c) => t + (Number(c.valor) || 0), 0) + (Number(f?.dia_a_dia) || 0);
