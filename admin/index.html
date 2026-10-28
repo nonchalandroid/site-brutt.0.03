@@ -1346,7 +1346,7 @@ html[data-nav-dir=sobe]::view-transition-new(root){animation-name:vtEntraCima}
 /* menu com cor: cada tela tem sua cor (ícone num quadradinho tingido); Pedidos online (o mais usado) ganha destaque;
    item ativo = vidro dourado com borda viva. Cores escuras e saturadas: contraste ≥ 3:1 no ícone sobre o claro. */
 .nav-i{--c:var(--muted)}
-.nav-i[data-tab=ia]{--c:#6d28d9}.nav-i[data-tab=visao]{--c:#c2410c}.nav-i[data-tab=financeiro]{--c:#a16207}.nav-i[data-tab=giro]{--c:#be123c}.nav-i[data-tab=home]{--c:#b45309}.nav-i[data-tab=pedidos]{--c:#15803d}.nav-i[data-tab=clientes]{--c:#7e22ce}
+.nav-i[data-tab=ia]{--c:#6d28d9}.nav-i[data-tab=visao]{--c:#c2410c}.nav-i[data-tab=financeiro]{--c:#a16207}.nav-i[data-tab=giro]{--c:#be123c}.nav-i[data-tab=compras]{--c:#0e7490}.nav-i[data-tab=home]{--c:#b45309}.nav-i[data-tab=pedidos]{--c:#15803d}.nav-i[data-tab=clientes]{--c:#7e22ce}
 .nav-i[data-tab=estoque-baixo]{--c:#dc2626}.nav-i[data-tab=conferencia]{--c:#0e7490}.nav-i[data-tab=vitrine]{--c:#d97706}.nav-i[data-tab=sommelier]{--c:#a21caf}.nav-i[data-tab=fotos]{--c:#2563eb}
 .nav-i[data-tab=horarios]{--c:#0f766e}.nav-i[data-tab=nex]{--c:#4338ca}.nav-i[data-tab=equipe]{--c:#6d28d9}.nav-i[data-tab=planilha]{--c:#15803d}.nav-i[data-tab=vendidos]{--c:#be123c}
 .side .nav-i>svg{flex:none;width:28px;height:28px;padding:5px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);box-sizing:border-box}
@@ -1701,6 +1701,101 @@ b,strong,h1,h2,h3,h4{font-weight:700}
 .ped-card.esquecido{border-left:4px solid var(--terracota-cl,#8a3a1c)}
 .ped-esq-res{margin:0 0 12px;padding:12px 14px;border-radius:12px;background:var(--terracota-es,#f6e2d6);color:var(--ink);font-size:14px;line-height:1.45;border:1px solid color-mix(in srgb,var(--terracota-cl,#8a3a1c) 35%,transparent)}
 .ped-esq-res b{color:var(--terracota-cl,#8a3a1c)}
+
+/* ===== COMPRAS E PONTO DE PEDIDO (#/compras, 28/10/2026): módulo escuro neomórfico dentro do tema claro =====
+   cores pedidas pelo dono: fundo #0f111a, cartões #161925, ouro #f3b72c, verde #10b981, rosa #f43f5e, ciano #06b6d4.
+   Texto colorido usa tons mais claros dessas cores para passar de 4,5 de contraste sobre o fundo escuro. */
+.rop{--r-bg:#0f111a;--r-card:#161925;--r-ink:#eef0f7;--r-mut:#a3a9bf;--r-ouro:#f3b72c;--r-ok:#34d399;--r-neg:#fb7185;--r-cia:#22d3ee;--r-am:#fbbf24;
+  --r-sh:6px 6px 14px rgba(0,0,0,.55),-4px -4px 12px rgba(255,255,255,.035);--r-in:inset 3px 3px 7px rgba(0,0,0,.6),inset -2px -2px 6px rgba(255,255,255,.04);
+  background:var(--r-bg);color:var(--r-ink);border-radius:18px;padding:16px;display:grid;gap:14px;font-weight:400;min-width:0}
+.rop a{color:var(--r-cia)}
+.rop-load,.rop-vazio{color:var(--r-mut);padding:20px;text-align:center}
+.rop-card{background:var(--r-card);border-radius:14px;box-shadow:var(--r-sh);padding:14px;min-width:0}
+.rop-janela{display:flex;flex-wrap:wrap;align-items:center;gap:12px 14px;border-radius:14px;padding:14px 16px;background:var(--r-card);box-shadow:var(--r-sh);border-left:4px solid var(--r-c)}
+.rop-janela.vermelho{--r-c:#f43f5e}.rop-janela.verde{--r-c:#10b981}.rop-janela.amarelo{--r-c:#f3b72c}
+.rop-jic{font-size:26px;line-height:1}
+.rop-jtx{flex:1 1 260px;display:grid;gap:4px;min-width:0}
+.rop-jtx b{font-size:16px;color:var(--r-c);filter:brightness(1.25)}
+.rop-jtx span{font-size:14px;color:var(--r-ink);line-height:1.45}
+.rop-sim{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--r-mut);flex-wrap:wrap}
+.rop select,.rop input[type=number],.rop input[type=search]{background-color:var(--r-bg)!important;color:var(--r-ink)!important;border:1px solid #2a2f45!important;border-radius:10px;box-shadow:var(--r-in);min-height:40px;padding:6px 10px;font:inherit;font-size:15px}
+.rop select:focus,.rop input:focus{outline:2px solid var(--r-cia);outline-offset:1px}
+.rop-link{background:none;border:0;color:var(--r-cia);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;padding:4px}
+.rop-abas{display:flex;gap:8px;flex-wrap:wrap}
+.rop-aba{background:var(--r-card);color:var(--r-mut);border:0;border-radius:12px;padding:10px 16px;min-height:44px;font:inherit;font-size:14px;font-weight:600;box-shadow:var(--r-sh);cursor:pointer}
+.rop-aba.on{color:var(--r-ouro);box-shadow:var(--r-in)}
+#cpConteudo{display:grid;gap:14px;min-width:0}
+.rop-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.rop-k{display:grid;gap:4px}
+.rop-k span{font-size:13px;color:var(--r-mut)}
+.rop-k b{font-family:var(--mono);font-size:26px;color:var(--r-ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rop-k small{font-size:13px;color:var(--r-mut)}
+.rop-k.comprar b{color:var(--r-neg)}.rop-k.ok b{color:var(--r-ok)}.rop-k.travado b{color:var(--r-am)}.rop-k.ouro b{color:var(--r-ouro)}
+.rop-risc{text-decoration:line-through;text-decoration-color:var(--r-mut)}
+.rop-ajustes{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.rop-ajustes label{display:grid;gap:6px;font-size:13px;color:var(--r-mut);align-content:start}
+.rop-ajustes label>span:first-child{display:flex;align-items:center;gap:6px}
+.rop-in{display:flex;align-items:center;gap:6px}
+.rop-in input{width:80px}
+.rop-in i{font-style:normal;color:var(--r-mut)}
+.rop-ok{color:var(--r-ok)}
+.rop-tip{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--r-bg);box-shadow:var(--r-in);color:var(--r-cia);font:600 11px/1 var(--mono);cursor:help;position:relative}
+.rop-tip:hover::after,.rop-tip:focus::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);width:220px;max-width:70vw;background:#05060b;color:var(--r-ink);border:1px solid #2a2f45;border-radius:10px;padding:8px 10px;font:400 13px/1.4 var(--font,Inter),sans-serif;z-index:20;white-space:normal}
+.rop-filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rop-filtros input{flex:1 1 200px;min-width:0}
+.rop-chip{display:inline-flex;align-items:center;gap:8px;background:var(--r-card);color:var(--r-mut);border:0;border-radius:999px;padding:8px 14px;min-height:40px;font:inherit;font-size:14px;box-shadow:var(--r-sh);cursor:pointer}
+.rop-chip b{font-family:var(--mono);color:var(--r-ink)}
+.rop-chip.on{box-shadow:var(--r-in);color:var(--r-ink)}
+.rop-chip.comprar.on{color:var(--r-neg)}.rop-chip.ok.on{color:var(--r-ok)}.rop-chip.travado.on{color:var(--r-am)}
+.rop-tab-box{padding:0;overflow-x:auto}
+.rop-tabela{min-width:0}
+.rop-tr{display:grid;grid-template-columns:minmax(200px,2.4fr) 56px 70px 84px 60px minmax(150px,1.3fr) minmax(150px,1.3fr);gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid #22263a;font-size:14px}
+.rop-tr:last-child{border-bottom:0}
+.rop-th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--r-mut);font-weight:600}
+.rop-pr{display:grid;gap:2px;min-width:0}
+.rop-pr b{font-weight:600;color:var(--r-ink);overflow-wrap:anywhere}
+.rop-pr small,.rop-mot,.rop-sug small{font-size:12px;color:var(--r-mut)}
+.rop-n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rop-abc{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;font:700 13px/1 var(--mono);font-style:normal;box-shadow:var(--r-in)}
+.rop-abc.a{color:var(--r-ouro)}.rop-abc.b{color:var(--r-cia)}.rop-abc.c{color:var(--r-mut)}
+.rop-st{display:inline-block;font-style:normal;font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px;white-space:nowrap;border:1px solid currentColor}
+.rop-st.comprar{color:var(--r-neg);background:rgba(244,63,94,.12)}
+.rop-st.ok{color:var(--r-ok);background:rgba(16,185,129,.12)}
+.rop-st.travado{color:var(--r-am);background:rgba(243,183,44,.10)}
+.rop-mot{display:block;margin-top:4px}
+.rop-sug{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px}
+.rop-sug b{font-family:var(--mono);color:var(--r-ouro)}
+.rop-sug>span{font-family:var(--mono);color:var(--r-ink);white-space:nowrap}
+.rop-sug .rop-qd{flex-basis:100%;color:var(--r-cia)}
+.rop-nota{font-size:13px;color:var(--r-mut);padding:10px 14px;margin:0}
+.rop-como summary{cursor:pointer;color:var(--r-cia);font-weight:600;font-size:14px}
+.rop-como p{font-size:14px;line-height:1.55;color:var(--r-ink);margin:10px 0 0}
+.rop-combo{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.rop-combo label{display:grid;gap:6px;font-size:14px;color:var(--r-ink);min-width:0}
+.rop-combo label small{color:var(--r-mut)}
+.rop-combo select{width:100%;min-width:0}
+.rop-slider b{color:var(--r-ouro);font-family:var(--mono);margin-left:6px}
+.rop-slider input{accent-color:#f3b72c;width:100%;min-height:32px}
+.rop-combo-res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.rop-av{color:var(--r-am)!important}
+.rop-pitch{display:grid;gap:10px;border-left:4px solid #06b6d4}
+.rop-pt{font-size:13px;color:var(--r-cia);font-weight:600}
+.rop-pitch p{margin:0;font-size:15px;line-height:1.5}
+.rop-btn{justify-self:start;background:linear-gradient(135deg,#f3b72c,#d99a12);color:#1a1205;border:0;border-radius:12px;padding:10px 18px;min-height:44px;font:inherit;font-weight:700;cursor:pointer;box-shadow:var(--r-sh)}
+@media(max-width:900px){.rop-combo-res{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+  .rop{padding:12px;border-radius:14px}
+  .rop-tab-box{overflow:visible;background:none;box-shadow:none}
+  .rop-th{display:none}
+  .rop-tr{grid-template-columns:repeat(4,minmax(0,1fr));background:var(--r-card);border-radius:14px;box-shadow:var(--r-sh);border:0;margin-bottom:10px;padding:12px;gap:10px 8px}
+  .rop-tr .rop-pr{grid-column:1/-1}
+  .rop-tr [data-l]{display:grid;gap:3px;align-content:start}
+  .rop-tr [data-l]::before{content:attr(data-l);font-size:11px;color:var(--r-mut);text-transform:uppercase;letter-spacing:.04em}
+  .rop-tr [data-l="Status"],.rop-tr [data-l="Sugestão"]{grid-column:span 2}
+  .rop-sug{display:grid}
+}
+@media(max-width:560px){.rop-cards{grid-template-columns:1fr}.rop-k b{font-size:22px}}
+@media(max-width:420px){.rop-combo-res{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1808,6 +1903,7 @@ const ICON = {
   sheet:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2M14 13h2M8 17h2M14 17h2"/>',
   trend:'<path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/>',
   scale:'<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+  cart:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
   gauge:'<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
   coin:'<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>',
   out:'<path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>',
@@ -1832,7 +1928,7 @@ const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]
 /* Navegação lateral agrupada. Rotas não mudam; apenas a hierarquia visual. */
 const NAV = [
   ["Operação", { items: [["visao","Visão geral","dash"],["pedidos","Pedidos online","bag","pedidos"],["home","Produtos","pkg"],["clientes","Clientes","users"]] }],
-  ["Estoque e compras", { items: [["estoque-baixo","Estoque","pkg","estoque"],["nex-novos","Produtos novos do NEX","sync"],["giro","Giro e reposição","gauge"],["vendidos","Mais vendidos","trend"],["planilha","Planilha de compra","sheet"]] }],
+  ["Estoque e compras", { items: [["estoque-baixo","Estoque","pkg","estoque"],["nex-novos","Produtos novos do NEX","sync"],["giro","Giro e reposição","gauge"],["compras","Compras e ponto de pedido","cart"],["vendidos","Mais vendidos","trend"],["planilha","Planilha de compra","sheet"]] }],
   ["Catálogo e conteúdo", { items: [["ia","Brutt IA","spark"],["site-cms","CMS do site","store"],["vitrine","Vitrine e destaques","trend"],["conferencia","Conferência de produtos","check"],["fotos","Fotos em lote","img"],["sommelier","Sommelier em massa","spark"]] }],
   ["Gestão", { items: [["financeiro","Financeiro","coin"]] }],
   ["Configurações", { collapsed: true, items: [["horarios","Horários da loja","clock"],["nex","Integrações Nex","sync"],["equipe","Equipe","shield"]] }],
@@ -4772,6 +4868,176 @@ async function iaPerguntar(){
 }
 
 /* ---------------- visão geral: o que precisa de atenção agora (só dados reais, consultas leves) ---------------- */
+
+/* ---------------- Compras e ponto de pedido (#/compras, só dono/admin) ----------------
+   Venda por dia e curva ABC = as mesmas do Giro e reposição (calcGiro: relatório de vendas do Nex ÷ dias do período).
+   Ponto de pedido (ROP) = venda prevista durante o prazo de entrega do fornecedor (sexta a domingo pesam mais) + estoque
+   de segurança (dias de pico). Status: COMPRAR HOJE (estoque ≤ ROP) · OK · TRAVADO (curva C, sem venda ou estoque > 3× ROP:
+   sem sugestão de compra). Sugestão = até ROP + N dias de venda, em caixas fechadas (lote). Janela do mês: dias 1–10
+   protegem o caixa (custos fixos do Financeiro), 11–20 é a janela principal, 21–31 só emergência da curva A.
+   Combos: 1 puxador (curva A) + 1 encalhado, desconto de 5% a 25%, preço, custo, lucro, margem e frase para o balcão. */
+const COMPRAS_PADRAO = { lead: 3, seg: 2, fds: 60, lote: 10, cobertura: 30 };
+let comprasEstado = { aba: "rop", filtro: "comprar", busca: "", dia: null, puxador: null, encalhado: null, desc: 15 };
+function janelaCompra(dia, fixos){
+  if(dia <= 10) return { cls: "vermelho", ic: "🛡️", t: "Janela de proteção de caixa ativa", s: `Foco total no pagamento dos custos fixos (${brl0(fixos)}). Não faça compras volumosas de estoque: só reponha o que acabou e é curva A.` };
+  if(dia <= 20) return { cls: "verde", ic: "✅", t: "Janela principal de compras liberada", s: "Custos fixos honrados. Reponha as curvas A e B em caixas fechadas, pedindo prazo de pagamento para os dias 10 a 15 do mês que vem." };
+  return { cls: "amarelo", ic: "⚠️", t: "Janela complementar", s: "Compras só de emergência: itens da curva A que chegaram no ponto de pedido. O resto espera o dia 11." };
+}
+/* ROP de um produto (g = linha do calcGiro), cfg = ajustes, dow = dia da semana de hoje (0 = domingo) */
+function ropCalc(g, cfg, dow){
+  const W = g.porDia * 7, pf = Math.min(.95, Math.max(.05, cfg.fds / 100));
+  const fds = W * pf / 3, util = W * (1 - pf) / 4, ehFds = d => d === 5 || d === 6 || d === 0;
+  let lead = 0; for(let k = 1; k <= cfg.lead; k++) lead += ehFds((dow + k) % 7) ? fds : util;
+  const rop = g.porDia > 0 ? Math.ceil(lead + cfg.seg * fds) : 0;
+  const custo = Number(g.p.cost_price) || 0;
+  let st = "ok", motivo = "";
+  if(g.porDia === 0){ st = "travado"; motivo = g.est > 0 ? "sem venda no período" : "sem venda e sem estoque"; }
+  else if(g.abc === "C"){ st = "travado"; motivo = "curva C (giro lento)"; }
+  else if(rop > 0 && g.est > 3 * rop){ st = "travado"; motivo = "estoque acima de 3× o ponto de pedido"; }
+  else if(g.est <= rop) st = "comprar";
+  let caixas = 0, un = 0;
+  if(st === "comprar"){ const falta = Math.max(0, rop + g.porDia * cfg.cobertura - g.est); caixas = Math.ceil(falta / cfg.lote); un = caixas * cfg.lote; }
+  return { rop, st, motivo, caixas, un, valor: un * custo, custo };
+}
+function quandoComprar(r, g, jan){
+  if(r.st !== "comprar") return "";
+  if(jan.cls === "verde") return "Hoje";
+  if(jan.cls === "amarelo") return g.abc === "A" ? "Hoje (emergência)" : "Dia 11";
+  return g.abc === "A" && g.est === 0 ? "Hoje (acabou)" : "Dia 11";
+}
+async function renderCompras(){
+  app.innerHTML = `${topbarHTML("Compras e ponto de pedido")}
+    <div class="pg">
+      <div class="pg-h"><div><h2 class="pg-t">Compras e ponto de pedido</h2><p class="pg-d" id="cpDesc">Quando comprar, o que comprar e quanto, em caixas fechadas, sem apertar o caixa dos custos fixos.</p></div></div>
+      <div class="rop" id="rop"><div class="rop-load">Calculando…</div></div>
+    </div>`;
+  bindTopbar();
+  const desde = new Date(Date.now() - 92 * 864e5).toISOString().slice(0, 10);
+  const [pr, per, fin, vd, cats] = await Promise.all([
+    sb.from("products").select("id,name,brand,category_id,price,promo_price,cost_price,stock,sales_count,is_active").eq("is_active", true).limit(5000),
+    sb.from("vendas_periodo").select("inicio,fim,dias").eq("id", 1).maybeSingle(),
+    sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),
+    sb.from("vendas_dia").select("dia,faturamento").gte("dia", desde).limit(400),
+    sb.from("categories").select("id,name,parent_id").limit(1000),
+  ]);
+  if(rotaAtual() !== "compras" || !$("#rop")) return;
+  if(pr.error){ $("#rop").innerHTML = `<div class="rop-vazio">Não deu para ler os produtos: ${esc(pr.error.message)}</div>`; return; }
+  if(!per.data){ $("#rop").innerHTML = `<div class="rop-vazio">Ainda não há relatório de vendas com período. Importe em <a href="#/vendidos">Mais vendidos</a>.</div>`; return; }
+  const F = (fin && fin.data) || { id: 1, custos: [] }, fixos = (Array.isArray(F.custos) ? F.custos : []).reduce((t, c) => t + (Number(c.valor) || 0), 0);
+  const cfg = { ...COMPRAS_PADRAO, ...(F.compras || {}) };
+  /* peso REAL de sexta a domingo nas vendas dos últimos ~90 dias (vendas_dia, relatório Resumo do Nex) */
+  let fdsReal = null; { let a = 0, t = 0; (vd.data || []).forEach(r => { const v = Number(r.faturamento) || 0, w = new Date(r.dia + "T12:00:00Z").getUTCDay(); t += v; if(w === 5 || w === 6 || w === 0) a += v; }); if(t > 0 && (vd.data || []).length >= 28) fdsReal = Math.round(a / t * 100); }
+  const catNome = new Map((cats.data || []).map(c => [c.id, c.name]));
+  const P = per.data, G = calcGiro(pr.data || [], P.dias);
+  $("#cpDesc").innerHTML = `Vendas de <b>${esc(dataBR(P.inicio))}</b> a <b>${esc(dataBR(P.fim))}</b> (${esc(P.dias)} dias), as mesmas do <a href="#/giro">Giro e reposição</a>. Quando comprar, o que comprar e quanto, em caixas fechadas.`;
+  const SP = spAgora(), D = new Date(SP.ano, SP.mes + 1, 0).getDate();
+  if(!comprasEstado.dia || comprasEstado.dia > D) comprasEstado.dia = SP.dia;
+  const salvar = async () => {
+    const { error } = await sb.from("financeiro").update({ compras: { ...cfg }, atualizado_em: new Date().toISOString() }).eq("id", 1);
+    if(error) toast("Não deu para salvar os ajustes: " + error.message); else F.compras = { ...cfg };
+  };
+  const desenha = () => {
+    const dia = comprasEstado.dia, dow = new Date(SP.ano, SP.mes, dia).getDay(), jan = janelaCompra(dia, fixos);
+    const linhas = G.lista.map(g => ({ g, r: ropCalc(g, cfg, dow) }));
+    const comprar = linhas.filter(x => x.r.st === "comprar"), ok = linhas.filter(x => x.r.st === "ok"), trav = linhas.filter(x => x.r.st === "travado");
+    const totCx = comprar.reduce((t, x) => t + x.r.caixas, 0), totR = comprar.reduce((t, x) => t + x.r.valor, 0);
+    const parado = trav.reduce((t, x) => t + x.g.est * x.r.custo, 0);
+    const puxadores = linhas.filter(x => x.g.abc === "A" && x.g.est > 0 && vendaDe(x.g.p) > 0).sort((a, b) => b.g.fat - a.g.fat);
+    const encalhados = trav.filter(x => x.g.est > 0 && vendaDe(x.g.p) > 0).sort((a, b) => b.g.est * b.r.custo - a.g.est * a.r.custo);
+    const tip = t => `<span class="rop-tip" tabindex="0" role="note" aria-label="${esc(t)}" data-tip="${esc(t)}">i</span>`;
+    const chip = (id, rot, n, cls) => `<button type="button" class="rop-chip ${cls}${comprasEstado.filtro === id ? " on" : ""}" data-cpf="${id}" aria-pressed="${comprasEstado.filtro === id}">${rot}<b>${n}</b></button>`;
+    $("#rop").innerHTML = `
+      <div class="rop-janela ${jan.cls}" role="status"><span class="rop-jic" aria-hidden="true">${jan.ic}</span><div class="rop-jtx"><b>${jan.t}</b><span>${jan.s}</span></div>
+        <label class="rop-sim"><span>Dia ${dia === SP.dia ? "(hoje)" : "(simulado)"}</span><select id="cpDia" aria-label="Simular o dia do mês">${Array.from({ length: D }, (_, i) => `<option value="${i + 1}"${i + 1 === dia ? " selected" : ""}>${i + 1}</option>`).join("")}</select>${dia !== SP.dia ? `<button type="button" class="rop-link" id="cpHoje">voltar a hoje</button>` : ""}</label></div>
+      <div class="rop-abas" role="tablist">
+        <button type="button" role="tab" class="rop-aba${comprasEstado.aba === "rop" ? " on" : ""}" aria-selected="${comprasEstado.aba === "rop"}" data-cpaba="rop">🧮 Ponto de pedido</button>
+        <button type="button" role="tab" class="rop-aba${comprasEstado.aba === "combo" ? " on" : ""}" aria-selected="${comprasEstado.aba === "combo"}" data-cpaba="combo">⚡ Combos para encalhados</button>
+      </div>
+      <div id="cpConteudo"></div>`;
+    const cont = $("#cpConteudo");
+    if(comprasEstado.aba === "rop"){
+      const q = normNome(comprasEstado.busca || "");
+      const lista = (comprasEstado.filtro === "comprar" ? comprar : comprasEstado.filtro === "ok" ? ok : comprasEstado.filtro === "travado" ? trav : linhas)
+        .filter(x => !q || normNome(x.g.p.name + " " + (x.g.p.brand || "")).includes(q))
+        .sort((a, b) => ({ comprar: 0, ok: 1, travado: 2 })[a.r.st] - ({ comprar: 0, ok: 1, travado: 2 })[b.r.st] || b.g.fat - a.g.fat);
+      const ST = { comprar: ["🚨 COMPRAR HOJE", "comprar"], ok: ["✅ OK", "ok"], travado: ["⛔ TRAVADO", "travado"] };
+      cont.innerHTML = `
+        <div class="rop-cards">
+          <div class="rop-card rop-k comprar"><span>🚨 Comprar</span><b>${comprar.length}</b><small>${totCx} caixa${totCx === 1 ? "" : "s"} · ${brlM(totR)}</small></div>
+          <div class="rop-card rop-k ok"><span>✅ Estoque confortável</span><b>${ok.length}</b><small>produtos</small></div>
+          <div class="rop-card rop-k travado"><span>⛔ Travados / encalhados</span><b>${trav.length}</b><small>${brlM(parado)} parados (custo)</small></div>
+        </div>
+        <div class="rop-card rop-ajustes">
+          <label><span>Prazo de entrega ${tip("Dias entre fazer o pedido e o fornecedor entregar.")}</span><span class="rop-in"><input type="number" min="1" max="30" step="1" id="cpLead" value="${cfg.lead}" inputmode="numeric"><i>dias</i></span></label>
+          <label><span>Estoque de segurança ${tip("Folga para atraso ou pico de venda, em dias de venda de fim de semana.")}</span><span class="rop-in"><input type="number" min="0" max="15" step="1" id="cpSeg" value="${cfg.seg}" inputmode="numeric"><i>dias</i></span></label>
+          <label><span>Sexta a domingo ${tip("Quanto das vendas da semana acontece de sexta a domingo. O ponto de pedido conta mais venda nesses dias.")}</span><span class="rop-in"><input type="number" min="10" max="90" step="1" id="cpFds" value="${cfg.fds}" inputmode="numeric"><i>%</i></span>${fdsReal != null && fdsReal !== cfg.fds ? `<button type="button" class="rop-link" id="cpFdsReal">usar o real: ${fdsReal}%</button>` : fdsReal != null ? `<small class="rop-ok">= real do histórico</small>` : ""}</label>
+          <label><span>Caixa fechada ${tip("Lote mínimo do fornecedor. A sugestão é sempre em caixas inteiras.")}</span><span class="rop-in"><input type="number" min="1" max="200" step="1" id="cpLote" value="${cfg.lote}" inputmode="numeric"><i>un</i></span></label>
+          <label><span>Comprar para ${tip("Além do ponto de pedido, quantos dias de venda a compra deve cobrir (até a próxima janela de compras).")}</span><span class="rop-in"><input type="number" min="7" max="90" step="1" id="cpCob" value="${cfg.cobertura}" inputmode="numeric"><i>dias</i></span></label>
+        </div>
+        <div class="rop-filtros" role="group" aria-label="Filtrar">${chip("comprar", "🚨 Comprar hoje", comprar.length, "comprar")}${chip("ok", "✅ OK", ok.length, "ok")}${chip("travado", "⛔ Travados", trav.length, "travado")}${chip("todos", "Todos", linhas.length, "")}
+          <input type="search" id="cpBusca" placeholder="Buscar produto ou marca" value="${esc(comprasEstado.busca || "")}" aria-label="Buscar produto"></div>
+        <div class="rop-card rop-tab-box">
+          <div class="rop-tabela" role="table" aria-label="Ponto de pedido por produto">
+            <div class="rop-tr rop-th" role="row"><span role="columnheader">Produto</span><span role="columnheader">Curva</span><span role="columnheader">Estoque</span><span role="columnheader">Venda/dia</span><span role="columnheader">ROP</span><span role="columnheader">Status</span><span role="columnheader">Sugestão de compra</span></div>
+            ${lista.length ? lista.slice(0, 300).map(({ g, r }) => `<div class="rop-tr" role="row">
+              <span class="rop-pr" role="cell"><b>${esc(g.p.name)}</b><small>${[g.p.brand, catNome.get(g.p.category_id)].filter(Boolean).map(esc).join(" · ") || "&nbsp;"}</small></span>
+              <span role="cell" data-l="Curva"><em class="rop-abc ${(g.abc || "c").toLowerCase()}">${g.abc || "—"}</em></span>
+              <span role="cell" data-l="Estoque" class="rop-n">${g.est}</span>
+              <span role="cell" data-l="Venda/dia" class="rop-n">${fmtRitmo(g.porDia)}</span>
+              <span role="cell" data-l="ROP" class="rop-n">${r.rop || "—"}</span>
+              <span role="cell" data-l="Status"><em class="rop-st ${ST[r.st][1]}" ${r.motivo ? `title="${esc(r.motivo)}"` : ""}>${ST[r.st][0]}</em>${r.motivo ? `<small class="rop-mot">${esc(r.motivo)}</small>` : ""}</span>
+              <span role="cell" data-l="Sugestão" class="rop-sug">${r.st === "comprar" ? `<b>${r.caixas} cx</b> <small>(${r.un} un)</small><span>${r.custo > 0 ? brlM(r.valor) : "sem custo"}</span><small class="rop-qd">${esc(quandoComprar(r, g, jan))}</small>` : r.st === "travado" ? `<small>bloqueada</small>` : `<small>—</small>`}</span>
+            </div>`).join("") + (lista.length > 300 ? `<p class="rop-nota">Mostrando 300 de ${lista.length}.</p>` : "") : `<div class="rop-vazio">${comprasEstado.filtro === "comprar" ? "Nada para comprar agora. 👌" : "Nenhum produto aqui."}</div>`}
+          </div>
+        </div>
+        <details class="rop-card rop-como"><summary>Como é calculado</summary>
+          <p><b>Venda por dia</b> = unidades vendidas no relatório ÷ dias do período (igual ao Giro e reposição). <b>Curva ABC</b> pelo faturamento: A = 80%, B = até 95%, C = o resto.</p>
+          <p><b>Ponto de pedido (ROP)</b> = venda prevista nos próximos ${cfg.lead} dia(s) de prazo de entrega (cada dia de sexta a domingo vale ${cfg.fds}% ÷ 3 da semana; os outros, ${100 - cfg.fds}% ÷ 4) + estoque de segurança (${cfg.seg} dia(s) de venda de fim de semana).</p>
+          <p><b>🚨 Comprar hoje</b> quando o estoque ≤ ROP. <b>⛔ Travado</b> = curva C, sem venda no período ou estoque maior que 3× o ROP: a compra fica bloqueada. Sugestão = ROP + ${cfg.cobertura} dias de venda − estoque, arredondada para cima em caixas de ${cfg.lote}; valor pelo custo cadastrado.</p>
+          <p>Tabaco bolado fica de fora (é feito na loja com o Crazy Dogs).</p>
+        </details>`;
+      const mexe = (id, k, min, max) => { const el = $("#" + id); el.onchange = () => { const v = Math.round(Number(el.value)); if(!Number.isFinite(v)){ el.value = cfg[k]; return; } cfg[k] = Math.min(max, Math.max(min, v)); salvar(); desenha(); }; };
+      mexe("cpLead", "lead", 1, 30); mexe("cpSeg", "seg", 0, 15); mexe("cpFds", "fds", 10, 90); mexe("cpLote", "lote", 1, 200); mexe("cpCob", "cobertura", 7, 90);
+      if($("#cpFdsReal")) $("#cpFdsReal").onclick = () => { cfg.fds = fdsReal; salvar(); desenha(); };
+      cont.querySelectorAll("[data-cpf]").forEach(b => b.onclick = () => { comprasEstado.filtro = b.dataset.cpf; desenha(); });
+      const bu = $("#cpBusca"); bu.oninput = () => { comprasEstado.busca = bu.value; clearTimeout(bu._t); bu._t = setTimeout(() => { desenha(); const n = $("#cpBusca"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
+    } else {
+      if(!puxadores.find(x => x.g.p.id === comprasEstado.puxador)) comprasEstado.puxador = puxadores[0] && puxadores[0].g.p.id;
+      if(!encalhados.find(x => x.g.p.id === comprasEstado.encalhado)) comprasEstado.encalhado = encalhados[0] && encalhados[0].g.p.id;
+      const A = puxadores.find(x => x.g.p.id === comprasEstado.puxador), C = encalhados.find(x => x.g.p.id === comprasEstado.encalhado);
+      const opt = (x, sel) => `<option value="${esc(x.g.p.id)}"${x.g.p.id === sel ? " selected" : ""}>${esc(x.g.p.name)} · ${brlM(vendaDe(x.g.p))} · ${x.g.est} un</option>`;
+      let res = `<div class="rop-vazio">${!puxadores.length ? "Nenhum produto da curva A com estoque." : "Nenhum produto encalhado com estoque. 🎉"}</div>`;
+      if(A && C){
+        const d = comprasEstado.desc / 100, normal = vendaDe(A.g.p) + vendaDe(C.g.p), combo = Math.round(normal * (1 - d) * 100) / 100;
+        const custo = (Number(A.g.p.cost_price) || 0) + (Number(C.g.p.cost_price) || 0), lucro = combo - custo, mg = combo > 0 ? lucro / combo * 100 : 0, econ = normal - combo;
+        const semCusto = !(Number(A.g.p.cost_price) > 0) || !(Number(C.g.p.cost_price) > 0);
+        const pitch = `Leva junto o ${C.g.p.name}? No combo com o ${A.g.p.name} sai por ${brlM(combo)} em vez de ${brlM(normal)}: você economiza ${brlM(econ)}. É por tempo limitado, enquanto durar o estoque.`.replace(/R\$ /g, "R$\u00a0");
+        res = `<div class="rop-combo-res">
+            <div class="rop-card rop-k"><span>Preço normal (soma)</span><b class="rop-risc">${brlM(normal)}</b></div>
+            <div class="rop-card rop-k ouro"><span>Preço do combo</span><b>${brlM(combo)}</b><small>−${comprasEstado.desc}% · cliente economiza ${brlM(econ)}</small></div>
+            <div class="rop-card rop-k"><span>Custo dos dois</span><b>${custo > 0 ? brlM(custo) : "—"}</b>${semCusto ? `<small class="rop-av">falta custo cadastrado</small>` : ""}</div>
+            <div class="rop-card rop-k ${lucro >= 0 ? "ok" : "comprar"}"><span>Lucro líquido do combo</span><b>${brlM(lucro)}</b><small>margem ${pctBR(mg)}${mg < 20 && !semCusto ? " · baixa" : ""}</small></div>
+          </div>
+          <div class="rop-card rop-pitch"><span class="rop-pt">💬 Frase para o balcão</span><p id="cpPitch">${esc(pitch)}</p><button type="button" class="rop-btn" id="cpCopia">Copiar frase</button></div>
+          <p class="rop-nota">O encalhado tem ${C.g.est} un paradas (${brlM(C.g.est * (Number(C.g.p.cost_price) || 0))} pelo custo)${C.r.motivo ? ` · ${esc(C.r.motivo)}` : ""}.</p>`;
+      }
+      cont.innerHTML = `<div class="rop-card rop-combo">
+          <label><span>1. Produto puxador <small>(curva A, sai rápido)</small></span><select id="cpA">${puxadores.map(x => opt(x, comprasEstado.puxador)).join("")}</select></label>
+          <label><span>2. Produto encalhado <small>(travado, maior dinheiro parado primeiro)</small></span><select id="cpC">${encalhados.map(x => opt(x, comprasEstado.encalhado)).join("")}</select></label>
+          <label class="rop-slider"><span>3. Desconto do combo <b id="cpDescV">${comprasEstado.desc}%</b></span><input type="range" min="5" max="25" step="1" id="cpDesc" value="${comprasEstado.desc}" aria-label="Desconto do combo em porcentagem"></label>
+        </div>${res}`;
+      if($("#cpA")) $("#cpA").onchange = e => { comprasEstado.puxador = e.target.value; desenha(); };
+      if($("#cpC")) $("#cpC").onchange = e => { comprasEstado.encalhado = e.target.value; desenha(); };
+      const sl = $("#cpDesc"); if(sl){ sl.oninput = () => { $("#cpDescV").textContent = sl.value + "%"; }; sl.onchange = () => { comprasEstado.desc = Number(sl.value); desenha(); }; }
+      const cp = $("#cpCopia"); if(cp) cp.onclick = () => { const t = $("#cpPitch").textContent;
+        (navigator.clipboard && window.isSecureContext ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("Frase copiada."), () => { const r = document.createRange(); r.selectNodeContents($("#cpPitch")); const s2 = getSelection(); s2.removeAllRanges(); s2.addRange(r); toast("Selecionei a frase: copie com Ctrl+C."); }); };
+    }
+    $("#cpDia").onchange = e => { comprasEstado.dia = Number(e.target.value); desenha(); };
+    if($("#cpHoje")) $("#cpHoje").onclick = () => { comprasEstado.dia = SP.dia; desenha(); };
+    $("#rop").querySelectorAll("[data-cpaba]").forEach(b => b.onclick = () => { comprasEstado.aba = b.dataset.cpaba; desenha(); });
+  };
+  desenha();
+}
 /* ---------------- conferência de produtos (#/conferencia) ----------------
    Tudo que deixa a margem, o lucro ou a vitrine errados, contado num lugar só. Cada problema vira um botão com o número;
    tocar lista os produtos e "Abrir" leva para a ficha (openProduct) para corrigir. O custo dá para digitar ali mesmo
@@ -6218,6 +6484,7 @@ Object.assign(ROUTES, {
   "vitrine": renderVitrine,
   "site-cms": renderSiteCms,
   "giro": renderGiro,
+  "compras": renderCompras,
   "ia": renderIA,
   "equipe": renderEquipe,
 });
