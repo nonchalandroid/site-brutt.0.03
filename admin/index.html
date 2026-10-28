@@ -4949,20 +4949,26 @@ function janelaCompra(dia, fixos){
   return { cls: "amarelo", ic: "⚠️", t: "Janela complementar", s: "Compras só de emergência: itens da curva A que chegaram no ponto de pedido. O resto espera o dia 11." };
 }
 /* ROP de um produto (g = linha do calcGiro), cfg = ajustes, dow = dia da semana de hoje (0 = domingo) */
-function ropCalc(g, cfg, dow){
+/* caixa fechada só vale para o que o fornecedor vende em caixa (essências, por padrão); o resto (narguilé, rosh,
+   bebida, headshop…) é comprado por unidade. caixaEm = slugs de categoria-mãe com caixa. */
+const loteDoProduto = (cfg, pai) => (cfg.caixaEm || ["essencias"]).includes(pai) ? Math.max(1, cfg.lote) : 1;
+function ropCalc(g, cfg, dow, lote = 1){
   const W = g.porDia * 7, pf = Math.min(.95, Math.max(.05, cfg.fds / 100));
   const fds = W * pf / 3, util = W * (1 - pf) / 4, ehFds = d => d === 5 || d === 6 || d === 0;
   let lead = 0; for(let k = 1; k <= cfg.lead; k++) lead += ehFds((dow + k) % 7) ? fds : util;
-  const rop = g.porDia > 0 ? Math.ceil(lead + cfg.seg * fds) : 0;
+  /* ropV = valor real (frações): produto que vende 1 por mês tem ROP 0,2 e só pede compra quando o estoque zera.
+     Antes era arredondado para cima (1) e 1 narguilé em estoque já pedia "comprar hoje". rop = mostrado na tela. */
+  const ropV = g.porDia > 0 ? lead + cfg.seg * fds : 0, rop = Math.ceil(ropV);
   const custo = Number(g.p.cost_price) || 0;
   let st = "ok", motivo = "";
   if(g.porDia === 0){ st = "travado"; motivo = g.est > 0 ? "sem venda no período" : "sem venda e sem estoque"; }
   else if(g.abc === "C"){ st = "travado"; motivo = "curva C (giro lento)"; }
-  else if(rop > 0 && g.est > 3 * rop){ st = "travado"; motivo = "estoque acima de 3× o ponto de pedido"; }
-  else if(g.est <= rop) st = "comprar";
+  else if(ropV > 0 && g.est > 3 * Math.max(1, ropV)){ st = "travado"; motivo = "estoque acima de 3× o ponto de pedido"; }
+  else if(g.est <= ropV) st = "comprar";
   let caixas = 0, un = 0;
-  if(st === "comprar"){ const falta = Math.max(0, rop + g.porDia * cfg.cobertura - g.est); caixas = Math.ceil(falta / cfg.lote); un = caixas * cfg.lote; }
-  return { rop, st, motivo, caixas, un, valor: un * custo, custo };
+  if(st === "comprar"){ const falta = Math.max(0, ropV + g.porDia * cfg.cobertura - g.est); /* caixa: arredonda para cima; unidade: arredonda normal (1,2 narguilé = 1), mínimo 1 */
+    caixas = lote > 1 ? Math.max(1, Math.ceil(falta / lote)) : Math.max(1, Math.round(falta)); un = caixas * lote; }
+  return { rop, st, motivo, caixas, un, lote, valor: un * custo, custo };
 }
 function quandoComprar(r, g, jan){
   if(r.st !== "comprar") return "";
@@ -5128,9 +5134,9 @@ async function renderCompras(){
   };
   const desenha = () => {
     const dia = comprasEstado.dia, dow = new Date(SP.ano, SP.mes, dia).getDay(), jan = janelaCompra(dia, fixos);
-    const linhas = G.lista.map(g => ({ g, r: ropCalc(g, cfg, dow) }));
+    const linhas = G.lista.map(g => ({ g, r: ropCalc(g, cfg, dow, loteDoProduto(cfg, catPai(g.p.category_id))) }));
     const comprar = linhas.filter(x => x.r.st === "comprar"), ok = linhas.filter(x => x.r.st === "ok"), trav = linhas.filter(x => x.r.st === "travado");
-    const totCx = comprar.reduce((t, x) => t + x.r.caixas, 0), totR = comprar.reduce((t, x) => t + x.r.valor, 0);
+    const totCx = comprar.filter(x => x.r.lote > 1).reduce((t, x) => t + x.r.caixas, 0), totUn = comprar.filter(x => x.r.lote === 1).reduce((t, x) => t + x.r.un, 0), totR = comprar.reduce((t, x) => t + x.r.valor, 0);
     const parado = trav.reduce((t, x) => t + x.g.est * x.r.custo, 0);
     const tip = t => `<span class="rop-tip" tabindex="0" role="note" aria-label="${esc(t)}" data-tip="${esc(t)}">i</span>`;
     const chip = (id, rot, n, cls) => `<button type="button" class="rop-chip ${cls}${comprasEstado.filtro === id ? " on" : ""}" data-cpf="${id}" aria-pressed="${comprasEstado.filtro === id}">${rot}<b>${n}</b></button>`;
@@ -5151,7 +5157,7 @@ async function renderCompras(){
       const ST = { comprar: ["🚨 COMPRAR HOJE", "comprar"], ok: ["✅ OK", "ok"], travado: ["⛔ TRAVADO", "travado"] };
       cont.innerHTML = `
         <div class="rop-cards">
-          <div class="rop-card rop-k comprar"><span>🚨 Comprar</span><b>${comprar.length}</b><small>${totCx} caixa${totCx === 1 ? "" : "s"} · ${brlM(totR)}</small></div>
+          <div class="rop-card rop-k comprar"><span>🚨 Comprar</span><b>${comprar.length}</b><small>${[totCx ? `${totCx} caixa${totCx === 1 ? "" : "s"}` : "", totUn ? `${totUn} un` : ""].filter(Boolean).join(" + ") || "—"} · ${brlM(totR)}</small></div>
           <div class="rop-card rop-k ok"><span>✅ Estoque confortável</span><b>${ok.length}</b><small>produtos</small></div>
           <div class="rop-card rop-k travado"><span>⛔ Travados / encalhados</span><b>${trav.length}</b><small>${brlM(parado)} parados (custo)</small></div>
         </div>
@@ -5159,7 +5165,7 @@ async function renderCompras(){
           <label><span>Prazo de entrega ${tip("Dias entre fazer o pedido e o fornecedor entregar.")}</span><span class="rop-in"><input type="number" min="1" max="30" step="1" id="cpLead" value="${cfg.lead}" inputmode="numeric"><i>dias</i></span></label>
           <label><span>Estoque de segurança ${tip("Folga para atraso ou pico de venda, em dias de venda de fim de semana.")}</span><span class="rop-in"><input type="number" min="0" max="15" step="1" id="cpSeg" value="${cfg.seg}" inputmode="numeric"><i>dias</i></span></label>
           <label><span>Sexta a domingo ${tip("Quanto das vendas da semana acontece de sexta a domingo. O ponto de pedido conta mais venda nesses dias.")}</span><span class="rop-in"><input type="number" min="10" max="90" step="1" id="cpFds" value="${cfg.fds}" inputmode="numeric"><i>%</i></span>${fdsReal != null && fdsReal !== cfg.fds ? `<button type="button" class="rop-link" id="cpFdsReal">usar o real: ${fdsReal}%</button>` : fdsReal != null ? `<small class="rop-ok">= real do histórico</small>` : ""}</label>
-          <label><span>Caixa fechada ${tip("Lote mínimo do fornecedor. A sugestão é sempre em caixas inteiras.")}</span><span class="rop-in"><input type="number" min="1" max="200" step="1" id="cpLote" value="${cfg.lote}" inputmode="numeric"><i>un</i></span></label>
+          <label><span>Caixa de essência ${tip("Quantas essências vêm na caixa do fornecedor. Só vale para essências; narguilé, rosh, bebida e o resto são comprados por unidade.")}</span><span class="rop-in"><input type="number" min="1" max="200" step="1" id="cpLote" value="${cfg.lote}" inputmode="numeric"><i>un</i></span></label>
           <label><span>Comprar para ${tip("Além do ponto de pedido, quantos dias de venda a compra deve cobrir (até a próxima janela de compras).")}</span><span class="rop-in"><input type="number" min="7" max="90" step="1" id="cpCob" value="${cfg.cobertura}" inputmode="numeric"><i>dias</i></span></label>
         </div>
         <div class="rop-filtros" role="group" aria-label="Filtrar">${chip("comprar", "🚨 Comprar hoje", comprar.length, "comprar")}${chip("ok", "✅ OK", ok.length, "ok")}${chip("travado", "⛔ Travados", trav.length, "travado")}${chip("todos", "Todos", linhas.length, "")}
@@ -5174,14 +5180,14 @@ async function renderCompras(){
               <span role="cell" data-l="Venda/dia" class="rop-n">${fmtRitmo(g.porDia)}</span>
               <span role="cell" data-l="ROP" class="rop-n">${r.rop || "—"}</span>
               <span role="cell" data-l="Status"><em class="rop-st ${ST[r.st][1]}" ${r.motivo ? `title="${esc(r.motivo)}"` : ""}>${ST[r.st][0]}</em>${r.motivo ? `<small class="rop-mot">${esc(r.motivo)}</small>` : ""}</span>
-              <span role="cell" data-l="Sugestão" class="rop-sug">${r.st === "comprar" ? `<b>${r.caixas} cx</b> <small>(${r.un} un)</small><span>${r.custo > 0 ? brlM(r.valor) : "sem custo"}</span><small class="rop-qd">${esc(quandoComprar(r, g, jan))}</small>` : r.st === "travado" ? `<small>bloqueada</small>` : `<small>—</small>`}</span>
+              <span role="cell" data-l="Sugestão" class="rop-sug">${r.st === "comprar" ? `${r.lote > 1 ? `<b>${r.caixas} cx</b> <small>(${r.un} un)</small>` : `<b>${r.un} un</b>`}<span>${r.custo > 0 ? brlM(r.valor) : "sem custo"}</span><small class="rop-qd">${esc(quandoComprar(r, g, jan))}</small>` : r.st === "travado" ? `<small>bloqueada</small>` : `<small>—</small>`}</span>
             </div>`).join("") + (lista.length > 300 ? `<p class="rop-nota">Mostrando 300 de ${lista.length}.</p>` : "") : `<div class="rop-vazio">${comprasEstado.filtro === "comprar" ? "Nada para comprar agora. 👌" : "Nenhum produto aqui."}</div>`}
           </div>
         </div>
         <details class="rop-card rop-como"><summary>Como é calculado</summary>
           <p><b>Venda por dia</b> = unidades vendidas no relatório ÷ dias do período (igual ao Giro e reposição). <b>Curva ABC</b> pelo faturamento: A = 80%, B = até 95%, C = o resto.</p>
           <p><b>Ponto de pedido (ROP)</b> = venda prevista nos próximos ${cfg.lead} dia(s) de prazo de entrega (cada dia de sexta a domingo vale ${cfg.fds}% ÷ 3 da semana; os outros, ${100 - cfg.fds}% ÷ 4) + estoque de segurança (${cfg.seg} dia(s) de venda de fim de semana).</p>
-          <p><b>🚨 Comprar hoje</b> quando o estoque ≤ ROP. <b>⛔ Travado</b> = curva C, sem venda no período ou estoque maior que 3× o ROP: a compra fica bloqueada. Sugestão = ROP + ${cfg.cobertura} dias de venda − estoque, arredondada para cima em caixas de ${cfg.lote}; valor pelo custo cadastrado.</p>
+          <p><b>🚨 Comprar hoje</b> quando o estoque ≤ ROP. <b>⛔ Travado</b> = curva C, sem venda no período ou estoque maior que 3× o ROP: a compra fica bloqueada. Sugestão = ROP + ${cfg.cobertura} dias de venda − estoque, arredondada para cima: essências em caixas de ${cfg.lote}, o resto por unidade; valor pelo custo cadastrado. Produto que vende pouco (ex.: 1 narguilé por mês) só pede compra quando o estoque chega ao ponto de pedido de verdade (para ele, zerar).</p>
           <p>Tabaco bolado fica de fora (é feito na loja com o Crazy Dogs).</p>
         </details>`;
       const mexe = (id, k, min, max) => { const el = $("#" + id); el.onchange = () => { const v = Math.round(Number(el.value)); if(!Number.isFinite(v)){ el.value = cfg[k]; return; } cfg[k] = Math.min(max, Math.max(min, v)); salvar(); desenha(); }; };
@@ -5887,18 +5893,19 @@ async function renderFinanceiro(){
   bindTopbar();
   $("#fnAtualiza").onclick = () => renderFinanceiro();
   const [prodsMg, fin, dias] = await Promise.all([
-    sb.from("products").select("id,name,price,promo_price,cost_price,stock,sales_count").eq("is_active", true).limit(5000),
+    sb.from("products").select("id,name,category_id,price,promo_price,cost_price,stock,sales_count").eq("is_active", true).limit(5000),
     sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),
     sb.from("vendas_dia").select("dia,vendas,faturamento,lucro_bruto").order("dia").limit(5000),
   ]);
-  const perR = await sb.from("vendas_periodo").select("dias").eq("id", 1).maybeSingle();
+  const [perR, catR] = await Promise.all([sb.from("vendas_periodo").select("dias").eq("id", 1).maybeSingle(), sb.from("categories").select("id,slug,parent_id").limit(1000)]);
   if(rotaAtual() !== "financeiro" || !$("#ovLucro")) return;
   FIN_DIAS = dias && !dias.error ? dias.data || [] : [];
   const f = fin && !fin.error ? fin.data : null;
   FIN_ROP = null;
   if(perR && perR.data && !prodsMg.error){
     const cfg = { ...COMPRAS_PADRAO, ...((f && f.compras) || {}) }, SPd = spAgora(), dow = new Date(SPd.ano, SPd.mes, SPd.dia).getDay();
-    let n = 0, v = 0; calcGiro(prodsMg.data || [], perR.data.dias).lista.forEach(g => { const r = ropCalc(g, cfg, dow); if(r.st === "comprar"){ n++; v += r.valor; } });
+    const cm = new Map(((catR && catR.data) || []).map(c => [c.id, c])), pai = id => { const c = cm.get(id); return c ? (c.parent_id ? (cm.get(c.parent_id) || {}).slug : c.slug) : ""; };
+    let n = 0, v = 0; calcGiro(prodsMg.data || [], perR.data.dias).lista.forEach(g => { const r = ropCalc(g, cfg, dow, loteDoProduto(cfg, pai(g.p.category_id))); if(r.st === "comprar"){ n++; v += r.valor; } });
     FIN_ROP = { n, v };
   }
   desenhaLucro(f, margemCatalogo(prodsMg.error ? [] : prodsMg.data), !!(fin && fin.error));
