@@ -5152,22 +5152,33 @@ function margemCatalogo(lista){
   const ponderada = recP > 0;
   return { ativos, comCusto, ponderada, pct: ponderada ? lucP / recP * 100 : rec > 0 ? luc / rec * 100 : null };
 }
+/* margem real do Nex: soma do lucro bruto ÷ soma do faturamento dos últimos 90 dias importados (vendas_dia); precisa de 14+ dias */
+function margemNex(){
+  if(!FIN_DIAS.length) return null;
+  const ult = String(FIN_DIAS[FIN_DIAS.length - 1].dia).slice(0, 10), desde = new Date(Date.parse(ult + "T00:00Z") - 89 * 864e5).toISOString().slice(0, 10);
+  let fat = 0, luc = 0, dias = 0;
+  FIN_DIAS.forEach(r => { const d = String(r.dia).slice(0, 10), f = Number(r.faturamento) || 0; if(d >= desde && f > 0){ fat += f; luc += Number(r.lucro_bruto) || 0; dias++; } });
+  return dias >= 14 && fat > 0 && luc > 0 ? { pct: luc / fat * 100, dias } : null;
+}
 function desenhaLucro(fin, mg, erro){
   const box = $("#ovLucro"); if(!box) return;
   if(erro){ box.innerHTML = `<h3>Lucro do mês</h3><p class="lc-nota">Só o dono e os administradores veem os números de lucro.</p>`; return; }
   const f = fin || { custos: [], dia_a_dia: 0, faturamento: null };
   const custos = Array.isArray(f.custos) ? f.custos : [];
   const fixos = custos.reduce((t, c) => t + (Number(c.valor) || 0), 0), dia = Number(f.dia_a_dia) || 0, fat = Number(f.faturamento) || 0;
-  const m0 = mg.pct == null ? null : mg.pct / 100;   /* margem do catálogo: padrão enquanto o lucro bruto não for digitado */
+  /* margem padrão enquanto o lucro bruto não for digitado: a REAL do Nex (lucro bruto ÷ faturamento dos últimos 90 dias do
+     relatório Resumo, vendas_dia); sem esse histórico, a do catálogo (preço × custo cadastrado), que costuma sair diferente */
+  const mNex = margemNex(), m0 = mNex ? mNex.pct / 100 : mg.pct == null ? null : mg.pct / 100;
+  const nomeM0 = mNex ? `margem real do Nex (${pctBR(mNex.pct)}, ${mNex.dias} dias)` : "margem do catálogo";
   const brutoMan = f.lucro_bruto != null ? Number(f.lucro_bruto) : null, cmvMan = f.cmv != null ? Number(f.cmv) : null;
-  /* lucro bruto digitado tem prioridade; depois o custo das mercadorias digitado; senão a margem do catálogo */
+  /* lucro bruto digitado tem prioridade; depois o custo das mercadorias digitado; senão a margem padrão (Nex ou catálogo) */
   const bruto = fat && brutoMan != null ? brutoMan : fat && cmvMan != null ? fat - cmvMan : m0 == null ? null : fat * m0;
   const cmv = bruto == null ? null : fat - bruto, liquido = bruto == null ? null : bruto - fixos - dia;
   const m = fat > 0 && bruto != null ? bruto / fat : m0;   /* margem efetiva (a digitada, se houver): é ela que move o ponto de equilíbrio */
   const equilibrio = m ? (fixos + dia) / m : null;
   const campo = v => (v == null || !Number.isFinite(v) ? "" : String(Number(v).toFixed(2)).replace(".", ","));
   const origemCmv = cmvMan != null ? "digitado" : brutoMan != null ? "pelo lucro bruto digitado" : m0 == null ? "" : `automático: ${pctBR(100 - m0 * 100)} do faturamento`;
-  const origemBruto = brutoMan != null ? "digitado" : cmvMan != null ? "pelo custo digitado" : m0 == null ? "" : "automático: margem do catálogo";
+  const origemBruto = brutoMan != null ? "digitado" : cmvMan != null ? "pelo custo digitado" : m0 == null ? "" : "automático: " + nomeM0;
   const linha = (rot, v, cls = "", k = "") => `<div class="lc-l ${cls}"><span>${rot}</span><b${k ? ` data-odo="${k}"` : ""}>${v}</b></div>`;
   box.innerHTML = `<div class="ov-box-h"><h3>Lucro do mês <small>projeção</small></h3><button class="btn-ghost btn-sm" id="lcEditar">${ic("sheet")} Custos</button></div>
     <div class="lc-grid">
