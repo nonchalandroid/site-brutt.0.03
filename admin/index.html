@@ -8,11 +8,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: data:; connect-src 'self' https://vedlxtljilsanykmddtj.supabase.co wss://vedlxtljilsanykmddtj.supabase.co; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="no-referrer">
 <!-- anti-clickjacking: o GitHub Pages não manda X-Frame-Options; se o painel for aberto dentro de um iframe de outro site, ele não aparece -->
-<style id="antiFrame">html{display:none!important}
-/* Central de estoque */
-.est-nav,.est-filters,.est-toolbar,.est-pages{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.est-nav{margin:18px 0}.est-nav a{padding:10px 14px;border:1px solid var(--line,#ddd);border-radius:10px;color:inherit;text-decoration:none}.est-nav [aria-current],.est-filters [aria-pressed=true]{background:#69410c;color:#fff8ed}.est-health{display:flex;justify-content:space-between;gap:16px;padding:18px;border:1px solid var(--gold);border-radius:14px;margin:16px 0}.est-health p{margin:6px 0}.est-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.est-kpis button{padding:20px;text-align:left;border:1px solid var(--line,#ddd);border-radius:14px;background:var(--card,#fff);color:inherit;cursor:pointer}.est-kpis span,.est-kpis small,.est-kpis strong{display:block}.est-kpis strong{font-size:32px;margin:8px 0}.est-kpis small{line-height:1.4}.est-work{border:1px solid var(--line,#ddd);border-radius:14px;padding:18px}.est-toolbar{align-items:end}.est-toolbar label{display:grid;gap:6px;font-size:12px;flex:1;min-width:135px}.est-toolbar label:first-child{flex:2}.est-toolbar input,.est-toolbar select{width:100%;padding:11px;border-radius:8px;border:1px solid var(--line,#bbb);background:var(--card,#fff);color:inherit}.est-filters{margin:18px 0}.est-filters button{padding:9px 12px;border:1px solid var(--line,#bbb);border-radius:20px;background:transparent;color:inherit;cursor:pointer}.est-table-wrap{overflow-x:auto}.est-table{border-collapse:collapse;width:100%;font-size:13px}.est-table th,.est-table td{text-align:left;padding:15px 10px;border-bottom:1px solid var(--line,#ddd);vertical-align:middle}.est-table th{font-size:11px;text-transform:uppercase;letter-spacing:.04em}.est-table td:first-child{min-width:210px}.est-table small{display:block;color:var(--muted);margin-top:5px}.est-status{display:inline-block;padding:5px 8px;border-radius:6px;background:#e8eee9;color:#234733}.est-status.zerado,.est-status.critico{background:#fde8e5;color:#8c2424}.est-status.atencao,.est-status.sem-vendas,.est-status.excesso{background:#fff0d5;color:#704500}.est-pages{justify-content:flex-end;margin-top:18px}.stock-center button:focus-visible,.stock-center a:focus-visible{outline:3px solid var(--gold);outline-offset:3px}@media(max-width:700px){.est-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.est-health{display:block}.est-health a{display:inline-block;margin-top:10px}.est-work{padding:12px}.est-toolbar label{min-width:42%}.est-nav a{font-size:12px}.est-kpis button{padding:14px}}
-@media(max-width:700px){.est-table thead{display:none}.est-table,.est-table tbody,.est-table tr,.est-table td{display:block;width:100%}.est-table tr{border:1px solid var(--line,#ddd);border-radius:12px;margin:12px 0;padding:10px}.est-table td{border:0;padding:8px;min-width:0!important}.est-table td[data-label]:before{content:attr(data-label);display:block;font-size:11px;color:var(--muted);margin-bottom:4px}.est-table td[data-label]{display:inline-block;width:48%;vertical-align:top}.est-table td:last-child{width:100%}.est-table td:last-child button{width:100%}.est-table-wrap{overflow:visible}}
-</style>
+<style id="antiFrame">html{display:none!important}</style>
 <script>if(self===top){document.getElementById("antiFrame").remove()}else{top.location=self.location}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1866,6 +1862,7 @@ b,strong,h1,h2,h3,h4{font-weight:700}
 @media(max-width:640px){.cb-eq{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}.cb-eq .cb-op:nth-of-type(2){display:none}.cb-fim{grid-column:1/-1}}
 @media(max-width:420px){.cb-eq{grid-template-columns:1fr}.cb-op{justify-self:center}.cb-eq .cb-op:nth-of-type(2){display:block}.cb-nums b{font-size:16px}.cb-mod small{display:none}}
 </style>
+<link rel="stylesheet" href="estoque.css?v=20261107-2">
 </head>
 <body>
 <div class="fundo" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -3603,13 +3600,16 @@ function estoqueQualidadeHTML(periodo, prods){
   const hoje = new Intl.DateTimeFormat("en-CA", {timeZone:"America/Sao_Paulo", year:"numeric", month:"2-digit", day:"2-digit"}).format(new Date());
   const dias = Math.max(0, Math.floor((Date.parse(hoje + "T12:00:00Z") - Date.parse(periodo.fim + "T12:00:00Z")) / 864e5));
   const semCusto = prods.filter(p => Number(p.stock) > 0 && !(Number(p.cost_price) > 0)).length;
-  return `<div class="nx-box" role="status" style="margin:12px 0;padding:14px;border-left:4px solid var(--gold)">
-    <b>Qualidade dos dados para decidir a compra</b>
-    <p>${Number.isFinite(dias) ? `O histórico termina há <b>${dias} dia(s)</b>.` : "A data do histórico precisa ser conferida."} O saldo é atual; a cobertura e a curva ABC usam as vendas desse período.</p>
-    ${dias > 7 ? '<p><b>Histórico desatualizado:</b> atualize as vendas antes de fechar a compra. <a href="#/vendidos">Importar relatório de vendas</a></p>' : ""}
-    <p>${semCusto ? `<b>${semCusto} produto(s) com saldo e sem custo:</b> o valor do estoque e o orçamento de reposição estão incompletos.` : "Todos os produtos com saldo nesta análise têm custo cadastrado."}</p>
-    <small>Sem venda registrada não comprova encalhe. A curva ABC usa receita estimada pelo preço atual, não o faturamento histórico realizado.</small>
-  </div>`;
+  const antiga = !Number.isFinite(dias) || dias > 7;
+  return `<details class="est-quality">
+    <summary>${ic(antiga || semCusto ? "alert" : "sheet")}<span class="est-quality-title">${antiga ? "Atualize as vendas antes de decidir a compra" : semCusto ? "Complete os custos para calcular a reposição" : "Base de vendas e custos disponíveis"}</span><span class="est-quality-summary">${Number.isFinite(dias) ? `Histórico de ${dias} dia(s) atrás` : "Conferir período"}${semCusto ? ` · ${semCusto} sem custo` : ""}</span></summary>
+    <div class="est-quality-body">
+      <p>${Number.isFinite(dias) ? `O histórico termina há <b>${dias} dia(s)</b>.` : "A data do histórico precisa ser conferida."} Cobertura e curva ABC usam esse período; os saldos vêm do cadastro atual.</p>
+      ${antiga ? '<p><b>Histórico desatualizado:</b> atualize as vendas antes de fechar a compra. <a href="#/vendidos">Importar relatório de vendas →</a></p>' : ""}
+      <p>${semCusto ? `<b>${semCusto} produto(s) com saldo e sem custo:</b> o valor do estoque e o orçamento de reposição estão incompletos.` : "Todos os produtos com saldo nesta análise têm custo cadastrado."}</p>
+      <p>Sem venda registrada não comprova encalhe. A curva ABC usa receita estimada pelo preço atual, não o faturamento histórico realizado.</p>
+    </div>
+  </details>`;
 }
 const GIRO_DIAS_COMPRA = 30;
 function calcGiro(prods, dias){
@@ -4142,9 +4142,16 @@ function estoqueLinha(g){
   return {...g, manual, st, semCusto:!(Number(g.p.cost_price)>0)};
 }
 async function renderEstoque(){
-  app.innerHTML = `${topbarHTML('Central de estoque')}<div class="pg stock-center"><div class="pg-h"><div><h2 class="pg-t">Central de estoque</h2><p class="pg-d">Confira os saldos. Priorize rupturas. Decida a reposição.</p></div><button class="btn-ghost" id="estRefresh">${ic('sync')} Atualizar</button></div>
-    <nav class="est-nav" aria-label="Ferramentas de estoque"><a href="#/estoque-baixo" aria-current="page">Saldos e prioridades</a><a href="#/compras">Reposição</a><a href="#/giro">Curva ABC e giro</a><a href="#/nex">Integração e histórico</a><a href="#/vendidos">Atualizar vendas</a></nav><div id="estBody" class="loading">Carregando saldos e qualidade dos dados…</div></div>`;
-  bindTopbar(); $('#estRefresh').onclick = renderEstoque;
+  app.innerHTML = `${topbarHTML('Central de estoque')}<div class="pg stock-center">
+    <div class="est-heading">
+      <div><span class="est-eyebrow">${ic('pkg')} Gestão de estoque</span><h1>Central de estoque</h1><p>Saldos, reposição e prioridades em um só lugar.</p></div>
+      <div class="est-heading-actions"><button type="button" class="est-btn" id="estExport" disabled>${ic('dl')} Exportar</button><button type="button" class="est-btn est-btn-primary" id="estRefresh">${ic('sync')} Atualizar</button></div>
+    </div>
+    <nav class="est-nav" aria-label="Ferramentas de estoque"><a href="#/estoque-baixo" aria-current="page">${ic('pkg')} Saldos e prioridades</a><a href="#/compras">Reposição</a><a href="#/giro">Curva ABC e giro</a><a href="#/nex">Integração e histórico</a><a href="#/vendidos">Relatório de vendas</a></nav>
+    <div id="estBody" class="loading">Conferindo saldos e prioridades…</div>
+  </div>`;
+  bindTopbar();
+  $('#estRefresh').onclick = renderEstoque;
   const [pr,per,sync] = await Promise.all([
     sb.from('products').select('id,site_product_id,sku,ean,name,brand,category_id,stock,price,promo_price,cost_price,sales_count,is_active').order('name').limit(5000),
     sb.from('vendas_periodo').select('inicio,fim,dias').eq('id',1).maybeSingle(),
@@ -4160,11 +4167,36 @@ async function renderEstoque(){
   const filtros=[['todos','Todos',()=>true],['zerado','Sem estoque',g=>g.p.is_active&&g.est<=0],['critico','Até 7 dias',g=>g.p.is_active&&g.est>0&&g.porDia>0&&g.cob<=7],['atencao','8–14 dias',g=>g.p.is_active&&g.cob>7&&g.cob<=14],['sem-vendas','Sem vendas',g=>g.p.is_active&&g.est>0&&g.q===0],['excesso','Mais de 90 dias',g=>g.p.is_active&&g.cob>90],['sem-custo','Sem custo',g=>g.p.is_active&&g.est>0&&g.semCusto],['inativo','Inativos',g=>!g.p.is_active]];
   const cats=new Map((state.categories||[]).map(c=>[c.id,c.name]));
   $('#estBody').className='';
-  $('#estBody').innerHTML=`<section class="est-health" role="status"><div><b>${esc(status)}</b><p>${ultimo?`Última execução: ${esc(fmtQuando(ultimo.ran_at))}. `:''}${Number(resumo.sem_par_site)||0} itens sem associação; ${Number(resumo.conflitos)||0} conflitos. O saldo exibido é o do site; não equivale a uma contagem física.</p></div><a href="#/nex">Conferir integração →</a></section>
-    ${periodo?estoqueQualidadeHTML(periodo,produtos):'<div class="est-health">Sem relatório de vendas. Cobertura e ABC indisponíveis. <a href="#/vendidos">Importar vendas</a></div>'}
-    <div class="est-kpis">${filtros.slice(1,5).map(([id,nome,fn])=>`<button type="button" data-est-kpi="${id}"><span>${nome}</span><strong>${linhas.filter(fn).length}</strong><small>${id==='zerado'?'ativos, indisponíveis no site':id==='sem-vendas'?'conferir antes de considerar encalhe':'cobertura estimada pelo histórico'}</small></button>`).join('')}</div>
-    <section class="est-work"><div class="est-toolbar"><label>Buscar<input id="estBusca" type="search" placeholder="Nome, código Nex ou EAN" value="${esc(estoqueUI.busca)}"></label><label>Categoria<select id="estCategoria"><option value="">Todas</option>${[...cats].map(([id,n])=>`<option value="${esc(id)}"${estoqueUI.categoria===id?' selected':''}>${esc(n)}</option>`).join('')}</select></label><label>Controle<select id="estOrigem"><option value="">Todos</option><option value="nex">Nex</option><option value="manual">Manual</option></select></label><label>Ordenar<select id="estOrdem"><option value="prioridade">Prioridade operacional</option><option value="nome">Nome</option><option value="saldo">Menor saldo</option><option value="valor">Maior valor em estoque</option></select></label><button class="btn-ghost" id="estLimpar">Limpar filtros</button><button class="btn-ghost" id="estExport">Exportar lista</button></div>
-    <div class="est-filters" role="group" aria-label="Situação do estoque">${filtros.map(([id,n,fn])=>`<button type="button" data-est-filtro="${id}">${n} <b>${linhas.filter(fn).length}</b></button>`).join('')}</div><p id="estCount" aria-live="polite"></p><div class="est-table-wrap"><table class="est-table"><thead><tr><th scope="col">Produto / código Nex</th><th scope="col">Saldo</th><th scope="col">Cobertura / ABC</th><th scope="col">Situação</th><th scope="col">Valor ao custo</th><th scope="col">Ação</th></tr></thead><tbody id="estRows"></tbody></table></div><div class="est-pages"><button class="btn-ghost" id="estPrev">Anterior</button><span id="estPage"></span><button class="btn-ghost" id="estNext">Próxima</button></div></section>`;
+  const kpiInfo = {
+    zerado: ['Rupturas', 'Produtos ativos sem saldo', 'alert'],
+    critico: ['Reposição urgente', 'Cobertura de até 7 dias', 'clock'],
+    atencao: ['Planejar compra', 'Cobertura de 8 a 14 dias', 'cart'],
+    'sem-vendas': ['Sem venda registrada', 'Saldo disponível no período', 'gauge']
+  };
+  $('#estBody').innerHTML=`
+    <div class="est-kpis">${filtros.slice(1,5).map(([id,nome,fn])=>`<button type="button" class="est-kpi" data-est-kpi="${id}"><span class="est-kpi-top"><span>${kpiInfo[id][0]}</span><span class="est-kpi-icon">${ic(kpiInfo[id][2])}</span></span><strong>${linhas.filter(fn).length}</strong><span class="est-kpi-foot"><small>${kpiInfo[id][1]}</small>${ic('chev')}</span></button>`).join('')}</div>
+    <section class="est-health ${sync.error || !ultimo?.ok ? 'is-error' : problemas ? '' : 'is-ok'}" role="status">
+      <span class="est-health-dot" aria-hidden="true"></span><b>${esc(status)}</b>
+      ${ultimo ? `<time datetime="${esc(ultimo.ran_at)}">${esc(fmtQuando(ultimo.ran_at))}</time>` : ''}
+      <span class="est-health-detail">${sync.error || !ultimo ? 'Conferência de integração indisponível' : `${Number(resumo.sem_par_site)||0} sem associação · ${Number(resumo.conflitos)||0} conflitos`}</span>
+      <a href="#/nex">Conferir integração ${ic('chev')}</a>
+    </section>
+    ${periodo ? estoqueQualidadeHTML(periodo,produtos) : '<div class="est-health">Sem relatório de vendas. Cobertura e ABC indisponíveis. <a href="#/vendidos">Importar vendas →</a></div>'}
+    <section class="est-work" aria-label="Posição do estoque">
+      <div class="est-work-head"><div><h2>Posição do estoque</h2><p>Encontre o produto. Confira o saldo. Tome a próxima ação.</p></div><span class="est-snapshot">${ic('clock')} Saldo atual do site</span></div>
+      <div class="est-toolbar">
+        <label>Buscar produto<span class="est-search">${ic('search')}<input id="estBusca" type="search" placeholder="Nome, código Nex ou EAN" value="${esc(estoqueUI.busca)}"></span></label>
+        <label>Categoria<select id="estCategoria"><option value="">Todas as categorias</option>${[...cats].map(([id,n])=>`<option value="${esc(id)}"${estoqueUI.categoria===id?' selected':''}>${esc(n)}</option>`).join('')}</select></label>
+        <label>Origem do saldo<select id="estOrigem"><option value="">Todas as origens</option><option value="nex">Nex</option><option value="manual">Manual</option></select></label>
+        <label>Ordenar por<select id="estOrdem"><option value="prioridade">Prioridade operacional</option><option value="nome">Nome do produto</option><option value="saldo">Menor saldo</option><option value="valor">Maior valor em estoque</option></select></label>
+      </div>
+      <div class="est-filters" role="group" aria-label="Situação do estoque">${filtros.map(([id,n,fn])=>`<button type="button" data-est-filtro="${id}"><span>${n}</span><b>${linhas.filter(fn).length}</b></button>`).join('')}</div>
+      <div class="est-results"><p id="estCount" aria-live="polite"></p><button type="button" class="est-clear" id="estLimpar">Limpar filtros</button></div>
+      <div class="est-table-wrap"><table class="est-table" aria-label="Saldos e prioridades dos produtos"><thead><tr><th scope="col">Produto</th><th scope="col">Saldo</th><th scope="col">Cobertura / ABC</th><th scope="col">Situação</th><th scope="col">Valor em estoque</th><th scope="col"><span class="sr-only">Ação</span></th></tr></thead><tbody id="estRows"></tbody></table></div>
+      <div class="est-pages"><span id="estRange"></span><div class="est-page-actions"><button type="button" class="est-btn" id="estPrev">${ic('chev')} Anterior</button><span id="estPage"></span><button type="button" class="est-btn" id="estNext">Próxima ${ic('chev')}</button></div></div>
+    </section>
+    <p class="est-note">Valores calculados ao custo cadastrado. O saldo do site não substitui a contagem física. Tabaco bolado aparece nos saldos, sem projeção de giro.</p>`;
+  $('#estExport').disabled = false;
   let filtradas=[];
   const desenha=()=>{
     const q=normalizaNomeBusca(estoqueUI.busca), fn=filtros.find(f=>f[0]===estoqueUI.filtro)?.[2]||(()=>true);
@@ -4172,9 +4204,17 @@ async function renderEstoque(){
     const rank={zerado:0,critico:1,atencao:2,'sem-vendas':3,excesso:4,regular:5};
     filtradas.sort((a,b)=>estoqueUI.ordem==='nome'?a.p.name.localeCompare(b.p.name,'pt-BR'):estoqueUI.ordem==='saldo'?a.est-b.est:estoqueUI.ordem==='valor'?b.est*(Number(b.p.cost_price)||0)-a.est*(Number(a.p.cost_price)||0):rank[a.st]-rank[b.st]||a.p.name.localeCompare(b.p.name,'pt-BR'));
     const paginas=Math.max(1,Math.ceil(filtradas.length/40));estoqueUI.pagina=Math.min(paginas,estoqueUI.pagina);
-    $('#estCount').textContent=`${filtradas.length} produtos encontrados · ${produtos.length} cadastros carregados${produtos.length===5000?' · limite atingido; refine a consulta':''}. Tabaco bolado aparece no saldo, sem projeção de giro.`;
-    const nomes={zerado:'Sem estoque',critico:'Repor: até 7 dias',atencao:'Planejar reposição','sem-vendas':'Conferir histórico',excesso:'Revisar excesso',regular:'Cobertura regular'};
-    $('#estRows').innerHTML=filtradas.slice((estoqueUI.pagina-1)*40,estoqueUI.pagina*40).map(g=>`<tr><td><b>${esc(g.p.name)}</b><small>${esc(g.p.sku||'Sem código Nex')} · ${esc(cats.get(g.p.category_id)||'Sem categoria')}</small><small>${g.manual?'Controle manual':'Controle pelo Nex'}${!g.p.is_active?' · Inativo':''}</small></td><td data-label="Saldo"><strong>${g.est}</strong><small>unidades</small></td><td data-label="Cobertura / ABC">${periodo?esc(fmtCob(g)):'Indisponível'}<small>${periodo&&g.abc?'Curva '+g.abc:'Sem classificação'}</small></td><td data-label="Situação"><span class="est-status ${g.st}">${periodo||g.est<=0?nomes[g.st]:'Sem histórico'}</span>${g.semCusto&&g.est>0?'<small>Custo pendente</small>':''}</td><td data-label="Valor ao custo">${g.semCusto?'Não informado':brlM(g.est*Number(g.p.cost_price))}</td><td data-label="Ação"><button class="btn-ghost btn-sm" data-est-abrir="${esc(g.p.id)}">Conferir / ajustar</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhum produto com esses filtros. Limpe os filtros para ampliar a busca.</td></tr>';
+    $('#estCount').textContent=`${filtradas.length} produto${filtradas.length===1?'':'s'} · ${produtos.length} cadastros${produtos.length===5000?' · limite de consulta atingido':''}`;
+    $('#estRange').textContent=filtradas.length ? `Exibindo ${(estoqueUI.pagina-1)*40+1}–${Math.min(estoqueUI.pagina*40,filtradas.length)} de ${filtradas.length}` : 'Nenhum resultado';
+    const nomes={zerado:'Sem estoque',critico:'Repor agora',atencao:'Planejar compra','sem-vendas':'Conferir histórico',excesso:'Revisar excesso',regular:'Regular'};
+    $('#estRows').innerHTML=filtradas.slice((estoqueUI.pagina-1)*40,estoqueUI.pagina*40).map(g=>`<tr>
+      <td><div class="est-product"><span class="est-product-icon" aria-hidden="true">${ic('pkg')}</span><div class="est-product-copy"><b class="est-product-name">${esc(g.p.name)}</b><div class="est-product-meta"><code>${esc(g.p.sku||'Sem código')}</code><span>${esc(cats.get(g.p.category_id)||'Sem categoria')}</span><span class="est-origin">${g.manual?'Manual':'Nex'}${!g.p.is_active?' · Inativo':''}</span></div></div></div></td>
+      <td data-label="Saldo"><div class="est-stock${g.est<=0?' is-zero':''}"><strong>${g.est}</strong><small>${g.est===1?'unidade':'unidades'}</small></div></td>
+      <td data-label="Cobertura / ABC"><span class="est-cover">${periodo?esc(fmtCob(g)):'Indisponível'}</span><small>${periodo&&g.abc?`<span class="est-abc est-abc-${g.abc}">${g.abc}</span> Curva ${g.abc}`:'Sem classificação'}</small></td>
+      <td data-label="Situação"><span class="est-status ${g.st}">${periodo||g.est<=0?nomes[g.st]:'Sem histórico'}</span>${g.semCusto&&g.est>0?'<small>Custo pendente</small>':''}</td>
+      <td data-label="Valor ao custo" class="est-value">${g.semCusto?'<span class="est-missing">Sem custo</span>':brlM(g.est*Number(g.p.cost_price))}</td>
+      <td data-label="Ação" class="est-action"><button type="button" class="est-row-action" data-est-abrir="${esc(g.p.id)}" aria-label="Conferir / ajustar ${esc(g.p.name)}">Conferir ${ic('chev')}</button></td>
+    </tr>`).join('')||'<tr><td colspan="6" class="empty">Nenhum produto encontrado.<br>Limpe os filtros ou tente outro nome, código Nex ou EAN.</td></tr>';
     $('#estPage').textContent=`Página ${estoqueUI.pagina} de ${paginas}`;$('#estPrev').disabled=estoqueUI.pagina<=1;$('#estNext').disabled=estoqueUI.pagina>=paginas;
     document.querySelectorAll('[data-est-filtro], [data-est-kpi]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.estFiltro||b.dataset.estKpi)===estoqueUI.filtro)));
     $('#estRows').querySelectorAll('[data-est-abrir]').forEach(b=>b.onclick=()=>openProduct(b.dataset.estAbrir));
