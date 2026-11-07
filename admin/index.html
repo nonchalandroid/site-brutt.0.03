@@ -3591,6 +3591,19 @@ async function confirmarBestsellers(candidatos, tbody, fileName){
    quanto comprar para 30 dias e curva ABC pelo faturamento (A = 80% do faturamento, B = até 95%, C = o resto).
    "Gira" = vendeu pelo menos ~1 por mês no período (senão um item parado com estoque 0 viraria "repor já").
    Tabaco bolado fica fora; o Crazy Dogs também vira bolado, então ele sai mais rápido do que mostra aqui. */
+// Transparência: saldo atual e vendas históricas têm datas e coberturas diferentes.
+function estoqueQualidadeHTML(periodo, prods){
+  const hoje = new Intl.DateTimeFormat("en-CA", {timeZone:"America/Sao_Paulo", year:"numeric", month:"2-digit", day:"2-digit"}).format(new Date());
+  const dias = Math.max(0, Math.floor((Date.parse(hoje + "T12:00:00Z") - Date.parse(periodo.fim + "T12:00:00Z")) / 864e5));
+  const semCusto = prods.filter(p => Number(p.stock) > 0 && !(Number(p.cost_price) > 0)).length;
+  return `<div class="nx-box" role="status" style="margin:12px 0;padding:14px;border-left:4px solid var(--gold)">
+    <b>Qualidade dos dados para decidir a compra</b>
+    <p>${Number.isFinite(dias) ? `O histórico termina há <b>${dias} dia(s)</b>.` : "A data do histórico precisa ser conferida."} O saldo é atual; a cobertura e a curva ABC usam as vendas desse período.</p>
+    ${dias > 7 ? '<p><b>Histórico desatualizado:</b> atualize as vendas antes de fechar a compra. <a href="#/vendidos">Importar relatório de vendas</a></p>' : ""}
+    <p>${semCusto ? `<b>${semCusto} produto(s) com saldo e sem custo:</b> o valor do estoque e o orçamento de reposição estão incompletos.` : "Todos os produtos com saldo nesta análise têm custo cadastrado."}</p>
+    <small>Sem venda registrada não comprova encalhe. A curva ABC usa receita estimada pelo preço atual, não o faturamento histórico realizado.</small>
+  </div>`;
+}
 const GIRO_DIAS_COMPRA = 30;
 function calcGiro(prods, dias){
   dias = Math.max(1, Number(dias) || 1);
@@ -3612,7 +3625,7 @@ const GIRO_FILTROS = [
   ["A",      "Curva A",                "a",      "Os que fazem 80% do faturamento. Nunca podem faltar.",                         g => g.abc === "A"],
   ["B",      "Curva B",                "b",      "Os próximos 15% do faturamento.",                                              g => g.abc === "B"],
   ["C",      "Curva C",                "c",      "Os últimos 5% do faturamento: compre pouco e só quando acabar.",               g => g.abc === "C"],
-  ["parados","Encalhados",             "info",   "Têm estoque e não venderam nada no período: dinheiro parado na prateleira.",   g => g.q === 0 && g.est > 0],
+  ["parados","Sem vendas no período",             "info",   "Têm estoque e não venderam nada no período: confira o histórico antes de considerar encalhe.",   g => g.q === 0 && g.est > 0],
 ];
 let giroEstado = { filtro: "repor" };
 const fmtCob = g => g.cob == null ? "—" : g.est === 0 ? "acabou" : g.cob < 1 ? "< 1 dia" : g.cob > 365 ? "+1 ano" : `${Math.round(g.cob)} dia${Math.round(g.cob) === 1 ? "" : "s"}`;
@@ -3620,7 +3633,7 @@ const fmtRitmo = d => { const f = (v, u) => `${String(Math.round(v * 10) / 10).r
 async function renderGiro(){
   app.innerHTML = `${topbarHTML("Giro e reposição")}
     <div class="pg">
-      <div class="pg-h"><div><h2 class="pg-t">Giro e reposição</h2><p class="pg-d" id="grDesc">Quanto cada produto vende por dia, em quantos dias acaba e quanto comprar.</p></div>
+      <div class="pg-h"><div><h2 class="pg-t">Giro e reposição</h2><div class="pg-d" id="grDesc">Quanto cada produto vende por dia, em quantos dias acaba e quanto comprar.</div></div>
         <button class="btn-ghost btn-sm" data-ir-vend>${ic("up")} Importar vendas</button></div>
       <div class="gr-res" id="grRes"></div>
       <div class="cf-grade gr-grade" id="grGrade"><div class="loading">Calculando o giro…</div></div>
@@ -3636,12 +3649,12 @@ async function renderGiro(){
   if(pr.error){ $("#grGrade").innerHTML = `<div class="empty">Não deu para ler os produtos: ${esc(pr.error.message)}</div>`; return; }
   if(!per.data){ $("#grGrade").innerHTML = `<div class="empty">Ainda não há relatório de vendas com período. Importe em <a href="#/vendidos">Mais vendidos</a>.</div>`; return; }
   const P = per.data, G = calcGiro(pr.data || [], P.dias);
-  $("#grDesc").innerHTML = `Vendas de <b>${esc(dataBR(P.inicio))}</b> a <b>${esc(dataBR(P.fim))}</b> (${esc(P.dias)} dias), produtos ativos. Sugestão de compra = o que falta para ${GIRO_DIAS_COMPRA} dias de venda. Tabaco bolado fica fora: lembre que o Crazy Dogs também vira bolado (compre um pouco mais).`;
+  $("#grDesc").innerHTML = estoqueQualidadeHTML(P, pr.data || []) + `Vendas de <b>${esc(dataBR(P.inicio))}</b> a <b>${esc(dataBR(P.fim))}</b> (${esc(P.dias)} dias), produtos ativos. Sugestão de compra = o que falta para ${GIRO_DIAS_COMPRA} dias de venda. Tabaco bolado fica fora: lembre que o Crazy Dogs também vira bolado (compre um pouco mais).`;
   const parado = G.lista.reduce((t, g) => t + g.parado, 0), emEst = G.lista.reduce((t, g) => t + g.est * (Number(g.p.cost_price) || 0), 0);
   const nRepor = G.lista.filter(GIRO_FILTROS[0][4]).length;
-  $("#grRes").innerHTML = `<div><small>Vendido no período (produtos do site)</small><b>${brl0(G.total)}</b><i>${brl0(G.total / G.dias * 30)} a cada 30 dias</i></div>
+  $("#grRes").innerHTML = `<div><small>Receita estimada no período</small><b>${brl0(G.total)}</b><i>${brl0(G.total / G.dias * 30)} a cada 30 dias</i></div>
     <div><small>Dinheiro em estoque (pelo custo)</small><b>${brl0(emEst)}</b><i>dos produtos com custo cadastrado</i></div>
-    <div class="${parado ? "warn" : ""}"><small>Parado em encalhados</small><b>${brl0(parado)}</b><i>com estoque e sem venda no período</i></div>
+    <div class="${parado ? "warn" : ""}"><small>Saldo sem vendas no período</small><b>${brl0(parado)}</b><i>com estoque e sem venda no período</i></div>
     <div class="${nRepor ? "bad" : ""}"><small>Para repor já</small><b>${nRepor}</b><i>acabam em até 7 dias</i></div>`;
   const grupos = GIRO_FILTROS.map(([id, rot, sev, dica, fn]) => ({ id, rot, sev, dica, itens: G.lista.filter(fn) }));
   const ordena = (id, l) => id === "parados" ? l.sort((a, b) => b.parado - a.parado || b.est - a.est)
@@ -4177,28 +4190,32 @@ async function renderNex(){
   if(error){ $("#nxBody").innerHTML = `<div class="empty">Erro ao carregar: ${esc(error.message)}</div>`; return; }
   if(!data || !data.length){ $("#nxBody").innerHTML = `<div class="empty">Nenhuma sincronização feita ainda. Toque em “Sincronizar agora”.</div>`; return; }
   const u = data[0], d = u.detalhe || {}, res = d.resumo || {};
+  const pendente = (res.sem_par_site ?? u.sem_par_site ?? 0) > 0 || (d.conflitos || []).length > 0 || (d.suspeitos || []).length > 0 || (d.avisos || []).length > 0 || !!res.zeragem_suspensa;
+  const atrasada = u.modo !== "teste" && Date.now() - Date.parse(u.ran_at) > 30 * 60000;
+  const situacao = !u.ok ? "Falha na sincronização" : u.modo === "teste" ? "Simulação — nenhum saldo alterado" : atrasada ? "Sincronização atrasada — confira os saldos" : pendente ? "Executada com pendências de conferência" : "Sincronização concluída";
   const lista = (arr, vazio) => (arr && arr.length) ? `<ul class="nx-list">${arr.map(x => `<li>${esc(typeof x === "string" ? x : (x.nex ? x.nex + (x.motivo ? " — " + x.motivo : "") + (x.site ? " ⇄ " + x.site + " ("+brl(x.preco_site)+" × "+brl(x.preco_nex)+")" : "") : JSON.stringify(x)))}</li>`).join("")}</ul>` : `<p style="color:var(--muted);font-size:13px;margin:8px 0 0">${vazio}</p>`;
   const kpi = (n, t) => `<div class="nx-kpi"><b>${n ?? "—"}</b><span>${t}</span></div>`;
   $("#nxBody").innerHTML = `
-    <div class="stcard ${u.ok?"":"bad"}" style="cursor:default;margin-top:12px">
+    <div class="stcard ${u.ok && !pendente && !atrasada?"":"bad"}" style="cursor:default;margin-top:12px">
       <div class="k">Última rodada · ${esc(u.origem)} · ${u.modo==="teste"?"simulação":"gravou"}</div>
-      <div class="v"><span class="dot ${u.ok?"ok":"bad"}"></span>${u.ok ? "Tudo certo" : "Não gravou"} — ${haQuanto(u.ran_at)} (${fmtQuando(u.ran_at)})</div>
+      <div class="v"><span class="dot ${u.ok && !pendente && !atrasada?"ok":"bad"}"></span>${situacao} — ${haQuanto(u.ran_at)} (${fmtQuando(u.ran_at)})</div>
       ${u.erro ? `<div class="d" style="color:var(--red)">${esc(u.erro)}</div>` : ""}
       ${(d.avisos||[]).length ? `<div class="d" style="color:var(--red)">${d.avisos.map(esc).join(" · ")}</div>` : ""}
     </div>
+    ${res.zeragem_suspensa ? `<p class="nx-box" role="status">A ausência na lista do Nex não comprova estoque zero. Itens sem correspondência exigem conferência; a lista completa ainda não foi comprovada.</p>` : ""}
     <div class="nx-kpis">
       ${kpi(u.nex_total, "produtos no Nex")}
-      ${kpi(u.casados, `ligados (${u.por_ean ?? 0} por EAN, ${u.por_nome ?? 0} por nome)`)}
+      ${kpi(u.casados, `ligados (${res.por_codigo ?? 0} por código Nex, ${u.por_ean ?? 0} por EAN, ${u.por_nome ?? 0} por nome)`)}
       ${kpi(u.modo==="teste" ? res.mudariam : u.estoque_alterado, u.modo==="teste" ? "mudariam" : "estoques alterados")}
       ${kpi(u.modo==="teste" ? "—" : u.preco_alterado, "preços alterados")}
       ${kpi(u.sem_par_nex, "do Nex sem par no site")}
       ${kpi(u.sem_par_site, "do site sem par no Nex")}
     </div>
     <h3 class="nx-sub">Conferir (o que ficou de fora)</h3>
-    <p style="color:var(--muted);font-size:12px;margin:0">Esses itens <b>não são alterados</b> pela sincronização. Quase sempre é só o código de barras (EAN) faltando ou diferente no cadastro do produto.</p>
+    <p style="color:var(--muted);font-size:12px;margin:0">Esses itens <b>não são alterados</b> pela sincronização. Confira primeiro o código Nex (SKU); depois o EAN e os nomes. Itens sem associação não têm saldo confirmado nesta rodada.</p>
     <details class="nx-box"><summary>No Nex, sem produto no site (${u.sem_par_nex ?? 0})</summary>${lista(d.sem_par_nex, "Nenhum.")}</details>
     <details class="nx-box"><summary>No site, sem produto no Nex (${u.sem_par_site ?? 0})</summary>${lista(d.sem_par_site_ativos, "Nenhum.")}</details>
-    <details class="nx-box"><summary>EAN repetido / ambíguo (${(d.conflitos||[]).length})</summary>${lista(d.conflitos, "Nenhum.")}<p style="color:var(--muted);font-size:12px">Corrija o EAN no cadastro do produto para o sistema saber qual é qual.</p></details>
+    <details class="nx-box"><summary>Código Nex ou EAN ambíguo (${(d.conflitos||[]).length})</summary>${lista(d.conflitos, "Nenhum.")}<p style="color:var(--muted);font-size:12px">Confira o código Nex e o EAN nos dois cadastros. Não altere um código apenas para forçar a associação.</p></details>
     <details class="nx-box"><summary>Preço muito diferente — travado por segurança (${(d.suspeitos||[]).length})</summary>${lista(d.suspeitos, "Nenhum.")}</details>
     <details class="nx-box"><summary>Ligados por nome aproximado — confira se estão certos (${(d.nome_aproximado||[]).length})</summary>${lista(d.nome_aproximado, "Nenhum.")}</details>
     <h3 class="nx-sub" style="margin-bottom:10px">Últimas rodadas</h3>
@@ -4945,7 +4962,7 @@ const COMPRAS_PADRAO = { lead: 3, seg: 2, fds: 60, lote: 10, cobertura: 30 };
 let comprasEstado = { aba: "rop", filtro: "comprar", busca: "", dia: null, desc: 15, modelo: "mix", par: 0, livreA: null, livreB: null };
 function janelaCompra(dia, fixos){
   if(dia <= 10) return { cls: "vermelho", ic: "🛡️", t: "Janela de proteção de caixa ativa", s: `Foco total no pagamento dos custos fixos (${brl0(fixos)}). Não faça compras volumosas de estoque: só reponha o que acabou e é curva A.` };
-  if(dia <= 20) return { cls: "verde", ic: "✅", t: "Janela principal de compras liberada", s: "Custos fixos honrados. Reponha as curvas A e B em caixas fechadas, pedindo prazo de pagamento para os dias 10 a 15 do mês que vem." };
+  if(dia <= 20) return { cls: "verde", ic: "✅", t: "Janela principal de compras liberada", s: "Confira o pagamento dos custos fixos antes de comprar. Pela regra de calendário, reponha as curvas A e B em caixas fechadas, pedindo prazo de pagamento para os dias 10 a 15 do mês que vem." };
   return { cls: "amarelo", ic: "⚠️", t: "Janela complementar", s: "Compras só de emergência: itens da curva A que chegaram no ponto de pedido. O resto espera o dia 11." };
 }
 /* ROP de um produto (g = linha do calcGiro), cfg = ajustes, dow = dia da semana de hoje (0 = domingo) */
@@ -5103,7 +5120,7 @@ function desenhaCombos(cont, linhas, catSlug, catPai, redesenha){
 async function renderCompras(){
   app.innerHTML = `${topbarHTML("Compras e ponto de pedido")}
     <div class="pg">
-      <div class="pg-h"><div><h2 class="pg-t">Compras e ponto de pedido</h2><p class="pg-d" id="cpDesc">Quando comprar, o que comprar e quanto, em caixas fechadas, sem apertar o caixa dos custos fixos.</p></div></div>
+      <div class="pg-h"><div><h2 class="pg-t">Compras e ponto de pedido</h2><div class="pg-d" id="cpDesc">Quando comprar, o que comprar e quanto, em caixas fechadas, sem apertar o caixa dos custos fixos.</div></div></div>
       <div class="rop" id="rop"><div class="rop-load">Calculando…</div></div>
     </div>`;
   bindTopbar();
@@ -5125,7 +5142,7 @@ async function renderCompras(){
   const catNome = new Map((cats.data || []).map(c => [c.id, c.name]));
   const catById = new Map((cats.data || []).map(c => [c.id, c])), catSlug = id => (catById.get(id) || {}).slug || "", catPai = id => { const c = catById.get(id); return c && c.parent_id ? (catById.get(c.parent_id) || {}).slug || "" : (c || {}).slug || ""; };
   const P = per.data, G = calcGiro(pr.data || [], P.dias);
-  $("#cpDesc").innerHTML = `Vendas de <b>${esc(dataBR(P.inicio))}</b> a <b>${esc(dataBR(P.fim))}</b> (${esc(P.dias)} dias), as mesmas do <a href="#/giro">Giro e reposição</a>. Quando comprar, o que comprar e quanto, em caixas fechadas.`;
+  $("#cpDesc").innerHTML = estoqueQualidadeHTML(P, pr.data || []) + `Vendas de <b>${esc(dataBR(P.inicio))}</b> a <b>${esc(dataBR(P.fim))}</b> (${esc(P.dias)} dias), as mesmas do <a href="#/giro">Giro e reposição</a>. Quando comprar, o que comprar e quanto, em caixas fechadas.`;
   const SP = spAgora(), D = new Date(SP.ano, SP.mes + 1, 0).getDate();
   if(!comprasEstado.dia || comprasEstado.dia > D) comprasEstado.dia = SP.dia;
   const salvar = async () => {
