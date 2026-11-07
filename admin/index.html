@@ -8,7 +8,11 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: data:; connect-src 'self' https://vedlxtljilsanykmddtj.supabase.co wss://vedlxtljilsanykmddtj.supabase.co; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="no-referrer">
 <!-- anti-clickjacking: o GitHub Pages não manda X-Frame-Options; se o painel for aberto dentro de um iframe de outro site, ele não aparece -->
-<style id="antiFrame">html{display:none!important}</style>
+<style id="antiFrame">html{display:none!important}
+/* Central de estoque */
+.est-nav,.est-filters,.est-toolbar,.est-pages{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.est-nav{margin:18px 0}.est-nav a{padding:10px 14px;border:1px solid var(--line,#ddd);border-radius:10px;color:inherit;text-decoration:none}.est-nav [aria-current],.est-filters [aria-pressed=true]{background:#69410c;color:#fff8ed}.est-health{display:flex;justify-content:space-between;gap:16px;padding:18px;border:1px solid var(--gold);border-radius:14px;margin:16px 0}.est-health p{margin:6px 0}.est-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.est-kpis button{padding:20px;text-align:left;border:1px solid var(--line,#ddd);border-radius:14px;background:var(--card,#fff);color:inherit;cursor:pointer}.est-kpis span,.est-kpis small,.est-kpis strong{display:block}.est-kpis strong{font-size:32px;margin:8px 0}.est-kpis small{line-height:1.4}.est-work{border:1px solid var(--line,#ddd);border-radius:14px;padding:18px}.est-toolbar{align-items:end}.est-toolbar label{display:grid;gap:6px;font-size:12px;flex:1;min-width:135px}.est-toolbar label:first-child{flex:2}.est-toolbar input,.est-toolbar select{width:100%;padding:11px;border-radius:8px;border:1px solid var(--line,#bbb);background:var(--card,#fff);color:inherit}.est-filters{margin:18px 0}.est-filters button{padding:9px 12px;border:1px solid var(--line,#bbb);border-radius:20px;background:transparent;color:inherit;cursor:pointer}.est-table-wrap{overflow-x:auto}.est-table{border-collapse:collapse;width:100%;font-size:13px}.est-table th,.est-table td{text-align:left;padding:15px 10px;border-bottom:1px solid var(--line,#ddd);vertical-align:middle}.est-table th{font-size:11px;text-transform:uppercase;letter-spacing:.04em}.est-table td:first-child{min-width:210px}.est-table small{display:block;color:var(--muted);margin-top:5px}.est-status{display:inline-block;padding:5px 8px;border-radius:6px;background:#e8eee9;color:#234733}.est-status.zerado,.est-status.critico{background:#fde8e5;color:#8c2424}.est-status.atencao,.est-status.sem-vendas,.est-status.excesso{background:#fff0d5;color:#704500}.est-pages{justify-content:flex-end;margin-top:18px}.stock-center button:focus-visible,.stock-center a:focus-visible{outline:3px solid var(--gold);outline-offset:3px}@media(max-width:700px){.est-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.est-health{display:block}.est-health a{display:inline-block;margin-top:10px}.est-work{padding:12px}.est-toolbar label{min-width:42%}.est-nav a{font-size:12px}.est-kpis button{padding:14px}}
+@media(max-width:700px){.est-table thead{display:none}.est-table,.est-table tbody,.est-table tr,.est-table td{display:block;width:100%}.est-table tr{border:1px solid var(--line,#ddd);border-radius:12px;margin:12px 0;padding:10px}.est-table td{border:0;padding:8px;min-width:0!important}.est-table td[data-label]:before{content:attr(data-label);display:block;font-size:11px;color:var(--muted);margin-bottom:4px}.est-table td[data-label]{display:inline-block;width:48%;vertical-align:top}.est-table td:last-child{width:100%}.est-table td:last-child button{width:100%}.est-table-wrap{overflow:visible}}
+</style>
 <script>if(self===top){document.getElementById("antiFrame").remove()}else{top.location=self.location}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2799,13 +2803,13 @@ async function openProduct(id){
       <p class="mv-info">O Nex manda no estoque: a sincronização iguala o site ao Nex a cada 15 min. Aqui só dá para <b>ajustar</b>, colocando a mesma quantidade que está no Nex.</p>
       <div class="grid2">
         <input type="number" min="0" step="1" inputmode="numeric" id="mvQty" placeholder="Quantidade no Nex">
-        <input type="text" id="mvNote" placeholder="Observação (opcional)">
+        <input type="text" id="mvNote" placeholder="Motivo do ajuste (obrigatório)">
       </div>
       <div class="save-row"><button class="btn-gold" id="mvBtn">Ajustar</button></div>
       <div class="hist" id="histBox">
         ${(hist && hist.length) ? hist.map(h => `
           <div class="hist-row">
-            <span>${esc(h.type)} · ${esc(h.quantity)} <span class="t">(${esc(h.stock_before)}→${esc(h.stock_after)})</span></span>
+            <span>${esc(h.type)} · ${esc(h.quantity)} <span class="t">(${esc(h.stock_before)}→${esc(h.stock_after)})</span>${h.note ? `<small style="display:block">${esc(h.note)}</small>` : ""}</span>
             <span class="t">${new Date(h.created_at).toLocaleDateString('pt-BR')}</span>
           </div>`).join("") : '<div class="t" style="padding:8px 0">Sem movimentações registradas ainda.</div>'}
       </div>
@@ -2923,13 +2927,16 @@ async function saveProduct(id){
 
 async function registerMovement(productId){
   const qty = parseInt($("#mvQty").value, 10);
-  if(!Number.isFinite(qty) || qty < 0){ toast("Informe a quantidade que está no Nex (0 ou mais)."); return; }
-  const note = $("#mvNote").value.trim() || null;
+  if(!/^\d+$/.test($("#mvQty").value.trim()) || !Number.isSafeInteger(qty) || qty < 0){ toast("Informe a quantidade que está no Nex (0 ou mais)."); return; }
+  const note = $("#mvNote").value.trim();
+  if(!note){ toast("Informe o motivo do ajuste para manter o histórico."); $("#mvNote").focus(); return; }
+  if(!confirm(`Confirmar ajuste: ${state.current?.stock ?? "—"} → ${qty} unidades?\nMotivo: ${note}\nO Nex continuará sendo a origem do saldo dos produtos integrados.`)) return;
+  const btn = $("#mvBtn"); if(btn.disabled) return; btn.disabled = true;
   const { error } = await sb.rpc("registrar_movimento_estoque", {
     p_product_id: productId, p_type: "ajuste", p_quantity: qty, p_note: note
   });
-  if(error){ toast("Erro: " + error.message); return; }
-  toast("Estoque ajustado.");
+  if(error){ btn.disabled = false; toast("Erro: " + error.message); return; }
+  toast("Estoque ajustado e registrado no histórico.");
   openProduct(productId);
 }
 
@@ -3649,7 +3656,7 @@ async function renderGiro(){
   if(pr.error){ $("#grGrade").innerHTML = `<div class="empty">Não deu para ler os produtos: ${esc(pr.error.message)}</div>`; return; }
   if(!per.data){ $("#grGrade").innerHTML = `<div class="empty">Ainda não há relatório de vendas com período. Importe em <a href="#/vendidos">Mais vendidos</a>.</div>`; return; }
   const P = per.data, G = calcGiro(pr.data || [], P.dias);
-  $("#grDesc").innerHTML = estoqueQualidadeHTML(P, pr.data || []) + `Vendas de <b>${esc(dataBR(P.inicio))}</b> a <b>${esc(dataBR(P.fim))}</b> (${esc(P.dias)} dias), produtos ativos. Sugestão de compra = o que falta para ${GIRO_DIAS_COMPRA} dias de venda. Tabaco bolado fica fora: lembre que o Crazy Dogs também vira bolado (compre um pouco mais).`;
+  $("#grDesc").innerHTML = estoqueQualidadeHTML(P, pr.data || []) + `Vendas de <b>${esc(dataBR(P.inicio))}</b> a <b>${esc(dataBR(P.fim))}</b> (${esc(P.dias)} dias), produtos ativos. A quantidade de compra é calculada em Reposição, considerando prazo, segurança e lote. Tabaco bolado fica fora: lembre que o Crazy Dogs também vira bolado (compre um pouco mais).`;
   const parado = G.lista.reduce((t, g) => t + g.parado, 0), emEst = G.lista.reduce((t, g) => t + g.est * (Number(g.p.cost_price) || 0), 0);
   const nRepor = G.lista.filter(GIRO_FILTROS[0][4]).length;
   $("#grRes").innerHTML = `<div><small>Receita estimada no período</small><b>${brl0(G.total)}</b><i>${brl0(G.total / G.dias * 30)} a cada 30 dias</i></div>
@@ -3667,7 +3674,7 @@ async function renderGiro(){
     const l = ordena(id, g.itens.slice());
     $("#grLista").innerHTML = l.length ? l.slice(0, 400).map(x => `<div class="cf-row gr-row"><div class="cf-nm"><b>${x.abc ? `<em class="abc abc-${x.abc}">${x.abc}</em>` : ""}${esc(x.p.name)}</b>
         <small>${x.q} vendido${x.q === 1 ? "" : "s"} no período${x.fat ? " · " + brl0(x.fat) : ""}${x.parado ? " · parado " + brl0(x.parado) : ""}</small></div>
-        <div class="cf-nums"><span><i>Vende</i>${fmtRitmo(x.porDia)}</span><span><i>Estoque</i>${x.est}</span><span><i>Acaba em</i><em class="${x.cob == null ? "" : x.cob <= 7 ? "neg" : x.cob <= 14 ? "baixa" : "ok"}">${fmtCob(x)}</em></span><span><i>Comprar</i><em class="${x.compra ? "cp" : ""}">${x.compra ? x.compra + " un" : "—"}</em></span></div>
+        <div class="cf-nums"><span><i>Vende</i>${fmtRitmo(x.porDia)}</span><span><i>Estoque</i>${x.est}</span><span><i>Acaba em</i><em class="${x.cob == null ? "" : x.cob <= 7 ? "neg" : x.cob <= 14 ? "baixa" : "ok"}">${fmtCob(x)}</em></span><span><i>Comprar</i><em class="${x.compra ? "cp" : ""}"><a href="#/compras">Ver reposição</a></em></span></div>
         <button type="button" class="btn-ghost btn-sm" data-gr-abrir="${esc(x.p.id)}">Abrir</button></div>`).join("") + (l.length > 400 ? `<p class="cf-dica">Mostrando 400 de ${l.length}.</p>` : "")
       : `<div class="empty">Nada aqui. Tudo certo!</div>`;
     $("#grLista").querySelectorAll("[data-gr-abrir]").forEach(b => b.onclick = () => openProduct(b.dataset.grAbrir));
@@ -4126,6 +4133,65 @@ async function renderHorarios(){
     toast("Horário salvo");
   };
 }
+
+/* Central de estoque: saldos, cobertura e pendências, sem alterações automáticas. */
+const estoqueUI = { filtro:'todos', busca:'', categoria:'', origem:'', ordem:'prioridade', pagina:1 };
+function estoqueLinha(g){
+  const manual = String(g.p.site_product_id || '').startsWith('adm-');
+  const st = g.est <= 0 ? 'zerado' : g.porDia <= 0 ? 'sem-vendas' : g.cob <= 7 ? 'critico' : g.cob <= 14 ? 'atencao' : g.cob > 90 ? 'excesso' : 'regular';
+  return {...g, manual, st, semCusto:!(Number(g.p.cost_price)>0)};
+}
+async function renderEstoque(){
+  app.innerHTML = `${topbarHTML('Central de estoque')}<div class="pg stock-center"><div class="pg-h"><div><h2 class="pg-t">Central de estoque</h2><p class="pg-d">Confira os saldos. Priorize rupturas. Decida a reposição.</p></div><button class="btn-ghost" id="estRefresh">${ic('sync')} Atualizar</button></div>
+    <nav class="est-nav" aria-label="Ferramentas de estoque"><a href="#/estoque-baixo" aria-current="page">Saldos e prioridades</a><a href="#/compras">Reposição</a><a href="#/giro">Curva ABC e giro</a><a href="#/nex">Integração e histórico</a><a href="#/vendidos">Atualizar vendas</a></nav><div id="estBody" class="loading">Carregando saldos e qualidade dos dados…</div></div>`;
+  bindTopbar(); $('#estRefresh').onclick = renderEstoque;
+  const [pr,per,sync] = await Promise.all([
+    sb.from('products').select('id,site_product_id,sku,ean,name,brand,category_id,stock,price,promo_price,cost_price,sales_count,is_active').order('name').limit(5000),
+    sb.from('vendas_periodo').select('inicio,fim,dias').eq('id',1).maybeSingle(),
+    sb.from('nex_sync_log').select('ran_at,ok,modo,erro,detalhe').eq('modo','real').order('id',{ascending:false}).limit(1)
+  ]);
+  if(rotaAtual() !== 'estoque-baixo') return;
+  if(pr.error){$('#estBody').innerHTML='<div class="empty">Não foi possível carregar os saldos. Atualize a tela para tentar novamente.</div>';return;}
+  const produtos=pr.data||[], periodo=per.data, G=calcGiro(produtos,periodo?.dias || 1), linhas=G.lista.map(g=>estoqueLinha(periodo?g:{...g,q:0,porDia:0,cob:null,abc:null}));
+  for(const p of produtos.filter(p=>ehBolado(p.name))){linhas.push(estoqueLinha({p,q:0,est:Number(p.stock)||0,porDia:0,cob:null,abc:null}));}
+  const ultimo=sync.data?.[0], resumo=ultimo?.detalhe?.resumo || {};
+  const problemas=sync.error || !ultimo || !ultimo.ok || Date.now()-Date.parse(ultimo.ran_at)>30*60000 || Number(resumo.sem_par_site)>0 || Number(resumo.conflitos)>0;
+  const status=sync.error?'Não foi possível consultar a integração':!ultimo?'Nenhuma execução disponível':!ultimo.ok?'Integração com falha':Date.now()-Date.parse(ultimo.ran_at)>30*60000?'Integração atrasada':problemas?'Integração com pendências':'Última execução concluída';
+  const filtros=[['todos','Todos',()=>true],['zerado','Sem estoque',g=>g.p.is_active&&g.est<=0],['critico','Até 7 dias',g=>g.p.is_active&&g.est>0&&g.porDia>0&&g.cob<=7],['atencao','8–14 dias',g=>g.p.is_active&&g.cob>7&&g.cob<=14],['sem-vendas','Sem vendas',g=>g.p.is_active&&g.est>0&&g.q===0],['excesso','Mais de 90 dias',g=>g.p.is_active&&g.cob>90],['sem-custo','Sem custo',g=>g.p.is_active&&g.est>0&&g.semCusto],['inativo','Inativos',g=>!g.p.is_active]];
+  const cats=new Map((state.categories||[]).map(c=>[c.id,c.name]));
+  $('#estBody').className='';
+  $('#estBody').innerHTML=`<section class="est-health" role="status"><div><b>${esc(status)}</b><p>${ultimo?`Última execução: ${esc(fmtQuando(ultimo.ran_at))}. `:''}${Number(resumo.sem_par_site)||0} itens sem associação; ${Number(resumo.conflitos)||0} conflitos. O saldo exibido é o do site; não equivale a uma contagem física.</p></div><a href="#/nex">Conferir integração →</a></section>
+    ${periodo?estoqueQualidadeHTML(periodo,produtos):'<div class="est-health">Sem relatório de vendas. Cobertura e ABC indisponíveis. <a href="#/vendidos">Importar vendas</a></div>'}
+    <div class="est-kpis">${filtros.slice(1,5).map(([id,nome,fn])=>`<button type="button" data-est-kpi="${id}"><span>${nome}</span><strong>${linhas.filter(fn).length}</strong><small>${id==='zerado'?'ativos, indisponíveis no site':id==='sem-vendas'?'conferir antes de considerar encalhe':'cobertura estimada pelo histórico'}</small></button>`).join('')}</div>
+    <section class="est-work"><div class="est-toolbar"><label>Buscar<input id="estBusca" type="search" placeholder="Nome, código Nex ou EAN" value="${esc(estoqueUI.busca)}"></label><label>Categoria<select id="estCategoria"><option value="">Todas</option>${[...cats].map(([id,n])=>`<option value="${esc(id)}"${estoqueUI.categoria===id?' selected':''}>${esc(n)}</option>`).join('')}</select></label><label>Controle<select id="estOrigem"><option value="">Todos</option><option value="nex">Nex</option><option value="manual">Manual</option></select></label><label>Ordenar<select id="estOrdem"><option value="prioridade">Prioridade operacional</option><option value="nome">Nome</option><option value="saldo">Menor saldo</option><option value="valor">Maior valor em estoque</option></select></label><button class="btn-ghost" id="estLimpar">Limpar filtros</button><button class="btn-ghost" id="estExport">Exportar lista</button></div>
+    <div class="est-filters" role="group" aria-label="Situação do estoque">${filtros.map(([id,n,fn])=>`<button type="button" data-est-filtro="${id}">${n} <b>${linhas.filter(fn).length}</b></button>`).join('')}</div><p id="estCount" aria-live="polite"></p><div class="est-table-wrap"><table class="est-table"><thead><tr><th scope="col">Produto / código Nex</th><th scope="col">Saldo</th><th scope="col">Cobertura / ABC</th><th scope="col">Situação</th><th scope="col">Valor ao custo</th><th scope="col">Ação</th></tr></thead><tbody id="estRows"></tbody></table></div><div class="est-pages"><button class="btn-ghost" id="estPrev">Anterior</button><span id="estPage"></span><button class="btn-ghost" id="estNext">Próxima</button></div></section>`;
+  let filtradas=[];
+  const desenha=()=>{
+    const q=normalizaNomeBusca(estoqueUI.busca), fn=filtros.find(f=>f[0]===estoqueUI.filtro)?.[2]||(()=>true);
+    filtradas=linhas.filter(g=>fn(g)&&(!q||normalizaNomeBusca([g.p.name,g.p.sku,g.p.ean,g.p.brand].join(' ')).includes(q))&&(!estoqueUI.categoria||g.p.category_id===estoqueUI.categoria)&&(!estoqueUI.origem||g.manual===(estoqueUI.origem==='manual')));
+    const rank={zerado:0,critico:1,atencao:2,'sem-vendas':3,excesso:4,regular:5};
+    filtradas.sort((a,b)=>estoqueUI.ordem==='nome'?a.p.name.localeCompare(b.p.name,'pt-BR'):estoqueUI.ordem==='saldo'?a.est-b.est:estoqueUI.ordem==='valor'?b.est*(Number(b.p.cost_price)||0)-a.est*(Number(a.p.cost_price)||0):rank[a.st]-rank[b.st]||a.p.name.localeCompare(b.p.name,'pt-BR'));
+    const paginas=Math.max(1,Math.ceil(filtradas.length/40));estoqueUI.pagina=Math.min(paginas,estoqueUI.pagina);
+    $('#estCount').textContent=`${filtradas.length} produtos encontrados · ${produtos.length} cadastros carregados${produtos.length===5000?' · limite atingido; refine a consulta':''}. Tabaco bolado aparece no saldo, sem projeção de giro.`;
+    const nomes={zerado:'Sem estoque',critico:'Repor: até 7 dias',atencao:'Planejar reposição','sem-vendas':'Conferir histórico',excesso:'Revisar excesso',regular:'Cobertura regular'};
+    $('#estRows').innerHTML=filtradas.slice((estoqueUI.pagina-1)*40,estoqueUI.pagina*40).map(g=>`<tr><td><b>${esc(g.p.name)}</b><small>${esc(g.p.sku||'Sem código Nex')} · ${esc(cats.get(g.p.category_id)||'Sem categoria')}</small><small>${g.manual?'Controle manual':'Controle pelo Nex'}${!g.p.is_active?' · Inativo':''}</small></td><td data-label="Saldo"><strong>${g.est}</strong><small>unidades</small></td><td data-label="Cobertura / ABC">${periodo?esc(fmtCob(g)):'Indisponível'}<small>${periodo&&g.abc?'Curva '+g.abc:'Sem classificação'}</small></td><td data-label="Situação"><span class="est-status ${g.st}">${periodo||g.est<=0?nomes[g.st]:'Sem histórico'}</span>${g.semCusto&&g.est>0?'<small>Custo pendente</small>':''}</td><td data-label="Valor ao custo">${g.semCusto?'Não informado':brlM(g.est*Number(g.p.cost_price))}</td><td data-label="Ação"><button class="btn-ghost btn-sm" data-est-abrir="${esc(g.p.id)}">Conferir / ajustar</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhum produto com esses filtros. Limpe os filtros para ampliar a busca.</td></tr>';
+    $('#estPage').textContent=`Página ${estoqueUI.pagina} de ${paginas}`;$('#estPrev').disabled=estoqueUI.pagina<=1;$('#estNext').disabled=estoqueUI.pagina>=paginas;
+    document.querySelectorAll('[data-est-filtro], [data-est-kpi]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.estFiltro||b.dataset.estKpi)===estoqueUI.filtro)));
+    $('#estRows').querySelectorAll('[data-est-abrir]').forEach(b=>b.onclick=()=>openProduct(b.dataset.estAbrir));
+  };
+  $('#estBusca').oninput=e=>{estoqueUI.busca=e.target.value;estoqueUI.pagina=1;desenha();};
+  for(const [id,k] of [['estCategoria','categoria'],['estOrigem','origem'],['estOrdem','ordem']]){$('#'+id).value=estoqueUI[k];$('#'+id).onchange=e=>{estoqueUI[k]=e.target.value;estoqueUI.pagina=1;desenha();};}
+  document.querySelectorAll('[data-est-filtro], [data-est-kpi]').forEach(b=>b.onclick=()=>{estoqueUI.filtro=b.dataset.estFiltro||b.dataset.estKpi;estoqueUI.pagina=1;desenha();});
+  $('#estPrev').onclick=()=>{estoqueUI.pagina--;desenha();};$('#estNext').onclick=()=>{estoqueUI.pagina++;desenha();};
+  $('#estLimpar').onclick=()=>{Object.assign(estoqueUI,{filtro:'todos',busca:'',categoria:'',origem:'',ordem:'prioridade',pagina:1});$('#estBusca').value='';$('#estCategoria').value='';$('#estOrigem').value='';$('#estOrdem').value='prioridade';desenha();};
+  $('#estExport').onclick=()=>{
+    const cel=v=>'"'+String(v??'').replace(/^\s*[=+@-]/,"'$&").replaceAll('"','""')+'"';
+    const csv=[['Produto','Código Nex','EAN','Saldo','Cobertura dias','Curva','Controle','Custo unitário'],...filtradas.map(g=>[g.p.name,g.p.sku,g.p.ean,g.est,periodo?g.cob:null,periodo?g.abc:null,g.manual?'Manual':'Nex',g.p.cost_price])].map(r=>r.map(cel).join(';')).join('\r\n');
+    const url=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='estoque-filtrado.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
+  desenha();
+}
+function normalizaNomeBusca(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();}
 
 async function renderLowStock(){
   app.innerHTML = `
@@ -4954,7 +5020,7 @@ async function iaPerguntar(){
 /* ---------------- Compras e ponto de pedido (#/compras, só dono/admin) ----------------
    Venda por dia e curva ABC = as mesmas do Giro e reposição (calcGiro: relatório de vendas do Nex ÷ dias do período).
    Ponto de pedido (ROP) = venda prevista durante o prazo de entrega do fornecedor (sexta a domingo pesam mais) + estoque
-   de segurança (dias de pico). Status: COMPRAR HOJE (estoque ≤ ROP) · OK · TRAVADO (curva C, sem venda ou estoque > 3× ROP:
+   de segurança (dias de pico). Status: COMPRAR HOJE (estoque ≤ ROP) · OK · TRAVADO (sem venda registrada ou estoque > 3× ROP:
    sem sugestão de compra). Sugestão = até ROP + N dias de venda, em caixas fechadas (lote). Janela do mês: dias 1–10
    protegem o caixa (custos fixos do Financeiro), 11–20 é a janela principal, 21–31 só emergência da curva A.
    Combos: 1 puxador (curva A) + 1 encalhado, desconto de 5% a 25%, preço, custo, lucro, margem e frase para o balcão. */
@@ -4979,7 +5045,7 @@ function ropCalc(g, cfg, dow, lote = 1){
   const custo = Number(g.p.cost_price) || 0;
   let st = "ok", motivo = "";
   if(g.porDia === 0){ st = "travado"; motivo = g.est > 0 ? "sem venda no período" : "sem venda e sem estoque"; }
-  else if(g.abc === "C"){ st = "travado"; motivo = "curva C (giro lento)"; }
+
   else if(ropV > 0 && g.est > 3 * Math.max(1, ropV)){ st = "travado"; motivo = "estoque acima de 3× o ponto de pedido"; }
   else if(g.est <= ropV) st = "comprar";
   let caixas = 0, un = 0;
@@ -4990,8 +5056,8 @@ function ropCalc(g, cfg, dow, lote = 1){
 function quandoComprar(r, g, jan){
   if(r.st !== "comprar") return "";
   if(jan.cls === "verde") return "Hoje";
-  if(jan.cls === "amarelo") return g.abc === "A" ? "Hoje (emergência)" : "Dia 11";
-  return g.abc === "A" && g.est === 0 ? "Hoje (acabou)" : "Dia 11";
+  if(jan.cls === "amarelo") return g.est === 0 ? "Conferir compra emergencial" : "Revisar prazo e caixa";
+  return g.est === 0 ? "Conferir compra emergencial" : "Revisar prazo e caixa";
 }
 
 /* ---------------- Combos de desencalhe (aba da tela Compras, 28/10/2026, pedido do dono) ----------------
@@ -5171,12 +5237,12 @@ async function renderCompras(){
       const lista = (comprasEstado.filtro === "comprar" ? comprar : comprasEstado.filtro === "ok" ? ok : comprasEstado.filtro === "travado" ? trav : linhas)
         .filter(x => !q || normNome(x.g.p.name + " " + (x.g.p.brand || "")).includes(q))
         .sort((a, b) => ({ comprar: 0, ok: 1, travado: 2 })[a.r.st] - ({ comprar: 0, ok: 1, travado: 2 })[b.r.st] || b.g.fat - a.g.fat);
-      const ST = { comprar: ["🚨 COMPRAR HOJE", "comprar"], ok: ["✅ OK", "ok"], travado: ["⛔ TRAVADO", "travado"] };
+      const ST = { comprar: ["🚨 COMPRAR HOJE", "comprar"], ok: ["✅ OK", "ok"], travado: ["Conferir necessidade", "travado"] };
       cont.innerHTML = `
         <div class="rop-cards">
           <div class="rop-card rop-k comprar"><span>🚨 Comprar</span><b>${comprar.length}</b><small>${[totCx ? `${totCx} caixa${totCx === 1 ? "" : "s"}` : "", totUn ? `${totUn} un` : ""].filter(Boolean).join(" + ") || "—"} · ${brlM(totR)}</small></div>
           <div class="rop-card rop-k ok"><span>✅ Estoque confortável</span><b>${ok.length}</b><small>produtos</small></div>
-          <div class="rop-card rop-k travado"><span>⛔ Travados / encalhados</span><b>${trav.length}</b><small>${brlM(parado)} parados (custo)</small></div>
+          <div class="rop-card rop-k travado"><span>⛔ Sem reposição sugerida</span><b>${trav.length}</b><small>${brlM(parado)} parados (custo)</small></div>
         </div>
         <div class="rop-card rop-ajustes">
           <label><span>Prazo de entrega ${tip("Dias entre fazer o pedido e o fornecedor entregar.")}</span><span class="rop-in"><input type="number" min="1" max="30" step="1" id="cpLead" value="${cfg.lead}" inputmode="numeric"><i>dias</i></span></label>
@@ -5185,7 +5251,7 @@ async function renderCompras(){
           <label><span>Caixa de essência ${tip("Quantas essências vêm na caixa do fornecedor. Só vale para essências; narguilé, rosh, bebida e o resto são comprados por unidade.")}</span><span class="rop-in"><input type="number" min="1" max="200" step="1" id="cpLote" value="${cfg.lote}" inputmode="numeric"><i>un</i></span></label>
           <label><span>Comprar para ${tip("Além do ponto de pedido, quantos dias de venda a compra deve cobrir (até a próxima janela de compras).")}</span><span class="rop-in"><input type="number" min="7" max="90" step="1" id="cpCob" value="${cfg.cobertura}" inputmode="numeric"><i>dias</i></span></label>
         </div>
-        <div class="rop-filtros" role="group" aria-label="Filtrar">${chip("comprar", "🚨 Comprar hoje", comprar.length, "comprar")}${chip("ok", "✅ OK", ok.length, "ok")}${chip("travado", "⛔ Travados", trav.length, "travado")}${chip("todos", "Todos", linhas.length, "")}
+        <div class="rop-filtros" role="group" aria-label="Filtrar">${chip("comprar", "🚨 Comprar hoje", comprar.length, "comprar")}${chip("ok", "✅ OK", ok.length, "ok")}${chip("travado", "Conferir", trav.length, "travado")}${chip("todos", "Todos", linhas.length, "")}
           <input type="search" id="cpBusca" placeholder="Buscar produto ou marca" value="${esc(comprasEstado.busca || "")}" aria-label="Buscar produto"></div>
         <div class="rop-card rop-tab-box">
           <div class="rop-tabela" role="table" aria-label="Ponto de pedido por produto">
@@ -5202,9 +5268,9 @@ async function renderCompras(){
           </div>
         </div>
         <details class="rop-card rop-como"><summary>Como é calculado</summary>
-          <p><b>Venda por dia</b> = unidades vendidas no relatório ÷ dias do período (igual ao Giro e reposição). <b>Curva ABC</b> pelo faturamento: A = 80%, B = até 95%, C = o resto.</p>
+          <p><b>Venda por dia</b> = unidades vendidas no relatório ÷ dias do período (igual ao Giro e reposição). <b>Curva ABC</b> pela receita estimada ao preço atual: A = 80%, B = até 95%, C = o resto.</p>
           <p><b>Ponto de pedido (ROP)</b> = venda prevista nos próximos ${cfg.lead} dia(s) de prazo de entrega (cada dia de sexta a domingo vale ${cfg.fds}% ÷ 3 da semana; os outros, ${100 - cfg.fds}% ÷ 4) + estoque de segurança (${cfg.seg} dia(s) de venda de fim de semana).</p>
-          <p><b>🚨 Comprar hoje</b> quando o estoque ≤ ROP. <b>⛔ Travado</b> = curva C, sem venda no período ou estoque maior que 3× o ROP: a compra fica bloqueada. Sugestão = ROP + ${cfg.cobertura} dias de venda − estoque, arredondada para cima: essências em caixas de ${cfg.lote}, o resto por unidade; valor pelo custo cadastrado. Produto que vende pouco (ex.: 1 narguilé por mês) só pede compra quando o estoque chega ao ponto de pedido de verdade (para ele, zerar).</p>
+          <p><b>🚨 Comprar hoje</b> quando o estoque ≤ ROP. <b>⛔ Travado</b> = sem venda registrada no período ou estoque maior que 3× o ponto de pedido: conferir necessidade antes de comprar. A curva C não bloqueia a reposição. Sugestão = ROP + ${cfg.cobertura} dias de venda − estoque, arredondada para cima: essências em caixas de ${cfg.lote}, o resto por unidade; valor pelo custo cadastrado. Produto que vende pouco (ex.: 1 narguilé por mês) só pede compra quando o estoque chega ao ponto de pedido de verdade (para ele, zerar).</p>
           <p>Tabaco bolado fica de fora (é feito na loja com o Crazy Dogs).</p>
         </details>`;
       const mexe = (id, k, min, max) => { const el = $("#" + id); el.onchange = () => { const v = Math.round(Number(el.value)); if(!Number.isFinite(v)){ el.value = cfg[k]; return; } cfg[k] = Math.min(max, Math.max(min, v)); salvar(); desenha(); }; };
@@ -6744,7 +6810,7 @@ Object.assign(ROUTES, {
   "nex": renderNex,
   "nex-novos": renderNexNovos,
   "horarios": renderHorarios,
-  "estoque-baixo": renderLowStock,
+  "estoque-baixo": renderEstoque,
   "planilha": renderSyncScreen,
   "vendidos": renderBestsellersScreen,
   "fotos": renderFotos,

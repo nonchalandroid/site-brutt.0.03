@@ -1,0 +1,35 @@
+const {chromium}=require('playwright'),fs=require('fs'),assert=require('assert/strict');
+(async()=>{
+fs.mkdirSync('work',{recursive:true});
+const src=fs.readFileSync('admin/index.html','utf8');
+const funcs=src.slice(src.indexOf('const estoqueUI ='),src.indexOf('async function renderLowStock(){'));
+const quality=src.slice(src.indexOf('function estoqueQualidadeHTML('),src.indexOf('const GIRO_DIAS_COMPRA'));
+const giro=src.slice(src.indexOf('function calcGiro('),src.indexOf('const GIRO_FILTROS'));
+const rop=src.slice(src.indexOf('function ropCalc('),src.indexOf('function quandoComprar('));
+const styles=[...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(m=>m[1]).join('\n').replace('html{display:none!important}', '');
+const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+const page=await browser.newPage();page.setDefaultTimeout(5000);let errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.setContent(`<style>${styles}</style><main id="app" style="display:block"></main>`);
+await page.evaluate(({funcs,quality,giro,rop})=>{
+window.app=document.querySelector('#app');window.$=s=>document.querySelector(s);window.esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+window.topbarHTML=()=>'';window.bindTopbar=()=>{};window.ic=()=>'';window.rotaAtual=()=> 'estoque-baixo';window.fmtQuando=s=>s;window.brlM=n=>'R$ '+n.toFixed(2);window.ehBolado=()=>false;window.vendaDe=p=>p.price;window.fmtCob=g=>g.cob===null?'—':g.cob.toFixed(1)+' dias';window.openProduct=id=>window.opened=id;window.state={categories:[{id:'cat',name:'Narguilé'}]};window.GIRO_DIAS_COMPRA=30;
+window.mockProducts=Array.from({length:85},(_,i)=>({id:'p'+i,site_product_id:'p'+i,sku:String(i).padStart(6,'0'),name:i===0?'Narguile de Termoplástico Dourado':'Produto '+i,category_id:'cat',stock:i===0?0:2,price:100,cost_price:i===1?null:50,sales_count:30,is_active:true}));
+window.sb={from(table){const obj={select(){return obj},order(){return obj},limit(){return obj},eq(){return obj},maybeSingle(){return obj},then(ok){return Promise.resolve({data:table==='products'?mockProducts:table==='vendas_periodo'?{inicio:'2026-09-18',fim:'2026-10-17',dias:30}:[{ok:true,modo:'real',ran_at:new Date().toISOString(),detalhe:{resumo:{sem_par_site:2,conflitos:1}}}]}).then(ok)}};return obj;}};
+window.eval(quality+giro+rop+funcs+'\nwindow.renderEstoque=renderEstoque;window.ropCalc=ropCalc;');
+}, {funcs,quality,giro,rop});
+await page.evaluate(()=>renderEstoque());
+assert.equal(await page.locator('#estRows tr').count(),40);
+await page.locator('#estBusca').fill('000000');assert.equal(await page.locator('#estRows tr').count(),1);assert((await page.locator('#estRows').innerText()).includes('Dourado'));
+await page.getByRole('button',{name:'Conferir / ajustar'}).click();assert.equal(await page.evaluate(()=>window.opened),'p0');
+await page.locator('#estLimpar').click();await page.locator('#estNext').click();assert.equal(await page.locator('#estPage').innerText(),'Página 2 de 3');
+await page.locator('[data-est-filtro="sem-custo"]').click();assert.equal(await page.locator('#estRows tr').count(),1);
+assert.equal(await page.evaluate(()=>ropCalc({porDia:1,est:0,abc:'C',p:{cost_price:10}},{fds:60,lead:3,seg:2,cobertura:30},1).st),'comprar');
+await page.locator('#estLimpar').click();await page.setViewportSize({width:1440,height:1000});await page.screenshot({path:'work/estoque-desktop.png',fullPage:true});
+await page.setViewportSize({width:390,height:844});await page.screenshot({path:'work/estoque-mobile.png',fullPage:true});
+const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert.equal(overflow,false,'sem transbordamento da página no celular');
+await page.evaluate(()=>{const original=sb.from;sb.from=t=>t==='vendas_periodo'?{select(){return this},eq(){return this},maybeSingle(){return Promise.resolve({data:null})}}:original(t)});
+await page.evaluate(()=>renderEstoque());assert((await page.locator('#estBody').innerText()).includes('Sem relatório de vendas'));assert.equal(await page.locator('[data-est-kpi="critico"] strong').innerText(),'0');
+await page.evaluate(()=>{sb.from=()=>{const o={select(){return o},order(){return o},limit(){return o},eq(){return o},maybeSingle(){return o},then(ok){return Promise.resolve({data:null,error:{message:'falha simulada'}}).then(ok)}};return o;}});
+await page.evaluate(()=>renderEstoque());assert((await page.locator('#estBody').innerText()).includes('Não foi possível carregar os saldos'));
+assert.deepEqual(errors,[]);console.log('OK: renderização, busca por código, ficha, paginação, filtro de custo, reposição curva C, desktop e celular.');await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});
