@@ -255,3 +255,15 @@ ok("filtro de Catálogo Online ignora produtos não publicados");
 }
 
 console.log(`${total} testes OK`);
+
+// Regressão real: nome editado no site, sem EAN, mesmo código Nex.
+base();
+nexLista.push({ ProductCode: "000119", ProductName: "NARGUILE DE PLÁSTICO DOURADO", BarCode: null, CurrentStock: 0, SalePrice: 100 });
+prods.push({ id: "dourado", site_product_id: "p501", sku: "000119", name: "Narguile de Termoplástico Dourado", ean: null, stock: 1, price: 100, promo_price: null, is_active: true });
+await roda();
+assert.equal(itensDe("Sync Nex").find(x => x.id === "dourado")?.stock, 0);
+ok("código Nex liga nome editado sem EAN e aplica esgotado");
+prods.push({ ...prods.at(-1), id: "duplicado" }); rpcs = [];
+await roda();
+assert.equal(itensDe("Sync Nex").some(x => ["dourado", "duplicado"].includes(x.id)), false);
+ok("código duplicado não altera nenhum dos produtos");

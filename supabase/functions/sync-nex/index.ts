@@ -184,14 +184,37 @@ async function nexTodos(cfg: Record<string, string>, stockControl: boolean): Pro
 }
 
 export const LIMITE_SEM_PAR = 60;   // mais que isso sem par = algo errado na lista do Nex: trava em vez de zerar
-type Prod = { id: string; site_product_id?: string; name: string; ean: string | null; stock: number; price: number; promo_price: number | null; is_active: boolean };
-type Par = { nex: Nex; prod: Prod; metodo: "ean" | "nome" | "nome~"; score?: number };
+type Prod = { id: string; site_product_id?: string; sku?: string | null; name: string; ean: string | null; stock: number; price: number; promo_price: number | null; is_active: boolean };
+type Par = { nex: Nex; prod: Prod; metodo: "codigo" | "ean" | "nome" | "nome~"; score?: number };
 export function ligar(nex: Nex[], prods: Prod[]) {
   const pares: Par[] = [], conflitos: any[] = [], usadoP = new Map<string, number>(), usadoN = new Set<number>();
+  // Código estável tem prioridade sobre nomes editáveis. Ambiguidades não podem cair no fuzzy.
+  prods = prods.filter(p => !String(p.site_product_id ?? "").startsWith("adm-"));
+  const bloqueadoN = new Set<number>();
+  const idxCodigo = new Map<string, Prod[]>();
+  for (const p of prods) {
+    const codigos = new Set([String(p.sku ?? "").trim(), String(p.site_product_id ?? "").startsWith("nex-") ? String(p.site_product_id).slice(4) : ""].filter(Boolean));
+    for (const c of codigos) idxCodigo.set(c, [...(idxCodigo.get(c) ?? []), p]);
+  }
+  const contCodigo = new Map<string, number>();
+  nex.forEach(n => { if(n.code) contCodigo.set(n.code, (contCodigo.get(n.code) ?? 0) + 1); });
+  const contProduto = new Map<string, number>();
+  nex.forEach(n => (idxCodigo.get(n.code) ?? []).forEach(p => contProduto.set(p.id, (contProduto.get(p.id) ?? 0) + 1)));
+  nex.forEach((n, i) => {
+    const hits = idxCodigo.get(n.code) ?? [];
+    if (!hits.length) return;
+    if (hits.length !== 1 || contCodigo.get(n.code) !== 1 || contProduto.get(hits[0].id) !== 1) {
+      bloqueadoN.add(i); hits.forEach(p => usadoP.set(p.id, 99));
+      conflitos.push({ nex: n.nome, motivo: "código Nex duplicado ou ambíguo: " + n.code });
+      return;
+    }
+    pares.push({ nex: n, prod: hits[0], metodo: "codigo" }); usadoN.add(i); usadoP.set(hits[0].id, 1);
+  });
   const idxEan = new Map<string, Prod[]>();
-  prods.forEach(p => eans(p.ean).forEach(e => { const l = idxEan.get(e) ?? []; l.push(p); idxEan.set(e, l); }));
+  prods.filter(p => !usadoP.has(p.id)).forEach(p => eans(p.ean).forEach(e => { const l = idxEan.get(e) ?? []; l.push(p); idxEan.set(e, l); }));
   const cand = new Map<number, Par>();
   nex.forEach((n, i) => {
+    if (usadoN.has(i) || bloqueadoN.has(i)) return;
     const hit = new Map<string, Prod>(); n.eans.forEach(e => (idxEan.get(e) ?? []).forEach(p => hit.set(p.id, p)));
     if (hit.size === 1) cand.set(i, { nex: n, prod: [...hit.values()][0], metodo: "ean" });
     else if (hit.size > 1) conflitos.push({ nex: n.nome, motivo: "mesmo EAN em " + hit.size + " produtos do site" });
@@ -203,7 +226,7 @@ export function ligar(nex: Nex[], prods: Prod[]) {
   const exato = new Map<string, Prod[]>(); livresP.forEach(p => { const k = normaliza(p.name); const l = exato.get(k) ?? []; l.push(p); exato.set(k, l); });
   const nomeCand: Array<[number, Par]> = [];
   nex.forEach((n, i) => {
-    if (usadoN.has(i)) return;
+    if (usadoN.has(i) || bloqueadoN.has(i)) return;
     const e = exato.get(normaliza(n.nome));
     if (e && e.length === 1) { nomeCand.push([i, { nex: n, prod: e[0], metodo: "nome", score: 1 }]); return; }
     let melhor: Prod | null = null, s1 = 0, s2 = 0;
@@ -336,7 +359,7 @@ export async function handler(req: Request): Promise<Response> {
     const listaNex = await nexTodos(cfg, lista === "estoque");
     const nex = listaNex.itens;
     // F3: manuais adm-* saem ANTES da ligação. Assim não casam por EAN nem por nome e não entram em "sem par".
-    const prods: Prod[] = (await sbGet("products?select=id,site_product_id,name,ean,stock,price,promo_price,is_active&limit=5000"))
+    const prods: Prod[] = (await sbGet("products?select=id,site_product_id,sku,name,ean,stock,price,promo_price,is_active&limit=5000"))
       .filter((p: Prod) => !String(p.site_product_id ?? "").startsWith("adm-"));
     const { pares, conflitos, semParNex, semParSite } = ligar(nex, prods);
     const ultimo = (await sbGet("nex_sync_log?select=nex_total&ok=eq.true&modo=eq.real&order=id.desc&limit=1"))[0]?.nex_total ?? 0;
@@ -377,7 +400,7 @@ export async function handler(req: Request): Promise<Response> {
     const zerarSemPar = podeZerar ? semParZeravel.map(p => ({ id: p.id, stock: 0, price: null, promo: p.promo_price == null ? null : Number(p.promo_price) })) : [];
     const alertaSemPar = semParZeravel.length && motivoZeragem ? `${semParZeravel.length} produtos nex-* ativos sem par no Nex: zeragem suspensa (${motivoZeragem})` : null;
     const semEstoqueNex = pares.filter(p => p.nex.estoque === null);
-    const resumo: any = { lista, nex_total: nex.length, site_total: prods.length, casados: pares.length, por_ean: pares.filter(p => p.metodo === "ean").length, por_nome: pares.filter(p => p.metodo !== "ean").length,
+    const resumo: any = { lista, nex_total: nex.length, site_total: prods.length, casados: pares.length, por_ean: pares.filter(p => p.metodo === "ean").length, por_codigo: pares.filter(p => p.metodo === "codigo").length, por_nome: pares.filter(p => p.metodo === "nome" || p.metodo === "nome~").length,
       sem_par_nex: semParNex.length, sem_par_site: semParSite.length, conflitos: conflitos.length, suspeitos: suspeitos.length, mudariam: aplicar.length, vao_zerar: zeram.length, sem_par_zerar: semParZeravel.length, sem_par_preservados: semParPreservado.length, casados_sem_estoque_nex: semEstoqueNex.length, zeragem_suspensa: motivoZeragem };
     const amostra = {
       nome_aproximado: pares.filter(p => p.metodo === "nome~").slice(0, 40).map(p => `${p.score} | Nex: ${p.nex.nome} ⇄ Site: ${p.prod.name}`),
