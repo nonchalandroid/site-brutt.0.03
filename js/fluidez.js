@@ -26,7 +26,12 @@ function iniciaLenis(){
     else if(lenis.isStopped){lenis.start();lenis.resize()}
   }).observe(html,{attributes:true,attributeFilter:["class"]});
 }
-iniciaLenis();
+if(mouse.matches&&!reduz.matches){
+  var biblioteca=document.createElement("script");
+  biblioteca.src="/vendor/lenis.min.js?v=20261113";
+  biblioteca.onload=iniciaLenis;
+  document.head.appendChild(biblioteca);
+}
 
 /* ───────── 2. Navegação entre produtos no modal ─────────
    Desktop: ← anterior / → próximo. Celular: deslizar p/ esquerda = próximo, p/ direita = anterior.
