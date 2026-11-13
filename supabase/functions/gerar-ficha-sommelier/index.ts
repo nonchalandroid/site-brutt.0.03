@@ -10,7 +10,7 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-const MODELOS = ["gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"];
+const MODELOS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.1-flash-lite"];
 const EIXOS = ["citrico", "tropical", "doce", "mentolado"];
 const DESC_MAX = 170;   // o site corta qualquer descrição maior que isso com "…"
 const CHAVES_WHISKY = ["intro","origem","tipo","destilaria","composicao","barril","idade","abv","cor","nariz","paladar","finalizacao","perfil","sugestao","obs"];
@@ -197,25 +197,29 @@ function json(obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 }
 
-async function chamaGemini(apiKey: string, modelo: string, prompt: string, pesquisar: boolean, sistema = SISTEMA, jsonSaida = true) {
+async function chamaGemini(apiKey: string, modelo: string, prompt: string, pesquisar: boolean, prazo: AbortSignal, sistema = SISTEMA, jsonSaida = true) {
   const corpo: any = {
     system_instruction: { parts: [{ text: sistema }] },
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: { temperature: jsonSaida ? 0.3 : 0.2, maxOutputTokens: 8192 },
   };
   if (pesquisar) corpo.tools = [{ google_search: {} }];
-  return await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
+  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
+    signal: AbortSignal.any([prazo, AbortSignal.timeout(8000)]),
     method: "POST", headers: { "x-goog-api-key": apiKey, "content-type": "application/json" }, body: JSON.stringify(corpo),
   });
+  // Leia o corpo da resposta dentro do mesmo prazo.
+  return new Response(await resp.text(), { status: resp.status });
 }
 
 /** Etapa 1: pesquisa na internet e devolve um dossiê em texto + as fontes. Vazio se a pesquisa não estiver disponível. */
-async function pesquisaDossie(apiKey: string, inp: any): Promise<{ texto: string; fontes: { titulo: string; url: string }[]; modelo: string }> {
+async function pesquisaDossie(apiKey: string, inp: any, prazo: AbortSignal): Promise<{ texto: string; fontes: { titulo: string; url: string }[]; modelo: string }> {
   const q = [`Pesquise este produto e monte o dossiê:`, `Nome: ${inp.name}`, inp.brand ? `Marca: ${inp.brand}` : "", inp.ean ? `EAN/GTIN: ${inp.ean}` : "",
     `Categoria: ${inp.categoria || "?"}${inp.subcategoria ? " / " + inp.subcategoria : ""}`, inp.notas ? `Notas: ${inp.notas}` : ""].filter(Boolean).join("\n");
   for (const modelo of MODELOS) {
     try {
-      const r = await chamaGemini(apiKey, modelo, q, true, SISTEMA_PESQUISA, false);
+      if (prazo.aborted) break;
+      const r = await chamaGemini(apiKey, modelo, q, true, prazo, SISTEMA_PESQUISA, false);
       if (!r.ok) { if (r.status === 404) continue; return { texto: "", fontes: [], modelo: "" }; }   // 400/403/429: pesquisa indisponível
       const d = await r.json();
       const texto = (d?.candidates?.[0]?.content?.parts || []).filter((p: any) => p.text).map((p: any) => p.text).join("\n").trim();
@@ -225,23 +229,24 @@ async function pesquisaDossie(apiKey: string, inp: any): Promise<{ texto: string
   return { texto: "", fontes: [], modelo: "" };
 }
 
-/** Tenta os modelos em ordem. Se a pesquisa na internet for recusada, refaz sem pesquisar. */
-export async function geraComReserva(apiKey: string, prompt: string, pesquisar: boolean) {
-  let ultimo: Response | null = null, semPesquisa = false;
+/** Gera a ficha com o primeiro modelo disponível dentro do prazo. */
+export async function geraComReserva(apiKey: string, prompt: string, prazo: AbortSignal) {
+  let ultimo: Response | null = null;
+  let expirou = false;
   for (const modelo of MODELOS) {
-    if (pesquisar) {
-      const r = await chamaGemini(apiKey, modelo, prompt, true);
-      if (r.ok) return { resp: r, modelo, pesquisou: true, semPesquisa: false };
-      ultimo = r;
-      if (![400, 403, 404, 429].includes(r.status)) continue;
-      if (r.status === 404) continue;
-      semPesquisa = true;
+    if (prazo.aborted) break;
+    try {
+      const resp = await chamaGemini(apiKey, modelo, prompt, false, prazo);
+      if (resp.ok) return { resp, modelo, expirou: false };
+      ultimo = resp;
+      expirou = false;
+      if ([400, 401, 402, 403].includes(resp.status)) break;
+    } catch (erro) {
+      expirou = erro instanceof Error && ["AbortError", "TimeoutError"].includes(erro.name);
+      console.error("Falha na chamada ao Gemini", modelo, expirou ? "timeout" : "rede");
     }
-    const r2 = await chamaGemini(apiKey, modelo, prompt, false);
-    if (r2.ok) return { resp: r2, modelo, pesquisou: false, semPesquisa: pesquisar || semPesquisa };
-    ultimo = r2;
   }
-  return { resp: ultimo as Response, modelo: "", pesquisou: false, semPesquisa };
+  return { resp: ultimo, modelo: "", expirou: prazo.aborted || expirou };
 }
 
 export async function handler(req: Request): Promise<Response> {
@@ -262,18 +267,22 @@ export async function handler(req: Request): Promise<Response> {
     const pesquisar = inp.pesquisar !== false;
     const cats = categoriasDe(inp);
 
-    // etapa 1: dossiê com pesquisa do Google
-    let dossie = { texto: "", fontes: [] as { titulo: string; url: string }[], modelo: "" };
-    if (pesquisar) dossie = await pesquisaDossie(apiKey, inp);
-
-    // etapa 2: ficha (com o dossiê; se a etapa 1 falhou, cai no caminho antigo com pesquisa embutida)
-    let g, pesquisou: boolean;
-    if (dossie.texto) { g = await geraComReserva(apiKey, montaPrompt(inp, tipo, dossie.texto), false); pesquisou = true; }
-    else { g = await geraComReserva(apiKey, montaPrompt(inp, tipo), pesquisar); pesquisou = g.pesquisou; }
+    const prazo = AbortSignal.timeout(25000);
+    const dossie = pesquisar
+      ? await pesquisaDossie(apiKey, inp, AbortSignal.any([prazo, AbortSignal.timeout(8000)]))
+      : { texto: "", fontes: [], modelo: "" };
+    const pesquisou = Boolean(dossie.texto);
+    const g = await geraComReserva(apiKey, montaPrompt(inp, tipo, dossie.texto), prazo);
     const resp = g.resp;
-    const avisoExtra = pesquisar && !pesquisou ? "Sem pesquisa na internet (sua chave do Gemini não tem esse recurso liberado): a ficha vem do que o Gemini sabe e do cadastro. Confira antes de salvar." : "";
+    const avisoExtra = pesquisar && !pesquisou
+      ? "Pesquisa na internet indisponível ou demorada. A ficha usa os dados do cadastro e o conhecimento do Gemini. Revise antes de salvar."
+      : "";
+    if (g.expirou) return json({ erro: "O Gemini demorou demais. Tente novamente com a pesquisa na internet desmarcada." }, 504);
     if (!resp || !resp.ok) {
       const txt = resp ? (await resp.text()).slice(0, 300) : ""; console.error("Gemini", resp?.status, txt);
+      if ([401, 403].includes(resp?.status ?? 0) || (resp?.status === 400 && /API_KEY_INVALID|api key not valid/i.test(txt))) {
+        return json({ erro: "O Gemini recusou a credencial. Confira a chave e as permissões do projeto no Google AI Studio." }, 502);
+      }
       if (resp?.status === 429) return json({ erro: "O limite do Gemini foi atingido por agora. Espere 1 minuto e tente de novo." }, 429);
       return json({ erro: "O Gemini não respondeu direito (código " + (resp?.status ?? "?") + "). Tente de novo em instantes." }, 502);
     }
@@ -284,7 +293,7 @@ export async function handler(req: Request): Promise<Response> {
     const bruto = extraiJson(texto);
     if (!bruto) { console.error("JSON ilegível:", texto.slice(0, 300)); return json({ erro: "A IA devolveu uma resposta que não consegui ler. Tente de novo." }, 502); }
 
-    const fontes = dossie.texto ? dossie.fontes : (pesquisou ? fontesDe(data) : []);
+    const fontes = dossie.fontes;
     const limpo = limpa(bruto, tipo, cats);
     if (avisoExtra) limpo.avisos.unshift(avisoExtra);
     if (pesquisou && fontes.length === 0) limpo.avisos.push("A pesquisa não trouxe fontes confiáveis para este produto: revise com atenção.");
