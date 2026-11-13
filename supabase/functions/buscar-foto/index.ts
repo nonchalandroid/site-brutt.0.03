@@ -218,6 +218,13 @@ export async function handler(req: Request): Promise<Response> {
     const inp = await req.json().catch(() => ({}));
     if (inp?.acao === "baixar") { const r: any = await baixar(String(inp.url || ""), String(inp.reserva || "")); return r.erro ? json({ erro: r.erro }, r.status) : json(r); }
     if (!inp?.name || !String(inp.name).trim()) return json({ erro: "Falta o nome do produto." }, 400);
+    if (inp.acao === "fontes") {
+      const nome = String(inp.name).slice(0, 140);
+      const marca = String(inp.brand || "").slice(0, 60);
+      const fotos = await doBing(termoBusca({ name: nome, brand: marca }));
+      const paginas = [...new Set(fotos.map(foto => foto.pagina).filter(Boolean))].slice(0, 3);
+      return json({ paginas });
+    }
     return json(await buscar({ name: String(inp.name).slice(0, 140), brand: String(inp.brand || "").slice(0, 60), ean: String(inp.ean || "").slice(0, 20),
       categoria: String(inp.categoria || "").slice(0, 40), sub: String(inp.sub || "").slice(0, 60) }, env("GEMINI_API_KEY")));
   } catch (e) { console.error("buscar-foto", e); return json({ erro: "Algo deu errado na busca. Tente de novo." }, 500); }
