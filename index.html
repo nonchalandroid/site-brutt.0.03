@@ -447,9 +447,15 @@ body:has(.minbar.on) .ia-bar{bottom:var(--ia-bottom)}
 body.ia-on footer{padding-bottom:calc(var(--ia-h) + var(--mb-h) + 48px)}
 
 /* ── carrossel do modal de produto: setas, dica "deslize" e saída/entrada em slide ── */
-/* A altura da janela e a largura útil da foto não mudam ao trocar de produto. */
-#pm{height:min(650px,90vh);height:min(650px,90dvh);scrollbar-gutter:stable}
-@media(max-width:640px){#pm{height:76vh;height:76dvh;max-height:76dvh}}
+/* O topo fica no mesmo lugar ao trocar de produto. A altura acompanha o conteúdo. */
+#pm{scrollbar-gutter:stable}
+@media(min-width:641px){
+  #pm{top:max(5vh,calc((100vh - 650px)/2));max-height:min(650px,90vh);transform:translateX(-50%) scale(.95)}
+  #pm.on{transform:translateX(-50%)}
+}
+@media(max-width:640px){
+  #pm{top:24vh;top:24dvh;bottom:auto;max-height:76vh;max-height:76dvh}
+}
 #pm .m-img{flex:none;grid-template:minmax(0,1fr) / minmax(0,1fr)}
 .pm-left.pm-car{position:relative}
 .pm-seta{position:absolute;top:var(--seta-y,85px);z-index:3;width:38px;height:38px;margin-top:-19px;display:grid;place-items:center;border-radius:999px;border:1px solid rgba(243,228,200,.22);background:rgba(14,8,6,.62);color:var(--ink);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);cursor:pointer;transition:transform .3s var(--ease-app),opacity .3s var(--ease-app);-webkit-tap-highlight-color:transparent}
