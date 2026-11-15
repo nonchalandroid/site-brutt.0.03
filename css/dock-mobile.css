@@ -93,32 +93,43 @@ body:has(#q:focus) .brutt-dock { visibility: hidden; pointer-events: none; }
 .dock-menu::backdrop { background: #080402a6; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
 .dock-mobile:has(.dock-menu[open]) { overflow: hidden; }
 .dock-menu-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.dock-menu-heading h2 { margin: 0; font: 400 24px var(--head); }
-.dock-menu-heading button { min-width: 44px; min-height: 44px; border: 1px solid var(--dock-edge); border-radius: 14px; color: var(--ink); background: #ffffff0e; font-size: 22px; }
-.dock-menu-links {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+.dock-menu-heading h2 {
   margin: 0;
-  padding: 0;
-  list-style: none;
+  font: 700 26px/1.2 var(--body);
+  letter-spacing: -.025em;
+  color: rgba(255, 255, 255, .96);
+  text-transform: none;
 }
-.dock-menu-links a {
+.dock-menu-heading button { min-width: 44px; min-height: 44px; border: 1px solid var(--dock-edge); border-radius: 14px; color: var(--ink); background: #ffffff0e; font-size: 22px; }
+.dock-menu { font-family: var(--body); -webkit-tap-highlight-color: transparent; }
+.dock-menu-links { margin: 0; padding: 0; list-style: none; }
+.dock-menu-links > li:not(.dock-subcategories) + li:not(.dock-subcategories) {
+  border-top: 1px solid rgba(255, 255, 255, .08);
+}
+.dock-menu-links a, .dock-subcategories summary {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-height: 48px;
   padding: 7px 8px;
-  border: 1px solid #efc25e24;
-  border-radius: 14px;
-  background: linear-gradient(145deg, #e3ac3d15, #fff04a05);
-  color: var(--ink);
-  overflow-wrap: anywhere;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, .92);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -.015em;
   text-decoration: none;
-  font-size: 13px;
-  font-weight: 600;
 }
-.dock-menu-links a:active { background: #efc25e26; }
+.dock-menu-links a::after, .dock-subcategories summary::after {
+  content: "";
+  flex: 0 0 7px;
+  height: 7px;
+  margin-inline-start: auto;
+  border: solid rgba(255, 255, 255, .35);
+  border-width: 1.5px 1.5px 0 0;
+  transform: rotate(45deg);
+}
+.dock-menu-links a:active, .dock-subcategories summary:active { background: #ffffff0d; }
 .dock-menu-links a:focus-visible, .dock-subcategories summary:focus-visible {
   outline: 2px solid var(--brand-2);
   outline-offset: -2px;
@@ -133,16 +144,16 @@ body:has(#q:focus) .brutt-dock { visibility: hidden; pointer-events: none; }
   background: #efc25e13;
 }
 .dock-category-icon svg { width: 16px; height: 16px; }
-.dock-subcategories { grid-column: 1 / -1; }
-.dock-subcategories summary {
-  padding: 12px;
-  border-radius: 12px;
-  color: var(--brand-2);
-  font-size: 13px;
-  cursor: pointer;
+.dock-subcategories summary { margin-top: 4px; cursor: pointer; list-style: none; }
+.dock-subcategories summary::-webkit-details-marker { display: none; }
+.dock-subcategories details[open] summary::after { transform: rotate(135deg); }
+.dock-sub-links a {
+  padding-inline-start: 24px;
+  color: rgba(255, 255, 255, .65);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: -.01em;
 }
-.dock-sub-links { display: flex; flex-wrap: wrap; gap: 6px; }
-.dock-sub-links a { min-height: 44px; }
 @media (prefers-reduced-motion: no-preference) {
   .dock-menu[open] .dock-menu-links { animation: dock-menu-in .22s ease-out both; }
 }
