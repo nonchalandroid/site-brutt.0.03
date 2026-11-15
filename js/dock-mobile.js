@@ -24,26 +24,46 @@
     cartAction.setAttribute("aria-label", badge.hidden ? "Carrinho" : `Carrinho, ${badge.textContent} ${badge.textContent === "1" ? "item" : "itens"}`);
   }
 
-  function addMenuLink(item, sub = false) {
-    const row = document.createElement("li");
-    if (sub) row.className = "dock-sub";
+  function menuLink(item, icon) {
     const link = document.createElement("a");
     link.href = item.href;
-    link.textContent = item.t;
-    row.append(link);
-    list.append(row);
+    if (icon) {
+      const graphic = document.createElement("span");
+      graphic.className = "dock-category-icon";
+      graphic.setAttribute("aria-hidden", "true");
+      graphic.innerHTML = ic(menuIcon(item));
+      link.append(graphic);
+    }
+    link.append(document.createTextNode(item.t));
+    return link;
   }
 
   function showMenu() {
     list.replaceChildren();
-    for (const item of MENU) {
-      if (item.href === "#em-alta") continue;
-      addMenuLink(item);
+    const categories = MENU.filter(item => item.href !== "#em-alta");
+    if (!categories.some(item => item.href === "#como-chegar")) {
+      categories.push({ href: "#como-chegar", t: "Como chegar" });
+    }
+    const subcategories = document.createElement("div");
+    subcategories.className = "dock-sub-links";
+    for (const item of categories) {
+      const row = document.createElement("li");
+      row.append(menuLink(item, true));
+      list.append(row);
       for (const sub of item.items || []) {
-        if (sub.href !== item.href || sub.t !== item.t) addMenuLink(sub, true);
+        if (sub.href !== item.href || sub.t !== item.t) subcategories.append(menuLink(sub));
       }
     }
-    if (!MENU.some(item => item.href === "#como-chegar")) addMenuLink({ href: "#como-chegar", t: "Como chegar" });
+    if (subcategories.childElementCount) {
+      const row = document.createElement("li");
+      row.className = "dock-subcategories";
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = "Subcategorias";
+      details.append(summary, subcategories);
+      row.append(details);
+      list.append(row);
+    }
     menu.showModal();
     menu.scrollTop = 0;
     menuAction.setAttribute("aria-expanded", "true");
