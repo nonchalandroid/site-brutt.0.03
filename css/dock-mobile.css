@@ -8,7 +8,11 @@
 .dock-mobile body { padding-bottom: calc(var(--dock-clearance) + var(--mb-h) + 10px); }
 .dock-mobile .navwrap, .dock-mobile #navHint, .dock-mobile #cartBtn,
 .dock-mobile .ia-orb, .dock-mobile .ia .ia-bar { display: none; }
-.dock-mobile .minbar { bottom: var(--dock-clearance); }
+.dock-mobile .minbar {
+  bottom: var(--dock-clearance);
+  transform: translateX(-50%);
+  transition-property: opacity;
+}
 .brutt-dock:not([hidden]) {
   position: fixed;
   left: 50%;
