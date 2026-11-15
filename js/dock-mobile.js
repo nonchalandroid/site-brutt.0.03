@@ -37,6 +37,7 @@
   function showMenu() {
     list.replaceChildren();
     for (const item of MENU) {
+      if (item.href === "#em-alta") continue;
       addMenuLink(item);
       for (const sub of item.items || []) {
         if (sub.href !== item.href || sub.t !== item.t) addMenuLink(sub, true);
