@@ -95,10 +95,61 @@ body:has(#q:focus) .brutt-dock { visibility: hidden; pointer-events: none; }
 .dock-menu-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .dock-menu-heading h2 { margin: 0; font: 400 24px var(--head); }
 .dock-menu-heading button { min-width: 44px; min-height: 44px; border: 1px solid var(--dock-edge); border-radius: 14px; color: var(--ink); background: #ffffff0e; font-size: 22px; }
-.dock-menu-links { margin: 0; padding: 0; list-style: none; }
-.dock-menu-links a { display: flex; align-items: center; min-height: 44px; padding: 8px 12px; border-radius: 12px; color: var(--ink); text-decoration: none; }
+.dock-menu-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dock-menu-links a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 7px 8px;
+  border: 1px solid #efc25e24;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #e3ac3d15, #fff04a05);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
 .dock-menu-links a:active { background: #efc25e26; }
-.dock-menu-links .dock-sub a { padding-left: 26px; color: var(--muted); font-size: 13px; }
+.dock-menu-links a:focus-visible, .dock-subcategories summary:focus-visible {
+  outline: 2px solid var(--brand-2);
+  outline-offset: -2px;
+}
+.dock-category-icon {
+  display: grid;
+  flex: 0 0 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--brand-2);
+  background: #efc25e13;
+}
+.dock-category-icon svg { width: 16px; height: 16px; }
+.dock-subcategories { grid-column: 1 / -1; }
+.dock-subcategories summary {
+  padding: 12px;
+  border-radius: 12px;
+  color: var(--brand-2);
+  font-size: 13px;
+  cursor: pointer;
+}
+.dock-sub-links { display: flex; flex-wrap: wrap; gap: 6px; }
+.dock-sub-links a { min-height: 44px; }
+@media (prefers-reduced-motion: no-preference) {
+  .dock-menu[open] .dock-menu-links { animation: dock-menu-in .22s ease-out both; }
+}
+@keyframes dock-menu-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .brutt-dock:not([hidden]), .dock-menu, .dock-mobile .drawer.on {
     background: var(--dock-glass);
