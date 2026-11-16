@@ -4819,9 +4819,8 @@ function pixVenceu(p){
   if(p.reserva) return false;
   return p.status === "expirado" || (p.status === "aguardando_pagamento" && !!p.pix_expira_em && new Date(p.pix_expira_em) < new Date());
 }
-/* pedido de teste da equipe fica de fora: nome com "teste"/"claude", ou WhatsApp que já apareceu num pedido cancelado
-   pela equipe com o motivo "teste" (o número de quem testa é aprendido sozinho, sem guardar telefone no código).
-   Para tirar um teste da lista: Cancelar pedido → motivo "teste". */
+/* Pedidos de teste ficam fora dos relatórios pelo marcador no nome ou pelo telefone já identificado.
+   Para marcar um pedido como teste, cancele com o motivo "teste". */
 const pedEhTeste = (p, numerosTeste) => /\b(teste|claude)\b/i.test(String(p.cliente_nome || "")) || (!!p.cliente_whats && numerosTeste.has(p.cliente_whats));
 async function pedNumerosTeste(){
   const { data, error } = await sb.from("pedidos").select("cliente_whats").ilike("mp_status_detail", "%teste%").not("cliente_whats", "is", null).limit(500);

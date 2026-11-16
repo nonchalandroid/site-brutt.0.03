@@ -969,7 +969,7 @@ function carregarCheckout(){
   if(!checkoutCarregando){
     checkoutCarregando=new Promise((resolve,reject)=>{
       const script=document.createElement("script");
-      script.src="/js/checkout-mp.js?v=20261026d";
+      script.src="/js/checkout-mp.js?v=20261116a";
       const falha=()=>{
         clearTimeout(prazo);
         script.remove();
