@@ -38,6 +38,8 @@ h1{margin:4px 0 10px;font:400 clamp(28px,5vw,34px)/1.1 var(--head);text-transfor
 .pc.esg{opacity:.55}
 .pc .tag{position:absolute;top:16px;left:16px;padding:2px 8px;border-radius:999px;background:rgba(14,8,6,.85);font:700 11px var(--body);color:var(--muted)}
 .carrega,.vazio{margin:24px 0;color:var(--muted)}
+#produtos[aria-busy="true"]{min-height:100vh;min-height:100svh}
+.subs{min-height:42px}
 .como{margin:36px 0 0;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
 .como h2{margin:0 0 8px;font:700 16px var(--body)}
 .como ol{margin:0;padding-left:20px;color:var(--muted)}

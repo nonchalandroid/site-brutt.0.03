@@ -80,7 +80,7 @@ def pagina(c):
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
 <link rel="preconnect" href="https://vedlxtljilsanykmddtj.supabase.co" crossorigin>
 <link rel="stylesheet" href="/css/tipografia.css?v=1">
-<link rel="stylesheet" href="/categoria/categoria.css?v=2">
+<link rel="stylesheet" href="/categoria/categoria.css?v=3">
 <script type="application/ld+json">{json.dumps(ld, ensure_ascii=False, separators=(",",":"))}</script>
 </head>
 <body>
@@ -90,7 +90,7 @@ def pagina(c):
   <h1>{e(c["h1"])}</h1>
   <p class="intro">{c["intro"]}</p>
   <nav class="subs" id="subs" aria-label="Tipos de produto"></nav>
-  <div id="produtos"><p class="carrega">Carregando os produtos…</p></div>
+  <div id="produtos" aria-busy="true"><p class="carrega" role="status">Carregando os produtos…</p></div>
   <noscript><p class="vazio">Para ver os produtos e preços, <a href="/#{c["sec"]}">abra o catálogo</a>.</p></noscript>
   <section class="como"><h2>Como comprar</h2><ol>
     <li>Toque no produto para abrir no catálogo e adicionar ao carrinho.</li>
@@ -102,7 +102,7 @@ def pagina(c):
 <footer><div class="wrap">Tabacaria Brutt · Rua 18, 145 · Conjunto Campinho, Campo Grande, Rio de Janeiro (RJ) · <a href="https://wa.me/5521996600243" rel="noopener">WhatsApp</a> · <a href="https://www.instagram.com/tabacariabrutt/" rel="noopener">@tabacariabrutt</a> · <a href="mailto:contato@tabacariabrutt.com.br">contato@tabacariabrutt.com.br</a><br>Venda proibida para menores de 18 anos. Fumar faz mal à saúde.</div></footer>
 <div class="idade" id="idade" role="dialog" aria-modal="true" aria-labelledby="idadeT" hidden><div><b>18+</b><h2 id="idadeT">Você tem 18 anos ou mais?</h2><p>A venda de tabaco e artigos para fumantes é proibida para menores.</p><button type="button" id="idadeSim">Sim, tenho 18+</button></div></div>
 <script>window.__CAT={json.dumps({"slugs":c["fontes"],"ord":c["ord"]}, ensure_ascii=False)};</script>
-<script src="/js/categoria.js" defer></script>
+<script src="/js/categoria.js?v=20261116" defer></script>
 </body>
 </html>
 '''
