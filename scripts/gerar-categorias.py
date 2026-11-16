@@ -61,7 +61,6 @@ def pagina(c):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Gerado por scripts/gerar-categorias.py: edite lá e rode de novo. -->
 <title>{e(c["titulo"])}</title>
 <meta name="description" content="{e(c["desc"])}">
 <link rel="canonical" href="{url}">
