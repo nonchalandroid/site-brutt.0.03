@@ -82,6 +82,7 @@ def pagina(c):
 <link rel="stylesheet" href="/css/tipografia.css?v=1">
 <link rel="stylesheet" href="/categoria/categoria.css?v=3">
 <script type="application/ld+json">{json.dumps(ld, ensure_ascii=False, separators=(",",":"))}</script>
+<script src="/js/analytics.js?v=20261116a" defer></script>
 </head>
 <body>
 <header class="topo"><div class="wrap"><a class="logo" href="/"><img src="/favicon/selo-brutt.webp" alt="Tabacaria Brutt" width="40" height="40"><span>Tabacaria Brutt</span></a><a class="ir" href="/">Ver catálogo<span class="lg"> completo</span></a></div></header>
