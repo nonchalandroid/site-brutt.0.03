@@ -5,7 +5,7 @@ import json
 import re
 from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urljoin, urlsplit
 from xml.etree import ElementTree
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,11 +21,16 @@ class Page(HTMLParser):
         self.canonical = ""
         self.title = ""
         self.schemas = []
+        self.links = []
         self.capture = None
         self.feed(source)
 
     def handle_starttag(self, tag, pairs):
         attrs = dict(pairs)
+        if tag in {"a", "link", "img", "script", "source", "video"}:
+            field = "href" if tag in {"a", "link"} else "src"
+            if attrs.get(field):
+                self.links.append(attrs[field])
         if tag == "meta":
             self.meta[attrs.get("property") or attrs.get("name")] = attrs.get("content")
         if tag == "link" and attrs.get("rel") == "canonical":
@@ -48,6 +53,18 @@ class Page(HTMLParser):
 
 def page_for(url):
     return ROOT / urlsplit(url).path.strip("/") / "index.html"
+
+
+def missing_local_links(page, url):
+    for value in dict.fromkeys(page.links):
+        address = urlsplit(urljoin(url, value))
+        if address.scheme != "https" or address.netloc != urlsplit(SITE).netloc:
+            continue
+        target = ROOT / unquote(address.path).lstrip("/")
+        if target.is_dir():
+            target /= "index.html"
+        if not target.is_file():
+            yield value
 
 
 def main():
@@ -81,6 +98,8 @@ def main():
             "HTML sem texto de exemplo conhecido": not EXAMPLES.search(source),
         }
         errors.extend(f"{path.relative_to(ROOT)}: {check}" for check, passed in checks.items() if not passed)
+        errors.extend(f"{path.relative_to(ROOT)}: link ou arquivo local ausente: {value}"
+                      for value in missing_local_links(page, url))
     if errors:
         raise SystemExit("\n".join(errors))
     print(f"{len(indexed)} páginas indexáveis e {len(aliases)} atalhos passaram nas verificações.")
