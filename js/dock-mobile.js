@@ -11,6 +11,7 @@
   const cartAction = dock.querySelector('[data-dock="carrinho"]');
   const menuAction = dock.querySelector('[data-dock="menu"]');
   const list = menu.querySelector(".dock-menu-links");
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
   function select(action) {
     dock.querySelector("[aria-current]")?.removeAttribute("aria-current");
@@ -65,7 +66,7 @@
       list.append(row);
     }
     menu.showModal();
-    menu.scrollTop = 0;
+    list.scrollTop = 0;
     menuAction.setAttribute("aria-expanded", "true");
   }
 
@@ -80,10 +81,43 @@
       case "menu": showMenu(); break;
     }
   });
+  async function closeMenu(destination) {
+    if (!menu.open || menu.hasAttribute("data-closing")) return;
+    menu.setAttribute("data-closing", "");
+    if (!reduceMotion.matches && menu.animate) {
+      const exit = menu.animate([
+        { transform: "translateY(0)", opacity: 1 },
+        { transform: "translateY(36px)", opacity: 0 }
+      ], { duration: 200, easing: "ease-in", fill: "forwards" });
+      await exit.finished.catch(() => {});
+      exit.cancel();
+    }
+    if (!menu.open) return;
+    menu.close();
+    if (destination) irParaSecao(destination);
+  }
+  menu.addEventListener("submit", event => {
+    event.preventDefault();
+    closeMenu();
+  });
+  menu.addEventListener("cancel", event => {
+    event.preventDefault();
+    closeMenu();
+  });
   menu.addEventListener("click", event => {
-    if (event.target.closest("a")) menu.close();
+    const link = event.target.closest('a[href^="#"]');
+    if (link && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeMenu(link.hash.slice(1));
+      return;
+    }
+    if (event.target !== menu) return;
+    const { left, right, top, bottom } = menu.getBoundingClientRect();
+    if (event.clientX < left || event.clientX > right || event.clientY < top || event.clientY > bottom) closeMenu();
   });
   menu.addEventListener("close", () => {
+    menu.removeAttribute("data-closing");
     menuAction.setAttribute("aria-expanded", "false");
   });
   function updateLayout() {
