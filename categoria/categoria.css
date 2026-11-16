@@ -1,5 +1,5 @@
 /* Páginas por categoria (SEO, 25/10/2026). Mesmos tokens da loja (index.html :root). Geradas por scripts/gerar-categorias.py */
-:root{--bg:#0e0806;--surface:#170f0a;--ink:#f3e4c8;--muted:#b8a184;--line:#2c1d14;--brand:#e3ac3d;--brand-2:#efc25e;--gold:#e3ac3d;--hot:#d6392b;--head:"Anton","Bebas Neue",Impact,sans-serif;--body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--ease-app:cubic-bezier(.16,1,.3,1)}
+:root{--bg:#0e0806;--surface:#170f0a;--ink:#f3e4c8;--muted:#b8a184;--line:#2c1d14;--brand:#e3ac3d;--brand-2:#efc25e;--gold:#e3ac3d;--hot:#d6392b;--head:var(--font-system);--body:var(--font-system);--ease-app:cubic-bezier(.16,1,.3,1)}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--body)}

@@ -1,0 +1,175 @@
+.dock-mobile {
+  --dock-height: 62px;
+  --dock-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  --dock-clearance: calc(var(--dock-height) + var(--dock-bottom) + 10px);
+  --dock-glass: rgba(18, 18, 22, .55);
+  --dock-edge: rgba(255, 255, 255, .18);
+}
+.dock-mobile body { padding-bottom: calc(var(--dock-clearance) + var(--mb-h) + 10px); }
+.dock-mobile .navwrap, .dock-mobile #navHint, .dock-mobile #cartBtn,
+.dock-mobile .ia-orb, .dock-mobile .ia .ia-bar { display: none; }
+.dock-mobile .minbar {
+  bottom: var(--dock-clearance);
+  transform: translateX(-50%);
+  transition-property: opacity;
+}
+.brutt-dock:not([hidden]) {
+  position: fixed;
+  left: 50%;
+  bottom: var(--dock-bottom);
+  transform: translateX(-50%);
+  z-index: 44;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: min(460px, calc(100% - 24px));
+  height: var(--dock-height);
+  padding: 5px;
+  border: 1px solid var(--dock-edge);
+  border-radius: 28px;
+  background: #1c1719;
+  box-shadow: 0 8px 28px #0008, inset 0 1px 1px #ffffff40;
+  isolation: isolate;
+}
+.brutt-dock::before {
+  content: "";
+  position: absolute;
+  inset: 5px auto 5px 5px;
+  width: calc((100% - 10px) / 5);
+  border-radius: 16px;
+  background: linear-gradient(155deg, #efc25e38, #efc25e10);
+  box-shadow: inset 0 1px 1px #efc25e66;
+  transform: translateX(calc(var(--dock-active, 0) * 100%));
+  transition: transform .32s cubic-bezier(.34, 1.56, .64, 1);
+  z-index: -1;
+}
+.brutt-dock > [data-dock] {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 3px;
+  position: relative;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  color: var(--ink);
+  background: transparent;
+  text-decoration: none;
+  font: 600 10px/1.1 var(--body);
+  cursor: pointer;
+  transition: transform .24s cubic-bezier(.34, 1.56, .64, 1), color .2s;
+}
+.brutt-dock > [data-dock]:active { transform: scale(.92); background: #efc25e18; }
+.brutt-dock > [aria-current], .brutt-dock > [data-dock="ia"] { color: var(--brand-2); }
+.brutt-dock > [data-dock]:focus-visible { outline: 2px solid var(--brand-2); outline-offset: -2px; }
+.brutt-dock svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+.brutt-dock .dock-ia { filter: drop-shadow(0 0 5px #efc25e55); }
+.dock-badge:not([hidden]) {
+  position: absolute;
+  top: 2px;
+  left: calc(50% + 6px);
+  min-width: 16px;
+  padding: 2px 3px;
+  border-radius: 999px;
+  background: var(--brand-2);
+  color: #20170b;
+  text-align: center;
+}
+html.is-locked .brutt-dock, body:has(.veil.on, .ia[data-state=open], .feito:not([hidden])) .brutt-dock,
+body:has(#q:focus) .brutt-dock { visibility: hidden; pointer-events: none; }
+.dock-menu {
+  position: fixed;
+  inset: auto 12px var(--dock-bottom);
+  width: min(460px, calc(100% - 24px));
+  max-height: min(70vh, 540px);
+  margin: 0 auto;
+  padding: 14px;
+  border: 1px solid var(--dock-edge);
+  border-radius: 24px;
+  color: var(--ink);
+  background: #211821;
+  box-shadow: 0 12px 36px #000a, inset 0 1px 1px #ffffff40;
+}
+.dock-menu::backdrop { background: #080402a6; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+.dock-mobile:has(.dock-menu[open]) { overflow: hidden; }
+.dock-menu-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.dock-menu-heading h2 {
+  margin: 0;
+  font: 700 26px/1.2 var(--body);
+  letter-spacing: -.025em;
+  color: rgba(255, 255, 255, .96);
+  text-transform: none;
+}
+.dock-menu-heading button { min-width: 44px; min-height: 44px; border: 1px solid var(--dock-edge); border-radius: 14px; color: var(--ink); background: #ffffff0e; font-size: 22px; }
+.dock-menu { font-family: var(--body); -webkit-tap-highlight-color: transparent; }
+.dock-menu-links { margin: 0; padding: 0; list-style: none; }
+.dock-menu-links > li:not(.dock-subcategories) + li:not(.dock-subcategories) {
+  border-top: 1px solid rgba(255, 255, 255, .08);
+}
+.dock-menu-links a, .dock-subcategories summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, .92);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -.015em;
+  text-decoration: none;
+}
+.dock-menu-links a::after, .dock-subcategories summary::after {
+  content: "";
+  flex: 0 0 7px;
+  height: 7px;
+  margin-inline-start: auto;
+  border: solid rgba(255, 255, 255, .35);
+  border-width: 1.5px 1.5px 0 0;
+  transform: rotate(45deg);
+}
+.dock-menu-links a:active, .dock-subcategories summary:active { background: #ffffff0d; }
+.dock-menu-links a:focus-visible, .dock-subcategories summary:focus-visible {
+  outline: 2px solid var(--brand-2);
+  outline-offset: -2px;
+}
+.dock-category-icon {
+  display: grid;
+  flex: 0 0 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--brand-2);
+  background: #efc25e13;
+}
+.dock-category-icon svg { width: 16px; height: 16px; }
+.dock-subcategories summary { margin-top: 4px; cursor: pointer; list-style: none; }
+.dock-subcategories summary::-webkit-details-marker { display: none; }
+.dock-subcategories details[open] summary::after { transform: rotate(135deg); }
+.dock-sub-links a {
+  padding-inline-start: 24px;
+  color: rgba(255, 255, 255, .65);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: -.01em;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dock-menu[open] .dock-menu-links { animation: dock-menu-in .22s ease-out both; }
+}
+@keyframes dock-menu-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .brutt-dock:not([hidden]), .dock-menu, .dock-mobile .drawer.on {
+    background: var(--dock-glass);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  .dock-mobile .drawer.on, .dock-menu { background-color: rgba(23, 15, 17, .84); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brutt-dock::before, .brutt-dock > [data-dock] { transition: none; }
+  .brutt-dock > [data-dock]:active { transform: none; }
+}

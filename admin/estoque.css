@@ -7,7 +7,7 @@
   --est-paper: #fffefa;
   --est-accent: #24645c;
   color: var(--est-ink);
-  font-family: "Geist", "Inter", system-ui, sans-serif;
+  font-family: var(--font-system);
   padding-top: 28px;
 }
 .stock-center .i { width: 17px; height: 17px; }
@@ -100,7 +100,7 @@
 .est-product-copy { min-width: 0; }
 .est-product-name { display: block; color: #3c352a; font-size: 13px; font-weight: 600; line-height: 1.5; }
 .est-product-meta { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 7px; row-gap: 2px; margin-top: 3px; color: #776e61; font-size: 10px; line-height: 1.5; }
-.est-product-meta code { font-family: "Geist Mono", ui-monospace, monospace; font-size: 10px; color: #7d715e; }
+.est-product-meta code { font-family: var(--font-system); font-size: 10px; color: #7d715e; }
 .est-origin { display: inline-flex; gap: 4px; align-items: center; font-size: 9px; color: #776e61; }
 .est-origin::before { content: ""; display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: #b9af9c; }
 .est-stock strong { display: block; font-size: 19px; line-height: 1.1; font-weight: 500; letter-spacing: -.04em; font-variant-numeric: tabular-nums; color: #453c2e; }
