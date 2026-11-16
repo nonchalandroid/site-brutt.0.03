@@ -31,5 +31,9 @@
         var promo=Number(p.promo_price)>0&&Number(p.promo_price)<Number(p.price),v=promo?p.promo_price:p.price,f=foto[p.id],esg=!(p.stock>0);
         var img=/^https:\/\//.test(f||"")?'<img src="'+esc(f)+'" alt="'+esc(p.name)+'" loading="lazy" decoding="async" width="200" height="200">':esc(p.icon||"📦");
         return'<a class="pc'+(esg?" esg":"")+'" href="/#produto-'+encodeURIComponent(p.site_product_id)+'">'+(esg?'<span class="tag">Esgotado</span>':"")+'<span class="ft">'+img+"</span><h3>"+esc(p.name)+'</h3><span class="pr"><small>R$</small>'+brl(v)+"</span>"+(promo?'<span class="old">R$ '+brl(p.price)+"</span>":"")+"</a>"}).join("")+"</div></section>"}).join("");
-  }).catch(function(){area.innerHTML='<p class="vazio">Não deu para carregar os produtos agora. <a href="/">Abra o catálogo completo</a>.</p>'});
+  }).catch(function(){
+    area.innerHTML='<p class="vazio">Não deu para carregar os produtos agora. <a href="/">Abra o catálogo completo</a>.</p>';
+  }).finally(function(){
+    area.removeAttribute("aria-busy");
+  });
 })();
