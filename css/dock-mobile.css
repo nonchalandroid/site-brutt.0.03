@@ -92,7 +92,8 @@ body:has(#q:focus) .brutt-dock { visibility: hidden; pointer-events: none; }
 }
 .dock-menu::backdrop { background: #080402a6; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
 .dock-mobile:has(.dock-menu[open]) { overflow: hidden; }
-.dock-menu-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.dock-menu[open] { display: flex; flex-direction: column; overflow: hidden; }
+.dock-menu-heading { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #ffffff14; }
 .dock-menu-heading h2 {
   margin: 0;
   font: 700 26px/1.2 var(--body);
@@ -102,7 +103,7 @@ body:has(#q:focus) .brutt-dock { visibility: hidden; pointer-events: none; }
 }
 .dock-menu-heading button { min-width: 44px; min-height: 44px; border: 1px solid var(--dock-edge); border-radius: 14px; color: var(--ink); background: #ffffff0e; font-size: 22px; }
 .dock-menu { font-family: var(--body); -webkit-tap-highlight-color: transparent; }
-.dock-menu-links { margin: 0; padding: 0; list-style: none; }
+.dock-menu-links { min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: 4px 0 0; list-style: none; }
 .dock-menu-links > li:not(.dock-subcategories) + li:not(.dock-subcategories) {
   border-top: 1px solid rgba(255, 255, 255, .08);
 }
@@ -155,10 +156,12 @@ body:has(#q:focus) .brutt-dock { visibility: hidden; pointer-events: none; }
   letter-spacing: -.01em;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .dock-menu[open] .dock-menu-links { animation: dock-menu-in .22s ease-out both; }
+  .dock-menu[open] { animation: dock-menu-in .24s ease-out; }
+  .dock-menu::backdrop { transition: opacity .2s ease; }
+  .dock-menu[data-closing]::backdrop { opacity: 0; }
 }
 @keyframes dock-menu-in {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
