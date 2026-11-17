@@ -137,6 +137,12 @@ async function freioWhats(whats: string) {
 // Entrega pela loja ligada/desligada no CMS do painel (site_cms_config.config.entrega.loja; 24/10/2026).
 // Desligada = só Uber/99. Sem leitura (erro de rede/banco) vale ligada, como era antes do botão existir.
 let ENTREGA_CACHE: { t: number; on: boolean } | null = null;
+export async function checkoutLigado(): Promise<boolean> {
+ const r = await sbGet("site_cms_config?select=config&id=eq.homepage");
+ return r?.[0]?.config?.checkout?.ativo !== false;
+}
+export const CHECKOUT_PAUSADO = "Os pedidos pelo site estão temporariamente pausados. Você pode continuar consultando o catálogo.";
+
 export async function entregaLojaLigada(): Promise<boolean> {
   if (ENTREGA_CACHE && Date.now() - ENTREGA_CACHE.t < 30_000) return ENTREGA_CACHE.on;
   try {
@@ -152,6 +158,7 @@ export const ENTREGA_PAUSADA_MSG = "Hoje a entrega pela loja está pausada: esta
 // ───────────────────────────── criar pedido ─────────────────────────────
 type ItemIn = { id: string; q: number };
 export async function criarPedido(body: any, ip = "") {
+  if (!(await checkoutLigado())) return { erro: CHECKOUT_PAUSADO, status: 409 };
   const nome = nomeLimpo(body?.nome);
   if (!nome) return { erro: "Digite seu nome.", status: 400 };
   // WhatsApp é opcional desde 18/10/2026 (o site pede só o nome; o contato chega quando o cliente manda o pedido à loja).
@@ -242,6 +249,7 @@ async function semEstoque(itens: any[]): Promise<string | null> {
 }
 const emailInterno = (numero: string) => `pix+${String(numero).toLowerCase()}@tabacariabrutt.com.br`;
 export async function pagar(body: any, urlFuncao: string) {
+  if (!(await checkoutLigado())) return { erro: CHECKOUT_PAUSADO, status: 409 };
   const id = String(body?.pedido_id ?? "");
   if (!UUID.test(id)) return { erro: "Pedido inválido.", status: 400 };
   const metodo = METODO[String(body?.metodo)];

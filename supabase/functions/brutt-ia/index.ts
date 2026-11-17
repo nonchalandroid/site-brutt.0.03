@@ -91,6 +91,12 @@ let CON_CACHE: { t: number; txt: string } | null = null;
 // Entrega pela loja ligada/desligada no CMS do painel (site_cms_config.config.entrega.loja; 24/10/2026). Desligada = só Uber/99.
 // Sem leitura vale ligada (como antes do botão existir); o checkout confere de novo na hora de criar o pedido.
 let ENTREGA_CACHE: { t: number; on: boolean } | null = null;
+export async function checkoutLigado(): Promise<boolean> {
+ const r = await sbGet("site_cms_config?select=config&id=eq.homepage");
+ return r?.[0]?.config?.checkout?.ativo !== false;
+}
+export const CHECKOUT_PAUSADO = "Os pedidos pelo site estão temporariamente pausados. Você pode continuar consultando o catálogo.";
+
 export async function entregaLojaLigada(): Promise<boolean> {
   if (ENTREGA_CACHE && Date.now() - ENTREGA_CACHE.t < 30_000) return ENTREGA_CACHE.on;
   try { const r = await sbGet("site_cms_config?select=config&id=eq.homepage"); const on = r?.[0]?.config?.entrega?.loja !== false; ENTREGA_CACHE = { t: Date.now(), on }; return on; }
@@ -493,6 +499,7 @@ async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
     return { ok: true, app, frete_da_loja: 0, subtotal: r.subtotal, total: r.total, minimo: r.minimo, endereco_da_loja: LOJA_ENDERECO, instrucao: "Confirme que o frete da loja fica R$ 0,00 e que ele mesmo chama o Uber Flash ou 99 depois do pedido, com o endereço da loja como coleta." };
   }
   if (nome === "finalizar_pedido") {
+    if (!(await checkoutLigado())) { c.finalErro = "checkout_pausado"; return { ok: false, erro: CHECKOUT_PAUSADO }; }
     const fechada = !!(c.loja && !c.loja.aberto);
     const abre = c.loja?.nenhum ? "sem previsão" : `${c.loja?.quando} às ${c.loja?.hora}`;
     // loja fechada: a reserva tem 2 etapas. Aqui só se PERGUNTA (e anota); só vale reserva=true se a pergunta já foi feita numa vez ANTERIOR (o cliente teve a chance de responder).
@@ -771,6 +778,7 @@ export async function handler(req: Request): Promise<Response> {
       if (c.draft.perdidos >= 2) { c.humano = true; c.draft.perdidos = 0; reply = "Desculpa, estou com dificuldade de te entender direito 😅 Toque no botão verde abaixo para falar com a nossa equipe no WhatsApp."; }
     }
   }
+  if (c.finalErro === "checkout_pausado") { reply = CHECKOUT_PAUSADO; c.humano = false; c.sug = []; }
   const humanoUrl = c.humano ? await linkHumano(c.draft) : null;
   const sugestoes = c.humano || erro || c.perdeu ? [] : atalhosValidos(c.sug ?? (!c.usadas.length && !c.draft.itens.length && !c.draft.entrega && !c.draft.pedido ? ATALHOS_VITRINE : []));
 

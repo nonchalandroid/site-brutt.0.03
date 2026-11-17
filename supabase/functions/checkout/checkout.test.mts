@@ -15,6 +15,7 @@ const realTimeout = globalThis.setTimeout;
 
 // ── banco em memória ──
 const db: Record<string, any[]> = { staff: [{ user_id: "u-staff", active: true }], pedidos: [], wa_notificacoes: [], wa_contatos: [], mp_eventos: [], push_config: [], push_assinaturas: [], sync_config: [{ key: "sync_secret", value: "seg-teste" }] };
+db.site_cms_config = [];
 const products = [
   { site_product_id: "ess-1", name: "Essência Ziggy Menta", price: 25, promo_price: null, stock: 5, is_active: true },
   { site_product_id: "car-1", name: "Carvão 1kg", price: 30, promo_price: 19.9, stock: 1, is_active: true },
@@ -496,7 +497,17 @@ await t("entrega pela loja desligada no CMS: recusa a entrega da loja e aceita U
   r = await call("criar", { ...base, entrega: { tipo: "cliente" } }); assert.equal(r.status, 200, "Uber/99 continua");
   db.site_cms_config = [{ id: "homepage", config: { entrega: { loja: true } } }]; C._limpaEntregaCache();
   r = await call("criar", { ...base, entrega: ent }); assert.equal(r.status, 200, "religada volta a aceitar");
-  delete db.site_cms_config; C._limpaEntregaCache();
+  db.site_cms_config = []; C._limpaEntregaCache();
   r = await call("criar", { ...base, entrega: ent }); assert.equal(r.status, 200, "sem ler o CMS vale ligada (como antes do botão)");
+});
+await t("checkout pausado bloqueia criação e pagamento; pode ser reativado", async () => {
+  const antes = db.pedidos.length, pagamentos = mpPays.size;
+  db.site_cms_config = [{ id: "homepage", config: { checkout: { ativo: false } } }];
+  assert.equal((await call("criar", base)).status, 409);
+  assert.equal((await call("pagar", {})).status, 409);
+  assert.equal(db.pedidos.length, antes);
+  assert.equal(mpPays.size, pagamentos);
+  db.site_cms_config[0].config.checkout.ativo = true;
+  assert.equal((await call("criar", { ...base, entrega: { tipo: "cliente" } })).status, 200);
 });
 console.log(`\n${ok} testes passaram`);
