@@ -15,6 +15,7 @@ const realTimeout = globalThis.setTimeout;
 
 // ── banco em memória ──
 const db: Record<string, any[]> = { staff: [{ user_id: "u-staff", active: true }], pedidos: [], wa_notificacoes: [], wa_contatos: [], mp_eventos: [], push_config: [], push_assinaturas: [], sync_config: [{ key: "sync_secret", value: "seg-teste" }] };
+db.site_cms_config = [];
 const products = [
   { site_product_id: "ess-1", name: "Essência Ziggy Menta", price: 25, promo_price: null, stock: 5, is_active: true },
   { site_product_id: "car-1", name: "Carvão 1kg", price: 30, promo_price: 19.9, stock: 1, is_active: true },
@@ -138,19 +139,21 @@ await t("webhook com assinatura inválida é rejeitado", async () => {
   assert.equal(r.status, 401); assert.equal(db.pedidos.find(p => p.id === pixPedido).status, "aguardando_pagamento");
 });
 await t("webhook válido confirma pelo GET no MP e manda WhatsApp uma vez; duplicado é ignorado", async () => {
+  db.site_cms_config = [{ id: "homepage", config: { contato: { whatsapp: "5511977776666" } } }];
   const id = String(mpSeq);
   const w = () => C.handler(new Request(`${F}?acao=webhook`, { method: "POST", headers: assina(id, "req-1"), body: JSON.stringify({ type: "payment", action: "payment.updated", data: { id } }) }));
   assert.equal((await w()).status, 200); await flush();
   assert.equal(db.pedidos.find(p => p.id === pixPedido).status, "pago");
   const conf = whats.filter(m => m.text.includes("Pagamento confirmado"));
   assert.equal(conf.length, 1); assert.equal(conf[0].number, "5521988887777");
-  assert.ok(whats.some(m => m.number === "5521999990000" && m.text.includes("NOVO PEDIDO PAGO")), "aviso para a loja");
+  assert.ok(whats.some(m => m.number === "5511977776666" && m.text.includes("NOVO PEDIDO PAGO")), "aviso usa WhatsApp do CMS, acima do secret");
   assert.ok(whats.some(m => m.text.includes("Seja bem-vindo")), "saudação a contato novo");
   const antes = whats.length;
   const r2 = await (await w()).json(); assert.equal(r2.repetido, true);
   // mesmo evento com outro request-id (reentrega) → processa de novo, mas não duplica mensagens
   await C.handler(new Request(`${F}?acao=webhook`, { method: "POST", headers: assina(id, "req-2"), body: JSON.stringify({ type: "payment", data: { id } }) })); await flush();
   assert.equal(whats.length, antes);
+  db.site_cms_config = [];
 });
 await t("Pix sem e-mail: o servidor usa o e-mail interno do pedido e gera o QR", async () => {
   const c = await call("criar", { ...base, whats: "21944443333", entrega: { tipo: "cliente" } });
@@ -496,7 +499,17 @@ await t("entrega pela loja desligada no CMS: recusa a entrega da loja e aceita U
   r = await call("criar", { ...base, entrega: { tipo: "cliente" } }); assert.equal(r.status, 200, "Uber/99 continua");
   db.site_cms_config = [{ id: "homepage", config: { entrega: { loja: true } } }]; C._limpaEntregaCache();
   r = await call("criar", { ...base, entrega: ent }); assert.equal(r.status, 200, "religada volta a aceitar");
-  delete db.site_cms_config; C._limpaEntregaCache();
+  db.site_cms_config = []; C._limpaEntregaCache();
   r = await call("criar", { ...base, entrega: ent }); assert.equal(r.status, 200, "sem ler o CMS vale ligada (como antes do botão)");
+});
+await t("checkout pausado bloqueia criação e pagamento; pode ser reativado", async () => {
+  const antes = db.pedidos.length, pagamentos = mpPays.size;
+  db.site_cms_config = [{ id: "homepage", config: { checkout: { ativo: false } } }];
+  assert.equal((await call("criar", base)).status, 409);
+  assert.equal((await call("pagar", {})).status, 409);
+  assert.equal(db.pedidos.length, antes);
+  assert.equal(mpPays.size, pagamentos);
+  db.site_cms_config[0].config.checkout.ativo = true;
+  assert.equal((await call("criar", { ...base, entrega: { tipo: "cliente" } })).status, 200);
 });
 console.log(`\n${ok} testes passaram`);

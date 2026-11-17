@@ -53,6 +53,24 @@ assert.match(decodeURIComponent(j.whatsapp_url),/frete da loja R\$ 0,00/);
 roteiro=[[{text:"oi"}]]; await chama("oi",false);
 assert.ok(prompts.at(-1)!.includes("só por Pix")&&prompts.at(-1)!.includes("botão verde"));
 console.log("IA: 'eu mesmo peço' sem endereço, fechamento com checkout e prompts conforme o modo — OK");
+for (const online of [false, true]) {
+  cmsConfig=[{id:"homepage",config:{checkout:{ativo:false}}}];
+  roteiro=[[{functionCall:{name:"finalizar_pedido",args:{nome:"Ana"}}}],[{text:"Os pedidos estão pausados."}]];
+  j=await chama("Pode fechar meu pedido",online);
+  assert.equal(ferramentasResp.at(-1).response.output.ok,false);
+  assert.match(ferramentasResp.at(-1).response.output.erro,/temporariamente pausados/);
+  assert.ok(!j.checkout&&!j.whatsapp_url&&!j.pedido);
+}
+cmsConfig=[];
+console.log("IA: checkout pausado bloqueia finalização online e WhatsApp — OK");
+cmsConfig=[{id:"homepage",config:{contato:{whatsapp:"5511977776666"}}}];
+roteiro=[[{functionCall:{name:"finalizar_pedido",args:{nome:"Ana"}}}],[{text:"Pedido pronto."}]];
+j=await chama("Pode fechar meu pedido",false);
+assert.match(j.whatsapp_url,/^https:\/\/wa\.me\/5511977776666\?/);
+j=await chama("Quero falar com um atendente",false);
+assert.match(j.humano_url,/^https:\/\/wa\.me\/5511977776666\?/);
+cmsConfig=[];
+console.log("IA: pedido e atendimento usam o WhatsApp do CMS — OK");
 
 // cota diária no banco: passou do limite, não chama o Gemini e oferece a equipe; IP nunca vai em claro
 { const antes=prompts.length; cotaOk=false;
