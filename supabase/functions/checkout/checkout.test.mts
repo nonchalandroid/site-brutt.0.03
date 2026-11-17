@@ -139,19 +139,21 @@ await t("webhook com assinatura inválida é rejeitado", async () => {
   assert.equal(r.status, 401); assert.equal(db.pedidos.find(p => p.id === pixPedido).status, "aguardando_pagamento");
 });
 await t("webhook válido confirma pelo GET no MP e manda WhatsApp uma vez; duplicado é ignorado", async () => {
+  db.site_cms_config = [{ id: "homepage", config: { contato: { whatsapp: "5511977776666" } } }];
   const id = String(mpSeq);
   const w = () => C.handler(new Request(`${F}?acao=webhook`, { method: "POST", headers: assina(id, "req-1"), body: JSON.stringify({ type: "payment", action: "payment.updated", data: { id } }) }));
   assert.equal((await w()).status, 200); await flush();
   assert.equal(db.pedidos.find(p => p.id === pixPedido).status, "pago");
   const conf = whats.filter(m => m.text.includes("Pagamento confirmado"));
   assert.equal(conf.length, 1); assert.equal(conf[0].number, "5521988887777");
-  assert.ok(whats.some(m => m.number === "5521999990000" && m.text.includes("NOVO PEDIDO PAGO")), "aviso para a loja");
+  assert.ok(whats.some(m => m.number === "5511977776666" && m.text.includes("NOVO PEDIDO PAGO")), "aviso usa WhatsApp do CMS, acima do secret");
   assert.ok(whats.some(m => m.text.includes("Seja bem-vindo")), "saudação a contato novo");
   const antes = whats.length;
   const r2 = await (await w()).json(); assert.equal(r2.repetido, true);
   // mesmo evento com outro request-id (reentrega) → processa de novo, mas não duplica mensagens
   await C.handler(new Request(`${F}?acao=webhook`, { method: "POST", headers: assina(id, "req-2"), body: JSON.stringify({ type: "payment", data: { id } }) })); await flush();
   assert.equal(whats.length, antes);
+  db.site_cms_config = [];
 });
 await t("Pix sem e-mail: o servidor usa o e-mail interno do pedido e gera o QR", async () => {
   const c = await call("criar", { ...base, whats: "21944443333", entrega: { tipo: "cliente" } });

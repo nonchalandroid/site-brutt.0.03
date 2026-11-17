@@ -23,6 +23,8 @@
 import { enviarPush, gerarChavesVapid } from "./push.ts";
 
 // trim: um espaço ou quebra de linha colado junto no painel de Secrets não pode virar "chave vazia" silenciosa
+import { whatsappLoja } from "../_shared/whatsapp.ts";
+
 const env = (k: string) => String(((globalThis as any).Deno?.env?.get(k) as string | undefined) ?? "").trim().replace(/^["']|["']$/g, "");
 const SB = () => env("SUPABASE_URL"), SK = () => env("SUPABASE_SERVICE_ROLE_KEY");
 const hdr = (x: Record<string, string> = {}) => ({ apikey: SK(), Authorization: "Bearer " + SK(), "Content-Type": "application/json", ...x });
@@ -437,7 +439,7 @@ export async function notificar(ped: any) {
     if (ped.status === "pago" || ped.status === "concluido") {
       // Crítica: confirmação vai na hora. As demais seguem em segundo plano, com ~3 s entre mensagens.
       const enviou = await enviarUmaVez(ped.id, "pagamento_confirmado", cliente, m.pagamento_confirmado);
-      const loja = normalizaWhats(env("WHATS_LOJA_AVISOS"));
+      const loja = await whatsappLoja(sbGet, normalizaWhats(env("WHATS_LOJA_AVISOS")) || "");
       emSegundoPlano((async () => {
         if (loja) await enviarUmaVez(ped.id, "loja_novo_pedido", loja, m.loja_novo_pedido);
         if (enviou && await saudarSeNovo(cliente)) { await pausa(INTERVALO_MSG_MS); await enviarWhats(cliente, m.saudacao).catch(() => {}); }

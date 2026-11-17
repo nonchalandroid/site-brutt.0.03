@@ -14,7 +14,7 @@ var abertoId=null,tPoll=null,tPill=null,tTerminal=null,ultimo={};
 var _esc=typeof esc==="function"?esc:function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
 var _R=function(v){return typeof R==="function"?R(Number(v)||0):"R$ "+(Number(v)||0).toFixed(2).replace(".",",")};
 var _toast=function(m){if(typeof toast==="function")toast(m)};
-var _whats=function(){return typeof WHATS==="string"&&/^\d{10,15}$/.test(WHATS)?WHATS:"5521996600243"};
+var _whats=function(){if(window.BruttContato)return BruttContato.numero();return typeof WHATS==="string"&&/^\d{10,15}$/.test(WHATS)?WHATS:"5521996600243"};
 var reduz=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ── pedidos guardados neste aparelho ── */
@@ -66,7 +66,10 @@ function autoWaTalvez(id,a){
   var n=4;f.insertAdjacentHTML("beforeend",'<p class="ac-auto" id="acAuto" role="status">Abrindo o WhatsApp em <b>'+n+'</b>… <button type="button" data-acomp-auto-cancela>Agora não</button></p>');
   tAuto=setInterval(function(){n--;var c=document.getElementById("acAuto");if(!c||abertoId!==id){autoWaCancela();return}
     if(n>0){c.querySelector("b").textContent=n;return}
-    autoWaCancela();marcaAvisou(id);location.href=btn.href;setTimeout(function(){if(abertoId===id&&ultimo[id])desenha(id,ultimo[id])},800)},1000);
+    autoWaCancela();
+    var ir=function(){if(abertoId!==id)return;marcaAvisou(id);location.href=window.BruttContato?BruttContato.url(btn.href):btn.href;setTimeout(function(){if(abertoId===id&&ultimo[id])desenha(id,ultimo[id])},800)};
+    if(window.BruttContato)BruttContato.carregar().catch(function(){}).then(ir);else ir();
+  },1000);
 }
 function esquece(id){grava(lista().filter(function(x){return x.id!==id}));pill()}
 

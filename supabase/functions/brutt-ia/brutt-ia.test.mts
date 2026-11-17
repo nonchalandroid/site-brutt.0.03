@@ -63,6 +63,14 @@ for (const online of [false, true]) {
 }
 cmsConfig=[];
 console.log("IA: checkout pausado bloqueia finalização online e WhatsApp — OK");
+cmsConfig=[{id:"homepage",config:{contato:{whatsapp:"5511977776666"}}}];
+roteiro=[[{functionCall:{name:"finalizar_pedido",args:{nome:"Ana"}}}],[{text:"Pedido pronto."}]];
+j=await chama("Pode fechar meu pedido",false);
+assert.match(j.whatsapp_url,/^https:\/\/wa\.me\/5511977776666\?/);
+j=await chama("Quero falar com um atendente",false);
+assert.match(j.humano_url,/^https:\/\/wa\.me\/5511977776666\?/);
+cmsConfig=[];
+console.log("IA: pedido e atendimento usam o WhatsApp do CMS — OK");
 
 // cota diária no banco: passou do limite, não chama o Gemini e oferece a equipe; IP nunca vai em claro
 { const antes=prompts.length; cotaOk=false;

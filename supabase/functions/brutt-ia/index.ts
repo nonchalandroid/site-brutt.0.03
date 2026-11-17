@@ -25,8 +25,10 @@ const DIAS_MIN = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "
 const MAX_ITERACOES = 6, MAX_LINHAS = 30, MAX_QTD = 99, PRAZO_TOTAL_MS = 40000, CORRIDA_MS = 4000;
 
 export const _deps = { now: () => new Date() };       // (só pra teste)
+import { whatsappLoja } from "../_shared/whatsapp.ts";
+
 const env = (k: string) => (globalThis as any).Deno?.env?.get(k) as string | undefined;
-const WHATSAPP = () => env("BRUTT_WHATSAPP") ?? "5521996600243";
+const WHATSAPP = () => whatsappLoja(sbGet, env("BRUTT_WHATSAPP") || "5521996600243");
 const MODELOS = () => { const p = env("GEMINI_MODEL"); const padrao = ["gemini-flash-lite-latest", "gemini-3.5-flash", "gemini-3.8-flash"]; return p ? [p, ...padrao.filter(m => m !== p)] : padrao; };
 
 // ---------- utilidades (iguais às do site) ----------
@@ -321,7 +323,7 @@ async function linkHumano(d: Draft): Promise<string> {
     if (!d.pedido && e?.modo === "entrega") L.push(`📍 Entrega: ${e.rua}, ${e.numero}${e.bairro ? " — " + e.bairro : ""} (taxa ${R(e.taxa)})`);
     else if (!d.pedido && e?.modo === "fora") L.push(`📍 Endereço (fora da área de entrega): ${e.local}`);
   } catch { /* a mensagem básica já resolve */ }
-  return `https://wa.me/${WHATSAPP()}?text=${encodeURIComponent(L.join("\n"))}`;
+  return `https://wa.me/${await WHATSAPP()}?text=${encodeURIComponent(L.join("\n"))}`;
 }
 async function draftDaSessao(session: string): Promise<Draft> {
   try { const rows = await sbGet(`ia_sessoes?select=draft&session_id=eq.${encodeURIComponent(session)}`); if (rows[0]?.draft) return { ...novoDraft(), ...rows[0].draft }; } catch { /* sessão nova */ }
@@ -526,7 +528,7 @@ async function executaFerramenta(nome: string, a: any, c: Ctx): Promise<any> {
       try { const n = await sbRpc("proximo_numero_pedido", {}); numero = Number.isFinite(+n) ? "BR-" + String(n).padStart(6, "0") : ""; } catch { /* usa o código por horário */ }
       if (!numero) numero = "BR-" + Date.now().toString(36).toUpperCase().slice(-6);                // mesma reserva do site quando offline
     }
-    const msg = base(numero), url = `https://wa.me/${WHATSAPP()}?text=${encodeURIComponent(msg)}`;
+    const msg = base(numero), url = `https://wa.me/${await WHATSAPP()}?text=${encodeURIComponent(msg)}`;
     d.pedido = { numero, msg, url, total: r.total }; d.reservaPerguntada = false; d.nome = nomeC;
     c.whatsapp = url; c.numero = numero; c.mudouPedido = true; c.reserva = !!reserva;
     c.sug = [{ t: "Fazer outro pedido", q: "Quero fazer outro pedido" }];
