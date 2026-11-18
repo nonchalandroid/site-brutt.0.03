@@ -351,7 +351,6 @@ button.ia-wa{width:100%;border:0;cursor:pointer;font-family:inherit}
 @media(prefers-reduced-motion:reduce){.some-nevoa,.some-nevoa>*{animation:none}.some-nevoa::after{display:none}}
 .ctt{margin:14px 0 4px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
 .ctt-t{margin:0 0 8px;font-size:14px;font-weight:600;color:var(--ink)}
-.ctt-t small{margin-left:6px;padding:2px 8px;border-radius:999px;background:var(--line);color:var(--muted);font-size:11px;font-weight:600}
 .ctt-g{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ctt-g .field{margin-top:0}
 .ctt-g .t{width:100%}
@@ -969,7 +968,7 @@ function carregarCheckout(){
   if(!checkoutCarregando){
     checkoutCarregando=new Promise((resolve,reject)=>{
       const script=document.createElement("script");
-      script.src="/js/checkout-mp.js?v=20261118d";
+      script.src="/js/checkout-mp.js?v=20261118e";
       const falha=()=>{
         clearTimeout(prazo);
         script.remove();
