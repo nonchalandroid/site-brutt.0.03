@@ -40,9 +40,7 @@
 (function(){var h=document.documentElement,n=navigator,c=n.connection||{},leve=!!c.saveData||(n.deviceMemory>0&&n.deviceMemory<4)||(n.hardwareConcurrency>0&&n.hardwareConcurrency<4);
 try{var g=JSON.parse(localStorage.getItem("brutt_fx")||"null");if(g&&Date.now()-g.t<6048e5&&g.v==="leve")leve=true}catch(e){}
 h.classList.add(leve?"fx-leve":"fx-alto");window.__FX=leve?"leve":"alto"})();</script>
-<script>/* Mercado Pago. MODO TESTE: o pagamento online só liga em quem abrir o site com ?mpteste=1
-   (fica lembrado no aparelho; ?mpteste=0 desliga). Os outros clientes seguem no pedido pelo WhatsApp.
-   Para ligar pra todo mundo (produção): MP_PRODUCAO="APP_USR-…" da tela "Credenciais de produção". */
+<script>
 (function(){var MP_TESTE="APP_USR-d54b3053-d6b3-43fb-b920-03e63b6f122f",MP_PRODUCAO="APP_USR-d54b3053-d6b3-43fb-b920-03e63b6f122f",t=false;
 try{var m=location.search.match(/[?&]mpteste=([01])/);if(m)localStorage.setItem("brutt_mpteste",m[1]);t=localStorage.getItem("brutt_mpteste")==="1"}catch(e){}
 window.__MP={publicKey:MP_PRODUCAO||(t?MP_TESTE:""),teste:!MP_PRODUCAO&&t}})();</script>
