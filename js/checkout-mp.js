@@ -8,10 +8,6 @@ var CFG=window.__MP||{},S=window.__SUPA||{};
 var FN=(S.url||"")+"/functions/v1/checkout";
 var LOJA_CEP="23067-030";            /* o mesmo do link "Como chegar" do site */
 var metodo="pix",whatsVal="",pedido=null,brick=null,poll=null,emailVal="",promosVal=false,_avisoTimer=null;
-/* 18/10/2026: o checkout pede só o NOME (e-mail e WhatsApp travavam compras). O contato chega quando o cliente manda o
-   pedido no WhatsApp da loja. O Mercado Pago recebe um e-mail interno do pedido (servidor); o comprovante do Mercado Pago
-   chega ao cliente no e-mail da conta dele, por isso a tela só avisa, sem pedir e-mail. */
-
 function ativo(){return!!(CFG.publicKey&&S.url&&S.key)}
 function dig(s){return String(s||"").replace(/\D/g,"")}
 function emailOk(){sincronizarContato();return/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(emailVal||"").trim())}
