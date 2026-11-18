@@ -8,26 +8,55 @@ var CFG=window.__MP||{},S=window.__SUPA||{};
 var FN=(S.url||"")+"/functions/v1/checkout";
 var LOJA_CEP="23067-030";            /* o mesmo do link "Como chegar" do site */
 var metodo="pix",whatsVal="",pedido=null,brick=null,poll=null,emailVal="",promosVal=false,_avisoTimer=null;
-/* 18/10/2026: o checkout pede só o NOME (e-mail e WhatsApp travavam compras). O contato chega quando o cliente manda o
-   pedido no WhatsApp da loja. O Mercado Pago recebe um e-mail interno do pedido (servidor); o comprovante do Mercado Pago
-   chega ao cliente no e-mail da conta dele, por isso a tela só avisa, sem pedir e-mail. */
-
 function ativo(){return!!(CFG.publicKey&&S.url&&S.key)}
 function dig(s){return String(s||"").replace(/\D/g,"")}
-function emailOk(){return/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(emailVal||"").trim())}
-function whatsOk(){var d=dig(whatsVal);if(d.length===12||d.length===13)d=d.replace(/^55/,"");return d.length===10||d.length===11}
-function mascara(v){var d=dig(v).slice(0,11);if(d.length<3)return d;if(d.length<7)return"("+d.slice(0,2)+") "+d.slice(2);if(d.length<11)return"("+d.slice(0,2)+") "+d.slice(2,6)+"-"+d.slice(6);return"("+d.slice(0,2)+") "+d.slice(2,7)+"-"+d.slice(7)}
+function emailOk(){sincronizarContato();return/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(emailVal||"").trim())}
+function nacional(v){
+  var s=String(v||"").trim(),d=dig(s);
+  if(!/^\+?[\d\s().-]*$/.test(s))return null;
+  if(s.charAt(0)==="+"){if(s.slice(0,3)!=="+55")return null;d=d.slice(2)}
+  else if(d.slice(0,2)==="00"){if(d.slice(0,4)!=="0055")return null;d=d.slice(4)}
+  else if((d.length===12||d.length===13)&&d.slice(0,2)==="55")d=d.slice(2);
+  return d;
+}
+function whatsOk(){sincronizarContato();var d=nacional(whatsVal);return d!==null&&/^[1-9]\d(?:[2-5]\d{7}|9\d{8})$/.test(d)}
+function mascara(v){
+  var s=String(v||"").trim(),d=nacional(s);
+  if(d===null||d.length>11||((s.charAt(0)==="+"||s.slice(0,2)==="00")&&d.length<10))return s;
+  if(d.length<3)return d;
+  if(d.length<7)return"("+d.slice(0,2)+") "+d.slice(2);
+  if(d.length<11)return"("+d.slice(0,2)+") "+d.slice(2,6)+"-"+d.slice(6);
+  return"("+d.slice(0,2)+") "+d.slice(2,7)+"-"+d.slice(7);
+}
+function atualizarWhats(t){
+  var raw=t.value,v=mascara(raw),start=t.selectionStart;
+  if(v!==raw){
+    t.value=v;
+    if(document.activeElement===t&&start!==null){
+      var n=Math.max(0,dig(raw.slice(0,start)).length-(dig(raw).length-dig(v).length)),pos=0,seen=0;
+      if(start===raw.length)pos=v.length;
+      else while(pos<v.length&&seen<n){if(/\d/.test(v.charAt(pos)))seen++;pos++}
+      try{t.setSelectionRange(pos,pos)}catch(_){}
+    }
+  }
+  if(v!==whatsVal){whatsVal=v;try{localStorage.setItem("brutt_whats",JSON.stringify(v))}catch(_){}}
+}
+function sincronizarContato(){
+  var t=document.getElementById("whats"),e=document.getElementById("email");
+  if(t)atualizarWhats(t);
+  if(e&&emailVal!==e.value.trim()){emailVal=e.value.trim();try{localStorage.setItem("brutt_email",JSON.stringify(emailVal))}catch(_){}}
+}
 
 /* ───────── partes do formulário de checkout ───────── */
 /* Contato OPCIONAL (19/10/2026): WhatsApp e e-mail para o andamento do pedido, comprovante e, só se marcar a caixa
    (que vem desmarcada: consentimento explícito, LGPD), promoções e cupons. Nada aqui trava a compra. */
 try{whatsVal=JSON.parse(localStorage.getItem("brutt_whats")||'""')||"";emailVal=JSON.parse(localStorage.getItem("brutt_email")||'""')||""}catch(e){}
-function whatsInvalido(){return!!dig(whatsVal)&&!whatsOk()}
-function emailInvalido(){return!!String(emailVal||"").trim()&&!emailOk()}
+function whatsInvalido(){sincronizarContato();return!!String(whatsVal||"").trim()&&!whatsOk()}
+function emailInvalido(){sincronizarContato();return!!String(emailVal||"").trim()&&!emailOk()}
 /* entrega=true ("Entrega pela loja"): mostra por que vale deixar o WhatsApp; a dica liga/desliga em marcarEntrega (#cttDica) */
-function whatsHTML(entrega){if(!ativo())return"";return'<div class="ctt"><p class="ctt-t">Quer acompanhar o pedido e receber novidades? <small>Opcional</small></p>'
+function whatsHTML(entrega){sincronizarContato();if(!ativo())return"";return'<div class="ctt"><p class="ctt-t">Quer acompanhar o pedido e receber novidades? <small>Opcional</small></p>'
   +'<p class="ctt-dica" id="cttDica"'+(entrega?"":" hidden")+'>Deixe seu WhatsApp para o entregador te chamar quando chegar.</p>'
-  +'<div class="ctt-g"><div><label class="field" for="whats">WhatsApp</label><input class="t" id="whats" type="tel" inputmode="tel" autocomplete="tel" placeholder="(21) 99999-9999" maxlength="16" value="'+esc(mascara(whatsVal))+'"></div>'
+  +'<div class="ctt-g"><div><label class="field" for="whats">WhatsApp</label><input class="t" id="whats" name="whatsapp" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(21) 99999-9999" maxlength="32" value="'+esc(mascara(whatsVal))+'"></div>'
   +'<div><label class="field" for="email">E-mail</label><input class="t" id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="120" value="'+esc(emailVal)+'"></div></div>'
     +'<label class="ctt-ok"><input type="checkbox" id="promos"'+(promosVal?" checked":"")+'><span>Quero receber promoções e cupons de desconto da Brutt</span></label></div>'}
 var PIN='<svg class="pin-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.1-7-12a7 7 0 0 1 14 0c0 5.9-7 12-7 12Z"/><circle cx="12" cy="10" r="2.6"/></svg>';
@@ -68,9 +97,10 @@ function pagamentoHTML(){
    +'</div><p class="pay-safe"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></svg><span>Pix instantâneo, processado com segurança pelo <b>Mercado Pago</b>. Não aceitamos cartão digitado no site.</span></p>';
 }
 document.addEventListener("input",function(e){var t=e.target;if(!t)return;
-  if(t.id==="whats"){var v=mascara(t.value);if(v!==t.value)t.value=v;whatsVal=v;try{localStorage.setItem("brutt_whats",JSON.stringify(v))}catch(_){}}
+  if(t.id==="whats")atualizarWhats(t);
   else if(t.id==="email"){emailVal=t.value.trim();try{localStorage.setItem("brutt_email",JSON.stringify(emailVal))}catch(_){}}});
-document.addEventListener("change",function(e){if(e.target&&e.target.id==="promos")promosVal=e.target.checked});
+document.addEventListener("change",function(e){if(!e.target)return;if(e.target.id==="promos")promosVal=e.target.checked;else if(e.target.id==="whats"||e.target.id==="email")sincronizarContato()});
+document.addEventListener("focusout",function(e){if(e.target&&(e.target.id==="whats"||e.target.id==="email"))sincronizarContato()});
 document.addEventListener("click",function(e){
   var b=e.target.closest&&e.target.closest("[data-pay],[data-pin-copy],[data-mp-voltar],[data-mp-copiar],[data-mp-tentar],[data-mp-whats],[data-mp-gerar]");if(!b)return;
   if(b.dataset.pay){metodo=b.dataset.pay;document.querySelectorAll(".popt").forEach(function(x){var on=x.dataset.pay===metodo;x.classList.toggle("sel",on);x.setAttribute("aria-checked",String(on))})}
@@ -109,6 +139,9 @@ function assinatura(nome,reserva){
 /* ───────── etapa de pagamento (dentro do drawer) ───────── */
 var _ctx=null;
 function iniciar(o){
+  sincronizarContato();
+  if(whatsInvalido()){toast("Confira seu WhatsApp com DDD. Aceitamos números do Brasil, com ou sem +55.");return}
+  if(emailInvalido()){toast("Confira seu e-mail.");return}
   _ctx=o;
   cartView="pagamento";
   $("#dTitle").textContent="Pagamento";
