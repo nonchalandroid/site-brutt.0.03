@@ -54,11 +54,11 @@ try{whatsVal=JSON.parse(localStorage.getItem("brutt_whats")||'""')||"";emailVal=
 function whatsInvalido(){sincronizarContato();return!!String(whatsVal||"").trim()&&!whatsOk()}
 function emailInvalido(){sincronizarContato();return!!String(emailVal||"").trim()&&!emailOk()}
 /* entrega=true ("Entrega pela loja"): mostra por que vale deixar o WhatsApp; a dica liga/desliga em marcarEntrega (#cttDica) */
-function whatsHTML(entrega){sincronizarContato();if(!ativo())return"";return'<div class="ctt"><p class="ctt-t">Quer acompanhar o pedido e receber novidades? <small>Opcional</small></p>'
+function whatsHTML(entrega){sincronizarContato();if(!ativo())return"";return'<div class="ctt"><p class="ctt-t">Contato para acompanhar o pedido</p>'
   +'<p class="ctt-dica" id="cttDica"'+(entrega?"":" hidden")+'>Deixe seu WhatsApp para o entregador te chamar quando chegar.</p>'
   +'<div class="ctt-g"><div><label class="field" for="whats">WhatsApp</label><input class="t" id="whats" name="whatsapp" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(21) 99999-9999" maxlength="32" value="'+esc(mascara(whatsVal))+'"></div>'
   +'<div><label class="field" for="email">E-mail</label><input class="t" id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="120" value="'+esc(emailVal)+'"></div></div>'
-    +'<label class="ctt-ok"><input type="checkbox" id="promos"'+(promosVal?" checked":"")+'><span>Quero receber promoções e cupons de desconto da Brutt</span></label></div>'}
+    +'<label class="ctt-ok"><input type="checkbox" id="promos"'+(promosVal?" checked":"")+'><span>Quero receber promoções e cupons de desconto da Brutt (opcional)</span></label></div>'}
 var PIN='<svg class="pin-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.1-7-12a7 7 0 0 1 14 0c0 5.9-7 12-7 12Z"/><circle cx="12" cy="10" r="2.6"/></svg>';
 /* "Prefiro eu mesmo solicitar a entrega": o cliente chama o Uber/99 dele, então aqui não aparece valor nenhum.
    Pin copia o endereço da loja (ponto de coleta); botões abrem os apps. Uber = logotipo oficial (simple-icons, CC0),
