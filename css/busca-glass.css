@@ -10,10 +10,7 @@ header .search::after {
   border-radius: inherit;
   pointer-events: none;
   opacity: .65;
-  background:
-    radial-gradient(ellipse 4px 3px at calc(100% - 22px) 7px, #ffffff70, #ffffff0d 55%, transparent 78%),
-    radial-gradient(ellipse 7px 5px at calc(100% - 45px) calc(100% - 7px), transparent 40%, #ffffff38 55%, #0002 65%, transparent 80%),
-    linear-gradient(175deg, #ffffff0c, transparent 42%);
+  background: linear-gradient(175deg, #ffffff0c, transparent 42%);
 }
 header .search input {
   background: transparent;
