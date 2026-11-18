@@ -123,6 +123,7 @@
     if (!menu.open || closing) return;
     closing = true;
     sheetMotion?.cancel();
+    menu.classList.remove("is-opening");
     menu.classList.add("is-closing");
     menu.inert = true;
     const finish = () => {
@@ -131,7 +132,7 @@
       menu.close();
       unlockPage();
       menu.inert = false;
-      menu.classList.remove("is-closing");
+      menu.classList.remove("is-closing", "is-opening");
       closing = false;
       menuAction.setAttribute("aria-expanded", "false");
       menuAction.focus({ preventScroll: true });
@@ -198,10 +199,16 @@
     menu.showModal();
     list.scrollTop = 0;
     menuAction.setAttribute("aria-expanded", "true");
-    if (!reduced.matches) sheetMotion = menu.animate(
-      [{ transform: foldedTransform(), opacity: 0 }, { transform: "translate(0, 0) scale(1)", opacity: 1 }],
-      { duration: 220, easing: "cubic-bezier(.2, .75, .25, 1)" }
-    );
+    if (!reduced.matches) {
+      menu.classList.add("is-opening");
+      sheetMotion = menu.animate(
+        [{ transform: foldedTransform(), opacity: 0 },
+          { transform: "translate(0, 0) scale(1.008)", opacity: 1, offset: .86 },
+          { transform: "translate(0, 0) scale(1)", opacity: 1 }],
+        { duration: 240, easing: "cubic-bezier(.2, .75, .25, 1)" }
+      );
+      sheetMotion.finished.then(() => menu.classList.remove("is-opening")).catch(() => {});
+    }
   }
 
   dock.addEventListener("click", event => {
@@ -253,7 +260,7 @@
       menu.close();
       unlockPage();
       menu.inert = false;
-      menu.classList.remove("is-closing");
+      menu.classList.remove("is-closing", "is-opening");
       closing = false;
     }
     dock.hidden = !mobile.matches;

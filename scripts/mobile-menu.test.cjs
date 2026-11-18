@@ -35,7 +35,7 @@ const fixture = process.env.BRUTT_CATALOGO_FIXTURE
   const base = 'http://127.0.0.1:' + server.address().port;
   try {
     async function openPage(width, reducedMotion = 'no-preference', config) {
-      const page = await browser.newPage({ ...devices['iPhone 13'], viewport: { width, height: 844 }, deviceScaleFactor: 1, reducedMotion });
+      const page = await browser.newPage({ ...(width <= 640 ? devices['iPhone 13'] : {}), viewport: { width, height: 844 }, deviceScaleFactor: 1, reducedMotion });
       pages.push(page);
       page.setDefaultTimeout(8000);
       page.errors = [];
@@ -67,7 +67,10 @@ const fixture = process.env.BRUTT_CATALOGO_FIXTURE
       await page.screenshot({ path: 'work/menu-' + width + '-fechado.png', animations: 'disabled' });
       await page.evaluate(() => { window.scrollTo({ top: 500, behavior: 'instant' }); });
       const y = await page.evaluate(() => scrollY);
-      await trigger.click(); await waitIdle(page);
+      await trigger.click();
+      const opening = await menu.evaluate(el => el.getAnimations().find(a => a.effect.target === el)?.effect.getKeyframes());
+      assert(opening?.[0].transform.includes('scale(') && opening.at(-1).transform.includes('scale(1)'), 'abertura expande a partir do botão');
+      await waitIdle(page);
       await page.screenshot({ path: 'work/menu-' + width + '-recolhido.png', animations: 'disabled' });
       assert.equal(await trigger.getAttribute('aria-expanded'), 'true');
       assert(await menu.getByRole('button', { name: 'Fechar menu' }).evaluate(el => el === document.activeElement));
@@ -112,6 +115,12 @@ const fixture = process.env.BRUTT_CATALOGO_FIXTURE
       await trigger.click(); await waitIdle(page);
       await page.mouse.click(3, 3);
       await menu.waitFor({ state: 'hidden' });
+      await page.evaluate(() => {
+        document.querySelector('[data-dock=menu]').click();
+        document.querySelector('[data-menu-close]').click();
+      });
+      await menu.waitFor({ state: 'hidden' });
+      assert.equal(await page.evaluate(() => document.documentElement.classList.contains('is-locked')), false);
       await trigger.click(); await waitIdle(page);
       await menu.getByRole('button', { name: 'Fechar menu' }).click();
       // The closing animation actually converges on the dock action.
@@ -161,6 +170,26 @@ const fixture = process.env.BRUTT_CATALOGO_FIXTURE
     assert.equal(await cms.evaluate(() => document.documentElement.classList.contains('is-locked')), false);
     assert.equal(await cms.locator('#bruttDock').isVisible(), false);
     console.log('Movimento reduzido, CMS e mudança para desktop OK');
+    for (const width of [360, 390, 430, 1366]) {
+      const page = await openPage(width, 'reduce'), q = page.locator('#q'), field = page.locator('header .search');
+      const before = await q.boundingBox();
+      await page.screenshot({path: 'work/busca-glass-' + width + '.png', animations: 'disabled'});
+      await q.fill('Ziggy');
+      await page.locator('#results.on [data-add]').first().waitFor();
+      const after = await q.boundingBox();
+      assert.equal(after.width, before.width);
+      assert.equal(after.height, before.height);
+      assert.equal(await field.evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
+      assert.equal(await field.evaluate(el => getComputedStyle(el, '::after').pointerEvents), 'none');
+      assert.equal(await q.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+      await q.fill('');
+      await page.waitForFunction(() => !document.getElementById('results').classList.contains('on'));
+      await page.emulateMedia({forcedColors:'active'});
+      assert.equal(await field.evaluate(el => getComputedStyle(el, '::after').display), 'none');
+      assert.deepEqual(page.errors, []);
+      await page.close();
+    }
+    console.log('Busca glass: mobile/desktop, resultados, foco, dimensões estáveis e alto contraste OK');
   } finally {
     await browser.close(); server.close();
   }
