@@ -58,9 +58,28 @@ function mockClient() {
     assert.equal(before.financialContext.custosFixos, 2500);
     assert.equal(before.meta.outrosCustos, 500);
     await page.locator('#fnCfoIa').click(); await page.locator('.cfo-agent-drawer').waitFor();
+    await page.locator('.cfo-agent-boletos summary').click();
+    const today = await page.locator('input[name="dataCompra"]').inputValue();
+    const date = offset => new Date(Date.parse(today) + offset * 86400000).toISOString().slice(0, 10);
+    async function addBill(name, offset, value) {
+      await page.locator('input[name="fornecedor"]').fill(name);
+      await page.locator('input[name="dataCompra"]').fill(date(-10));
+      await page.locator('input[name="dataVencimento"]').fill(date(offset));
+      await page.locator('input[name="valor"]').fill(value);
+      await page.getByRole('button', { name: 'Cadastrar boleto', exact: true }).click();
+    }
+    await addBill('Distante', 8, '1234,56'); await addBill('Próximo', 7, '100.25'); await addBill('Vencido', -1, '10'); await addBill('Hoje', 0, '20');
+    assert.deepEqual(await page.locator('.cfo-agent-boleto strong').allTextContents(), ['Vencido', 'Hoje', 'Próximo', 'Distante']);
+    assert.equal(await page.locator('.cfo-agent-due-soon').count(), 2);
+    assert.equal(await page.locator('.cfo-agent-overdue').count(), 1);
+    await page.getByRole('button', { name: 'Marcar Pago: Hoje', exact: true }).click();
+    assert.equal(await page.locator('.cfo-agent-boleto').count(), 3);
+    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('brutt:cfo-boletos:')))));
+    assert.equal(stored.find(b => b.fornecedor === 'Hoje').status, 'pago');
+    await page.locator('.cfo-agent-boletos summary').click();
     await page.getByText('Quanto falta para atingir o ponto de equilíbrio?', { exact: true }).click();
     await page.locator('.cfo-agent-assistant').waitFor();
-    assert.deepEqual(requests[0].financialContext, before.financialContext);
+    assert.deepEqual(requests[0].financialContext, { ...before.financialContext, boletosAbertos: stored.filter(b => b.status === 'aberto').sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento)) });
     assert.equal(await page.locator('.cfo-agent-assistant img').count(), 0);
     await page.locator('.cfo-agent-context summary').click();
     await page.screenshot({ path: 'work/cfo-agent-desktop.png' });
@@ -85,6 +104,18 @@ function mockClient() {
     await page.waitForFunction(() => document.querySelector('#lcGraf .eq-term')?.cfoContext === null); await page.locator('#fnCfoIa').click();
     await page.waitForFunction(() => document.querySelector('.cfo-agent-drawer').open && document.querySelector('.cfo-agent-metrics').textContent.includes('indisponíveis'));
     assert.equal(await page.evaluate(() => window.__writes), 0);
+    mode = 'ok'; await page.getByText('Analisar impacto dos boletos próximos', { exact: true }).click();
+    await page.waitForFunction(() => document.querySelector('.cfo-agent-assistant'));
+    assert.equal(requests.at(-1).financialContext, undefined);
+    assert.equal(requests.at(-1).boletosAbertos.length, 3);
+    await page.reload(); await page.locator('#eqSim').waitFor(); await page.locator('#fnCfoIa').click();
+    await page.locator('.cfo-agent-boletos summary').click();
+    await page.waitForFunction(() => document.querySelectorAll('.cfo-agent-boleto').length === 3);
+    for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-drawer').evaluate(el => el.scrollWidth > el.clientWidth), false); }
+    await page.evaluate(() => localStorage.setItem(Object.keys(localStorage).find(k => k.startsWith('brutt:cfo-boletos:')), '{invalid'));
+    await page.locator('#cfo-agent-question').fill('Teste de armazenamento inválido'); await page.locator('.cfo-agent-send').click();
+    await page.waitForFunction(() => document.querySelector('.cfo-agent-status').textContent.includes('consulta foi interrompida'));
+    assert(await page.locator('.cfo-agent-boleto-form fieldset').evaluate(el => el.disabled));
     assert.deepEqual(errors, []);
     console.log('CFO UI: indicadores, simulador, chat seguro, erro/retry, cancelamento, foco, navegação e 360/390/430px OK. Nenhuma escrita.');
   } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }

@@ -9,7 +9,7 @@
 .cfo-agent-drawer button:disabled{cursor:wait;opacity:.55}
 .cfo-agent-drawer :focus-visible{outline:2px solid #efc66c;outline-offset:3px}
 .cfo-agent-close{font-size:26px!important;width:44px;padding:0!important}
-.cfo-agent-note,.cfo-agent-status{color:#cbb79a;font-size:13px}
+.cfo-agent-note,.cfo-agent-status,.cfo-agent-boleto-status{color:#cbb79a;font-size:13px}
 .cfo-agent-context{padding:12px;border:1px solid #58412d;border-radius:12px;margin:16px 0}
 .cfo-agent-context summary{cursor:pointer;min-height:32px;align-content:center;color:#efc66c}
 .cfo-agent-metrics p{font-size:12px;color:#cbb79a}
@@ -26,6 +26,20 @@
 .cfo-agent-form label{font-size:13px}
 .cfo-agent-form textarea{width:100%;min-height:86px;resize:vertical;border:1px solid #715438;border-radius:12px;padding:12px;background:#100c09;color:#f4e7cf;font-size:16px}
 .cfo-agent-form .cfo-agent-send{background:#edbd59;color:#21150b;font-weight:650}
+.cfo-agent-boletos{margin:16px 0;padding:12px;border:1px solid #58412d;border-radius:12px}
+.cfo-agent-boletos summary{cursor:pointer;min-height:36px;align-content:center;color:#efc66c}
+.cfo-agent-boleto-form fieldset{border:0;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+.cfo-agent-boleto-form legend{font-weight:600;margin-bottom:10px}
+.cfo-agent-boleto-form label{display:grid;gap:4px;font-size:13px;min-width:0}
+.cfo-agent-boleto-form label:first-of-type,.cfo-agent-boleto-form button{grid-column:1/-1}
+.cfo-agent-boleto-form input{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid #715438;border-radius:8px;background:#100c09;color:#f4e7cf;font:inherit;font-size:16px;color-scheme:dark}
+.cfo-agent-boleto-list{display:grid;gap:10px;margin-bottom:12px}
+.cfo-agent-boleto{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:12px;background:#261c15;border:1px solid #58412d;border-radius:10px;overflow-wrap:anywhere}
+.cfo-agent-boleto p{grid-column:1/-1;font-size:12px;color:#cbb79a;margin:0}
+.cfo-agent-boleto button{grid-column:1/-1;font-size:13px;justify-self:start}
+.cfo-agent-due-soon{border-color:#edbd59;border-left-width:4px}
+.cfo-agent-overdue{border-color:#ed907e;border-left-width:4px}
+.cfo-agent-clear-paid{font-size:12px!important}
 @keyframes cfo-agent-in{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
 @media(max-width:540px){.cfo-agent-drawer{padding:18px 16px max(18px,env(safe-area-inset-bottom));border-radius:0}.cfo-agent-metrics dl{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.cfo-agent-drawer[open]{animation:none}}
