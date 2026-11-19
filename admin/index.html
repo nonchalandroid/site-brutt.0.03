@@ -5661,6 +5661,7 @@ function graficoEquilibrio(o){
   };
   /* resumo do simulador + botões + tabela (dependem do ritmo) */
   const textos = () => {
+    term.cfoMonthData = { currentPeriod: pre.slice(0, 7), dailySales: FIN_DIAS, margin: o.m, cost: o.custo, rhythm: st.ritmo, weights: PESO };
     term.cfoContext = real && Number.isFinite(o.margem) && o.margem > 0 ? { financialContext: { faturamentoAtual: R[L], faturamentoProjetado: vend(D), margemBrutaPct: o.margem, custosFixos: o.fixos, diaAtual: hoje, pontoEquilibrio: o.equilibrio, faltaParaEmpatar: Math.max(0, o.equilibrio - R[L]), ritmoDiarioSimulado: st.ritmo }, meta: { periodo: pre.slice(0, 7), dadosAte: pre + String(L).padStart(2, "0"), outrosCustos: o.custo - o.fixos, simulado: Math.abs(st.ritmo - ritmoBase) > .5 } } : null;
     const simulando = Math.abs(st.ritmo - ritmoBase) > 0.5, de = dEq(), dia = Math.max(1, Math.ceil(de));
     term.querySelector(".eq-sv").textContent = `${brl0(st.ritmo)}/dia`;
@@ -6015,7 +6016,7 @@ async function renderFinanceiro(){
     </div>`;
   bindTopbar();
   $("#fnAtualiza").onclick = () => renderFinanceiro();
-  { const anchor = $("#fnCfoIa"), options = { client: sb, url: SUPA_URL, key: SUPA_KEY, anchor, getContext: () => $("#lcGraf .eq-term")?.cfoContext || null }, module = import("./cfo-agent-drawer.js?v=20261119c"); module.then(({ CfoAgentDrawer }) => CfoAgentDrawer.notify(options)).catch(() => {}); anchor.onclick = async () => { try { const { CfoAgentDrawer } = await module; if (anchor.isConnected) CfoAgentDrawer.open(options); } catch { alert("Não foi possível abrir a consulta financeira. Atualize a página e tente novamente."); } }; }
+{ const anchor = $("#fnCfoIa"), options = { client: sb, url: SUPA_URL, key: SUPA_KEY, anchor, getContext: () => $("#lcGraf .eq-term")?.cfoContext || null }, module = import("./cfo-agent-drawer.js?v=20261119e"); module.then(({ CfoAgentDrawer }) => CfoAgentDrawer.notify(options)).catch(() => {}); anchor.onclick = async () => { try { const { CfoAgentDrawer } = await module; if (anchor.isConnected) CfoAgentDrawer.open(options); } catch { alert("Não foi possível abrir a consulta financeira. Atualize a página e tente novamente."); } }; }
   const [prodsMg, fin, dias] = await Promise.all([
     sb.from("products").select("id,name,category_id,price,promo_price,cost_price,stock,sales_count").eq("is_active", true).limit(5000),
     sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),

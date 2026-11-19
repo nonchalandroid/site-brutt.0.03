@@ -81,6 +81,10 @@ function mockClient() {
     assert.equal(await page.locator('.cfo-agent-boleto').count(), 3);
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('brutt:cfo-boletos:')))));
     assert.equal(stored.find(b => b.fornecedor === 'Hoje').status, 'pago');
+    assert.equal(stored.find(b => b.fornecedor === 'Hoje').pagoEm, today);
+    await page.waitForFunction(() => document.querySelectorAll('.cfo-chart-bill').length === 4);
+    assert.equal(await page.locator('.cfo-chart-bill.is-paid').count(), 1);
+    assert((await page.locator('.cfo-chart-bill.is-paid').textContent()).includes(today.split('-').reverse().join('/')));
     await page.getByRole('tab', { name: 'Análise', exact: true }).click();
     await page.getByText('Quanto falta para atingir o ponto de equilíbrio?', { exact: true }).click();
     await page.locator('.cfo-agent-assistant').waitFor();
@@ -93,9 +97,46 @@ function mockClient() {
     await page.locator('.cfo-agent-context summary').click();
     await page.screenshot({ path: 'work/cfo-agent-desktop.png' });
     await page.keyboard.press('Escape'); assert.equal(await page.locator('dialog[open]').count(), 0);
+    await page.locator('.cfo-chart-bills').screenshot({ path: 'work/cfo-boletos-contexto-desktop.png' });
+    await page.locator('#lcGraf').screenshot({ path: 'work/cfo-grafico-boletos-desktop.png' });
+    await page.setViewportSize({ width: 390, height: 850 });
+    assert.equal(await page.locator('.cfo-chart-bills').evaluate(el => el.scrollWidth > el.clientWidth), false);
+    await page.locator('.cfo-chart-bills').screenshot({ path: 'work/cfo-boletos-contexto-mobile.png' });
+    await page.setViewportSize({ width: 1440, height: 1000 });
     assert.equal(await page.locator('#fnCfoIa').evaluate(el => el === document.activeElement), true);
     await page.locator('#eqSim').evaluate(el => { el.value = String(Number(el.value) + 200); el.dispatchEvent(new Event('input', { bubbles: true })); });
     await page.waitForFunction(previous => document.querySelector('.eq-term').cfoContext.financialContext.ritmoDiarioSimulado !== previous, before.financialContext.ritmoDiarioSimulado);
+    assert.equal(await page.locator('.cfo-chart-bill').count(), 4, 'agenda preservada ao mudar simulador');
+    await page.evaluate(({ rows, day }) => {
+      const key = Object.keys(localStorage).find(k => k.startsWith('brutt:cfo-boletos:v1:') && !k.endsWith(':aviso-2dias'));
+      localStorage.setItem(key, JSON.stringify([...rows, { id: 'legacy-paid', fornecedor: 'Pago antigo', dataCompra: day, dataVencimento: day, valor: 5, status: 'pago' }, { id: 'outside-month', fornecedor: 'Outro mês', dataCompra: day, dataVencimento: '2027-01-31', valor: 7, status: 'aberto' }]));
+      window.dispatchEvent(new StorageEvent('storage', { key }));
+    }, { rows: stored, day: today });
+    await page.waitForFunction(() => document.querySelectorAll('.cfo-chart-bill').length === 5);
+    assert((await page.locator('.cfo-chart-bills').innerText()).includes('Data de pagamento não registrada'));
+    await page.getByLabel('Período da agenda de boletos').selectOption('todos');
+    assert.equal(await page.locator('.cfo-chart-bill').count(), 6);
+    await page.evaluate(rows => { const key = Object.keys(localStorage).find(k => k.startsWith('brutt:cfo-boletos:v1:') && !k.endsWith(':aviso-2dias')); localStorage.setItem(key, JSON.stringify(rows)); window.dispatchEvent(new StorageEvent('storage', { key })); }, stored);
+    await page.waitForFunction(() => document.querySelectorAll('.cfo-chart-bill').length === 4);
+    await page.getByLabel('Período da agenda de boletos').selectOption('mes');
+    await page.getByRole('button', { name: 'Mês anterior', exact: true }).click();
+    assert((await page.locator('.cfo-month-chart').innerText()).includes('Não há vendas importadas'));
+    assert.equal(await page.locator('#lcGraf .eq-graf').isVisible(), false);
+    assert.equal(await page.locator('.cfo-chart-bill').count(), 0);
+    await page.getByRole('button', { name: 'Próximo mês', exact: true }).click();
+    assert.equal(await page.locator('#lcGraf .eq-graf').isVisible(), true);
+    assert.equal(await page.locator('.cfo-chart-bill').count(), 4);
+    await page.getByRole('button', { name: 'Próximo mês', exact: true }).click();
+    assert((await page.locator('.cfo-month-chart').innerText()).includes('projeção'));
+    assert.equal(await page.locator('.cfo-month-chart svg').count(), 1);
+    await page.getByLabel('Período financeiro').fill('2027-01');
+    assert((await page.locator('.cfo-month-chart h4').textContent()).includes('2027'));
+    for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('#lcGraf .eq-term').evaluate(el => el.scrollWidth > el.clientWidth), false); }
+    await page.screenshot({ path: 'work/cfo-meses-mobile.png' });
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.locator('#lcGraf').screenshot({ path: 'work/cfo-meses-desktop.png' });
+    await page.getByRole('button', { name: 'Mês atual', exact: true }).click();
+    assert.equal(await page.locator('#lcGraf .eq-graf').isVisible(), true);
     await page.locator('#fnCfoIa').click();
     mode = 'error'; await page.locator('#cfo-agent-question').fill('Teste de erro'); await page.locator('.cfo-agent-send').click();
     await page.waitForFunction(() => document.querySelector('.cfo-agent-status').textContent === 'Tente novamente.');
@@ -104,6 +145,34 @@ function mockClient() {
     mode = 'ok'; await page.locator('.cfo-agent-send').click(); await page.waitForFunction(() => document.querySelectorAll('.cfo-agent-assistant').length === 2);
     for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-drawer').evaluate(el => el.scrollWidth > el.clientWidth), false); }
     await page.screenshot({ path: 'work/cfo-agent-mobile.png' });
+    await page.getByRole('tab', { name: 'Simular despesa', exact: true }).click();
+    await page.locator('input[name="valorDespesa"]').fill('100,25');
+    await page.locator('select[name="prazoDespesa"]').selectOption('15');
+    const dueDate = date(15).split('-').reverse().join('/');
+    assert((await page.locator('.cfo-agent-financial-preview').innerText()).includes(dueDate));
+    assert((await page.locator('.cfo-agent-financial-preview').innerText()).includes('Folga não calculada'));
+    const critical = Number(date(15).slice(-2)) <= 10;
+    assert.equal(await page.locator('.cfo-agent-financial-preview .cfo-agent-cash-warning').count(), critical ? 1 : 0);
+    await page.locator('input[name="saldoRealCaixaHoje"]').fill('0');
+    assert((await page.locator('.cfo-agent-financial-preview').innerText()).includes('-R$'));
+    await page.locator('input[name="saldoRealCaixaHoje"]').fill('2000,50');
+    assert((await page.locator('.cfo-agent-financial-preview').innerText()).includes('655,69'));
+    assert((await page.locator('.cfo-agent-financial-preview').innerText()).includes('555,44'));
+    await page.getByRole('button', { name: 'Analisar cenário com CFO', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('.cfo-agent-send').disabled);
+    assert.equal(requests.at(-1).financialContext.saldoRealCaixaHoje, 2000.5);
+    assert.equal(requests.at(-1).financialContext.saldoInformadoEm, today);
+    assert.deepEqual(requests.at(-1).financialContext.simulacaoDespesa, { valor: 100.25, prazoDias: 15 });
+    assert(requests.at(-1).messages.at(-1).content.includes(date(15)));
+    await page.getByRole('tab', { name: 'Simular despesa', exact: true }).click();
+    for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-drawer').evaluate(el => el.scrollWidth > el.clientWidth), false); }
+    await page.screenshot({ path: 'work/cfo-simulador-mobile.png' });
+    await page.setViewportSize({ width: 1440, height: 1000 }); await page.screenshot({ path: 'work/cfo-simulador-desktop.png' });
+    await page.getByRole('button', { name: 'Nova conversa', exact: true }).click();
+    await page.getByText('Simular compromisso de despesa em 15/30 dias', { exact: true }).click();
+    assert.equal(await page.getByRole('tab', { name: 'Simular despesa', exact: true }).getAttribute('aria-selected'), 'true');
+    assert.equal(await page.locator('input[name="valorDespesa"]').inputValue(), '');
+    await page.getByRole('button', { name: 'Nova conversa', exact: true }).click();
     await page.setViewportSize({ width: 390, height: 480 });
     const shortComposer = await page.locator('.cfo-agent-send').boundingBox(); assert(shortComposer.y + shortComposer.height <= 480, 'campo acessível com viewport reduzida');
     await page.setViewportSize({ width: 430, height: 850 });
@@ -120,7 +189,10 @@ function mockClient() {
     await page.waitForFunction(() => document.querySelector('.cfo-agent-assistant'));
     assert.equal(requests.at(-1).financialContext, undefined);
     assert.equal(requests.at(-1).boletosAbertos.length, 3);
+    assert.equal(requests.at(-1).contextoCaixa.saldoRealCaixaHoje, 2000.5);
     await page.reload(); await page.locator('#eqSim').waitFor(); await page.locator('#fnCfoIa').click();
+    await page.getByRole('tab', { name: 'Simular despesa', exact: true }).click();
+    assert.equal(await page.locator('input[name="saldoRealCaixaHoje"]').inputValue(), '', 'saldo não persistido após reload');
     await page.getByRole('tab', { name: 'Contas a pagar', exact: true }).click();
     await page.waitForFunction(() => document.querySelectorAll('.cfo-agent-boleto').length === 3);
     for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-drawer').evaluate(el => el.scrollWidth > el.clientWidth), false); }
@@ -141,7 +213,7 @@ function mockClient() {
     for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-bill-alert').evaluate(el => el.scrollWidth > el.clientWidth), false); }
     await page.getByRole('button', { name: 'Dispensar por hoje' }).click();
     await page.reload(); await page.locator('#eqSim').waitFor();
-    await page.evaluate(async () => { const { CfoAgentDrawer } = await import('/admin/cfo-agent-drawer.js?v=20261119c'); await CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions); });
+    await page.evaluate(async () => { const { CfoAgentDrawer } = await import('/admin/cfo-agent-drawer.js?v=20261119e'); await CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions); });
     assert.equal(await page.locator('.cfo-agent-bill-alert').count(), 0);
     await page.evaluate(() => {
       const key = Object.keys(localStorage).find(k => k.endsWith(':aviso-2dias'));
