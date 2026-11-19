@@ -213,7 +213,7 @@ function mockClient() {
     for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-bill-alert').evaluate(el => el.scrollWidth > el.clientWidth), false); }
     await page.getByRole('button', { name: 'Dispensar por hoje' }).click();
     await page.reload(); await page.locator('#eqSim').waitFor();
-    await page.evaluate(async () => { const { CfoAgentDrawer } = await import('/admin/cfo-agent-drawer.js?v=20261119c'); await CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions); });
+    await page.evaluate(async () => { const { CfoAgentDrawer } = await import('/admin/cfo-agent-drawer.js?v=20261119e'); await CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions); });
     assert.equal(await page.locator('.cfo-agent-bill-alert').count(), 0);
     await page.evaluate(() => {
       const key = Object.keys(localStorage).find(k => k.endsWith(':aviso-2dias'));

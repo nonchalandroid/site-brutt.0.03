@@ -37,7 +37,7 @@ export function renderFinancialAnswer(target, text) {
 }
 function ensureStyles() {
   if (document.querySelector('link[data-cfo-styles]')) return;
-  const css = element('link', ''); css.rel = 'stylesheet'; css.dataset.cfoStyles = ''; css.href = new URL('./cfo-agent-drawer.css?v=20261119d', import.meta.url).href; document.head.append(css);
+  const css = element('link', ''); css.rel = 'stylesheet'; css.dataset.cfoStyles = ''; css.href = new URL('./cfo-agent-drawer.css?v=20261119e', import.meta.url).href; document.head.append(css);
 }
 
 export class CfoAgentDrawer {
