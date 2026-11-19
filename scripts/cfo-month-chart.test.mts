@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import { buildMonthSeries, shiftMonth } from '../admin/cfo-month-chart.js';
+assert.equal(shiftMonth('2026-01', -1), '2025-12'); assert.equal(shiftMonth('2026-12', 1), '2027-01');
+const data = { currentPeriod: '2026-11', rhythm: 100, margin: .4, cost: 500, weights: [1, 1, 1, 1, 1, 1, 1], dailySales: [{ dia: '2026-10-01', faturamento: 100, lucro_bruto: 50 }, { dia: '2026-10-03', faturamento: 200, lucro_bruto: 100 }] };
+const past = buildMonthSeries('2026-10', data);
+assert.equal(past.projected, false); assert.equal(past.revenue, 300); assert.equal(past.result, -350); assert.equal(past.actualGross, true); assert.equal(past.points.length, 3);
+assert.equal(buildMonthSeries('2026-09', data).hasData, false);
+const future = buildMonthSeries('2026-12', data);
+assert.equal(future.projected, true); assert.equal(future.revenue, 3100); assert.equal(future.result, 740); assert.equal(future.days, 31);
+assert.equal(buildMonthSeries('2028-02', data).days, 29);
+assert.equal(buildMonthSeries('2026-10', { ...data, dailySales: [{ dia: '2026-10-01', faturamento: 100 }] }).actualGross, false);
+assert.throws(() => buildMonthSeries('2026-13', data));
+console.log('CFO meses: histórico, ausência de dados, projeção, margem/custos, virada de ano e ano bissexto OK.');

@@ -1,4 +1,5 @@
 import { financialEstimate, parseAmount } from './cfo-financial.js';
+import { mountMonthNavigation } from './cfo-month-chart.js';
 const QUESTIONS = ['Quanto falta para atingir o ponto de equilíbrio?', 'Como está o ritmo para fechar o mês?', 'Simular uma despesa com vencimento em 30 dias', 'Analisar impacto dos boletos próximos', 'Qual nossa folga financeira condicionada hoje?', 'Simular compromisso de despesa em 15/30 dias'];
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const validDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
@@ -79,7 +80,9 @@ export class CfoAgentDrawer {
   static renderChartBills() {
     const data = this.billData; if (!data?.options.anchor.isConnected) return;
     const { options, rows } = data, term = options.anchor.closest('.pg').querySelector('#lcGraf .eq-term'); if (!term) return;
-    const period = term.cfoContext?.meta.periodo || today().slice(0, 7);
+    if (!term._cfoMonthBound) { term._cfoMonthBound = true; term.addEventListener('cfo-month-change', () => this.renderChartBills()); }
+    mountMonthNavigation(term, term.cfoMonthData);
+    const period = term.dataset.cfoPeriod || term.cfoContext?.meta.periodo || today().slice(0, 7);
     let panel = term.querySelector('.cfo-chart-bills');
     const mode = panel?.dataset.mode || 'mes', signature = JSON.stringify([period, today(), rows, mode]);
     if (panel?.dataset.signature === signature) return;

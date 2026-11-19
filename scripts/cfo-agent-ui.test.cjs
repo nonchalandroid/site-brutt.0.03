@@ -119,6 +119,24 @@ function mockClient() {
     await page.evaluate(rows => { const key = Object.keys(localStorage).find(k => k.startsWith('brutt:cfo-boletos:v1:') && !k.endsWith(':aviso-2dias')); localStorage.setItem(key, JSON.stringify(rows)); window.dispatchEvent(new StorageEvent('storage', { key })); }, stored);
     await page.waitForFunction(() => document.querySelectorAll('.cfo-chart-bill').length === 4);
     await page.getByLabel('Período da agenda de boletos').selectOption('mes');
+    await page.getByRole('button', { name: 'Mês anterior', exact: true }).click();
+    assert((await page.locator('.cfo-month-chart').innerText()).includes('Não há vendas importadas'));
+    assert.equal(await page.locator('#lcGraf .eq-graf').isVisible(), false);
+    assert.equal(await page.locator('.cfo-chart-bill').count(), 0);
+    await page.getByRole('button', { name: 'Próximo mês', exact: true }).click();
+    assert.equal(await page.locator('#lcGraf .eq-graf').isVisible(), true);
+    assert.equal(await page.locator('.cfo-chart-bill').count(), 4);
+    await page.getByRole('button', { name: 'Próximo mês', exact: true }).click();
+    assert((await page.locator('.cfo-month-chart').innerText()).includes('projeção'));
+    assert.equal(await page.locator('.cfo-month-chart svg').count(), 1);
+    await page.getByLabel('Período financeiro').fill('2027-01');
+    assert((await page.locator('.cfo-month-chart h4').textContent()).includes('2027'));
+    for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('#lcGraf .eq-term').evaluate(el => el.scrollWidth > el.clientWidth), false); }
+    await page.screenshot({ path: 'work/cfo-meses-mobile.png' });
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.locator('#lcGraf').screenshot({ path: 'work/cfo-meses-desktop.png' });
+    await page.getByRole('button', { name: 'Mês atual', exact: true }).click();
+    assert.equal(await page.locator('#lcGraf .eq-graf').isVisible(), true);
     await page.locator('#fnCfoIa').click();
     mode = 'error'; await page.locator('#cfo-agent-question').fill('Teste de erro'); await page.locator('.cfo-agent-send').click();
     await page.waitForFunction(() => document.querySelector('.cfo-agent-status').textContent === 'Tente novamente.');

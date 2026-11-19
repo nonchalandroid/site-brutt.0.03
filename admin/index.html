@@ -5661,6 +5661,7 @@ function graficoEquilibrio(o){
   };
   /* resumo do simulador + botões + tabela (dependem do ritmo) */
   const textos = () => {
+    term.cfoMonthData = { currentPeriod: pre.slice(0, 7), dailySales: FIN_DIAS, margin: o.m, cost: o.custo, rhythm: st.ritmo, weights: PESO };
     term.cfoContext = real && Number.isFinite(o.margem) && o.margem > 0 ? { financialContext: { faturamentoAtual: R[L], faturamentoProjetado: vend(D), margemBrutaPct: o.margem, custosFixos: o.fixos, diaAtual: hoje, pontoEquilibrio: o.equilibrio, faltaParaEmpatar: Math.max(0, o.equilibrio - R[L]), ritmoDiarioSimulado: st.ritmo }, meta: { periodo: pre.slice(0, 7), dadosAte: pre + String(L).padStart(2, "0"), outrosCustos: o.custo - o.fixos, simulado: Math.abs(st.ritmo - ritmoBase) > .5 } } : null;
     const simulando = Math.abs(st.ritmo - ritmoBase) > 0.5, de = dEq(), dia = Math.max(1, Math.ceil(de));
     term.querySelector(".eq-sv").textContent = `${brl0(st.ritmo)}/dia`;

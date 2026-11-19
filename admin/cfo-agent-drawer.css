@@ -111,6 +111,19 @@
 #lcGraf .cfo-chart-note{margin:12px 0;font-size:11px;color:#c1b1a3}
 #lcGraf .cfo-chart-bills>button{min-height:42px;padding:8px 12px;border:1px solid #66523c;border-radius:8px;background:#261e20;color:#efdfc3;font:inherit}
 #lcGraf .cfo-chart-bills :focus-visible{outline:2px solid #e9ca87;outline-offset:3px}
+#lcGraf .cfo-month-navigation{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 18px;color:#efdfc3;font-size:12px}
+#lcGraf .cfo-month-navigation label{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:inherit;color:inherit}
+#lcGraf .cfo-month-navigation input{width:auto;max-width:100%;min-height:40px;padding:6px 10px;border:1px solid #66523c;border-radius:8px;background:#261e20;color:#efdfc3;color-scheme:dark;font:inherit}
+#lcGraf .cfo-month-navigation button{min-height:40px;padding:6px 12px;border:1px solid #66523c;border-radius:8px;background:#261e20;color:#efdfc3;font:inherit}
+#lcGraf .cfo-month-navigation button:disabled{opacity:.4;cursor:default}
+#lcGraf .cfo-month-navigation :focus-visible{outline:2px solid #e9ca87;outline-offset:3px}
+#lcGraf .cfo-month-chart{color:#efdfc3;font:13px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:12px 0}
+#lcGraf .cfo-month-chart[hidden]{display:none!important}
+#lcGraf .cfo-month-chart h4{color:#f4e7cf;font-size:17px;margin:0 0 10px;letter-spacing:-.015em;text-transform:none}
+#lcGraf .cfo-month-chart svg{display:block;width:100%;height:auto;min-height:180px}
+#lcGraf .cfo-month-chart>p{font-size:12px;color:#c1b1a3;margin:10px 0}
+#lcGraf .cfo-month-stats{display:flex;gap:12px 24px;flex-wrap:wrap;color:#e9ca87;font-variant-numeric:tabular-nums}
+#lcGraf .cfo-month-stats p{margin:0}
 @media(max-width:540px){#lcGraf .cfo-chart-day{grid-template-columns:minmax(0,1fr)}#lcGraf .cfo-chart-day h5{grid-column:1;grid-row:auto;padding:0 0 3px}#lcGraf .cfo-chart-bill{grid-column:1;grid-template-columns:minmax(0,1fr) auto}#lcGraf .cfo-chart-bill-status{grid-column:1/-1}#lcGraf .cfo-chart-bills select{width:100%}}
 .cfo-agent-bill-alert{margin:0 0 18px;padding:16px;border:1px solid #c58c31;border-left:4px solid #edbd59;border-radius:12px;background:#302219;color:#f4e7cf;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-wrap:anywhere}
 .cfo-agent-bill-alert ul{margin:8px 0;padding-left:20px;max-height:160px;overflow:auto}
