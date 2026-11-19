@@ -5,15 +5,47 @@ const validBoleto = b => b && typeof b.id === 'string' && b.id.length <= 80 && t
 const money = value => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const labels = { faturamentoAtual: 'Faturamento importado', faturamentoProjetado: 'Fechamento projetado', margemBrutaPct: 'Margem bruta', custosFixos: 'Custos fixos', diaAtual: 'Dia atual', pontoEquilibrio: 'Ponto de equilíbrio', faltaParaEmpatar: 'Faturamento que falta', ritmoDiarioSimulado: 'Ritmo diário simulado' };
 function element(tag, className, text) { const el = document.createElement(tag); el.className = className; if (text !== undefined) el.textContent = text; return el; }
+function ensureStyles() {
+  if (document.querySelector('link[data-cfo-styles]')) return;
+  const css = element('link', ''); css.rel = 'stylesheet'; css.dataset.cfoStyles = ''; css.href = new URL('./cfo-agent-drawer.css?v=20261119b', import.meta.url).href; document.head.append(css);
+}
 
 export class CfoAgentDrawer {
   static instance;
+  static async notify(options) {
+    if (!options?.anchor?.isConnected) return;
+    this.alertOptions = options;
+    try {
+      const { data: { session } } = await options.client.auth.getSession();
+      if (!options.anchor.isConnected || !session?.user?.id) return;
+      const key = 'brutt:cfo-boletos:v1:' + options.url + ':' + session.user.id;
+      const rows = JSON.parse(localStorage.getItem(key) || '[]');
+      const container = options.anchor.closest('.pg'), previous = container.querySelector('.cfo-agent-bill-alert');
+      previous?.remove();
+      if (!Array.isArray(rows) || rows.length > 100 || rows.some(b => !validBoleto(b))) return;
+      const now = Date.parse(today());
+      const due = rows.filter(b => b.status === 'aberto' && Date.parse(b.dataVencimento) <= now + 2 * 86400000).sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento));
+      if (!due.length) return;
+      const signature = JSON.stringify([today(), due.map(b => [b.id, b.dataVencimento, b.valor, b.fornecedor])]);
+      const dismissKey = key + ':aviso-2dias';
+      if (localStorage.getItem(dismissKey) === signature) return;
+      ensureStyles();
+      const alert = element('section', 'cfo-agent-bill-alert'); alert.setAttribute('role', 'status'); alert.setAttribute('aria-label', 'Aviso de vencimento de boletos');
+      alert.append(element('strong', '', `${due.length} boleto${due.length === 1 ? '' : 's'}: vencidos ou vencendo em até 2 dias • ${money(due.reduce((sum, b) => sum + b.valor, 0))}`));
+      const list = element('ul', '');
+      for (const b of due) list.append(element('li', '', `${b.fornecedor} • ${money(b.valor)} • ${b.dataVencimento.split('-').reverse().join('/')} (${b.dataVencimento < today() ? 'vencido' : b.dataVencimento === today() ? 'vence hoje' : 'próximo do vencimento'})`));
+      alert.append(list);
+      const view = element('button', '', 'Ver boletos'); view.type = 'button'; view.onclick = () => { this.open(options); this.instance.boletosBlock.open = true; this.instance.boletosBlock.scrollIntoView({ block: 'start' }); };
+      const dismiss = element('button', '', 'Dispensar por hoje'); dismiss.type = 'button'; dismiss.onclick = () => { try { localStorage.setItem(dismissKey, signature); alert.remove(); } catch { dismiss.textContent = 'Não foi possível salvar a dispensa'; } };
+      alert.append(view, dismiss); container.querySelector('#ovLucro')?.before(alert);
+    } catch { /* O cadastro exibe o erro de armazenamento ao abrir a gaveta. */ }
+  }
   static open(options) {
     if (!this.instance) this.instance = new CfoAgentDrawer();
     this.instance.open(options);
   }
   constructor() {
-    const css = element('link', ''); css.rel = 'stylesheet'; css.href = new URL('./cfo-agent-drawer.css?v=20261119', import.meta.url).href; document.head.append(css);
+    ensureStyles();
     this.messages = [];
     this.dialog = element('dialog', 'cfo-agent-drawer');
     this.dialog.setAttribute('aria-labelledby', 'cfo-agent-title');
@@ -98,7 +130,7 @@ export class CfoAgentDrawer {
     }
   }
   saveBoletos(rows) {
-    try { localStorage.setItem(this.storageKey, JSON.stringify(rows)); this.boletos = rows; this.renderBoletos(); this.boletoStatus.textContent = 'Registros salvos neste navegador.'; return true; }
+    try { localStorage.setItem(this.storageKey, JSON.stringify(rows)); this.boletos = rows; this.renderBoletos(); this.boletoStatus.textContent = 'Registros salvos neste navegador.'; CfoAgentDrawer.notify(this.options); return true; }
     catch { this.boletoStatus.textContent = 'Não foi possível salvar. A alteração não foi aplicada; verifique o espaço e as permissões do navegador.'; return false; }
   }
   addBoleto() {
@@ -174,3 +206,6 @@ export class CfoAgentDrawer {
     }
   }
 }
+window.addEventListener('focus', () => CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions); });
+window.addEventListener('storage', event => { if (event.key?.startsWith('brutt:cfo-boletos:')) CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions); });

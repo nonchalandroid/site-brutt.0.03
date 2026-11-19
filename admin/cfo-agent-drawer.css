@@ -40,6 +40,10 @@
 .cfo-agent-due-soon{border-color:#edbd59;border-left-width:4px}
 .cfo-agent-overdue{border-color:#ed907e;border-left-width:4px}
 .cfo-agent-clear-paid{font-size:12px!important}
+.cfo-agent-bill-alert{margin:0 0 18px;padding:16px;border:1px solid #c58c31;border-left:4px solid #edbd59;border-radius:12px;background:#302219;color:#f4e7cf;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-wrap:anywhere}
+.cfo-agent-bill-alert ul{margin:8px 0;padding-left:20px;max-height:160px;overflow:auto}
+.cfo-agent-bill-alert button{min-height:44px;padding:8px 12px;margin:4px 8px 0 0;border:1px solid #715438;border-radius:8px;background:#1d1510;color:#f4e7cf;font:inherit;cursor:pointer}
+.cfo-agent-bill-alert button:focus-visible{outline:2px solid #efc66c;outline-offset:2px}
 @keyframes cfo-agent-in{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
 @media(max-width:540px){.cfo-agent-drawer{padding:18px 16px max(18px,env(safe-area-inset-bottom));border-radius:0}.cfo-agent-metrics dl{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.cfo-agent-drawer[open]{animation:none}}

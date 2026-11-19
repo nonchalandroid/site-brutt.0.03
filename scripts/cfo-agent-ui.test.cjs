@@ -112,6 +112,34 @@ function mockClient() {
     await page.locator('.cfo-agent-boletos summary').click();
     await page.waitForFunction(() => document.querySelectorAll('.cfo-agent-boleto').length === 3);
     for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-drawer').evaluate(el => el.scrollWidth > el.clientWidth), false); }
+    await page.locator('.cfo-agent-close').click();
+    await page.evaluate(({ two, three, purchase }) => {
+      const key = Object.keys(localStorage).find(k => k.startsWith('brutt:cfo-boletos:v1:') && !k.endsWith(':aviso-2dias'));
+      const bills = JSON.parse(localStorage.getItem(key));
+      bills.push({ id: 'two-days', fornecedor: 'Em dois dias', dataCompra: purchase, dataVencimento: two, valor: 50, status: 'aberto' }, { id: 'three-days', fornecedor: 'Em três dias', dataCompra: purchase, dataVencimento: three, valor: 70, status: 'aberto' });
+      localStorage.setItem(key, JSON.stringify(bills));
+    }, { two: date(2), three: date(3), purchase: date(-10) });
+    await page.reload();
+    await page.locator('.cfo-agent-bill-alert').waitFor();
+    const notice = await page.locator('.cfo-agent-bill-alert').innerText();
+    assert(notice.includes('Em dois dias') && notice.includes('Vencido'));
+    assert(!notice.includes('Em três dias') && !notice.includes('Distante') && !notice.includes('Hoje'));
+    assert.equal(await page.locator('.cfo-agent-bill-alert li').count(), 2);
+    assert(notice.includes('60,00'));
+    for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-bill-alert').evaluate(el => el.scrollWidth > el.clientWidth), false); }
+    await page.getByRole('button', { name: 'Dispensar por hoje' }).click();
+    await page.reload(); await page.locator('#eqSim').waitFor();
+    await page.evaluate(async () => { const { CfoAgentDrawer } = await import('/admin/cfo-agent-drawer.js?v=20261119b'); await CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions); });
+    assert.equal(await page.locator('.cfo-agent-bill-alert').count(), 0);
+    await page.evaluate(() => {
+      const key = Object.keys(localStorage).find(k => k.endsWith(':aviso-2dias'));
+      localStorage.removeItem(key); window.dispatchEvent(new Event('focus'));
+    });
+    await page.locator('.cfo-agent-bill-alert').waitFor();
+    await page.getByRole('button', { name: 'Ver boletos', exact: true }).click();
+    await page.waitForFunction(() => document.querySelector('.cfo-agent-boletos').open);
+    await page.getByRole('button', { name: 'Marcar Pago: Em dois dias', exact: true }).click();
+    await page.waitForFunction(() => document.querySelectorAll('.cfo-agent-bill-alert li').length === 1);
     await page.evaluate(() => localStorage.setItem(Object.keys(localStorage).find(k => k.startsWith('brutt:cfo-boletos:')), '{invalid'));
     await page.locator('#cfo-agent-question').fill('Teste de armazenamento inválido'); await page.locator('.cfo-agent-send').click();
     await page.waitForFunction(() => document.querySelector('.cfo-agent-status').textContent.includes('consulta foi interrompida'));

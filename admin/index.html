@@ -6009,7 +6009,7 @@ async function renderFinanceiro(){
     </div>`;
   bindTopbar();
   $("#fnAtualiza").onclick = () => renderFinanceiro();
-  $("#fnCfoIa").onclick = async () => { try { const { CfoAgentDrawer } = await import("./cfo-agent-drawer.js?v=20261119"); if (rotaAtual() === "financeiro") CfoAgentDrawer.open({ client: sb, url: SUPA_URL, key: SUPA_KEY, getContext: () => $("#lcGraf .eq-term")?.cfoContext || null }); } catch { alert("Não foi possível abrir a consulta financeira. Atualize a página e tente novamente."); } };
+  { const anchor = $("#fnCfoIa"), options = { client: sb, url: SUPA_URL, key: SUPA_KEY, anchor, getContext: () => $("#lcGraf .eq-term")?.cfoContext || null }, module = import("./cfo-agent-drawer.js?v=20261119b"); module.then(({ CfoAgentDrawer }) => CfoAgentDrawer.notify(options)).catch(() => {}); anchor.onclick = async () => { try { const { CfoAgentDrawer } = await module; if (anchor.isConnected) CfoAgentDrawer.open(options); } catch { alert("Não foi possível abrir a consulta financeira. Atualize a página e tente novamente."); } }; }
   const [prodsMg, fin, dias] = await Promise.all([
     sb.from("products").select("id,name,category_id,price,promo_price,cost_price,stock,sales_count").eq("is_active", true).limit(5000),
     sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),
