@@ -20,6 +20,18 @@
 .cfo-agent-panel{flex:1;min-height:0}
 .cfo-agent-panel-analise{display:flex;flex-direction:column}
 .cfo-agent-panel-contas{overflow:auto;overscroll-behavior:contain;padding:22px 24px}
+.cfo-agent-panel-simular{overflow:auto;overscroll-behavior:contain;padding:22px 24px}
+.cfo-agent-simulator h3{margin:0 0 8px;font-size:20px;letter-spacing:-.025em}
+.cfo-agent-simulation-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0}
+.cfo-agent-simulation-form label{display:grid;gap:6px;color:var(--cfo-muted);font-size:13px;min-width:0}
+.cfo-agent-simulation-form label:first-child,.cfo-agent-financial-preview,.cfo-agent-simulation-form>button{grid-column:1/-1}
+.cfo-agent-simulation-form input,.cfo-agent-simulation-form select{width:100%;min-width:0;min-height:46px;border:1px solid #62503a;border-radius:8px;background:#211a14;color:var(--cfo-paper);font:inherit;font-size:16px;padding:10px}
+.cfo-agent-simulation-form select{appearance:auto}
+.cfo-agent-financial-preview{border-left:2px solid var(--cfo-gold);padding:4px 0 4px 14px;font-size:13px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.cfo-agent-financial-preview p{margin:6px 0}
+.cfo-agent-financial-preview strong{display:block;margin-top:12px}
+.cfo-agent-cash-warning{color:#efac97;font-weight:600}
+.cfo-agent-simulation-form>button{background:var(--cfo-gold);color:#21180f;font-weight:650}
 .cfo-agent-note,.cfo-agent-status,.cfo-agent-boleto-status{color:var(--cfo-muted);font-size:12px}
 .cfo-agent-disclaimer{flex:none;padding:10px 24px max(12px,env(safe-area-inset-bottom));margin:0;border-top:1px solid var(--cfo-line);font-size:11px}
 .cfo-agent-context{flex:none;margin:0;padding:0 24px;border-bottom:1px solid var(--cfo-line);max-height:35vh;overflow:auto}

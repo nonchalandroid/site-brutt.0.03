@@ -104,6 +104,34 @@ function mockClient() {
     mode = 'ok'; await page.locator('.cfo-agent-send').click(); await page.waitForFunction(() => document.querySelectorAll('.cfo-agent-assistant').length === 2);
     for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-drawer').evaluate(el => el.scrollWidth > el.clientWidth), false); }
     await page.screenshot({ path: 'work/cfo-agent-mobile.png' });
+    await page.getByRole('tab', { name: 'Simular despesa', exact: true }).click();
+    await page.locator('input[name="valorDespesa"]').fill('100,25');
+    await page.locator('select[name="prazoDespesa"]').selectOption('15');
+    const dueDate = date(15).split('-').reverse().join('/');
+    assert((await page.locator('.cfo-agent-financial-preview').innerText()).includes(dueDate));
+    assert((await page.locator('.cfo-agent-financial-preview').innerText()).includes('Folga não calculada'));
+    const critical = Number(date(15).slice(-2)) <= 10;
+    assert.equal(await page.locator('.cfo-agent-financial-preview .cfo-agent-cash-warning').count(), critical ? 1 : 0);
+    await page.locator('input[name="saldoRealCaixaHoje"]').fill('0');
+    assert((await page.locator('.cfo-agent-financial-preview').innerText()).includes('-R$'));
+    await page.locator('input[name="saldoRealCaixaHoje"]').fill('2000,50');
+    assert((await page.locator('.cfo-agent-financial-preview').innerText()).includes('655,69'));
+    assert((await page.locator('.cfo-agent-financial-preview').innerText()).includes('555,44'));
+    await page.getByRole('button', { name: 'Analisar cenário com CFO', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('.cfo-agent-send').disabled);
+    assert.equal(requests.at(-1).financialContext.saldoRealCaixaHoje, 2000.5);
+    assert.equal(requests.at(-1).financialContext.saldoInformadoEm, today);
+    assert.deepEqual(requests.at(-1).financialContext.simulacaoDespesa, { valor: 100.25, prazoDias: 15 });
+    assert(requests.at(-1).messages.at(-1).content.includes(date(15)));
+    await page.getByRole('tab', { name: 'Simular despesa', exact: true }).click();
+    for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-drawer').evaluate(el => el.scrollWidth > el.clientWidth), false); }
+    await page.screenshot({ path: 'work/cfo-simulador-mobile.png' });
+    await page.setViewportSize({ width: 1440, height: 1000 }); await page.screenshot({ path: 'work/cfo-simulador-desktop.png' });
+    await page.getByRole('button', { name: 'Nova conversa', exact: true }).click();
+    await page.getByText('Simular compromisso de despesa em 15/30 dias', { exact: true }).click();
+    assert.equal(await page.getByRole('tab', { name: 'Simular despesa', exact: true }).getAttribute('aria-selected'), 'true');
+    assert.equal(await page.locator('input[name="valorDespesa"]').inputValue(), '');
+    await page.getByRole('button', { name: 'Nova conversa', exact: true }).click();
     await page.setViewportSize({ width: 390, height: 480 });
     const shortComposer = await page.locator('.cfo-agent-send').boundingBox(); assert(shortComposer.y + shortComposer.height <= 480, 'campo acessível com viewport reduzida');
     await page.setViewportSize({ width: 430, height: 850 });
@@ -120,7 +148,10 @@ function mockClient() {
     await page.waitForFunction(() => document.querySelector('.cfo-agent-assistant'));
     assert.equal(requests.at(-1).financialContext, undefined);
     assert.equal(requests.at(-1).boletosAbertos.length, 3);
+    assert.equal(requests.at(-1).contextoCaixa.saldoRealCaixaHoje, 2000.5);
     await page.reload(); await page.locator('#eqSim').waitFor(); await page.locator('#fnCfoIa').click();
+    await page.getByRole('tab', { name: 'Simular despesa', exact: true }).click();
+    assert.equal(await page.locator('input[name="saldoRealCaixaHoje"]').inputValue(), '', 'saldo não persistido após reload');
     await page.getByRole('tab', { name: 'Contas a pagar', exact: true }).click();
     await page.waitForFunction(() => document.querySelectorAll('.cfo-agent-boleto').length === 3);
     for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-drawer').evaluate(el => el.scrollWidth > el.clientWidth), false); }
