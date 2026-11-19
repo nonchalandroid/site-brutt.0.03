@@ -51,7 +51,14 @@ export class CfoAgentDrawer {
       const rows = JSON.parse(localStorage.getItem(key) || '[]');
       const container = options.anchor.closest('.pg'), previous = container.querySelector('.cfo-agent-bill-alert');
       previous?.remove();
-      if (!Array.isArray(rows) || rows.length > 100 || rows.some(b => !validBoleto(b))) return;
+      if (!Array.isArray(rows) || rows.length > 100 || rows.some(b => !validBoleto(b) || (b.pagoEm !== undefined && !validDate(b.pagoEm)))) { container.querySelector('.cfo-chart-bills')?.remove(); this.billData = null; return; }
+      this.billData = { options, rows }; this.renderChartBills();
+      const root = container.querySelector('#ovLucro');
+      if (root && this.billWatchRoot !== root) {
+        this.billWatch?.disconnect(); this.billWatchRoot = root;
+        this.billWatch = new MutationObserver(records => { if (!options.anchor.isConnected) { this.billWatch.disconnect(); return; } if (records.some(r => !r.target.closest?.('.cfo-chart-bills'))) this.renderChartBills(); });
+        this.billWatch.observe(root, { childList: true, subtree: true });
+      }
       const now = Date.parse(today());
       const due = rows.filter(b => b.status === 'aberto' && Date.parse(b.dataVencimento) <= now + 2 * 86400000).sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento));
       if (!due.length) return;
@@ -67,7 +74,44 @@ export class CfoAgentDrawer {
       const view = element('button', '', 'Ver boletos'); view.type = 'button'; view.onclick = () => { this.open(options); this.instance.selectView('contas'); this.instance.boletosBlock.open = true; };
       const dismiss = element('button', '', 'Dispensar por hoje'); dismiss.type = 'button'; dismiss.onclick = () => { try { localStorage.setItem(dismissKey, signature); alert.remove(); } catch { dismiss.textContent = 'Não foi possível salvar a dispensa'; } };
       alert.append(view, dismiss); container.querySelector('#ovLucro')?.before(alert);
-    } catch { /* O cadastro exibe o erro de armazenamento ao abrir a gaveta. */ }
+    } catch { this.billData = null; options.anchor.closest('.pg')?.querySelector('.cfo-chart-bills')?.remove(); }
+  }
+  static renderChartBills() {
+    const data = this.billData; if (!data?.options.anchor.isConnected) return;
+    const { options, rows } = data, term = options.anchor.closest('.pg').querySelector('#lcGraf .eq-term'); if (!term) return;
+    const period = term.cfoContext?.meta.periodo || today().slice(0, 7);
+    let panel = term.querySelector('.cfo-chart-bills');
+    const mode = panel?.dataset.mode || 'mes', signature = JSON.stringify([period, today(), rows, mode]);
+    if (panel?.dataset.signature === signature) return;
+    ensureStyles();
+    if (!panel) { panel = element('section', 'cfo-chart-bills'); panel.setAttribute('aria-label', 'Agenda de boletos no contexto financeiro'); term.append(panel); }
+    panel.dataset.signature = signature; panel.dataset.mode = mode; panel.replaceChildren();
+    const heading = element('div', 'cfo-chart-bills-heading'); heading.append(element('h4', '', 'Agenda de boletos'));
+    const filter = element('select', ''); filter.setAttribute('aria-label', 'Período da agenda de boletos');
+    for (const [value, name] of [['mes', `Mês do painel (${period.split('-').reverse().join('/')})`], ['todos', 'Todos os boletos']]) { const option = element('option', '', name); option.value = value; filter.append(option); } filter.value = mode;
+    filter.onchange = () => { panel.dataset.mode = filter.value; this.renderChartBills(); }; heading.append(filter); panel.append(heading);
+    const visible = rows.filter(b => mode === 'todos' || b.dataVencimento.startsWith(period) || b.pagoEm?.startsWith(period));
+    const sum = status => visible.filter(b => b.status === status).reduce((s, b) => s + Math.round(b.valor * 100), 0) / 100;
+    panel.append(element('p', 'cfo-chart-totals', `Em aberto: ${money(sum('aberto'))} • Pagos: ${money(sum('pago'))}`));
+    const list = element('div', 'cfo-chart-bill-list');
+    const dateFor = b => b.status === 'pago' && b.pagoEm?.startsWith(period) ? b.pagoEm : b.dataVencimento;
+    const format = date => date.split('-').reverse().join('/');
+    const groups = new Map();
+    for (const bill of [...visible].sort((a, b) => dateFor(a).localeCompare(dateFor(b)))) { const date = dateFor(bill); if (!groups.has(date)) groups.set(date, []); groups.get(date).push(bill); }
+    for (const [date, bills] of groups) {
+      const group = element('section', 'cfo-chart-day'); group.append(element('h5', '', format(date)));
+      for (const b of bills) {
+        const row = element('article', 'cfo-chart-bill ' + (b.status === 'pago' ? 'is-paid' : b.dataVencimento < today() ? 'is-overdue' : 'is-open'));
+        row.append(element('strong', '', b.fornecedor), element('span', 'cfo-chart-bill-value', money(b.valor)), element('span', 'cfo-chart-bill-status', b.status === 'pago' ? 'Pago' : b.dataVencimento < today() ? 'Vencido · em aberto' : 'A pagar'));
+        row.append(element('p', '', `Compra: ${format(b.dataCompra)} • Vencimento: ${format(b.dataVencimento)}${b.status === 'pago' ? b.pagoEm ? ` • Marcado pago em ${format(b.pagoEm)}` : ' • Data de pagamento não registrada' : ''}`));
+        group.append(row);
+      } list.append(group);
+    }
+    if (!visible.length) list.append(element('p', '', 'Nenhum boleto cadastrado neste período.'));
+    panel.append(list);
+    if (mode === 'mes' && rows.length > visible.length) panel.append(element('p', 'cfo-chart-note', `${rows.length - visible.length} registro(s) fora deste mês. Selecione Todos os boletos para consultar.`));
+    panel.append(element('p', 'cfo-chart-note', 'Registros manuais deste navegador. Datas e situação dos boletos não alteram as linhas de faturamento, P&L ou equilíbrio; atingir o equilíbrio não confirma quitação.'));
+    const manage = element('button', '', 'Gerenciar boletos'); manage.type = 'button'; manage.onclick = () => { this.open(options); this.instance.selectView('contas'); }; panel.append(manage);
   }
   static open(options) {
     if (!this.instance) this.instance = new CfoAgentDrawer();
@@ -249,7 +293,7 @@ export class CfoAgentDrawer {
       const row = element('article', 'cfo-agent-boleto' + (days < 0 ? ' cfo-agent-overdue' : days <= 7 ? ' cfo-agent-due-soon' : ''));
       row.append(element('strong', '', b.fornecedor), element('span', '', money(b.valor)), element('p', '', `Compra ${b.dataCompra.split('-').reverse().join('/')} • Vence ${b.dataVencimento.split('-').reverse().join('/')} • ${days < 0 ? 'Vencido' : days === 0 ? 'Vence hoje' : days <= 7 ? 'Vence nos próximos 7 dias' : 'Em aberto'}`));
       const paid = element('button', '', 'Marcar Pago'); paid.type = 'button'; paid.setAttribute('aria-label', 'Marcar Pago: ' + b.fornecedor);
-      paid.onclick = () => { if (this.loadBoletos()) this.saveBoletos(this.boletos.map(item => item.id === b.id ? { ...item, status: 'pago' } : item)); };
+      paid.onclick = () => { if (this.loadBoletos()) this.saveBoletos(this.boletos.map(item => item.id === b.id ? { ...item, status: 'pago', pagoEm: today() } : item)); };
       row.append(paid); this.boletoList.append(row);
     }
   }

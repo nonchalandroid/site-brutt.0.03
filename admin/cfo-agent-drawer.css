@@ -93,6 +93,25 @@
 .cfo-agent-due-soon>span{color:var(--cfo-gold)}
 .cfo-agent-overdue>span,.cfo-agent-overdue p{color:#efac97}
 .cfo-agent-clear-paid{font-size:12px!important}
+#lcGraf .cfo-chart-bills{margin-top:20px;padding-top:18px;border-top:1px solid rgba(235,208,159,.18);color:#efdfc3;font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#lcGraf .cfo-chart-bills-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#lcGraf .cfo-chart-bills h4{margin:0;font-size:15px;font-weight:650;letter-spacing:-.015em;color:#f4e7cf;text-transform:none}
+#lcGraf .cfo-chart-bills select{width:auto;max-width:100%;min-height:40px;appearance:auto;padding:8px 12px;border:1px solid #66523c;border-radius:8px;background:#261e20;color:#efdfc3;font:inherit;color-scheme:dark}
+#lcGraf .cfo-chart-totals{margin:12px 0;color:#e9ca87;font-variant-numeric:tabular-nums}
+#lcGraf .cfo-chart-bill-list{display:grid;gap:14px;max-height:340px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#lcGraf .cfo-chart-day{display:grid;grid-template-columns:96px minmax(0,1fr);gap:0 14px;align-items:start}
+#lcGraf .cfo-chart-day h5{grid-column:1;grid-row:1/span 100;margin:0;padding-top:9px;font-size:12px;color:#c1b1a3;letter-spacing:0;text-transform:none;font-weight:500}
+#lcGraf .cfo-chart-bill{grid-column:2;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 12px;border-bottom:1px solid rgba(235,208,159,.12);padding:9px 0;overflow-wrap:anywhere}
+#lcGraf .cfo-chart-bill strong{font-size:13px;font-weight:550;color:#f4e7cf}
+#lcGraf .cfo-chart-bill-value{font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+#lcGraf .cfo-chart-bill-status{font-size:11px;color:#e9ca87}
+#lcGraf .cfo-chart-bill.is-paid .cfo-chart-bill-status{color:#8fe2b5}
+#lcGraf .cfo-chart-bill.is-overdue .cfo-chart-bill-status{color:#ffb29f}
+#lcGraf .cfo-chart-bill p{grid-column:1/-1;margin:0;font-size:11px;color:#c1b1a3}
+#lcGraf .cfo-chart-note{margin:12px 0;font-size:11px;color:#c1b1a3}
+#lcGraf .cfo-chart-bills>button{min-height:42px;padding:8px 12px;border:1px solid #66523c;border-radius:8px;background:#261e20;color:#efdfc3;font:inherit}
+#lcGraf .cfo-chart-bills :focus-visible{outline:2px solid #e9ca87;outline-offset:3px}
+@media(max-width:540px){#lcGraf .cfo-chart-day{grid-template-columns:minmax(0,1fr)}#lcGraf .cfo-chart-day h5{grid-column:1;grid-row:auto;padding:0 0 3px}#lcGraf .cfo-chart-bill{grid-column:1;grid-template-columns:minmax(0,1fr) auto}#lcGraf .cfo-chart-bill-status{grid-column:1/-1}#lcGraf .cfo-chart-bills select{width:100%}}
 .cfo-agent-bill-alert{margin:0 0 18px;padding:16px;border:1px solid #c58c31;border-left:4px solid #edbd59;border-radius:12px;background:#302219;color:#f4e7cf;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-wrap:anywhere}
 .cfo-agent-bill-alert ul{margin:8px 0;padding-left:20px;max-height:160px;overflow:auto}
 .cfo-agent-bill-alert button{min-height:44px;padding:8px 12px;margin:4px 8px 0 0;border:1px solid #715438;border-radius:8px;background:#1d1510;color:#f4e7cf;font:inherit;cursor:pointer}
