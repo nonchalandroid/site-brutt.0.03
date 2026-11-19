@@ -5,41 +5,127 @@ const validBoleto = b => b && typeof b.id === 'string' && b.id.length <= 80 && t
 const money = value => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const labels = { faturamentoAtual: 'Faturamento importado', faturamentoProjetado: 'Fechamento projetado', margemBrutaPct: 'Margem bruta', custosFixos: 'Custos fixos', diaAtual: 'Dia atual', pontoEquilibrio: 'Ponto de equilíbrio', faltaParaEmpatar: 'Faturamento que falta', ritmoDiarioSimulado: 'Ritmo diário simulado' };
 function element(tag, className, text) { const el = document.createElement(tag); el.className = className; if (text !== undefined) el.textContent = text; return el; }
+function inlineText(target, text) {
+  const pattern = /\*\*([^*\n]+)\*\*|`([^`\n]+)`|R\$\s*[\d.]+(?:,\d{1,2})?/g; let start = 0;
+  for (const match of text.matchAll(pattern)) {
+    target.append(document.createTextNode(text.slice(start, match.index)));
+    const node = element(match[1] ? 'strong' : match[2] ? 'code' : 'span', match[1] || match[2] ? '' : 'cfo-agent-amount', match[1] || match[2] || match[0]); target.append(node); start = match.index + match[0].length;
+  }
+  target.append(document.createTextNode(text.slice(start)));
+}
+export function renderFinancialAnswer(target, text) {
+  const lines = text.replace(/\r/g, '').split('\n'); let list = null;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim(); if (!line) { list = null; continue; }
+    if (line.includes('|') && /^\s*\|?\s*:?-{3,}/.test(lines[i + 1] || '')) {
+      const wrap = element('div', 'cfo-agent-table'), table = element('table', ''); table.setAttribute('aria-label', 'Comparação financeira');
+      const cells = value => value.replace(/^\|/, '').replace(/\|$/, '').split('|').map(s => s.trim());
+      const head = element('thead', ''), tr = element('tr', '');
+      cells(line).forEach(value => { const cell = element('th', ''); cell.scope = 'col'; inlineText(cell, value); tr.append(cell); }); head.append(tr); table.append(head);
+      const body = element('tbody', ''); i += 2;
+      for (; i < lines.length && lines[i].includes('|') && lines[i].trim(); i++) { const row = element('tr', ''); cells(lines[i].trim()).forEach(value => { const cell = element('td', ''); inlineText(cell, value); row.append(cell); }); body.append(row); }
+      i--; table.append(body); wrap.append(table); target.append(wrap); list = null; continue;
+    }
+    const heading = line.match(/^#{1,6}\s+(.+)$/), bullet = line.match(/^([-*•]|\d+[.)])\s+(.+)$/);
+    if (heading) { const title = element('h3', ''); inlineText(title, heading[1]); target.append(title); list = null; }
+    else if (bullet) { const tag = /^\d/.test(bullet[1]) ? 'ol' : 'ul'; if (!list || list.localName !== tag) { list = element(tag, ''); target.append(list); } const item = element('li', ''); inlineText(item, bullet[2]); list.append(item); }
+    else if (/^[-*_]{3,}$/.test(line)) { target.append(element('hr', '')); list = null; }
+    else { const paragraph = element('p', line.startsWith('> ') ? 'cfo-agent-callout' : ''); inlineText(paragraph, line.replace(/^>\s?/, '')); target.append(paragraph); list = null; }
+  }
+}
+function ensureStyles() {
+  if (document.querySelector('link[data-cfo-styles]')) return;
+  const css = element('link', ''); css.rel = 'stylesheet'; css.dataset.cfoStyles = ''; css.href = new URL('./cfo-agent-drawer.css?v=20261119c', import.meta.url).href; document.head.append(css);
+}
 
 export class CfoAgentDrawer {
   static instance;
+  static async notify(options) {
+    if (!options?.anchor?.isConnected) return;
+    this.alertOptions = options;
+    try {
+      const { data: { session } } = await options.client.auth.getSession();
+      if (!options.anchor.isConnected || !session?.user?.id) return;
+      const key = 'brutt:cfo-boletos:v1:' + options.url + ':' + session.user.id;
+      const rows = JSON.parse(localStorage.getItem(key) || '[]');
+      const container = options.anchor.closest('.pg'), previous = container.querySelector('.cfo-agent-bill-alert');
+      previous?.remove();
+      if (!Array.isArray(rows) || rows.length > 100 || rows.some(b => !validBoleto(b))) return;
+      const now = Date.parse(today());
+      const due = rows.filter(b => b.status === 'aberto' && Date.parse(b.dataVencimento) <= now + 2 * 86400000).sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento));
+      if (!due.length) return;
+      const signature = JSON.stringify([today(), due.map(b => [b.id, b.dataVencimento, b.valor, b.fornecedor])]);
+      const dismissKey = key + ':aviso-2dias';
+      if (localStorage.getItem(dismissKey) === signature) return;
+      ensureStyles();
+      const alert = element('section', 'cfo-agent-bill-alert'); alert.setAttribute('role', 'status'); alert.setAttribute('aria-label', 'Aviso de vencimento de boletos');
+      alert.append(element('strong', '', `${due.length} boleto${due.length === 1 ? '' : 's'}: vencidos ou vencendo em até 2 dias • ${money(due.reduce((sum, b) => sum + b.valor, 0))}`));
+      const list = element('ul', '');
+      for (const b of due) list.append(element('li', '', `${b.fornecedor} • ${money(b.valor)} • ${b.dataVencimento.split('-').reverse().join('/')} (${b.dataVencimento < today() ? 'vencido' : b.dataVencimento === today() ? 'vence hoje' : 'próximo do vencimento'})`));
+      alert.append(list);
+      const view = element('button', '', 'Ver boletos'); view.type = 'button'; view.onclick = () => { this.open(options); this.instance.selectView('contas'); this.instance.boletosBlock.open = true; };
+      const dismiss = element('button', '', 'Dispensar por hoje'); dismiss.type = 'button'; dismiss.onclick = () => { try { localStorage.setItem(dismissKey, signature); alert.remove(); } catch { dismiss.textContent = 'Não foi possível salvar a dispensa'; } };
+      alert.append(view, dismiss); container.querySelector('#ovLucro')?.before(alert);
+    } catch { /* O cadastro exibe o erro de armazenamento ao abrir a gaveta. */ }
+  }
   static open(options) {
     if (!this.instance) this.instance = new CfoAgentDrawer();
     this.instance.open(options);
   }
   constructor() {
-    const css = element('link', ''); css.rel = 'stylesheet'; css.href = new URL('./cfo-agent-drawer.css?v=20261119', import.meta.url).href; document.head.append(css);
+    ensureStyles();
     this.messages = [];
     this.dialog = element('dialog', 'cfo-agent-drawer');
     this.dialog.setAttribute('aria-labelledby', 'cfo-agent-title');
     const header = element('header', 'cfo-agent-header');
-    const title = element('h2', '', 'CFO IA'); title.id = 'cfo-agent-title';
+    const title = element('h2', '', 'CFO financeiro'); title.id = 'cfo-agent-title';
+    const identity = element('div', 'cfo-agent-identity'); identity.append(title, element('span', '', 'Análise financeira da Brutt'));
+    this.reset = element('button', 'cfo-agent-reset', 'Nova conversa'); this.reset.type = 'button'; this.reset.onclick = () => this.newConversation();
     const close = element('button', 'cfo-agent-close', '×'); close.type = 'button'; close.setAttribute('aria-label', 'Fechar CFO IA'); close.onclick = () => this.close();
-    header.append(title, close);
-    const intro = element('p', 'cfo-agent-note', 'Consulta financeira • somente leitura. Não confirma saldo bancário nem contas quitadas.');
+    header.append(identity, this.reset, close);
+    const intro = element('p', 'cfo-agent-note cfo-agent-disclaimer', 'Somente leitura. Faturamento não é saldo disponível em caixa.');
     this.context = element('details', 'cfo-agent-context');
     this.context.append(element('summary', '', 'Dados usados na consulta'));
     this.metrics = element('div', 'cfo-agent-metrics'); this.context.append(this.metrics);
     this.createBoletos();
     this.log = element('div', 'cfo-agent-log'); this.log.setAttribute('role', 'log'); this.log.setAttribute('aria-label', 'Conversa financeira'); this.log.setAttribute('aria-live', 'polite');
+    this.showEmpty();
     const quick = element('div', 'cfo-agent-quick'); quick.setAttribute('aria-label', 'Perguntas rápidas');
+    this.suggestions = element('details', 'cfo-agent-suggestions'); this.suggestions.open = true; this.suggestions.append(element('summary', '', 'Perguntas rápidas'), quick);
     this.quickButtons = QUESTIONS.map(question => { const button = element('button', '', question); button.type = 'button'; button.onclick = () => { this.input.value = question; this.send(); }; quick.append(button); return button; });
     this.status = element('p', 'cfo-agent-status'); this.status.setAttribute('role', 'status');
     this.form = element('form', 'cfo-agent-form');
     const label = element('label', '', 'Sua pergunta'); label.htmlFor = 'cfo-agent-question';
     this.input = element('textarea', ''); this.input.id = 'cfo-agent-question'; this.input.maxLength = 2000; this.input.rows = 3; this.input.required = true;
-    this.submit = element('button', 'cfo-agent-send', 'Consultar'); this.submit.type = 'submit';
+    this.submit = element('button', 'cfo-agent-send', 'Enviar pergunta'); this.submit.type = 'submit';
     this.form.append(label, this.input, this.submit); this.form.onsubmit = event => { event.preventDefault(); this.send(); };
-    this.dialog.append(header, intro, this.context, this.boletosBlock, quick, this.log, this.status, this.form); document.body.append(this.dialog);
+    const tabs = element('div', 'cfo-agent-tabs'); tabs.setAttribute('role', 'tablist'); tabs.setAttribute('aria-label', 'Área do CFO');
+    this.views = {}; this.tabs = {};
+    for (const [key, name] of [['analise', 'Análise'], ['contas', 'Contas a pagar']]) {
+      const button = element('button', '', name), panel = element('section', 'cfo-agent-panel cfo-agent-panel-' + key);
+      button.type = 'button'; button.id = 'cfo-tab-' + key; button.setAttribute('role', 'tab'); button.setAttribute('aria-controls', 'cfo-panel-' + key); button.onclick = () => this.selectView(key);
+      button.onkeydown = event => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const next = event.key === 'Home' ? 'analise' : event.key === 'End' ? 'contas' : key === 'analise' ? 'contas' : 'analise'; this.selectView(next); this.tabs[next].focus(); } };
+      panel.id = 'cfo-panel-' + key; panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', button.id); this.views[key] = panel; this.tabs[key] = button; tabs.append(button);
+    }
+    this.views.analise.append(this.context, this.suggestions, this.log, this.status, this.form); this.views.contas.append(this.boletosBlock);
+    this.dialog.append(header, tabs, this.views.analise, this.views.contas, intro); this.selectView('analise'); document.body.append(this.dialog);
     this.dialog.addEventListener('cancel', event => { event.preventDefault(); this.close(); });
     this.dialog.addEventListener('click', event => { if (event.target === this.dialog) { const r = this.dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) this.close(); } });
-    window.addEventListener('hashchange', () => { this.close(); this.messages = []; this.log.replaceChildren(); });
+    window.addEventListener('hashchange', () => { this.close(); this.newConversation(false); });
     window.addEventListener('storage', event => { if (event.key === this.storageKey) this.loadBoletos(); });
+  }
+  selectView(key) {
+    for (const name of Object.keys(this.tabs)) { const active = name === key; this.views[name].hidden = !active; this.tabs[name].setAttribute('aria-selected', String(active)); this.tabs[name].tabIndex = active ? 0 : -1; }
+    if (key === 'contas') this.boletosBlock.open = true;
+  }
+  showEmpty() {
+    this.empty = element('div', 'cfo-agent-empty');
+    this.empty.append(element('span', 'cfo-agent-empty-symbol', '↗'), element('h3', '', 'Vamos olhar os números.'), element('p', '', 'Escolha uma pergunta acima ou descreva o cenário que deseja analisar.'));
+    this.log.append(this.empty);
+  }
+  newConversation(focus = true) {
+    this.epoch = (this.epoch || 0) + 1; this.controller?.abort(); this.messages = []; this.log.replaceChildren(); this.showEmpty(); this.input.value = ''; this.suggestions.open = true; this.status.textContent = 'Nova conversa. Seus boletos foram mantidos.';
+    if (focus) { this.selectView('analise'); this.input.focus(); }
   }
   open(options) {
     this.options = options;
@@ -48,7 +134,7 @@ export class CfoAgentDrawer {
     this.previousFocus = document.activeElement;
     this.overflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';
-    this.dialog.showModal(); this.input.focus();
+    this.dialog.showModal(); this.selectView('analise'); this.input.focus();
     this.storageKey = null; this.boletos = []; this.boletoFields.disabled = true; this.boletoList.replaceChildren();
     options.client.auth.getSession().then(({ data: { session } }) => {
       if (this.dialog.open && this.options === options) this.useAccount(session?.user?.id);
@@ -82,7 +168,7 @@ export class CfoAgentDrawer {
   useAccount(userId) {
     if (!userId) { this.storageKey = null; this.boletoFields.disabled = true; this.boletoList.replaceChildren(); this.boletoStatus.textContent = 'Entre novamente para acessar os boletos.'; return; }
     const key = 'brutt:cfo-boletos:v1:' + this.options.url + ':' + userId;
-    if (this.accountKey && this.accountKey !== key) { this.messages = []; this.log.replaceChildren(); this.input.value = ''; }
+    if (this.accountKey && this.accountKey !== key) this.newConversation(false);
     this.accountKey = this.storageKey = key;
     this.loadBoletos();
   }
@@ -98,7 +184,7 @@ export class CfoAgentDrawer {
     }
   }
   saveBoletos(rows) {
-    try { localStorage.setItem(this.storageKey, JSON.stringify(rows)); this.boletos = rows; this.renderBoletos(); this.boletoStatus.textContent = 'Registros salvos neste navegador.'; return true; }
+    try { localStorage.setItem(this.storageKey, JSON.stringify(rows)); this.boletos = rows; this.renderBoletos(); this.boletoStatus.textContent = 'Registros salvos neste navegador.'; CfoAgentDrawer.notify(this.options); return true; }
     catch { this.boletoStatus.textContent = 'Não foi possível salvar. A alteração não foi aplicada; verifique o espaço e as permissões do navegador.'; return false; }
   }
   addBoleto() {
@@ -140,10 +226,18 @@ export class CfoAgentDrawer {
     list.append(element('dt', '', 'Outros custos do mês'), element('dd', '', money(meta.outrosCustos)));
     this.metrics.append(list); return snapshot;
   }
-  bubble(role, text) { const item = element('p', `cfo-agent-message cfo-agent-${role}`, text); this.log.append(item); item.scrollIntoView({ block: 'nearest' }); return item; }
+  bubble(role, text) {
+    this.empty?.remove(); const item = element('article', `cfo-agent-message cfo-agent-${role}`);
+    const meta = element('div', 'cfo-agent-message-meta', role === 'assistant' ? 'Parecer financeiro' : 'Você');
+    const time = element('time', '', new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }).format(new Date())); time.dateTime = new Date().toISOString(); meta.append(time);
+    const content = element('div', 'cfo-agent-message-body'); if (role === 'assistant') renderFinancialAnswer(content, text); else content.textContent = text;
+    item.append(meta, content); this.log.append(item); this.log.scrollTop = this.log.scrollHeight; return item;
+  }
   async send() {
     if (this.controller || !this.input.value.trim()) return;
     const question = this.input.value.trim();
+    this.suggestions.open = false;
+    const epoch = this.epoch;
     const snapshot = this.refreshContext();
     const controller = new AbortController(); this.controller = controller;
     const timer = setTimeout(() => controller.abort('timeout'), 35000);
@@ -168,9 +262,12 @@ export class CfoAgentDrawer {
       this.status.textContent = 'Análise consultiva. Confira os dados antes de decidir.';
     } catch (error) {
       pending.remove();
-      this.status.textContent = controller.signal.aborted ? (controller.signal.reason === 'timeout' ? 'A consulta demorou demais. Tente novamente.' : 'Consulta cancelada.') : error.message;
+      if (epoch === this.epoch) this.status.textContent = controller.signal.aborted ? (controller.signal.reason === 'timeout' ? 'A consulta demorou demais. Tente novamente.' : 'Consulta cancelada.') : error.message;
     } finally {
       clearTimeout(timer); this.controller = null; this.submit.disabled = false; this.quickButtons.forEach(b => b.disabled = false);
     }
   }
 }
+window.addEventListener('focus', () => CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions); });
+window.addEventListener('storage', event => { if (event.key?.startsWith('brutt:cfo-boletos:')) CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions); });

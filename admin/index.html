@@ -1124,6 +1124,12 @@ button.stcard:hover,.prow:hover,.dropzone:hover,details.nx-box summary:hover,.ft
 .btn-gold:hover:not(:disabled){background:var(--grad-ouro);filter:brightness(1.05)}
 .btn-ghost{background:rgba(255,255,255,.55);color:var(--ink);border-color:var(--line-2)}
 .btn-ghost:hover:not(:disabled){background:rgba(255,255,255,.85);border-color:var(--petroleo);color:var(--petroleo-cl)}
+.fn-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-left:auto}
+#fnCfoIa{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:46px;padding:7px 15px 7px 8px;border:1px solid #a8803f;border-radius:12px;background:linear-gradient(135deg,#35281c,#1c1510);color:#f3d99b;font-size:13px;font-weight:650;box-shadow:inset 0 1px 0 rgba(255,230,179,.16),0 3px 8px rgba(48,29,8,.12)}
+#fnCfoIa .fn-cfo-mark{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:rgba(228,186,103,.13);color:#e4ba67}
+#fnCfoIa:hover:not(:disabled){background:linear-gradient(135deg,#49351f,#2c2015);border-color:#c49b54;color:#fff0ce}
+#fnCfoIa:focus-visible{outline:3px solid #a8803f;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){#fnCfoIa{transition:none}}
 .btn-sec{background:var(--petroleo);color:#fff}
 .btn-sec:hover:not(:disabled){background:#17606a}
 .btn-indigo{background:var(--indigo);color:#fff}
@@ -6003,13 +6009,13 @@ async function renderFinanceiro(){
   app.innerHTML = `${topbarHTML("Financeiro")}
     <div class="pg">
       <div class="pg-h"><div><h2 class="pg-t">Financeiro</h2><p class="pg-d">Lucro do mês, custos e ponto de equilíbrio, com o terminal ao vivo (horário de Brasília) e o simulador de vendas.</p></div>
-        <button class="btn-ghost btn-sm" id="fnCfoIa">Consultar CFO IA</button><button class="btn-ghost btn-sm" id="fnAtualiza">${ic("sync")} Atualizar</button></div>
+        <div class="fn-actions"><button type="button" id="fnCfoIa"><span class="fn-cfo-mark" aria-hidden="true">${ic("trend")}</span><span>Consultar CFO IA</span></button><button class="btn-ghost btn-sm" id="fnAtualiza">${ic("sync")} Atualizar</button></div></div>
       <section class="ov-box ov-lucro" id="ovLucro" aria-live="polite"><div class="loading">Calculando o lucro…</div></section>
       <section class="ov-box hs-box" id="fnHist"></section>
     </div>`;
   bindTopbar();
   $("#fnAtualiza").onclick = () => renderFinanceiro();
-  $("#fnCfoIa").onclick = async () => { try { const { CfoAgentDrawer } = await import("./cfo-agent-drawer.js?v=20261119"); if (rotaAtual() === "financeiro") CfoAgentDrawer.open({ client: sb, url: SUPA_URL, key: SUPA_KEY, getContext: () => $("#lcGraf .eq-term")?.cfoContext || null }); } catch { alert("Não foi possível abrir a consulta financeira. Atualize a página e tente novamente."); } };
+  { const anchor = $("#fnCfoIa"), options = { client: sb, url: SUPA_URL, key: SUPA_KEY, anchor, getContext: () => $("#lcGraf .eq-term")?.cfoContext || null }, module = import("./cfo-agent-drawer.js?v=20261119c"); module.then(({ CfoAgentDrawer }) => CfoAgentDrawer.notify(options)).catch(() => {}); anchor.onclick = async () => { try { const { CfoAgentDrawer } = await module; if (anchor.isConnected) CfoAgentDrawer.open(options); } catch { alert("Não foi possível abrir a consulta financeira. Atualize a página e tente novamente."); } }; }
   const [prodsMg, fin, dias] = await Promise.all([
     sb.from("products").select("id,name,category_id,price,promo_price,cost_price,stock,sales_count").eq("is_active", true).limit(5000),
     sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),
