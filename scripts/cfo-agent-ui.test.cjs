@@ -49,7 +49,8 @@ function mockClient() {
     await page.route('**/functions/v1/cfo-agent', async route => {
       requests.push(route.request().postDataJSON());
       if (mode === 'wait') await new Promise(resolve => setTimeout(resolve, 800));
-      await route.fulfill({ status: mode === 'error' ? 503 : 200, contentType: 'application/json', body: JSON.stringify(mode === 'error' ? { error: 'Tente novamente.' } : { answer: 'Faltam R$ 6.499,75. <img src=x onerror=alert(1)>' }) }).catch(() => {});
+      const answer = '### Parecer\n**O ponto de equilíbrio ainda não foi atingido.**\nFaltam R$ 6.499,75 em faturamento para cobrir os custos cadastrados.\n### Números utilizados\n- **Faturamento importado:** R$ 1.000,25\n- **Ponto de equilíbrio:** R$ 7.500,00\n### Compromissos e riscos\n| Indicador | Valor |\n| --- | --- |\n| Compromissos próximos | R$ 60,00 |\n| Saldo disponível | Não informado |\n> Faturamento acumulado não comprova caixa livre.\n### Próximo passo\n1. Confirme o saldo disponível e os recebíveis.\n2. Informe o valor da despesa para simular o impacto.';
+      await route.fulfill({ status: mode === 'error' ? 503 : 200, contentType: 'application/json', body: JSON.stringify(mode === 'error' ? { error: 'Tente novamente.' } : { answer: answer + (mode === 'formatted' ? '' : '\n<img src=x onerror=alert(1)>') }) }).catch(() => {});
     });
     await page.goto(`http://127.0.0.1:${server.address().port}/admin/#/financeiro`);
     await page.waitForFunction(() => document.querySelector('.eq-term')?.cfoContext);
@@ -58,7 +59,7 @@ function mockClient() {
     assert.equal(before.financialContext.custosFixos, 2500);
     assert.equal(before.meta.outrosCustos, 500);
     await page.locator('#fnCfoIa').click(); await page.locator('.cfo-agent-drawer').waitFor();
-    await page.locator('.cfo-agent-boletos summary').click();
+    await page.getByRole('tab', { name: 'Contas a pagar', exact: true }).click();
     const today = await page.locator('input[name="dataCompra"]').inputValue();
     const date = offset => new Date(Date.parse(today) + offset * 86400000).toISOString().slice(0, 10);
     async function addBill(name, offset, value) {
@@ -76,11 +77,15 @@ function mockClient() {
     assert.equal(await page.locator('.cfo-agent-boleto').count(), 3);
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('brutt:cfo-boletos:')))));
     assert.equal(stored.find(b => b.fornecedor === 'Hoje').status, 'pago');
-    await page.locator('.cfo-agent-boletos summary').click();
+    await page.getByRole('tab', { name: 'Análise', exact: true }).click();
     await page.getByText('Quanto falta para atingir o ponto de equilíbrio?', { exact: true }).click();
     await page.locator('.cfo-agent-assistant').waitFor();
     assert.deepEqual(requests[0].financialContext, { ...before.financialContext, boletosAbertos: stored.filter(b => b.status === 'aberto').sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento)) });
     assert.equal(await page.locator('.cfo-agent-assistant img').count(), 0);
+    assert.equal(await page.locator('.cfo-agent-assistant h3').count(), 4);
+    assert.equal(await page.locator('.cfo-agent-assistant table').count(), 1);
+    assert.equal(await page.locator('.cfo-agent-assistant ul li').count(), 2);
+    assert.equal(await page.locator('.cfo-agent-assistant ol li').count(), 2);
     await page.locator('.cfo-agent-context summary').click();
     await page.screenshot({ path: 'work/cfo-agent-desktop.png' });
     await page.keyboard.press('Escape'); assert.equal(await page.locator('dialog[open]').count(), 0);
@@ -109,7 +114,7 @@ function mockClient() {
     assert.equal(requests.at(-1).financialContext, undefined);
     assert.equal(requests.at(-1).boletosAbertos.length, 3);
     await page.reload(); await page.locator('#eqSim').waitFor(); await page.locator('#fnCfoIa').click();
-    await page.locator('.cfo-agent-boletos summary').click();
+    await page.getByRole('tab', { name: 'Contas a pagar', exact: true }).click();
     await page.waitForFunction(() => document.querySelectorAll('.cfo-agent-boleto').length === 3);
     for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-drawer').evaluate(el => el.scrollWidth > el.clientWidth), false); }
     await page.locator('.cfo-agent-close').click();
@@ -129,7 +134,7 @@ function mockClient() {
     for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-bill-alert').evaluate(el => el.scrollWidth > el.clientWidth), false); }
     await page.getByRole('button', { name: 'Dispensar por hoje' }).click();
     await page.reload(); await page.locator('#eqSim').waitFor();
-    await page.evaluate(async () => { const { CfoAgentDrawer } = await import('/admin/cfo-agent-drawer.js?v=20261119b'); await CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions); });
+    await page.evaluate(async () => { const { CfoAgentDrawer } = await import('/admin/cfo-agent-drawer.js?v=20261119c'); await CfoAgentDrawer.notify(CfoAgentDrawer.alertOptions); });
     assert.equal(await page.locator('.cfo-agent-bill-alert').count(), 0);
     await page.evaluate(() => {
       const key = Object.keys(localStorage).find(k => k.endsWith(':aviso-2dias'));
@@ -140,6 +145,28 @@ function mockClient() {
     await page.waitForFunction(() => document.querySelector('.cfo-agent-boletos').open);
     await page.getByRole('button', { name: 'Marcar Pago: Em dois dias', exact: true }).click();
     await page.waitForFunction(() => document.querySelectorAll('.cfo-agent-bill-alert li').length === 1);
+    await page.getByRole('button', { name: 'Nova conversa', exact: true }).click();
+    assert.equal(await page.locator('.cfo-agent-message').count(), 0);
+    assert.equal(await page.locator('.cfo-agent-empty').count(), 1);
+    mode = 'wait'; await page.locator('#cfo-agent-question').fill('Descartar consulta'); await page.locator('.cfo-agent-send').click();
+    await page.getByRole('button', { name: 'Nova conversa', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('.cfo-agent-send').disabled);
+    assert.equal(await page.locator('.cfo-agent-message').count(), 0);
+    assert((await page.locator('.cfo-agent-status').textContent()).includes('boletos foram mantidos'));
+    mode = 'formatted'; await page.locator('#cfo-agent-question').fill('Como está o ritmo para fechar o mês?'); await page.locator('.cfo-agent-send').click(); await page.locator('.cfo-agent-assistant').waitFor();
+    assert.equal(requests.at(-1).messages.length, 1);
+    assert.equal(requests.at(-1).financialContext.boletosAbertos.length, 4);
+    await page.locator('.cfo-agent-context').evaluate(el => el.open = false);
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.locator('.cfo-agent-log').evaluate(el => el.scrollTop = 0);
+    await page.screenshot({ path: 'work/cfo-agent-desktop.png' });
+    for (const width of [360, 390, 430]) {
+      await page.setViewportSize({ width, height: 850 });
+      assert.equal(await page.locator('.cfo-agent-drawer').evaluate(el => el.scrollWidth > el.clientWidth), false);
+      const rect = await page.locator('.cfo-agent-send').boundingBox(); assert(rect.y >= 0 && rect.y + rect.height <= 850);
+    }
+    await page.locator('.cfo-agent-log').evaluate(el => el.scrollTop = 0);
+    await page.screenshot({ path: 'work/cfo-agent-mobile.png' });
     await page.evaluate(() => localStorage.setItem(Object.keys(localStorage).find(k => k.startsWith('brutt:cfo-boletos:')), '{invalid'));
     await page.locator('#cfo-agent-question').fill('Teste de armazenamento inválido'); await page.locator('.cfo-agent-send').click();
     await page.waitForFunction(() => document.querySelector('.cfo-agent-status').textContent.includes('consulta foi interrompida'));

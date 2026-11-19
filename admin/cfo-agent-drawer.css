@@ -1,49 +1,90 @@
-.cfo-agent-drawer{box-sizing:border-box;position:fixed;inset:0 0 0 auto;margin:0;width:min(520px,100%);max-width:100%;height:100dvh;max-height:100dvh;padding:24px 24px max(24px,env(safe-area-inset-bottom));border:0;border-left:1px solid #715438;border-radius:20px 0 0 20px;background:#1d1510;color:#f4e7cf;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:auto;overscroll-behavior:contain;color-scheme:dark}
-.cfo-agent-drawer::backdrop{background:rgba(8,5,3,.65)}
-.cfo-agent-drawer[open]{animation:cfo-agent-in .2s ease-out}
+.cfo-agent-drawer{--cfo-bg:#171310;--cfo-paper:#f3e7d0;--cfo-muted:#bdb09d;--cfo-line:#42372b;--cfo-gold:#e4ba67;box-sizing:border-box;position:fixed;inset:0 0 0 auto;margin:0;width:min(680px,100%);max-width:100%;height:100dvh;max-height:100dvh;padding:0;border:0;border-left:1px solid var(--cfo-line);border-radius:22px 0 0 22px;background:var(--cfo-bg);color:var(--cfo-paper);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark;overflow:hidden}
+.cfo-agent-drawer[open]{display:flex;flex-direction:column;animation:cfo-agent-in .2s ease-out}
+.cfo-agent-drawer::backdrop{background:rgba(8,5,3,.68)}
 .cfo-agent-drawer *{box-sizing:border-box}
-.cfo-agent-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.cfo-agent-header h2{margin:0;font-family:inherit;font-weight:700;font-size:24px;line-height:1.3}
+.cfo-agent-drawer [hidden]{display:none!important}
 .cfo-agent-drawer button,.cfo-agent-drawer textarea{font:inherit}
-.cfo-agent-drawer button{cursor:pointer;min-height:44px;border:1px solid #715438;border-radius:12px;background:#302219;color:#f4e7cf;padding:9px 12px}
+.cfo-agent-drawer button{min-height:44px;padding:9px 13px;border:1px solid var(--cfo-line);border-radius:10px;background:#241e18;color:var(--cfo-paper);cursor:pointer}
+.cfo-agent-drawer button:hover{border-color:#927447}
 .cfo-agent-drawer button:disabled{cursor:wait;opacity:.55}
-.cfo-agent-drawer :focus-visible{outline:2px solid #efc66c;outline-offset:3px}
-.cfo-agent-close{font-size:26px!important;width:44px;padding:0!important}
-.cfo-agent-note,.cfo-agent-status,.cfo-agent-boleto-status{color:#cbb79a;font-size:13px}
-.cfo-agent-context{padding:12px;border:1px solid #58412d;border-radius:12px;margin:16px 0}
-.cfo-agent-context summary{cursor:pointer;min-height:32px;align-content:center;color:#efc66c}
-.cfo-agent-metrics p{font-size:12px;color:#cbb79a}
-.cfo-agent-metrics dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;font-size:13px}
+.cfo-agent-drawer :focus-visible{outline:2px solid var(--cfo-gold);outline-offset:3px}
+.cfo-agent-header{display:flex;align-items:center;gap:12px;padding:22px 24px 18px;flex:none}
+.cfo-agent-identity{flex:1;min-width:0}
+.cfo-agent-header h2{margin:0;font:650 23px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.035em}
+.cfo-agent-identity>span{display:block;margin-top:5px;font-size:12px;color:var(--cfo-muted)}
+.cfo-agent-drawer .cfo-agent-reset{background:transparent;font-size:12px;white-space:nowrap}
+.cfo-agent-drawer .cfo-agent-close{width:40px;min-height:40px;font-size:25px;padding:0;background:transparent;border:0}
+.cfo-agent-tabs{display:flex;gap:24px;padding:0 24px;border-bottom:1px solid var(--cfo-line);flex:none}
+.cfo-agent-tabs button{border:0;border-radius:0;padding:12px 0;background:transparent;font-size:14px;color:var(--cfo-muted)}
+.cfo-agent-tabs button[aria-selected=true]{color:var(--cfo-gold);box-shadow:inset 0 -2px var(--cfo-gold)}
+.cfo-agent-panel{flex:1;min-height:0}
+.cfo-agent-panel-analise{display:flex;flex-direction:column}
+.cfo-agent-panel-contas{overflow:auto;overscroll-behavior:contain;padding:22px 24px}
+.cfo-agent-note,.cfo-agent-status,.cfo-agent-boleto-status{color:var(--cfo-muted);font-size:12px}
+.cfo-agent-disclaimer{flex:none;padding:10px 24px max(12px,env(safe-area-inset-bottom));margin:0;border-top:1px solid var(--cfo-line);font-size:11px}
+.cfo-agent-context{flex:none;margin:0;padding:0 24px;border-bottom:1px solid var(--cfo-line);max-height:35vh;overflow:auto}
+.cfo-agent-context summary{cursor:pointer;min-height:42px;align-content:center;color:var(--cfo-muted);font-size:12px}
+.cfo-agent-metrics p{font-size:12px;color:var(--cfo-muted)}
+.cfo-agent-metrics dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;font-size:12px}
 .cfo-agent-metrics dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
-.cfo-agent-quick{display:grid;gap:8px}
-.cfo-agent-quick button{text-align:left;font-size:13px}
-.cfo-agent-log{display:flex;flex-direction:column;gap:12px;margin:20px 0;min-height:24px}
-.cfo-agent-message{margin:0;padding:12px 14px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere}
-.cfo-agent-user{background:#443020;margin-left:24px}
-.cfo-agent-assistant{background:#261c15;border:1px solid #58412d;margin-right:12px}
-.cfo-agent-status{min-height:20px}
-.cfo-agent-form{display:grid;gap:8px}
-.cfo-agent-form label{font-size:13px}
-.cfo-agent-form textarea{width:100%;min-height:86px;resize:vertical;border:1px solid #715438;border-radius:12px;padding:12px;background:#100c09;color:#f4e7cf;font-size:16px}
-.cfo-agent-form .cfo-agent-send{background:#edbd59;color:#21150b;font-weight:650}
-.cfo-agent-boletos{margin:16px 0;padding:12px;border:1px solid #58412d;border-radius:12px}
-.cfo-agent-boletos summary{cursor:pointer;min-height:36px;align-content:center;color:#efc66c}
-.cfo-agent-boleto-form fieldset{border:0;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
-.cfo-agent-boleto-form legend{font-weight:600;margin-bottom:10px}
-.cfo-agent-boleto-form label{display:grid;gap:4px;font-size:13px;min-width:0}
+.cfo-agent-quick{flex:none;display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:14px 24px}
+.cfo-agent-suggestions{flex:none;border-bottom:1px solid var(--cfo-line)}
+.cfo-agent-suggestions summary{padding:9px 24px;font-size:12px;color:var(--cfo-muted);cursor:pointer}
+.cfo-agent-suggestions[open] summary{padding-bottom:0}
+.cfo-agent-quick button{text-align:left;font-size:12px;line-height:1.4;min-height:48px;background:transparent}
+.cfo-agent-log{flex:1;min-height:100px;overflow:auto;overscroll-behavior:contain;padding:12px 24px 24px;scrollbar-width:thin}
+.cfo-agent-empty{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;min-height:200px;max-width:370px;margin:0 auto;color:var(--cfo-muted)}
+.cfo-agent-empty-symbol{color:var(--cfo-gold);font-size:36px;line-height:1;margin-bottom:16px}
+.cfo-agent-empty h3{margin:0 0 8px;font-size:22px;letter-spacing:-.025em;color:var(--cfo-paper);font-weight:550}
+.cfo-agent-empty p{margin:0;font-size:14px;line-height:1.6}
+.cfo-agent-message{margin:0 0 24px;overflow-wrap:anywhere}
+.cfo-agent-message-meta{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:var(--cfo-muted);margin-bottom:10px}
+.cfo-agent-message-meta time{font-variant-numeric:tabular-nums}
+.cfo-agent-user{background:#2b241c;border-radius:12px;padding:13px 16px;margin-left:32px}
+.cfo-agent-user .cfo-agent-message-body{white-space:pre-wrap;font-size:14px}
+.cfo-agent-assistant{border-left:2px solid #927447;padding:0 0 0 18px}
+.cfo-agent-assistant .cfo-agent-message-meta{color:var(--cfo-gold)}
+.cfo-agent-message-body{font-size:14px;line-height:1.75}
+.cfo-agent-message-body p{margin:0 0 12px}
+.cfo-agent-message-body h3{font:650 15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:22px 0 9px;color:var(--cfo-gold);letter-spacing:-.01em}
+.cfo-agent-message-body h3:first-child{margin-top:0}
+.cfo-agent-message-body ul,.cfo-agent-message-body ol{padding-left:20px;margin:8px 0 16px}
+.cfo-agent-message-body li{padding-left:3px;margin:6px 0}
+.cfo-agent-message-body strong{font-weight:650;color:#fff1d6}
+.cfo-agent-amount{font-weight:600;font-variant-numeric:tabular-nums;color:#f5d99c;white-space:nowrap}
+.cfo-agent-message-body code{padding:2px 5px;border-radius:4px;background:#30271d;font-size:12px}
+.cfo-agent-message-body hr{border:0;border-top:1px solid var(--cfo-line);margin:16px 0}
+.cfo-agent-message-body .cfo-agent-callout{border-left:2px solid var(--cfo-gold);padding-left:12px;color:var(--cfo-muted)}
+.cfo-agent-table{max-width:100%;overflow:auto;margin:12px 0 18px}
+.cfo-agent-table table{width:100%;border-collapse:collapse;font-size:12px}
+.cfo-agent-table th,.cfo-agent-table td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--cfo-line);vertical-align:top}
+.cfo-agent-table th{background:#241e18;font-weight:600}
+.cfo-agent-status{flex:none;margin:0;padding:0 24px 7px;min-height:24px}
+.cfo-agent-form{flex:none;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:8px 24px 16px}
+.cfo-agent-form label{grid-column:1/-1;font-size:12px;color:var(--cfo-muted)}
+.cfo-agent-form textarea{width:100%;min-height:64px;max-height:110px;resize:vertical;border:1px solid #62503a;border-radius:12px;padding:12px;background:#211a14;color:var(--cfo-paper);font-size:16px}
+.cfo-agent-form .cfo-agent-send{background:var(--cfo-gold);color:#21180f;font-weight:650;align-self:stretch;max-width:105px}
+.cfo-agent-boletos{margin:0;border:0;padding:0}
+.cfo-agent-boletos summary{cursor:pointer;font-size:19px;letter-spacing:-.025em;font-weight:600;color:var(--cfo-paper);min-height:38px}
+.cfo-agent-boleto-form{margin:24px 0}
+.cfo-agent-boleto-form fieldset{border:0;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0}
+.cfo-agent-boleto-form legend{font-weight:600;margin-bottom:14px;font-size:14px}
+.cfo-agent-boleto-form label{display:grid;gap:6px;font-size:12px;min-width:0;color:var(--cfo-muted)}
 .cfo-agent-boleto-form label:first-of-type,.cfo-agent-boleto-form button{grid-column:1/-1}
-.cfo-agent-boleto-form input{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid #715438;border-radius:8px;background:#100c09;color:#f4e7cf;font:inherit;font-size:16px;color-scheme:dark}
-.cfo-agent-boleto-list{display:grid;gap:10px;margin-bottom:12px}
-.cfo-agent-boleto{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:12px;background:#261c15;border:1px solid #58412d;border-radius:10px;overflow-wrap:anywhere}
-.cfo-agent-boleto p{grid-column:1/-1;font-size:12px;color:#cbb79a;margin:0}
-.cfo-agent-boleto button{grid-column:1/-1;font-size:13px;justify-self:start}
-.cfo-agent-due-soon{border-color:#edbd59;border-left-width:4px}
-.cfo-agent-overdue{border-color:#ed907e;border-left-width:4px}
+.cfo-agent-boleto-form input{width:100%;min-width:0;min-height:46px;padding:10px;border:1px solid #62503a;border-radius:8px;background:#211a14;color:var(--cfo-paper);font:inherit;font-size:16px;color-scheme:dark}
+.cfo-agent-boleto-list{display:grid;gap:0;margin:20px 0}
+.cfo-agent-boleto{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:16px 0;border:0;border-bottom:1px solid var(--cfo-line);overflow-wrap:anywhere}
+.cfo-agent-boleto strong{font-size:14px;font-weight:550}
+.cfo-agent-boleto>span{font-variant-numeric:tabular-nums;font-weight:600}
+.cfo-agent-boleto p{grid-column:1/-1;font-size:12px;color:var(--cfo-muted);margin:0}
+.cfo-agent-boleto button{grid-column:1/-1;font-size:12px;justify-self:start;background:transparent}
+.cfo-agent-due-soon>span{color:var(--cfo-gold)}
+.cfo-agent-overdue>span,.cfo-agent-overdue p{color:#efac97}
 .cfo-agent-clear-paid{font-size:12px!important}
 .cfo-agent-bill-alert{margin:0 0 18px;padding:16px;border:1px solid #c58c31;border-left:4px solid #edbd59;border-radius:12px;background:#302219;color:#f4e7cf;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-wrap:anywhere}
 .cfo-agent-bill-alert ul{margin:8px 0;padding-left:20px;max-height:160px;overflow:auto}
 .cfo-agent-bill-alert button{min-height:44px;padding:8px 12px;margin:4px 8px 0 0;border:1px solid #715438;border-radius:8px;background:#1d1510;color:#f4e7cf;font:inherit;cursor:pointer}
 .cfo-agent-bill-alert button:focus-visible{outline:2px solid #efc66c;outline-offset:2px}
 @keyframes cfo-agent-in{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
-@media(max-width:540px){.cfo-agent-drawer{padding:18px 16px max(18px,env(safe-area-inset-bottom));border-radius:0}.cfo-agent-metrics dl{font-size:12px}}
+@media(max-width:540px){.cfo-agent-drawer{border-radius:0}.cfo-agent-header{padding:16px;gap:6px}.cfo-agent-header h2{font-size:20px}.cfo-agent-identity>span{font-size:11px}.cfo-agent-drawer .cfo-agent-reset{padding:7px;font-size:11px}.cfo-agent-tabs{padding:0 16px}.cfo-agent-context{padding:0 16px}.cfo-agent-quick{padding:10px 16px;gap:6px}.cfo-agent-quick button{font-size:11px;padding:8px;min-height:44px}.cfo-agent-log{padding:10px 16px 16px}.cfo-agent-status{padding:0 16px 6px;font-size:11px}.cfo-agent-form{padding:6px 16px 12px;gap:6px}.cfo-agent-form .cfo-agent-send{font-size:12px;max-width:76px;padding:8px}.cfo-agent-disclaimer{padding-left:16px;padding-right:16px}.cfo-agent-panel-contas{padding:18px 16px}.cfo-agent-empty{min-height:150px}.cfo-agent-empty h3{font-size:20px}}
 @media(prefers-reduced-motion:reduce){.cfo-agent-drawer[open]{animation:none}}
