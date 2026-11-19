@@ -58,6 +58,10 @@ function mockClient() {
     assert.equal(before.financialContext.faturamentoAtual, 1000.25);
     assert.equal(before.financialContext.custosFixos, 2500);
     assert.equal(before.meta.outrosCustos, 500);
+    await page.locator('.pg-h').screenshot({ path: 'work/cfo-launcher-desktop.png' });
+    await page.setViewportSize({ width: 390, height: 850 });
+    await page.locator('.pg-h').screenshot({ path: 'work/cfo-launcher-mobile.png' });
+    await page.setViewportSize({ width: 1440, height: 1000 });
     await page.locator('#fnCfoIa').click(); await page.locator('.cfo-agent-drawer').waitFor();
     await page.getByRole('tab', { name: 'Contas a pagar', exact: true }).click();
     const today = await page.locator('input[name="dataCompra"]').inputValue();
