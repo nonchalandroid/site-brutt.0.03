@@ -32,7 +32,7 @@
 .cfo-agent-suggestions summary{padding:9px 24px;font-size:12px;color:var(--cfo-muted);cursor:pointer}
 .cfo-agent-suggestions[open] summary{padding-bottom:0}
 .cfo-agent-quick button{text-align:left;font-size:12px;line-height:1.4;min-height:48px;background:transparent}
-.cfo-agent-log{flex:1;min-height:100px;overflow:auto;overscroll-behavior:contain;padding:12px 24px 24px;scrollbar-width:thin}
+.cfo-agent-log{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px 24px 24px;scrollbar-width:thin}
 .cfo-agent-empty{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;min-height:200px;max-width:370px;margin:0 auto;color:var(--cfo-muted)}
 .cfo-agent-empty-symbol{color:var(--cfo-gold);font-size:36px;line-height:1;margin-bottom:16px}
 .cfo-agent-empty h3{margin:0 0 8px;font-size:22px;letter-spacing:-.025em;color:var(--cfo-paper);font-weight:550}
@@ -88,3 +88,4 @@
 @keyframes cfo-agent-in{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
 @media(max-width:540px){.cfo-agent-drawer{border-radius:0}.cfo-agent-header{padding:16px;gap:6px}.cfo-agent-header h2{font-size:20px}.cfo-agent-identity>span{font-size:11px}.cfo-agent-drawer .cfo-agent-reset{padding:7px;font-size:11px}.cfo-agent-tabs{padding:0 16px}.cfo-agent-context{padding:0 16px}.cfo-agent-quick{padding:10px 16px;gap:6px}.cfo-agent-quick button{font-size:11px;padding:8px;min-height:44px}.cfo-agent-log{padding:10px 16px 16px}.cfo-agent-status{padding:0 16px 6px;font-size:11px}.cfo-agent-form{padding:6px 16px 12px;gap:6px}.cfo-agent-form .cfo-agent-send{font-size:12px;max-width:76px;padding:8px}.cfo-agent-disclaimer{padding-left:16px;padding-right:16px}.cfo-agent-panel-contas{padding:18px 16px}.cfo-agent-empty{min-height:150px}.cfo-agent-empty h3{font-size:20px}}
 @media(prefers-reduced-motion:reduce){.cfo-agent-drawer[open]{animation:none}}
+@media(max-height:600px){.cfo-agent-header{padding:8px 16px}.cfo-agent-identity>span{display:none}.cfo-agent-tabs button{min-height:36px;padding:6px 0}.cfo-agent-context{max-height:64px}.cfo-agent-suggestions .cfo-agent-quick{max-height:80px;overflow:auto;padding-top:8px;padding-bottom:8px}.cfo-agent-log{padding-top:6px;padding-bottom:6px}.cfo-agent-form textarea{height:56px;min-height:56px;max-height:72px}.cfo-agent-form{padding-top:4px;padding-bottom:8px}.cfo-agent-disclaimer{padding-top:6px;padding-bottom:max(6px,env(safe-area-inset-bottom));font-size:10px}}

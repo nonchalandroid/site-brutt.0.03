@@ -100,6 +100,9 @@ function mockClient() {
     mode = 'ok'; await page.locator('.cfo-agent-send').click(); await page.waitForFunction(() => document.querySelectorAll('.cfo-agent-assistant').length === 2);
     for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-drawer').evaluate(el => el.scrollWidth > el.clientWidth), false); }
     await page.screenshot({ path: 'work/cfo-agent-mobile.png' });
+    await page.setViewportSize({ width: 390, height: 480 });
+    const shortComposer = await page.locator('.cfo-agent-send').boundingBox(); assert(shortComposer.y + shortComposer.height <= 480, 'campo acessível com viewport reduzida');
+    await page.setViewportSize({ width: 430, height: 850 });
     mode = 'wait'; await page.locator('#cfo-agent-question').fill('Cancelar'); await page.locator('.cfo-agent-send').click(); await page.locator('.cfo-agent-close').click();
     await page.waitForFunction(() => !document.querySelector('.cfo-agent-send').disabled);
     await page.locator('#fnCfoIa').click(); await page.evaluate(() => location.hash = '#/pedidos');
