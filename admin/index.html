@@ -5513,7 +5513,7 @@ function desenhaLucro(fin, mg, erro){
   [$("#lcFat"), $("#lcDia"), $("#lcBruto"), $("#lcCmv")].forEach(i => i.onkeydown = e => { if(e.key === "Enter") e.target.blur(); });
   $("#lcEditar").onclick = () => editarCustos(f, custos, mg);
   box.querySelectorAll("[data-odo]").forEach(el => odo(el, el.dataset.odo));   /* números rolando (efeito bolsa) */
-  graficoEquilibrio({ fat, m, custo: fixos + dia, equilibrio, margem: m == null ? mg.pct : m * 100 });
+  graficoEquilibrio({ fat, m, fixos, custo: fixos + dia, equilibrio, margem: m == null ? mg.pct : m * 100 });
 }
 /* ---------------- números "de bolsa": os dígitos rolam até o valor novo ----------------
    odo(el, chave): troca o texto de el por colunas de dígitos que rolam (transform) do valor anterior (ou de zero, na
@@ -5655,6 +5655,7 @@ function graficoEquilibrio(o){
   };
   /* resumo do simulador + botões + tabela (dependem do ritmo) */
   const textos = () => {
+    term.cfoContext = real && Number.isFinite(o.margem) && o.margem > 0 ? { financialContext: { faturamentoAtual: R[L], faturamentoProjetado: vend(D), margemBrutaPct: o.margem, custosFixos: o.fixos, diaAtual: hoje, pontoEquilibrio: o.equilibrio, faltaParaEmpatar: Math.max(0, o.equilibrio - R[L]), ritmoDiarioSimulado: st.ritmo }, meta: { periodo: pre.slice(0, 7), dadosAte: pre + String(L).padStart(2, "0"), outrosCustos: o.custo - o.fixos, simulado: Math.abs(st.ritmo - ritmoBase) > .5 } } : null;
     const simulando = Math.abs(st.ritmo - ritmoBase) > 0.5, de = dEq(), dia = Math.max(1, Math.ceil(de));
     term.querySelector(".eq-sv").textContent = `${brl0(st.ritmo)}/dia`;
     term.querySelector(".eq-sres").innerHTML = fecha()
@@ -6002,12 +6003,13 @@ async function renderFinanceiro(){
   app.innerHTML = `${topbarHTML("Financeiro")}
     <div class="pg">
       <div class="pg-h"><div><h2 class="pg-t">Financeiro</h2><p class="pg-d">Lucro do mês, custos e ponto de equilíbrio, com o terminal ao vivo (horário de Brasília) e o simulador de vendas.</p></div>
-        <button class="btn-ghost btn-sm" id="fnAtualiza">${ic("sync")} Atualizar</button></div>
+        <button class="btn-ghost btn-sm" id="fnCfoIa">Consultar CFO IA</button><button class="btn-ghost btn-sm" id="fnAtualiza">${ic("sync")} Atualizar</button></div>
       <section class="ov-box ov-lucro" id="ovLucro" aria-live="polite"><div class="loading">Calculando o lucro…</div></section>
       <section class="ov-box hs-box" id="fnHist"></section>
     </div>`;
   bindTopbar();
   $("#fnAtualiza").onclick = () => renderFinanceiro();
+  $("#fnCfoIa").onclick = async () => { try { const { CfoAgentDrawer } = await import("./cfo-agent-drawer.js?v=20261119"); if (rotaAtual() === "financeiro") CfoAgentDrawer.open({ client: sb, url: SUPA_URL, key: SUPA_KEY, getContext: () => $("#lcGraf .eq-term")?.cfoContext || null }); } catch { alert("Não foi possível abrir a consulta financeira. Atualize a página e tente novamente."); } };
   const [prodsMg, fin, dias] = await Promise.all([
     sb.from("products").select("id,name,category_id,price,promo_price,cost_price,stock,sales_count").eq("is_active", true).limit(5000),
     sb.from("financeiro").select("*").eq("id", 1).maybeSingle(),

@@ -1,0 +1,91 @@
+const { chromium } = require('playwright');
+const fs = require('node:fs');
+const path = require('node:path');
+const http = require('node:http');
+const assert = require('node:assert/strict');
+function mockClient() {
+  const session = { user: { id: 'test-user' }, access_token: 'test-only' };
+  window.__writes = 0;
+  function from(table) {
+    let single = false;
+    const q = {
+      select() { return q; }, eq() { return q; }, order() { return q; }, limit() { return q; }, not() { return q; }, lt() { return q; }, lte() { return q; }, gt() { return q; }, gte() { return q; }, is() { return q; }, in() { return q; },
+      single() { single = true; return q; }, maybeSingle() { single = true; return q; },
+      update() { window.__writes++; return q; }, upsert() { window.__writes++; return q; }, insert() { window.__writes++; return q; },
+      then(resolve, reject) {
+        const now = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+        const rows = {
+          staff: [{ user_id: 'test-user', role: 'owner', name: 'Gestão', active: true }],
+          financeiro: [{ id: 1, custos: [{ nome: 'Aluguel', valor: 2500 }], dia_a_dia: 500, faturamento: 15000 }],
+          products: [{ id: 'p1', price: 100, cost_price: 60, stock: 10, sales_count: 30, category_id: 'c1' }],
+          categories: [{ id: 'c1', name: 'Categoria', slug: 'categoria' }],
+          vendas_dia: window.__noSales ? [] : [{ dia: now, faturamento: 1000.25, lucro_bruto: 400.10, vendas: 10 }],
+          vendas_periodo: [{ id: 1, dias: 30 }]
+        };
+        const data = rows[table] || [];
+        return Promise.resolve({ data: single ? data[0] || null : data, count: data.length, error: null }).then(resolve, reject);
+      }
+    }; return q;
+  }
+  window.supabase = { createClient: () => ({ from, auth: { getSession: async () => ({ data: { session } }), getUser: async () => ({ data: { user: session.user } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) } }) };
+}
+(async () => {
+  const root = process.cwd(); fs.mkdirSync('work', { recursive: true });
+  const server = http.createServer((req, res) => {
+    const pathname = new URL(req.url, 'http://localhost').pathname;
+    const file = path.resolve(root, '.' + (pathname.endsWith('/') ? pathname + 'index.html' : pathname));
+    if (!file.startsWith(root + path.sep)) return res.writeHead(403).end();
+    fs.readFile(file, (error, body) => { if (error) return res.writeHead(404).end(); res.writeHead(200, { 'Content-Type': { '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html; charset=utf-8' }[path.extname(file)] || 'application/octet-stream' }); res.end(body); });
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  let browser;
+  try {
+    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }); page.setDefaultTimeout(10000);
+    const errors = [], requests = []; let mode = 'ok';
+    page.on('pageerror', e => errors.push(e.message));
+    await page.route('https://**/*', route => route.abort());
+    await page.route('**/vendor/supabase-js-2.117.2.js', route => route.fulfill({ contentType: 'text/javascript', body: `(${mockClient.toString()})();` }));
+    await page.route('**/functions/v1/cfo-agent', async route => {
+      requests.push(route.request().postDataJSON());
+      if (mode === 'wait') await new Promise(resolve => setTimeout(resolve, 800));
+      await route.fulfill({ status: mode === 'error' ? 503 : 200, contentType: 'application/json', body: JSON.stringify(mode === 'error' ? { error: 'Tente novamente.' } : { answer: 'Faltam R$ 6.499,75. <img src=x onerror=alert(1)>' }) }).catch(() => {});
+    });
+    await page.goto(`http://127.0.0.1:${server.address().port}/admin/#/financeiro`);
+    await page.waitForFunction(() => document.querySelector('.eq-term')?.cfoContext);
+    const before = await page.locator('#lcGraf .eq-term').evaluate(e => e.cfoContext);
+    assert.equal(before.financialContext.faturamentoAtual, 1000.25);
+    assert.equal(before.financialContext.custosFixos, 2500);
+    assert.equal(before.meta.outrosCustos, 500);
+    await page.locator('#fnCfoIa').click(); await page.locator('.cfo-agent-drawer').waitFor();
+    await page.getByText('Quanto falta para atingir o ponto de equilíbrio?', { exact: true }).click();
+    await page.locator('.cfo-agent-assistant').waitFor();
+    assert.deepEqual(requests[0].financialContext, before.financialContext);
+    assert.equal(await page.locator('.cfo-agent-assistant img').count(), 0);
+    await page.locator('.cfo-agent-context summary').click();
+    await page.screenshot({ path: 'work/cfo-agent-desktop.png' });
+    await page.keyboard.press('Escape'); assert.equal(await page.locator('dialog[open]').count(), 0);
+    assert.equal(await page.locator('#fnCfoIa').evaluate(el => el === document.activeElement), true);
+    await page.locator('#eqSim').evaluate(el => { el.value = String(Number(el.value) + 200); el.dispatchEvent(new Event('input', { bubbles: true })); });
+    await page.waitForFunction(previous => document.querySelector('.eq-term').cfoContext.financialContext.ritmoDiarioSimulado !== previous, before.financialContext.ritmoDiarioSimulado);
+    await page.locator('#fnCfoIa').click();
+    mode = 'error'; await page.locator('#cfo-agent-question').fill('Teste de erro'); await page.locator('.cfo-agent-send').click();
+    await page.waitForFunction(() => document.querySelector('.cfo-agent-status').textContent === 'Tente novamente.');
+    assert.equal(await page.locator('.cfo-agent-send').isEnabled(), true);
+    assert.equal(requests.at(-1).meta.simulado, true);
+    mode = 'ok'; await page.locator('.cfo-agent-send').click(); await page.waitForFunction(() => document.querySelectorAll('.cfo-agent-assistant').length === 2);
+    for (const width of [360, 390, 430]) { await page.setViewportSize({ width, height: 850 }); assert.equal(await page.locator('.cfo-agent-drawer').evaluate(el => el.scrollWidth > el.clientWidth), false); }
+    await page.screenshot({ path: 'work/cfo-agent-mobile.png' });
+    mode = 'wait'; await page.locator('#cfo-agent-question').fill('Cancelar'); await page.locator('.cfo-agent-send').click(); await page.locator('.cfo-agent-close').click();
+    await page.waitForFunction(() => !document.querySelector('.cfo-agent-send').disabled);
+    await page.locator('#fnCfoIa').click(); await page.evaluate(() => location.hash = '#/pedidos');
+    await page.waitForFunction(() => !document.querySelector('.cfo-agent-drawer').open);
+    await page.waitForTimeout(350);
+    await page.evaluate(() => { window.__noSales = true; location.hash = '#/financeiro'; });
+    await page.waitForFunction(() => document.querySelector('#lcGraf .eq-term')?.cfoContext === null); await page.locator('#fnCfoIa').click();
+    await page.waitForFunction(() => document.querySelector('.cfo-agent-drawer').open && document.querySelector('.cfo-agent-metrics').textContent.includes('indisponíveis'));
+    assert.equal(await page.evaluate(() => window.__writes), 0);
+    assert.deepEqual(errors, []);
+    console.log('CFO UI: indicadores, simulador, chat seguro, erro/retry, cancelamento, foco, navegação e 360/390/430px OK. Nenhuma escrita.');
+  } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }
+})().catch(error => { console.error(error); process.exitCode = 1; });
