@@ -1861,7 +1861,7 @@ b,strong,h1,h2,h3,h4{font-weight:700}
 @media(max-width:640px){.cb-eq{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}.cb-eq .cb-op:nth-of-type(2){display:none}.cb-fim{grid-column:1/-1}}
 @media(max-width:420px){.cb-eq{grid-template-columns:1fr}.cb-op{justify-self:center}.cb-eq .cb-op:nth-of-type(2){display:block}.cb-nums b{font-size:16px}.cb-mod small{display:none}}
 </style>
-<link rel="stylesheet" href="estoque.css?v=20261107-3">
+<link rel="stylesheet" href="estoque.css?v=20261121-1">
 <script src="/js/contato-loja.js?v=20261117"></script>
 </head>
 <body>
@@ -2767,7 +2767,7 @@ function somIniciaNoEditor(p){
 }
 
 /* ---------------- product detail / edit ---------------- */
-async function openProduct(id){
+async function openProduct(id, options = {}){
   openDrawer(`<div class="loading">Carregando…</div>`);
   const { data: p } = await sb.from("products").select("*").eq("id", id).single();
   const { data: imgRows } = await sb.from("product_images").select("*").eq("product_id", id);
@@ -2813,8 +2813,9 @@ async function openProduct(id){
     </div>
 
     <div class="section">
-      <h3>Dados do produto</h3>
+      <h3 id="productDataTitle" tabindex="-1">Dados do produto</h3>
       <div class="field"><label>Nome</label><input id="fName" value="${esc(p.name)}"></div>
+      <div class="field"><label for="fCost">Custo unitário (R$)</label><input id="fCost" type="text" inputmode="decimal" autocomplete="off" value="${fmtNum(p.cost_price)}"></div>
       <div class="grid2">
         <div class="field"><label>Preço (R$)</label><input id="fPrice" type="number" step="0.01" value="${p.price}"></div>
         <div class="field"><label>Preço promocional</label><input id="fPromo" type="number" step="0.01" value="${p.promo_price ?? ''}"></div>
@@ -2877,6 +2878,7 @@ async function openProduct(id){
     };
   }
   somIniciaNoEditor(p);
+  if(options.focus === 'dados') requestAnimationFrame(() => { const title = $('#productDataTitle'); title?.scrollIntoView({ block:'start' }); title?.focus({ preventScroll:true }); });
 }
 
 function renderCategoryOptions(selectedId){
@@ -2896,11 +2898,12 @@ function renderCategoryOptions(selectedId){
 }
 
 async function saveProduct(id){
+  const saveBtn = $('#saveBtn'); if(saveBtn.disabled) return;
   const nome = normalizaNome($("#fName").value);
   if(nome.length < 2){ toast("O nome precisa ter pelo menos 2 letras."); return; }
   if(nome.length > 120){ toast("Nome muito longo (máx. 120 caracteres)."); return; }
   if(/^[\d\s.,]+$/.test(nome)){ toast("O nome não pode ser só números."); return; }
-  const v = { price: parsePreco($("#fPrice").value), cost: state.current?.cost_price != null ? Number(state.current.cost_price) : null, promo: parsePreco($("#fPromo").value) };
+  const v = { price: parsePreco($("#fPrice").value), cost: parsePreco($("#fCost").value), promo: parsePreco($("#fPromo").value) };
   const chk = checaPrecos(v, state.current);
   if(chk.erros.length){ toast(chk.erros[0]); return; }
   const dup = await sb.from("products").select("id").ilike("name", nome.replace(/[%_\\]/g, m => "\\" + m)).neq("id", id).limit(1);
@@ -2910,13 +2913,15 @@ async function saveProduct(id){
   const payload = {
     name: nome,
     price: v.price,
+    cost_price: v.cost,
     promo_price: v.promo,
     category_id: $("#fCat").value,
     description: $("#fDesc").value.trim() || null,
     is_active: $("#fActive").checked,
   };
+  if(saveBtn.disabled) return; saveBtn.disabled = true;
   const { error } = await sb.from("products").update(payload).eq("id", id);
-  if(error){ toast("Erro ao salvar: " + error.message); return; }
+  if(error){ saveBtn.disabled = false; toast("Erro ao salvar: " + error.message); return; }
   toast("Produto atualizado.");
   closeDrawer();
   (state.lastView || renderCategoryGrid)();
@@ -4142,6 +4147,7 @@ function estoqueLinha(g){
   return {...g, manual, st, semCusto:!(Number(g.p.cost_price)>0)};
 }
 async function renderEstoque(){
+  state.lastView = renderEstoque;
   app.innerHTML = `${topbarHTML('Central de estoque')}<div class="pg stock-center">
     <div class="est-heading">
       <div><span class="est-eyebrow">${ic('pkg')} Gestão de estoque</span><h1>Central de estoque</h1><p>Saldos, reposição e prioridades em um só lugar.</p></div>
@@ -4213,11 +4219,11 @@ async function renderEstoque(){
       <td data-label="Cobertura / ABC"><span class="est-cover">${periodo?esc(fmtCob(g)):'Indisponível'}</span><small>${periodo&&g.abc?`<span class="est-abc est-abc-${g.abc}">${g.abc}</span> Curva ${g.abc}`:'Sem classificação'}</small></td>
       <td data-label="Situação"><span class="est-status ${g.st}">${periodo||g.est<=0?nomes[g.st]:'Sem histórico'}</span>${g.semCusto&&g.est>0?'<small>Custo pendente</small>':''}</td>
       <td data-label="Valor ao custo" class="est-value">${g.semCusto?'<span class="est-missing">Sem custo</span>':brlM(g.est*Number(g.p.cost_price))}</td>
-      <td data-label="Ação" class="est-action"><button type="button" class="est-row-action" data-est-abrir="${esc(g.p.id)}" aria-label="Conferir / ajustar ${esc(g.p.name)}">Conferir ${ic('chev')}</button></td>
+      <td data-label="Ação" class="est-action"><button type="button" class="est-row-action" data-est-abrir="${esc(g.p.id)}" aria-label="Editar dados de ${esc(g.p.name)}">Editar ${ic('chev')}</button></td>
     </tr>`).join('')||'<tr><td colspan="6" class="empty">Nenhum produto encontrado.<br>Limpe os filtros ou tente outro nome, código Nex ou EAN.</td></tr>';
     $('#estPage').textContent=`Página ${estoqueUI.pagina} de ${paginas}`;$('#estPrev').disabled=estoqueUI.pagina<=1;$('#estNext').disabled=estoqueUI.pagina>=paginas;
     document.querySelectorAll('[data-est-filtro], [data-est-kpi]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.estFiltro||b.dataset.estKpi)===estoqueUI.filtro)));
-    $('#estRows').querySelectorAll('[data-est-abrir]').forEach(b=>b.onclick=()=>openProduct(b.dataset.estAbrir));
+    $('#estRows').querySelectorAll('[data-est-abrir]').forEach(b=>b.onclick=()=>openProduct(b.dataset.estAbrir, { focus:'dados' }));
   };
   $('#estBusca').oninput=e=>{estoqueUI.busca=e.target.value;estoqueUI.pagina=1;desenha();};
   for(const [id,k] of [['estCategoria','categoria'],['estOrigem','origem'],['estOrdem','ordem']]){$('#'+id).value=estoqueUI[k];$('#'+id).onchange=e=>{estoqueUI[k]=e.target.value;estoqueUI.pagina=1;desenha();};}
