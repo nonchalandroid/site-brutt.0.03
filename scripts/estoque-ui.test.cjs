@@ -44,24 +44,31 @@ const products = Array.from({ length: 85 }, (_, i) => {
 
 function mockClient() {
   const session = { user: { id: 'test-user' }, access_token: 'test-only' };
-  window.__mockState = { missingPeriod: false, failProducts: false, productWrites: 0 };
+  window.__mockState = { missingPeriod: false, failProducts: false, failSave: false, productWrites: 0, updates: [] };
   function from(table) {
-    let equals = [], single = false, options = {};
+    let equals = [], excluded = [], names = [], single = false, options = {}, update;
     const q = {
       select(_columns, opts = {}) { options = opts; return q; },
       eq(key, val) { equals.push([key, val]); return q; },
+      neq(key, val) { excluded.push([key, val]); return q; }, ilike(key, val) { names.push([key, val.toLowerCase()]); return q; },
       order() { return q; }, limit() { return q; }, not() { return q; },
       lt() { return q; }, lte() { return q; }, gt() { return q; },
       gte() { return q; }, is() { return q; }, in() { return q; },
       single() { single = true; return q; }, maybeSingle() { single = true; return q; },
-      update() { window.__mockState.productWrites++; return q; },
+      update(value) { update = value; return q; },
       then(resolve, reject) {
         let data = [];
         if (table === 'staff') data = [{ user_id: 'test-user', role: 'owner', name: 'Gestão Brutt', active: true }];
         if (table === 'categories') data = window.__categories;
         if (table === 'products') {
           if (window.__mockState.failProducts) return Promise.resolve({ error: { message: 'Falha simulada' }, data: null }).then(resolve, reject);
-          data = window.__products.filter(p => equals.every(([k, v]) => p[k] === v));
+          data = window.__products.filter(p => equals.every(([k, v]) => p[k] === v) && excluded.every(([k, v]) => p[k] !== v) && names.every(([k, v]) => String(p[k]).toLowerCase() === v));
+          if (update) {
+            window.__mockState.productWrites++;
+            if (window.__mockState.failSave) return Promise.resolve({ error: { message: 'Falha simulada ao salvar' }, data: null }).then(resolve, reject);
+            window.__mockState.updates.push({ fields: { ...update }, filters: [...equals] });
+            data.forEach(p => Object.assign(p, update));
+          }
         }
         if (table === 'vendas_periodo' && !window.__mockState.missingPeriod) data = [{ id: 1, inicio: '2026-09-18', fim: '2026-10-17', dias: 30 }];
         if (table === 'nex_sync_log') data = [{ ok: true, modo: 'real', ran_at: new Date().toISOString(), detalhe: { resumo: { sem_par_site: 20, conflitos: 2 } } }];
@@ -113,13 +120,39 @@ function mockClient() {
     assert.equal(await page.locator('.est-toolbar').evaluate(el => getComputedStyle(el).display), 'grid');
     assert.equal(await page.locator('.est-product-name').first().evaluate(el => getComputedStyle(el).display), 'block', 'nome e metadados não podem ficar colados');
     assert.equal(await page.locator('#estRows tr').count(), 40);
+    const baseFont = await page.locator('body').evaluate(el => getComputedStyle(el).fontFamily);
+    for (const selector of ['.stock-center', '.est-product-name', '.est-row-action', '#estBusca']) assert.equal(await page.locator(selector).first().evaluate(el => getComputedStyle(el).fontFamily), baseFont);
     await page.screenshot({ path: 'work/estoque-redesign-desktop.png' });
     await page.locator('#estBusca').fill('000119');
     assert.equal(await page.locator('#estRows tr').count(), 1);
     assert((await page.locator('#estRows').innerText()).includes('Dourado'));
-    await page.getByRole('button', { name: 'Conferir / ajustar Narguile de Termoplástico Dourado', exact: true }).click();
+    await page.getByRole('button', { name: 'Editar dados de Narguile de Termoplástico Dourado', exact: true }).click();
     await page.locator('#mvQty').waitFor();
     assert((await page.locator('.drawer').innerText()).includes('Narguile de Termoplástico Dourado'));
+    await page.waitForFunction(() => document.activeElement?.id === 'productDataTitle');
+    await page.getByLabel('Custo unitário (R$)', { exact: true }).fill('-1');
+    await page.locator('#saveBtn').click();
+    assert.equal(await page.evaluate(() => window.__mockState.productWrites), 0, 'custo negativo não pode gravar');
+    await page.locator('#fCost').fill('50,25');
+    await page.evaluate(() => window.__mockState.failSave = true);
+    await page.locator('#saveBtn').click();
+    await page.waitForFunction(() => !document.querySelector('#saveBtn').disabled);
+    assert.equal(await page.locator('#fCost').inputValue(), '50,25');
+    assert.equal(await page.locator('.drawer').evaluate(el => el.classList.contains('on')), true);
+    await page.evaluate(() => window.__mockState.failSave = false);
+    await page.locator('#fDesc').fill('Descrição conferida no cadastro.');
+    await page.locator('.drawer').screenshot({ path: 'work/estoque-editar-dados-desktop.png' });
+    await page.locator('#saveBtn').click();
+    await page.waitForFunction(() => !document.querySelector('.drawer').classList.contains('on'));
+    await page.locator('#estRows tr').first().waitFor();
+    assert.equal(new URL(page.url()).hash, '#/estoque-baixo');
+    const saved = await page.evaluate(() => window.__mockState.updates.at(-1));
+    assert.equal(saved.fields.cost_price, 50.25);
+    assert.equal(saved.fields.description, 'Descrição conferida no cadastro.');
+    assert.deepEqual(saved.filters, [['id', 'p0']]);
+    assert(!('stock' in saved.fields) && !('sku' in saved.fields) && !('ean' in saved.fields), 'não altera saldo nem identificadores de integração');
+    await page.getByRole('button', { name: 'Editar dados de Narguile de Termoplástico Dourado', exact: true }).click();
+    await page.waitForFunction(() => document.querySelector('#fCost')?.value === '50,25');
     await page.locator('[data-close]').first().click();
     await page.locator('#estLimpar').click();
     await page.locator('#estNext').click();
@@ -156,6 +189,14 @@ function mockClient() {
     await page.locator('.est-work').evaluate(el => window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 65));
     await page.screenshot({ path: 'work/estoque-redesign-mobile-lista.png' });
     assert.equal(await page.locator('#estRows tr').first().evaluate(el => getComputedStyle(el).display), 'grid');
+    await page.locator('#estBusca').fill('000817');
+    await page.getByRole('button', { name: 'Editar dados de Água Mineral Gás Terê', exact: true }).click();
+    await page.locator('#fCost').waitFor();
+    assert.equal(await page.locator('#fCost').inputValue(), '');
+    await page.locator('#fCost').fill('7,50');
+    await page.locator('#saveBtn').click();
+    await page.waitForFunction(() => !document.querySelector('.drawer').classList.contains('on'));
+    await page.waitForFunction(() => window.__products.find(p => p.id === 'p1').cost_price === 7.5);
     await page.evaluate(() => { window.__mockState.missingPeriod = true; });
     await page.locator('#estRefresh').click();
     await page.locator('#estRows tr').first().waitFor();
@@ -165,7 +206,7 @@ function mockClient() {
     await page.locator('#estRefresh').click();
     await page.getByText('Não foi possível carregar os saldos.', { exact: false }).waitFor();
     assert.equal(await page.locator('#estExport').isDisabled(), true);
-    assert.equal(await page.evaluate(() => window.__mockState.productWrites), 0);
+    assert.equal(await page.evaluate(() => window.__mockState.productWrites), 3, 'uma falha simulada e duas gravações: custo alterado e custo antes ausente');
     assert.deepEqual(errors, []);
     assert.deepEqual(attemptedProduction, []);
     console.log('OK: HTML completo + antiFrame + CSS persistente; busca, filtros, ficha, paginação, exportação, estados vazio/erro/sem histórico e cinco larguras. Nenhuma chamada à produção.');
